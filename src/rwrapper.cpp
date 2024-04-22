@@ -90,7 +90,7 @@ SEXP miniparquet_read(SEXP filesxp) {
 				SET_STRING_ELT(cl, 0, PROTECT(Rf_mkChar("POSIXct")));
 				SET_STRING_ELT(cl, 1, PROTECT(Rf_mkChar("POSIXt")));
 				SET_CLASS(varvalue, cl);
-				Rf_setAttrib(varvalue, install("tzone"), PROTECT(Rf_mkString("UTC")));
+				Rf_setAttrib(varvalue, Rf_install("tzone"), PROTECT(Rf_mkString("UTC")));
 				UNPROTECT(4);
 				break;
 			}
