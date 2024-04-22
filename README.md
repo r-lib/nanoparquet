@@ -1,15 +1,17 @@
 # miniparquet
-[![Travis](https://api.travis-ci.org/hannesmuehleisen/miniparquet.svg?branch=master)](https://travis-ci.org/hannesmuehleisen/miniparquet)
-[![CRAN
-status](https://www.r-pkg.org/badges/version/miniparquet)](https://cran.r-project.org/package=miniparquet)
-[![](http://cranlogs.r-pkg.org/badges/miniparquet)](https://dgrtwo.shinyapps.io/cranview/)
 
-`miniparquet` is a reader for a common subset of Parquet files. miniparquet only supports rectangular-shaped data structures (no nested tables) and only the Snappy compression scheme. miniparquet has no (zero, none, 0) [external dependencies](https://research.swtch.com/deps) and is very lightweight. It compiles in seconds to a binary size of under 1 MB. 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/gaborcsardi/miniparquet/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gaborcsardi/miniparquet/actions/workflows/R-CMD-check.yaml)
+[![CRAN status](https://www.r-pkg.org/badges/version/miniparquet)](https://cran.r-project.org/package=miniparquet)
+[![](http://cranlogs.r-pkg.org/badges/miniparquet)](https://dgrtwo.shinyapps.io/cranview/)
+<!-- badges: end -->
+
+`miniparquet` is a reader for a common subset of Parquet files. miniparquet only supports rectangular-shaped data structures (no nested tables) and only the Snappy compression scheme. miniparquet has no (zero, none, 0) [external dependencies](https://research.swtch.com/deps) and is very lightweight. It compiles in seconds to a binary size of under 1 MB.
 
 ## Installation
 Miniparquet comes as C++ library, a Python package and a R package. Install the R package like so:
 
-`devtools::install_github("hannesmuehleisen/miniparquet")` 
+`devtools::install_github("hannesmuehleisen/miniparquet")`
 
 The C++ library can be built by typing `make`.
 
@@ -17,13 +19,13 @@ The Python package is installed using `python setup.py install`
 
 
 ## Usage
-Use the R package like so: `df <- miniparquet::parquet_read("example.parquet")` 
+Use the R package like so: `df <- miniparquet::parquet_read("example.parquet")`
 
-Folders of similar-structured Parquet files (e.g. produced by Spark) can be read like this: 
+Folders of similar-structured Parquet files (e.g. produced by Spark) can be read like this:
 
 `df <- data.table::rbindlist(lapply(Sys.glob("some-folder/part-*.parquet"), miniparquet::parquet_read))`
 
-If you find a file that should be supported but isn't, please open an issue here with a link to the file. 
+If you find a file that should be supported but isn't, please open an issue here with a link to the file.
 
 Use the Python package like so: `miniparquet.read('example.parquet')`. You can convert the result to a Pandas dataframe like so: `pandas.DataFrame.from_dict(miniparquet.read('example.parquet'))`
 

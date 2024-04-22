@@ -17,3 +17,5 @@ bench\.cpp
 pq2csv\.cpp
 \.travis\.yml
 dependencies\.R
+^\.github$
+^codecov\.yml$
