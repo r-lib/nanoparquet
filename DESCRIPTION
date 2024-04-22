@@ -1,19 +1,20 @@
 Package: miniparquet
 Title: Read Parquet Files
-Version: 0.1.2
+Version: 0.1.2.9000
 Authors@R: c(
-	person("Hannes", "M\u00fchleisen", role = c("aut", "cre"), email = "hannes@cwi.nl", comment = c(ORCID = "0000-0001-8552-0029")),
+	person("Gábor", "Csárdi", role = c("aut", "cre"), email = "csardi.gabor@gmail.com"),
+	person("Hannes", "Mühleisen", role = "aut", comment = c(ORCID = "0000-0001-8552-0029")),
 	person("Google Inc.", role = "cph"),
 	person("Apache Software Foundation", role = "cph"),
 	person("Daniel", "Lemire", role = "cph"),
-	person("Chad", "Walters", role = "cph"))
-Description: Self-sufficient reader for a subset of Parquet files. Nested tables, compression besides Snappy and encryption are not supported.
-Depends: 
+	person("Chad", "Walters", role = "cph"),
+	person("Posit Software, PBC", role = "cph"))
+Description: Self-sufficient reader for a subset of Parquet files.
+    Nested tables, compression besides Snappy and encryption are not
+		supported.
+Depends:
     R (>= 3.5.0)
 Imports: methods
 License: MIT + file LICENSE
 Encoding: UTF-8
-Collate: 
-    'miniparquet.R'
-SystemRequirements: C++11
 Suggests: testthat
