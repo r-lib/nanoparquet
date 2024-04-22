@@ -63,7 +63,7 @@ SEXP miniparquet_read(SEXP filesxp) {
 
 		for (size_t col_idx = 0; col_idx < ncols; col_idx++) {
 			SEXP varname = PROTECT(
-					mkCharCE(f.columns[col_idx]->name.c_str(), CE_UTF8));
+					Rf_mkCharCE(f.columns[col_idx]->name.c_str(), CE_UTF8));
 			if (!varname) {
 				UNPROTECT(2); // varname, retlist
 				Rf_error("miniparquet_read: Memory allocation failed");
@@ -87,10 +87,10 @@ SEXP miniparquet_read(SEXP filesxp) {
 			case parquet::format::Type::INT96: {
 				varvalue = PROTECT(NEW_NUMERIC(nrows));
 				SEXP cl = PROTECT(NEW_STRING(2));
-				SET_STRING_ELT(cl, 0, PROTECT(mkChar("POSIXct")));
-				SET_STRING_ELT(cl, 1, PROTECT(mkChar("POSIXt")));
+				SET_STRING_ELT(cl, 0, PROTECT(Rf_mkChar("POSIXct")));
+				SET_STRING_ELT(cl, 1, PROTECT(Rf_mkChar("POSIXt")));
 				SET_CLASS(varvalue, cl);
-				setAttrib(varvalue, install("tzone"), PROTECT(mkString("UTC")));
+				Rf_setAttrib(varvalue, install("tzone"), PROTECT(Rf_mkString("UTC")));
 				UNPROTECT(4);
 				break;
 			}
@@ -269,7 +269,7 @@ SEXP miniparquet_read(SEXP filesxp) {
 
 					case parquet::format::Type::BYTE_ARRAY:
 						SET_STRING_ELT(dest, row_idx + dest_offset,
-								mkCharCE(
+								Rf_mkCharCE(
 										((char**)col.data.ptr)[row_idx],
 										CE_UTF8));
 						break;
@@ -295,7 +295,7 @@ SEXP miniparquet_read(SEXP filesxp) {
 
 
 	} catch (std::exception &ex) {
-		Rf_error(ex.what());
+		Rf_error("%s", ex.what());
 		// TODO this may leak
 	}
 
