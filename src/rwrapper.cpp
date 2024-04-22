@@ -36,6 +36,9 @@ SEXP miniparquet_read(SEXP filesxp) {
 		Rf_error("miniparquet_read: Need single filename parameter");
 	}
 
+	char error_buffer[8192];
+	error_buffer[0] = '\0';
+
 	try {
 		// parse the query and transform it into a set of statements
 
@@ -295,10 +298,15 @@ SEXP miniparquet_read(SEXP filesxp) {
 
 
 	} catch (std::exception &ex) {
-		Rf_error("%s", ex.what());
-		// TODO this may leak
+		strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1);
 	}
 
+	if (error_buffer[0] != '\0') {
+		Rf_error("%s", error_buffer);
+	}
+
+	// never reached
+	return R_NilValue;
 }
 
 // R native routine registration
