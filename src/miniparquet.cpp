@@ -119,7 +119,7 @@ void ParquetFile::initialize(string filename) {
 		col->name = s_ele.name;
 		col->schema_element = &s_ele;
 		col->type = s_ele.type;
-		columns.push_back(move(col));
+		columns.push_back(std::move(col));
 	}
 	this->nrow = file_meta_data.num_rows;
 }
@@ -445,7 +445,7 @@ public:
 			// never going to have more string data than this uncompressed_page_size (lengths use bytes)
 			auto string_heap_chunk = std::unique_ptr<char[]>(
 					new char[page_header.uncompressed_page_size]);
-			result_col.string_heap_chunks.push_back(move(string_heap_chunk));
+			result_col.string_heap_chunks.push_back(std::move(string_heap_chunk));
 			auto str_ptr =
 					result_col.string_heap_chunks[result_col.string_heap_chunks.size()
 							- 1].get();
@@ -547,12 +547,12 @@ public:
 
 	void scan_data_page_plain(ResultColumn &result_col) {
 		// TODO compute null count while getting the def levels already?
-		uint32_t null_count = 0;
-		for (uint32_t i = 0; i < page_header.data_page_header.num_values; i++) {
-			if (!defined_ptr[i]) {
-				null_count++;
-			}
-		}
+		// uint32_t null_count = 0;
+		// for (uint32_t i = 0; i < page_header.data_page_header.num_values; i++) {
+		// 	 if (!defined_ptr[i]) {
+		//	 null_count++;
+		//   }
+		// }
 
 		switch (result_col.col->type) {
 		case Type::BOOLEAN: {
@@ -598,7 +598,7 @@ public:
 				shc_len += page_header.data_page_header.num_values; // make space for terminators
 			}
 			auto string_heap_chunk = std::unique_ptr<char[]>(new char[shc_len]);
-			result_col.string_heap_chunks.push_back(move(string_heap_chunk));
+			result_col.string_heap_chunks.push_back(std::move(string_heap_chunk));
 			auto str_ptr =
 					result_col.string_heap_chunks[result_col.string_heap_chunks.size()
 							- 1].get();
@@ -975,4 +975,3 @@ void ParquetFile::initialize_result(ResultChunk &result) {
 
 	}
 }
-

@@ -49,7 +49,7 @@ public:
 			if (copy && holder != nullptr) {
 				memcpy(new_holder.get(), holder.get(), len);
 			}
-			holder = move(new_holder);
+			holder = std::move(new_holder);
 			ptr = holder.get();
 			len = new_size;
 		}
