@@ -94,4 +94,18 @@ private:
 	std::ifstream pfile;
 };
 
+class ParquetOutFile {
+public:
+	ParquetOutFile(std::string filename);
+	void set_schema(const std::vector<parquet::format::SchemaElement>& schema);
+	void set_num_rows(const uint64_t n);
+
+
+private:
+  parquet::format::FileMetaData file_meta_data;
+	std::ofstream pfile;
+};
+
 }
+
+void experiment();

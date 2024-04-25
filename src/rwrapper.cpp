@@ -309,12 +309,19 @@ SEXP miniparquet_read(SEXP filesxp) {
 	return R_NilValue;
 }
 
+SEXP r_experiment() {
+	experiment();
+	return R_NilValue;
+}
+
 // R native routine registration
 #define CALLDEF(name, n)                                                                                               \
 	{ #name, (DL_FUNC)&name, n }
-static const R_CallMethodDef R_CallDef[] = { CALLDEF(miniparquet_read, 1),
-
-{ NULL, NULL, 0 } };
+static const R_CallMethodDef R_CallDef[] = {
+	CALLDEF(miniparquet_read, 1),
+	CALLDEF(r_experiment, 0),
+	{ NULL, NULL, 0 }
+};
 
 void R_init_miniparquet(DllInfo *dll) {
 	R_registerRoutines(dll, NULL, R_CallDef, NULL, NULL);
