@@ -315,6 +315,7 @@ class RParquetOutFile : public ParquetOutFile {
 public:
   RParquetOutFile(std::string filename);
 	void write_int32(std::ostream& file, uint32_t idx);
+	void write_double(std::ostream& file, uint32_t idx);
 	void write(SEXP dfsxp, SEXP dim);
 private:
 	SEXP df = R_NilValue;
@@ -331,6 +332,12 @@ void RParquetOutFile::write_int32(std::ostream& file, uint32_t idx) {
 	file.write((const char*) INTEGER(col), sizeof(int) * len);
 }
 
+void RParquetOutFile::write_double(std::ostream& file, uint32_t idx) {
+	SEXP col = VECTOR_ELT(df, idx);
+	R_xlen_t len = XLENGTH(col);
+	file.write((const char*) REAL(col), sizeof(double) * len);
+}
+
 void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
 	df = dfsxp;
 	SEXP nms = Rf_getAttrib(dfsxp, R_NamesSymbol);
@@ -344,6 +351,10 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
 		switch(rtype) {
 			case INTSXP: {
 				type = parquet::format::Type::INT32;
+				break;
+			}
+			case REALSXP: {
+				type = parquet::format::Type::DOUBLE;
 				break;
 			}
 			default: throw runtime_error("Uninmplemented R type");

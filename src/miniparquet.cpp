@@ -1073,8 +1073,17 @@ void ParquetOutFile::write_column(uint32_t idx) {
 
 	// data via callback
 	uint32_t cb_start = pfile.tellp();
-	// TODO: other types
-	write_int32(pfile, idx);
+	parquet::format::Type::type type = schemas[idx + 1].type;
+	switch (type) {
+		case Type::INT32:
+			write_int32(pfile, idx);
+			break;
+		case Type::DOUBLE:
+			write_double(pfile, idx);
+			break;
+		default:
+			throw runtime_error("Cannot write unknown column type");
+	}
 	uint32_t cb_end = pfile.tellp();
 
 	if (cb_end - cb_start != data_size) {
@@ -1094,6 +1103,9 @@ uint32_t ParquetOutFile::calculate_column_data_size(uint32_t idx) {
 	switch (type) {
 		case Type::INT32: {
 			return num_rows * sizeof(int32_t);
+		}
+		case Type::DOUBLE: {
+			return num_rows * sizeof(double);
 		}
 		default: {
 			throw runtime_error(

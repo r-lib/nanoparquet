@@ -105,11 +105,12 @@ public:
 		std::string name,
 		parquet::format::Type::type type
 	);
+	void write();
 
 	// write out various parquet types, these must be implemented in
 	// the subclass
 	virtual void write_int32(std::ostream& file, uint32_t idx) = 0;
-	void write();
+	virtual void write_double(std::ostream& file, uint32_t idx) = 0;
 
 private:
 	std::ofstream pfile;
