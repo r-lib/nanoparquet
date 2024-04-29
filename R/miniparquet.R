@@ -6,5 +6,11 @@ parquet_read <- function(file) {
 	res
 }
 
-
 read_parquet <- parquet_read
+
+parquet_write <- function(x, file) {
+	dim <- as.integer(dim(x))
+	invisible(.Call(miniparquet_write, x, file, dim))
+}
+
+write_parquet <- parquet_write

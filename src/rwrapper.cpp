@@ -309,6 +309,77 @@ SEXP miniparquet_read(SEXP filesxp) {
 	return R_NilValue;
 }
 
+// ========================================================================
+
+class RParquetOutFile : public ParquetOutFile {
+public:
+  RParquetOutFile(std::string filename);
+	void write_int32(std::ostream& file, uint32_t idx);
+	void write(SEXP dfsxp, SEXP dim);
+private:
+	SEXP df = R_NilValue;
+};
+
+RParquetOutFile::RParquetOutFile(std::string filename) :
+	ParquetOutFile(filename) {
+	// nothing to do here
+}
+
+void RParquetOutFile::write_int32(std::ostream& file, uint32_t idx) {
+	SEXP col = VECTOR_ELT(df, idx);
+	R_xlen_t len = XLENGTH(col);
+	file.write((const char*) INTEGER(col), sizeof(int) * len);
+}
+
+void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
+	df = dfsxp;
+	SEXP nms = Rf_getAttrib(dfsxp, R_NamesSymbol);
+	R_xlen_t nr = INTEGER(dim)[0];
+	set_num_rows(nr);
+	R_xlen_t nc = INTEGER(dim)[1];
+	for (R_xlen_t idx = 0; idx < nc; idx++) {
+		parquet::format::Type::type type;
+		SEXP col = VECTOR_ELT(dfsxp, idx);
+		int rtype = TYPEOF(col);
+		switch(rtype) {
+			case INTSXP: {
+				type = parquet::format::Type::INT32;
+				break;
+			}
+			default: throw runtime_error("Uninmplemented R type");
+		}
+		schema_add_column(CHAR(STRING_ELT(nms, idx)), type);
+	}
+
+	ParquetOutFile::write();
+}
+
+SEXP miniparquet_write(SEXP dfsxp, SEXP filesxp, SEXP dim) {
+	if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
+		Rf_error("miniparquet_write: filename must be a string");
+	}
+
+  char error_buffer[8192];
+	error_buffer[0] = '\0';
+
+	try {
+		char *fname = (char *) CHAR(STRING_ELT(filesxp, 0));
+		RParquetOutFile of(fname);
+		of.write(dfsxp, dim);
+		return R_NilValue;
+
+	} catch (std::exception &ex) {
+		strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1);
+	}
+
+	if (error_buffer[0] != '\0') {
+		Rf_error("%s", error_buffer);
+	}
+
+	// never reached
+	return R_NilValue;
+}
+
 SEXP r_experiment() {
 	experiment();
 	return R_NilValue;
@@ -318,8 +389,9 @@ SEXP r_experiment() {
 #define CALLDEF(name, n)                                                                                               \
 	{ #name, (DL_FUNC)&name, n }
 static const R_CallMethodDef R_CallDef[] = {
-	CALLDEF(miniparquet_read, 1),
-	CALLDEF(r_experiment, 0),
+	CALLDEF(miniparquet_read,  1),
+	CALLDEF(miniparquet_write, 3),
+	CALLDEF(r_experiment,      0),
 	{ NULL, NULL, 0 }
 };
 

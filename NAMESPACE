@@ -1,6 +1,8 @@
 export(parquet_read)
 export(read_parquet)
 
+export(parquet_write)
+export(write_parquet)
 
 import(methods)
 

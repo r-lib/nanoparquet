@@ -7,6 +7,9 @@
 #include <cstring>
 #include "parquet/parquet_types.h"
 
+#include <protocol/TCompactProtocol.h>
+#include <transport/TBufferTransports.h>
+
 namespace miniparquet {
 
 class ParquetColumn {
@@ -97,13 +100,36 @@ private:
 class ParquetOutFile {
 public:
 	ParquetOutFile(std::string filename);
-	void set_schema(const std::vector<parquet::format::SchemaElement>& schema);
-	void set_num_rows(const uint64_t n);
+	void set_num_rows(uint32_t nr);
+	void schema_add_column(
+		std::string name,
+		parquet::format::Type::type type
+	);
 
+	// write out various parquet types, these must be implemented in
+	// the subclass
+	virtual void write_int32(std::ostream& file, uint32_t idx) = 0;
+	void write();
 
 private:
-  parquet::format::FileMetaData file_meta_data;
 	std::ofstream pfile;
+	uint32_t num_rows, num_cols;
+	bool num_rows_set;
+	uint32_t total_size; // for the single row group we have for now
+
+	std::vector<parquet::format::SchemaElement> schemas;
+	std::vector<parquet::format::ColumnMetaData> column_meta_data;
+
+	std::shared_ptr<apache::thrift::transport::TMemoryBuffer> mem_buffer;
+  apache::thrift::protocol::TCompactProtocolFactoryT
+		<apache::thrift::transport::TMemoryBuffer> tproto_factory;
+  std::shared_ptr<apache::thrift::protocol::TProtocol> tproto;
+
+	void write_columns();
+	void write_column(uint32_t idx);
+	void write_footer();
+
+	uint32_t calculate_column_data_size(uint32_t idx);
 };
 
 }
