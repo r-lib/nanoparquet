@@ -97,6 +97,8 @@ private:
 	std::ifstream pfile;
 };
 
+// ========================================================================
+
 class ParquetOutFile {
 public:
 	ParquetOutFile(std::string filename);
