@@ -399,18 +399,12 @@ SEXP miniparquet_write(SEXP dfsxp, SEXP filesxp, SEXP dim) {
 	return R_NilValue;
 }
 
-SEXP r_experiment() {
-	experiment();
-	return R_NilValue;
-}
-
 // R native routine registration
 #define CALLDEF(name, n)                                                                                               \
 	{ #name, (DL_FUNC)&name, n }
 static const R_CallMethodDef R_CallDef[] = {
 	CALLDEF(miniparquet_read,  1),
 	CALLDEF(miniparquet_write, 3),
-	CALLDEF(r_experiment,      0),
 	{ NULL, NULL, 0 }
 };
 

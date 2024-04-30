@@ -145,5 +145,3 @@ private:
 };
 
 }
-
-void experiment();
