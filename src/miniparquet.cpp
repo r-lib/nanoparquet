@@ -108,11 +108,6 @@ void ParquetFile::initialize(string filename) {
 		if (!s_ele.__isset.type || s_ele.num_children > 0) {
 			throw runtime_error("Only flat tables are supported (no nesting)");
 		}
-		// TODO if this is REQUIRED, there are no defined levels in file, support this
-		// if field is REPEATED, no bueno
-		if (s_ele.repetition_type != FieldRepetitionType::OPTIONAL) {
-			throw runtime_error("Only OPTIONAL fields support for now");
-		}
 		// TODO scale? precision? complain if set
 		auto col = unique_ptr<ParquetColumn>(new ParquetColumn());
 		col->id = col_idx - 1;
@@ -478,7 +473,7 @@ public:
 		}
 	}
 
-	void scan_data_page(ResultColumn &result_col) {
+	void scan_data_page(ResultColumn &result_col, bool has_def_levels) {
 		if (!page_header.__isset.data_page_header
 				|| page_header.__isset.dictionary_page_header) {
 			throw runtime_error("Data page header mismatch");
@@ -490,23 +485,31 @@ public:
 
 		auto num_values = page_header.data_page_header.num_values;
 
-		// we have to first decode the define levels
-		switch (page_header.data_page_header.definition_level_encoding) {
-		case Encoding::RLE: {
-			// read length of define payload, always
-			uint32_t def_length;
-			memcpy(&def_length, page_buf_ptr, sizeof(def_length));
-			page_buf_ptr += sizeof(def_length);
+		// we have to first decode the define levels, if we have them
+		if (has_def_levels) {
+			switch (page_header.data_page_header.definition_level_encoding) {
+			case Encoding::RLE: {
+				// read length of define payload, always
+				uint32_t def_length;
+				memcpy(&def_length, page_buf_ptr, sizeof(def_length));
+				page_buf_ptr += sizeof(def_length);
 
-			RleBpDecoder dec((const uint8_t*) page_buf_ptr, def_length, 1);
-			dec.GetBatch<uint8_t>(defined_ptr, num_values);
+				RleBpDecoder dec((const uint8_t*) page_buf_ptr, def_length, 1);
+				dec.GetBatch<uint8_t>(defined_ptr, num_values);
 
-			page_buf_ptr += def_length;
-		}
-			break;
-		default:
-			throw runtime_error(
-					"Definition levels have unsupported/invalid encoding");
+				page_buf_ptr += def_length;
+			}
+				break;
+			default:
+				throw runtime_error(
+						"Definition levels have unsupported/invalid encoding");
+			}
+		} else {
+			std::fill(
+				defined_ptr,
+				defined_ptr + num_values,
+				static_cast<uint8_t>(1)
+			);
 		}
 
 		switch (page_header.data_page_header.encoding) {
@@ -827,6 +830,8 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
 
 	cs.page_start_row = 0;
 	cs.defined_ptr = (uint8_t*) result_col.defined.ptr;
+	SchemaElement sch = file_meta_data.schema[result_col.id + 1]; // skip root
+	bool has_def_levels = sch.repetition_type != FieldRepetitionType::REQUIRED;
 
 	while (bytes_to_read > 0) {
 		auto page_header_len = bytes_to_read; // the header is clearly not that long but we have no idea
@@ -884,7 +889,7 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
 			break;
 
 		case PageType::DATA_PAGE: {
-			cs.scan_data_page(result_col);
+			cs.scan_data_page(result_col, has_def_levels);
 			break;
 		}
 		case PageType::DATA_PAGE_V2:
