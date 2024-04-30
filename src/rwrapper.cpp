@@ -316,6 +316,9 @@ public:
   RParquetOutFile(std::string filename);
 	void write_int32(std::ostream& file, uint32_t idx);
 	void write_double(std::ostream& file, uint32_t idx);
+  void write_byte_array(std::ostream& file, uint32_t idx);
+  uint32_t get_size_byte_array(uint32_t idx);
+
 	void write(SEXP dfsxp, SEXP dim);
 private:
 	SEXP df = R_NilValue;
@@ -338,6 +341,28 @@ void RParquetOutFile::write_double(std::ostream& file, uint32_t idx) {
 	R_xlen_t len = XLENGTH(col);
 	file.write((const char*) REAL(col), sizeof(double) * len);
 //	REprintf("Wrote %td doubles\n", len);
+}
+
+void RParquetOutFile::write_byte_array(std::ostream& file, uint32_t idx) {
+  SEXP col = VECTOR_ELT(df, idx);
+  R_xlen_t len = XLENGTH(col);
+  for (R_xlen_t i = 0; i < len; i++) {
+    const char *c = CHAR(STRING_ELT(col, i));
+    uint32_t len1 = strlen(c);
+    file.write((const char*) &len1, 4);
+    file.write(c, len1);
+  }
+}
+
+uint32_t RParquetOutFile::get_size_byte_array(uint32_t idx) {
+  SEXP col = VECTOR_ELT(df, idx);
+  R_xlen_t len = XLENGTH(col);
+  uint32_t size = len * 4; // 4 bytes of length for each CHARSXP
+  for (R_xlen_t i = 0; i < len; i++) {
+    const char *c = CHAR(STRING_ELT(col, i));
+    size += strlen(c);
+  }
+  return size;
 }
 
 void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
@@ -366,6 +391,13 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
 //				REprintf("Adding REALSXP\n");
 				break;
 			}
+      case STRSXP: {
+        parquet::format::StringType st;
+        parquet::format::LogicalType logical_type;
+        logical_type.__set_STRING(st);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type);
+        break;
+      }
 			default: throw runtime_error("Uninmplemented R type");
 		}
 	}

@@ -1159,6 +1159,9 @@ void ParquetOutFile::write_column(uint32_t idx) {
 		case Type::DOUBLE:
 			write_double(pfile, idx);
 			break;
+		case Type::BYTE_ARRAY:
+			write_byte_array(pfile, idx);
+			break;
 		default:
 			throw runtime_error("Cannot write unknown column type");
 	}
@@ -1184,6 +1187,10 @@ uint32_t ParquetOutFile::calculate_column_data_size(uint32_t idx) {
 		}
 		case Type::DOUBLE: {
 			return num_rows * sizeof(double);
+		}
+		case Type::BYTE_ARRAY: {
+			// not known yet
+			return get_size_byte_array(idx);
 		}
 		default: {
 			throw runtime_error(
