@@ -995,8 +995,8 @@ ParquetOutFile::ParquetOutFile(std::string filename) :
 
 	// root schema element
 	SchemaElement sch;
+	sch.__set_name("schema");
 	sch.__set_num_children(0);
-	sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
 	schemas.push_back(sch);
 }
 
