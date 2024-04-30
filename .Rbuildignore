@@ -19,3 +19,4 @@ pq2csv\.cpp
 dependencies\.R
 ^\.github$
 ^codecov\.yml$
+^.vscode$
