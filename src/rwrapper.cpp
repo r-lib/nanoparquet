@@ -318,6 +318,7 @@ public:
 	void write_double(std::ostream& file, uint32_t idx);
   void write_byte_array(std::ostream& file, uint32_t idx);
   uint32_t get_size_byte_array(uint32_t idx);
+  void write_boolean(std::ostream& file, uint32_t idx);
 
 	void write(SEXP dfsxp, SEXP dim);
 private:
@@ -333,14 +334,12 @@ void RParquetOutFile::write_int32(std::ostream& file, uint32_t idx) {
 	SEXP col = VECTOR_ELT(df, idx);
 	R_xlen_t len = XLENGTH(col);
 	file.write((const char*) INTEGER(col), sizeof(int) * len);
-//	REprintf("Wrote %td integers\n", len);
 }
 
 void RParquetOutFile::write_double(std::ostream& file, uint32_t idx) {
 	SEXP col = VECTOR_ELT(df, idx);
 	R_xlen_t len = XLENGTH(col);
 	file.write((const char*) REAL(col), sizeof(double) * len);
-//	REprintf("Wrote %td doubles\n", len);
 }
 
 void RParquetOutFile::write_byte_array(std::ostream& file, uint32_t idx) {
@@ -365,6 +364,33 @@ uint32_t RParquetOutFile::get_size_byte_array(uint32_t idx) {
   return size;
 }
 
+void RParquetOutFile::write_boolean(std::ostream& file, uint32_t idx) {
+  // TODO: this is a very inefficient implementation
+  SEXP col = VECTOR_ELT(df, idx);
+  R_xlen_t len = XLENGTH(col);
+  int *p = LOGICAL(col);
+  int *end = p + len;
+  while (p + 8 < end) {
+    char b = 0;
+    b += (*p++);
+    b += (*p++) << 1;
+    b += (*p++) << 2;
+    b += (*p++) << 3;
+    b += (*p++) << 4;
+    b += (*p++) << 5;
+    b += (*p++) << 6;
+    b += (*p++) << 7;
+    file.write(&b, 1);
+  }
+  if (p < end) {
+    char b = 0;
+    while (end > p) {
+      b = (b << 1) + (*--end);
+    }
+    file.write(&b, 1);
+  }
+}
+
 void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
 	df = dfsxp;
 	SEXP nms = Rf_getAttrib(dfsxp, R_NamesSymbol);
@@ -382,13 +408,11 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
 				parquet::format::LogicalType logical_type;
 				logical_type.__set_INTEGER(it);
 				schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type);
-//				REprintf("Adding INTSXP\n");
 				break;
 			}
 			case REALSXP: {
 				parquet::format::Type::type type = parquet::format::Type::DOUBLE;
 				schema_add_column(CHAR(STRING_ELT(nms, idx)), type);
-//				REprintf("Adding REALSXP\n");
 				break;
 			}
       case STRSXP: {
@@ -397,6 +421,11 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
         logical_type.__set_STRING(st);
         schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type);
         break;
+      }
+      case LGLSXP: {
+        parquet::format::Type::type type = parquet::format::Type::BOOLEAN;
+				schema_add_column(CHAR(STRING_ELT(nms, idx)), type);
+				break;
       }
 			default: throw runtime_error("Uninmplemented R type");
 		}

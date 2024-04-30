@@ -117,6 +117,7 @@ public:
 	virtual void write_double(std::ostream& file, uint32_t idx) = 0;
 	virtual void write_byte_array(std::ostream& file, uint32_t idx) = 0;
 	virtual uint32_t get_size_byte_array(uint32_t idx) = 0;
+	virtual void write_boolean(std::ostream& file, uint32_t idx) = 0;
 
 private:
 	std::ofstream pfile;

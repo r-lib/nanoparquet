@@ -1162,6 +1162,9 @@ void ParquetOutFile::write_column(uint32_t idx) {
 		case Type::BYTE_ARRAY:
 			write_byte_array(pfile, idx);
 			break;
+		case Type::BOOLEAN:
+			write_boolean(pfile, idx);
+			break;
 		default:
 			throw runtime_error("Cannot write unknown column type");
 	}
@@ -1182,6 +1185,9 @@ uint32_t ParquetOutFile::calculate_column_data_size(uint32_t idx) {
 	// +1 is to skip the root schema
 	parquet::format::Type::type type = schemas[idx + 1].type;
 	switch (type) {
+		case Type::BOOLEAN: {
+			return num_rows / 8 + (num_rows % 8 > 0);
+		}
 		case Type::INT32: {
 			return num_rows * sizeof(int32_t);
 		}
