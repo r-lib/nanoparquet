@@ -1030,6 +1030,59 @@ void ParquetOutFile::schema_add_column(
 	num_cols++;
 }
 
+void ParquetOutFile::schema_add_column(
+	std::string name,
+	parquet::format::LogicalType logical_type) {
+
+  SchemaElement sch;
+	sch.__set_name(name);
+	Type::type type = get_type_from_logical_type(logical_type);
+	sch.__set_type(type);
+	sch.__set_logicalType(logical_type);
+	sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
+	schemas.push_back(sch);
+	schemas[0].__set_num_children(schemas[0].num_children + 1);
+
+	ColumnMetaData cmd;
+	cmd.__set_type(type);
+	vector<Encoding::type> encs;
+	encs.push_back(Encoding::PLAIN);
+	cmd.__set_encodings(encs);
+	vector<string> paths;
+	paths.push_back(name);
+	cmd.__set_path_in_schema(paths);
+	cmd.__set_codec(CompressionCodec::UNCOMPRESSED);
+	// num_values set later
+	// total_uncompressed_size set later
+	// total_compressed_size set later
+	// data_page_offset  set later
+	// dictionary_page_offset set later when we have dictionaries
+	column_meta_data.push_back(cmd);
+
+	num_cols++;
+}
+
+parquet::format::Type::type ParquetOutFile::get_type_from_logical_type(
+	parquet::format::LogicalType logical_type) {
+
+	if (logical_type.__isset.STRING) {
+		return Type::BYTE_ARRAY;
+
+	} else if (logical_type.__isset.INTEGER) {
+		IntType it = logical_type.INTEGER;
+		if (!it.isSigned) {
+			throw runtime_error("Unsigned integers are not implemented");
+		}
+		if (it.bitWidth != 32) {
+			throw runtime_error("Only 32 bit integers are implemented");
+		}
+		return Type::INT32;
+
+	} else {
+		throw runtime_error("Unimplemented logical type");
+	}
+}
+
 void ParquetOutFile::write() {
 	if (!num_rows_set) {
 		throw runtime_error("Need to set the number of rows before writing");

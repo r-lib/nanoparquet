@@ -105,6 +105,10 @@ public:
 		std::string name,
 		parquet::format::Type::type type
 	);
+	void schema_add_column(
+		std::string name,
+		parquet::format::LogicalType logical_type
+	);
 	void write();
 
 	// write out various parquet types, these must be implemented in
@@ -130,6 +134,9 @@ private:
 	void write_column(uint32_t idx);
 	void write_footer();
 
+	parquet::format::Type::type get_type_from_logical_type(
+		parquet::format::LogicalType logical_type
+	);
 	uint32_t calculate_column_data_size(uint32_t idx);
 };
 

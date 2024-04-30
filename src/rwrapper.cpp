@@ -330,12 +330,14 @@ void RParquetOutFile::write_int32(std::ostream& file, uint32_t idx) {
 	SEXP col = VECTOR_ELT(df, idx);
 	R_xlen_t len = XLENGTH(col);
 	file.write((const char*) INTEGER(col), sizeof(int) * len);
+//	REprintf("Wrote %td integers\n", len);
 }
 
 void RParquetOutFile::write_double(std::ostream& file, uint32_t idx) {
 	SEXP col = VECTOR_ELT(df, idx);
 	R_xlen_t len = XLENGTH(col);
 	file.write((const char*) REAL(col), sizeof(double) * len);
+//	REprintf("Wrote %td doubles\n", len);
 }
 
 void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
@@ -345,21 +347,27 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
 	set_num_rows(nr);
 	R_xlen_t nc = INTEGER(dim)[1];
 	for (R_xlen_t idx = 0; idx < nc; idx++) {
-		parquet::format::Type::type type;
 		SEXP col = VECTOR_ELT(dfsxp, idx);
 		int rtype = TYPEOF(col);
 		switch(rtype) {
 			case INTSXP: {
-				type = parquet::format::Type::INT32;
+				parquet::format::IntType it;
+				it.__set_isSigned(true);
+				it.__set_bitWidth(32);
+				parquet::format::LogicalType logical_type;
+				logical_type.__set_INTEGER(it);
+				schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type);
+//				REprintf("Adding INTSXP\n");
 				break;
 			}
 			case REALSXP: {
-				type = parquet::format::Type::DOUBLE;
+				parquet::format::Type::type type = parquet::format::Type::DOUBLE;
+				schema_add_column(CHAR(STRING_ELT(nms, idx)), type);
+//				REprintf("Adding REALSXP\n");
 				break;
 			}
 			default: throw runtime_error("Uninmplemented R type");
 		}
-		schema_add_column(CHAR(STRING_ELT(nms, idx)), type);
 	}
 
 	ParquetOutFile::write();
