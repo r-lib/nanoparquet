@@ -14,7 +14,8 @@ Description: Self-sufficient reader for a subset of Parquet files.
 		supported.
 Depends:
     R (>= 3.5.0)
-Imports: methods
 License: MIT + file LICENSE
 Encoding: UTF-8
 Suggests: testthat
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
