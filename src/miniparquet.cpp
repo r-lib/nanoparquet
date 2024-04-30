@@ -1040,6 +1040,9 @@ void ParquetOutFile::schema_add_column(
 	sch.__set_type(type);
 	sch.__set_logicalType(logical_type);
 	sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
+	ConvertedType::type converted_type =
+		get_converted_type_from_logical_type(logical_type);
+	sch.__set_converted_type(converted_type);
 	schemas.push_back(sch);
 	schemas[0].__set_num_children(schemas[0].num_children + 1);
 
@@ -1077,6 +1080,28 @@ parquet::format::Type::type ParquetOutFile::get_type_from_logical_type(
 			throw runtime_error("Only 32 bit integers are implemented");
 		}
 		return Type::INT32;
+
+	} else {
+		throw runtime_error("Unimplemented logical type");
+	}
+}
+
+parquet::format::ConvertedType::type
+ParquetOutFile::get_converted_type_from_logical_type(
+	parquet::format::LogicalType logical_type) {
+
+	if (logical_type.__isset.STRING) {
+		return ConvertedType::UTF8;
+
+	} else if (logical_type.__isset.INTEGER) {
+		IntType it = logical_type.INTEGER;
+		if (!it.isSigned) {
+			throw runtime_error("Unsigned integers are not implemented");
+		}
+		if (it.bitWidth != 32) {
+			throw runtime_error("Only 32 bit integers are implemented");
+		}
+		return ConvertedType::INT_32;
 
 	} else {
 		throw runtime_error("Unimplemented logical type");

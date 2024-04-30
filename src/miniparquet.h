@@ -134,6 +134,10 @@ private:
 	void write_column(uint32_t idx);
 	void write_footer();
 
+  // internal utility functions
+	parquet::format::ConvertedType::type get_converted_type_from_logical_type(
+		parquet::format::LogicalType logical_type
+	);
 	parquet::format::Type::type get_type_from_logical_type(
 		parquet::format::LogicalType logical_type
 	);
