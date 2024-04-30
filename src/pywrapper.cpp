@@ -1,7 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-// motherfucker
+// buzz off
 #undef error
 #undef length
 
@@ -121,7 +121,7 @@ static PyObject *miniparquet_read(PyObject *self, PyObject *args) {
 							current_item = PyLong_FromLong(nanoseconds);
 							break;
 						}
-						case parquet::format::Type::FIXED_LEN_BYTE_ARRAY: { // oof, TODO clusterfuck
+						case parquet::format::Type::FIXED_LEN_BYTE_ARRAY: { // oof, TODO mess
 							auto &s_ele = f.columns[col_idx]->schema_element;
 							if (!s_ele->__isset.converted_type) {
 								throw runtime_error("Missing FLBA type");
@@ -129,7 +129,7 @@ static PyObject *miniparquet_read(PyObject *self, PyObject *args) {
 							switch (s_ele->converted_type) {
 							case parquet::format::ConvertedType::DECIMAL: {
 
-								// this is a giant clusterfuck
+								// this is a giant mess
 								auto type_len = s_ele->type_length;
 								auto bytes = ((char **)col.data.ptr)[row_idx];
 								int64_t val = 0;

@@ -79,7 +79,7 @@ int main(int argc, char *const argv[]) {
 
 						// TODO what about logical_type??
 						switch (col.col->schema_element->converted_type) {
-						case parquet::format::ConvertedType::DECIMAL: { // this is a giant clusterfuck
+						case parquet::format::ConvertedType::DECIMAL: { // this is a giant mess
 							auto type_len = s_ele->type_length;
 							auto bytes = ((char**) col.data.ptr)[row];
 							int64_t val = 0;

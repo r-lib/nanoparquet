@@ -1,4 +1,4 @@
-// motherfucker
+// buzz off
 #undef error
 #undef length
 
@@ -225,7 +225,7 @@ SEXP miniparquet_read(SEXP filesxp) {
             break;
 
           case parquet::format::Type::FIXED_LEN_BYTE_ARRAY: { // oof, TODO
-                                                              // clusterfuck
+                                                              // mess
             auto &s_ele = f.columns[col_idx]->schema_element;
             if (!s_ele->__isset.converted_type) {
               throw runtime_error("Missing FLBA type");
@@ -235,7 +235,7 @@ SEXP miniparquet_read(SEXP filesxp) {
 
             {
 
-              // this is a giant clusterfuck
+              // this is a giant mess
               auto type_len = s_ele->type_length;
               auto bytes = ((char **)col.data.ptr)[row_idx];
               int64_t val = 0;

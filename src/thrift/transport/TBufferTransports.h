@@ -24,7 +24,7 @@
 #include <cstddef>
 #include <cstring>
 #include <limits>
-//#include <boost/scoped_array.hpp> // FUCK OFF
+//#include <boost/scoped_array.hpp> // BUZZ OFF
 
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TVirtualTransport.h>
