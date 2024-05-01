@@ -16,6 +16,10 @@ Depends:
     R (>= 3.5.0)
 License: MIT + file LICENSE
 Encoding: UTF-8
-Suggests: testthat
+Suggests:
+    arrow,
+    DBI,
+    duckdb,
+    testthat
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1

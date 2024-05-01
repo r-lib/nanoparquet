@@ -91,3 +91,41 @@ test_that("basic reading works with snappy", {
   res <- parquet_read(test_path("data/alltypes_plain.snappy.parquet"))
   expect_true(data_comparable(alltypes_plain_snappy, res))
 })
+
+test_that("round trip with arrow", {
+  mt <- cbind(nam = rownames(mtcars), mtcars)
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  arrow::write_parquet(mt, tmp, compression = "uncompressed")
+  expect_true(all(read_parquet(tmp) == mt))
+  unlink(tmp)
+
+  arrow::write_parquet(mt, tmp, compression = "snappy")
+  expect_true(all(arrow::read_parquet(tmp) == mt))
+})
+
+test_that("round trip with duckdb", {
+  mt <- cbind(nam = rownames(mtcars), mtcars)
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  drv <- duckdb::duckdb()
+  con <- DBI::dbConnect(drv)
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+  DBI::dbWriteTable(con, "mtcars", mt)
+
+  DBI::dbExecute(con, DBI::sqlInterpolate(con,
+    "COPY mtcars TO ?filename (FORMAT 'parquet', COMPRESSION 'uncompressed')",
+    filename = tmp
+  ))
+  expect_true(all(read_parquet(tmp) == mt))
+  unlink(tmp)
+
+  DBI::dbExecute(con, DBI::sqlInterpolate(con,
+    "COPY mtcars TO ?filename (FORMAT PARQUET, COMPRESSION 'snappy')",
+    filename = tmp
+  ))
+  arrow::write_parquet(mt, tmp, compression = "snappy")
+  expect_true(all(arrow::read_parquet(tmp) == mt))
+})
