@@ -24,26 +24,22 @@ jobs:
         config:
           - {os: macos-latest,   r: 'release'}
 
-          # - {os: windows-latest, r: 'release'}
-          # # use 4.1 to check with rtools40's older compiler
-          # - {os: windows-latest, r: '4.1'}
+          - {os: windows-latest, r: 'release'}
+          # use 4.1 to check with rtools40's older compiler
+          - {os: windows-latest, r: '4.1'}
 
-          # - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          # - {os: ubuntu-latest,   r: 'release'}
-          # - {os: ubuntu-latest,   r: 'oldrel-1'}
-          # - {os: ubuntu-latest,   r: 'oldrel-2'}
-          # - {os: ubuntu-latest,   r: 'oldrel-3'}
-          # - {os: ubuntu-latest,   r: 'oldrel-4'}
+          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest,   r: 'release'}
+          - {os: ubuntu-latest,   r: 'oldrel-1'}
+          - {os: ubuntu-latest,   r: 'oldrel-2'}
+          - {os: ubuntu-latest,   r: 'oldrel-3'}
+          - {os: ubuntu-latest,   r: 'oldrel-4'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
 
     steps:
-      - run: |
-          which pkg-config || true
-          pkg-config --libs openssl || true
-
       - uses: actions/checkout@v4
 
       - uses: r-lib/actions/setup-pandoc@v2
@@ -62,10 +58,9 @@ jobs:
       - name: Update arrow on macOS, CRAN binary is broken
         if: runner.os == 'macOS'
         run: |
-          system("brew install openssl@3")
-          system("brew link openssl@3")
           if (! arrow::arrow_info()$capabilities[["parquet"]]) {
-            arrow::install_arrow()
+            pak::repo_add(CRAN = "https://apache.r-universe.dev")
+            pak::pkg_install("arrow?reinstall&nocache")
           }
         shell: Rscript {0}
 
