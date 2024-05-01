@@ -64,24 +64,23 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Miniparquet comes as C++ library, a Python package and a R package. Install the R package like so:</p>
-<p><code>devtools::install_github("hannesmuehleisen/miniparquet")</code></p>
-<p>The C++ library can be built by typing <code>make</code>.</p>
-<p>The Python package is installed using <code>python setup.py install</code></p>
+<p>Install the R package from CRAN:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"miniparquet"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p>Use the R package like so: <code>df &lt;- miniparquet::parquet_read("example.parquet")</code></p>
+<p>Call <code><a href="reference/parquet_read.html">parquet_read()</a></code> to read a Parquet file:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">miniparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_read.html">parquet_read</a></span><span class="op">(</span><span class="st">"example.parquet"</span><span class="op">)</span></span></code></pre></div>
 <p>Folders of similar-structured Parquet files (e.g. produced by Spark) can be read like this:</p>
-<p><code>df &lt;- data.table::rbindlist(lapply(Sys.glob("some-folder/part-*.parquet"), miniparquet::parquet_read))</code></p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu">rbindlist</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Sys.glob.html" class="external-link">Sys.glob</a></span><span class="op">(</span><span class="st">"some-folder/part-*.parquet"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">miniparquet</span><span class="fu">::</span><span class="va"><a href="reference/parquet_read.html">parquet_read</a></span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>If you find a file that should be supported but isn’t, please open an issue here with a link to the file.</p>
-<p>Use the Python package like so: <code>miniparquet.read('example.parquet')</code>. You can convert the result to a Pandas dataframe like so: <code>pandas.DataFrame.from_dict(miniparquet.read('example.parquet'))</code></p>
-</div>
-<div class="section level2">
-<h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
-</h2>
-<p><code>miniparquet</code> is quite fast, on my laptop (I7-4578U) it can read compressed Parquet files at over 200 MB/s using only a single thread. Previously, there was a comparision with the arrow package here, but it appeared that results were caused by a bug which is fixed.</p>
 </div>
 </div>
   </div>
