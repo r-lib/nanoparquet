@@ -1,7 +1,6 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <strstream>
 
 #include <protocol/TCompactProtocol.h>
 #include <transport/TBufferTransports.h>
