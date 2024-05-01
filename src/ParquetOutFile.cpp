@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <strstream>
 
 #include <protocol/TCompactProtocol.h>
 #include <transport/TBufferTransports.h>
@@ -24,10 +25,13 @@ static string type_to_string(Type::type t) {
   return ss.str();
 }
 
-ParquetOutFile::ParquetOutFile(std::string filename)
-    : num_rows(0), num_cols(0), num_rows_set(false),
-      mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
-      tproto(tproto_factory.getProtocol(mem_buffer)) {
+ParquetOutFile::ParquetOutFile(
+  std::string filename,
+  parquet::format::CompressionCodec::type codec) :
+  num_rows(0), num_cols(0), num_rows_set(false),
+  codec(codec),
+  mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
+  tproto(tproto_factory.getProtocol(mem_buffer)) {
 
   // open file
   pfile.open(filename, std::ios::binary);
@@ -62,7 +66,7 @@ void ParquetOutFile::schema_add_column(std::string name,
   vector<string> paths;
   paths.push_back(name);
   cmd.__set_path_in_schema(paths);
-  cmd.__set_codec(CompressionCodec::UNCOMPRESSED);
+  cmd.__set_codec(codec);
   // num_values set later
   // total_uncompressed_size set later
   // total_compressed_size set later
@@ -96,7 +100,7 @@ void ParquetOutFile::schema_add_column(
   vector<string> paths;
   paths.push_back(name);
   cmd.__set_path_in_schema(paths);
-  cmd.__set_codec(CompressionCodec::UNCOMPRESSED);
+  cmd.__set_codec(codec);
   // num_values set later
   // total_uncompressed_size set later
   // total_compressed_size set later
@@ -171,6 +175,16 @@ void ParquetOutFile::write_columns() {
 }
 
 void ParquetOutFile::write_column(uint32_t idx) {
+  // Do we need compression? If yes, then we first write into a buffer
+  ColumnMetaData *cmd = &(column_meta_data[idx]);
+  if (cmd->codec == CompressionCodec::UNCOMPRESSED) {
+    write_column_uncompressed(idx);
+  } else {
+    write_column_compressed(idx);
+  }
+}
+
+void ParquetOutFile::write_column_uncompressed(uint32_t idx) {
   uint32_t col_start = pfile.tellp();
   // TODO: dictionary here
   // data page header
@@ -190,6 +204,7 @@ void ParquetOutFile::write_column(uint32_t idx) {
   mem_buffer->getBuffer(&out_buffer, &out_length);
   pfile.write((char *)out_buffer, out_length);
   mem_buffer->resetBuffer();
+
 
   // data via callback
   uint32_t cb_start = pfile.tellp();
@@ -215,7 +230,78 @@ void ParquetOutFile::write_column(uint32_t idx) {
   if (cb_end - cb_start != data_size) {
     throw runtime_error("Wrong number of bytes written for parquet column");
   }
+
   ColumnMetaData *cmd = &(column_meta_data[idx]);
+  int32_t column_bytes = ((int32_t)pfile.tellp()) - col_start;
+  cmd->__set_num_values(num_rows);
+  cmd->__set_total_uncompressed_size(column_bytes);
+  cmd->__set_total_compressed_size(column_bytes);
+  cmd->__set_data_page_offset(data_offset);
+}
+
+void ParquetOutFile::write_column_compressed(uint32_t idx) {
+  ColumnMetaData *cmd = &(column_meta_data[idx]);
+  uint32_t data_size = calculate_column_data_size(idx);
+  std::unique_ptr<std::ostream> os;
+  if (cmd->codec == CompressionCodec::SNAPPY) {
+      buf_unc.resize(data_size);
+      buf_unc.reset();
+      os = std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+  } else {
+    throw runtime_error("Only SNAPPY compression is supported at this time");
+  }
+
+  // data via callback
+  parquet::format::Type::type type = schemas[idx + 1].type;
+  switch (type) {
+  case Type::INT32:
+    write_int32(*os, idx);
+    break;
+  case Type::DOUBLE:
+    write_double(*os, idx);
+    break;
+  case Type::BYTE_ARRAY:
+    write_byte_array(*os, idx);
+    break;
+  case Type::BOOLEAN:
+    write_boolean(*os, idx);
+    break;
+  default:
+    throw runtime_error("Cannot write unknown column type");
+  }
+
+  if (buf_unc.tellp != data_size) {
+    throw runtime_error("Wrong number of bytes written for parquet column");
+  }
+
+  size_t cl = 0;
+  if (cmd->codec == CompressionCodec::SNAPPY) {
+    size_t ms = snappy::MaxCompressedLength(data_size);
+    buf_com.resize(ms);
+    snappy::RawCompress(buf_unc.ptr, data_size, buf_com.ptr, &cl);
+  }
+
+  uint32_t col_start = pfile.tellp();
+  // TODO: dictionary here
+  // data page header
+  uint32_t data_offset = pfile.tellp();
+  PageHeader ph;
+  ph.__set_type(PageType::DATA_PAGE);
+  ph.__set_uncompressed_page_size(data_size);
+  ph.__set_compressed_page_size(cl);
+  DataPageHeader dph;
+  dph.__set_num_values(num_rows);
+  dph.__set_encoding(Encoding::PLAIN);
+  ph.__set_data_page_header(dph);
+  ph.write(tproto.get());
+  uint8_t *out_buffer;
+  uint32_t out_length;
+  mem_buffer->getBuffer(&out_buffer, &out_length);
+  pfile.write((char *)out_buffer, out_length);
+  mem_buffer->resetBuffer();
+
+  pfile.write(buf_com.ptr, cl);
+
   int32_t column_bytes = ((int32_t)pfile.tellp()) - col_start;
   cmd->__set_num_values(num_rows);
   cmd->__set_total_uncompressed_size(column_bytes);

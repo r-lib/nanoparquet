@@ -5,14 +5,17 @@
 \alias{write_parquet}
 \title{Write a data frame to a Parquet file}
 \usage{
-parquet_write(x, file)
+parquet_write(x, file, compression = c("snappy", "uncompressed"))
 
-write_parquet(x, file)
+write_parquet(x, file, compression = c("snappy", "uncompressed"))
 }
 \arguments{
 \item{x}{Data frame to write.}
 
 \item{file}{Path to the output file.}
+
+\item{compression}{Compression algorithm to use. Currently only
+\code{"snappy"} (the default) and \code{"uncompressed"} are supported.}
 }
 \value{
 \code{NULL}

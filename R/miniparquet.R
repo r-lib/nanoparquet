@@ -29,6 +29,8 @@ read_parquet <- parquet_read
 #'
 #' @param x Data frame to write.
 #' @param file Path to the output file.
+#' @param compression Compression algorithm to use. Currently only
+#'   `"snappy"` (the default) and `"uncompressed"` are supported.
 #' @return `NULL`
 #'
 #' @export
@@ -37,9 +39,15 @@ read_parquet <- parquet_read
 #' mtcars2 <- cbind(name = rownames(mtcars), mtcars)
 #' parquet_write(mtcars2, "mtcars.parquet")
 
-parquet_write <- function(x, file) {
+parquet_write <- function(
+	x,
+	file,
+	compression = c("snappy", "uncompressed")) {
+
+	codecs <- c("uncompressed" = 0L, "snappy" = 1L)
+	compression <- codecs[match.arg(compression)]
 	dim <- as.integer(dim(x))
-	invisible(.Call(miniparquet_write, x, file, dim))
+	invisible(.Call(miniparquet_write, x, file, dim, compression))
 }
 
 #' @export

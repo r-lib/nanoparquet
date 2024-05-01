@@ -35,29 +35,6 @@ public:
   }
 };
 
-// todo move this to impl
-
-class ByteBuffer { // on to the 10 thousandth impl
-public:
-  char *ptr = nullptr;
-  uint64_t len = 0;
-
-  void resize(uint64_t new_size, bool copy = true) {
-    if (new_size > len) {
-      auto new_holder = std::unique_ptr<char[]>(new char[new_size]);
-      if (copy && holder != nullptr) {
-        memcpy(new_holder.get(), holder.get(), len);
-      }
-      holder = std::move(new_holder);
-      ptr = holder.get();
-      len = new_size;
-    }
-  }
-
-private:
-  std::unique_ptr<char[]> holder = nullptr;
-};
-
 class ScanState {
 public:
   uint64_t row_group_idx = 0;
