@@ -296,7 +296,10 @@ SEXP miniparquet_read(SEXP filesxp) {
 
 class RParquetOutFile : public ParquetOutFile {
 public:
-  RParquetOutFile(std::string filename);
+  RParquetOutFile(
+    std::string filename,
+    parquet::format::CompressionCodec::type codec
+  );
   void write_int32(std::ostream &file, uint32_t idx);
   void write_double(std::ostream &file, uint32_t idx);
   void write_byte_array(std::ostream &file, uint32_t idx);
@@ -309,8 +312,10 @@ private:
   SEXP df = R_NilValue;
 };
 
-RParquetOutFile::RParquetOutFile(std::string filename)
-    : ParquetOutFile(filename) {
+RParquetOutFile::RParquetOutFile(
+  std::string filename,
+  parquet::format::CompressionCodec::type codec
+) : ParquetOutFile(filename, codec) {
   // nothing to do here
 }
 
@@ -419,9 +424,28 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
   ParquetOutFile::write();
 }
 
-SEXP miniparquet_write(SEXP dfsxp, SEXP filesxp, SEXP dim) {
+SEXP miniparquet_write(
+  SEXP dfsxp,
+  SEXP filesxp,
+  SEXP dim,
+  SEXP compression) {
+
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("miniparquet_write: filename must be a string");
+  }
+
+  int c_compression = INTEGER(compression)[0];
+  parquet::format::CompressionCodec::type codec;
+  switch(c_compression) {
+    case 0:
+      codec = parquet::format::CompressionCodec::UNCOMPRESSED;
+      break;
+    case 1:
+      codec = parquet::format::CompressionCodec::SNAPPY;
+      break;
+    default:
+      Rf_error("Invalid compression type code: %d", c_compression);
+      break;
   }
 
   char error_buffer[8192];
@@ -429,7 +453,7 @@ SEXP miniparquet_write(SEXP dfsxp, SEXP filesxp, SEXP dim) {
 
   try {
     char *fname = (char *)CHAR(STRING_ELT(filesxp, 0));
-    RParquetOutFile of(fname);
+    RParquetOutFile of(fname, codec);
     of.write(dfsxp, dim);
     return R_NilValue;
 
@@ -446,11 +470,14 @@ SEXP miniparquet_write(SEXP dfsxp, SEXP filesxp, SEXP dim) {
 }
 
 // R native routine registration
-#define CALLDEF(name, n)                                                       \
+#define CALLDEF(name, n) \
   { #name, (DL_FUNC)&name, n }
-static const R_CallMethodDef R_CallDef[] = {CALLDEF(miniparquet_read, 1),
-                                            CALLDEF(miniparquet_write, 3),
-                                            {NULL, NULL, 0}};
+
+static const R_CallMethodDef R_CallDef[] = {
+  CALLDEF(miniparquet_read, 1),
+  CALLDEF(miniparquet_write, 4),
+  {NULL, NULL, 0}
+};
 
 void R_init_miniparquet(DllInfo *dll) {
   R_registerRoutines(dll, NULL, R_CallDef, NULL, NULL);
