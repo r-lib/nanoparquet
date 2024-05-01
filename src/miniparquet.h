@@ -2,6 +2,8 @@
 
 #include <cstddef>
 #include <iostream>
+#include <memory>
+#include <cstring>
 
 class ByteBuffer : public std::streambuf {
 public:
