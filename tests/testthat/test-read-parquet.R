@@ -93,6 +93,9 @@ test_that("basic reading works with snappy", {
 })
 
 test_that("round trip with arrow", {
+  # Don't want to skip on the parquet capability missing, because then
+  # this might not be tested on the CI. So rather we skip on CRAN.
+  skip_on_cran()
   mt <- cbind(nam = rownames(mtcars), mtcars)
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

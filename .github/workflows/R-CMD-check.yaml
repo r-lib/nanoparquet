@@ -55,6 +55,14 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      - name: Update arrow on macOS, CRAN binary is broken
+        if: runner.os == 'macOS'
+        run: |
+          if (! arrow::arrow_info()$capabilities[["parquet"]]) {
+            arrow::install_arrow()
+          }
+        shell: Rscript {0}
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
