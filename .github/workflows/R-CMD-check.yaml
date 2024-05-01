@@ -59,6 +59,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           system("brew install openssl@3")
+          system("brew link openssl@3")
           if (! arrow::arrow_info()$capabilities[["parquet"]]) {
             arrow::install_arrow()
           }
