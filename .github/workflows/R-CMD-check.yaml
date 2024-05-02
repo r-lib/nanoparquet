@@ -52,6 +52,11 @@ jobs:
 
       - name: Install Python packages for testing
         run: |
+          dir.create("~/.pip", showWarnings = FALSE, recursive = TRUE)
+          writeLines(
+            c("[global]", "break-system-packages = true", "user = true"),
+            "~/.pip/pip.conf"
+          )
           if (Sys.which("pip3") != "") {
             system("pip3 install pyarrow pandas")
           } else {
