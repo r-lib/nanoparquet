@@ -21,6 +21,20 @@ jobs:
         with:
           use-public-rspm: true
 
+      - name: Install Python packages for testing
+        run: |
+          dir.create("~/.pip", showWarnings = FALSE, recursive = TRUE)
+          writeLines(
+            c("[global]", "break-system-packages = true", "user = true"),
+            "~/.pip/pip.conf"
+          )
+          if (Sys.which("pip3") != "") {
+            system("pip3 install pyarrow pandas")
+          } else {
+            system("pip install pyarrow pandas")
+          }
+        shell: Rscript {0}
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::covr
