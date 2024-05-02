@@ -96,20 +96,20 @@ test_that("round trip with arrow", {
   # Don't want to skip on the parquet capability missing, because then
   # this might not be tested on the CI. So rather we skip on CRAN.
   skip_on_cran()
-  mt <- cbind(nam = rownames(mtcars), mtcars)
+  mt <- test_df()
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
   arrow::write_parquet(mt, tmp, compression = "uncompressed")
-  expect_true(all(read_parquet(tmp) == mt))
+  expect_equal(read_parquet(tmp), mt)
   unlink(tmp)
 
   arrow::write_parquet(mt, tmp, compression = "snappy")
-  expect_true(all(arrow::read_parquet(tmp) == mt))
+  expect_equal(read_parquet(tmp), mt)
 })
 
 test_that("round trip with duckdb", {
-  mt <- cbind(nam = rownames(mtcars), mtcars)
+  mt <- test_df()
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
@@ -122,7 +122,7 @@ test_that("round trip with duckdb", {
     "COPY mtcars TO ?filename (FORMAT 'parquet', COMPRESSION 'uncompressed')",
     filename = tmp
   ))
-  expect_true(all(read_parquet(tmp) == mt))
+  expect_equal(read_parquet(tmp), mt)
   unlink(tmp)
 
   DBI::dbExecute(con, DBI::sqlInterpolate(con,
@@ -130,5 +130,5 @@ test_that("round trip with duckdb", {
     filename = tmp
   ))
   arrow::write_parquet(mt, tmp, compression = "snappy")
-  expect_true(all(arrow::read_parquet(tmp) == mt))
+  expect_equal(read_parquet(tmp), mt)
 })
