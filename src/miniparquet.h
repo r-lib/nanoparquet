@@ -26,14 +26,14 @@ public:
 
   std::streamsize xsputn(const char* s, std::streamsize n) override {
     if (sptr == nullptr) {
-      throw std::runtime_error("Cannot write to uninitialized byte buffer");
+      throw std::runtime_error("Cannot write to uninitialized byte buffer"); // # nocov
     }
     uint64_t space = len - (sptr - ptr);
     if (space < n) {
-      memcpy(sptr, s, space);
-      sptr += space;
-      tellp += space;
-      return space;
+      memcpy(sptr, s, space);                  // # nocov
+      sptr += space;                           // # nocov
+      tellp += space;                          // # nocov
+      return space;                            // # nocov
     } else {
       memcpy(sptr, s, n);
       sptr += n;
@@ -42,9 +42,9 @@ public:
     }
   };
 
-  int overflow(int ch) override {
-    return (int) xsputn((const char*) &ch, 1);
-  }
+  int overflow(int ch) override {                          // # nocov
+    return (int) xsputn((const char*) &ch, 1);             // # nocov
+  }                                                        // # nocov
 
   void reset() {
     sptr = ptr;

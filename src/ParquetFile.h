@@ -29,7 +29,7 @@ public:
   Dictionary(uint64_t n_values) { dict.resize(n_values); }
   T &get(uint64_t offset) {
     if (offset >= dict.size()) {
-      throw std::runtime_error("Dictionary offset out of bounds");
+      throw std::runtime_error("Dictionary offset out of bounds"); // # nocov
     } else
       return dict.at(offset);
   }
