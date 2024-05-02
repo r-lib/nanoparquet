@@ -50,10 +50,33 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      - name: Install Python packages for testing
+        run: |
+          dir.create("~/.pip", showWarnings = FALSE, recursive = TRUE)
+          writeLines(
+            c("[global]", "break-system-packages = true", "user = true"),
+            "~/.pip/pip.conf"
+          )
+          if (Sys.which("pip3") != "") {
+            system("pip3 install pyarrow pandas")
+          } else {
+            system("pip install pyarrow pandas")
+          }
+        shell: Rscript {0}
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
           needs: check
+
+      - name: Update arrow on macOS, CRAN binary is broken
+        if: runner.os == 'macOS'
+        run: |
+          if (! arrow::arrow_info()$capabilities[["parquet"]]) {
+            pak::repo_add(CRAN = "https://apache.r-universe.dev")
+            pak::pkg_install("arrow?reinstall&nocache")
+          }
+        shell: Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v2
         with:
