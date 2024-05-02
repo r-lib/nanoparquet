@@ -38,6 +38,7 @@ read_parquet <- parquet_read
 #' # add row names as a column, because `parquet_write()` ignores them.
 #' mtcars2 <- cbind(name = rownames(mtcars), mtcars)
 #' parquet_write(mtcars2, "mtcars.parquet")
+#' \dontshow{if (Sys.getenv("NOT_CRAN") == "true") unlink("mtcars.parquet")}
 
 parquet_write <- function(
 	x,
