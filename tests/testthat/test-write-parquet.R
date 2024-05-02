@@ -48,16 +48,22 @@ test_that("round trip with pandas/pyarrow", {
   tmp1 <- tempfile(fileext = ".parquet")
   tmp2 <- tempfile(fileext = ".parquet")
   on.exit(unlink(c(tmp1, tmp2)), add = TRUE)
+  # need to create to be able to call normalizePath()
+  file.create(tmp1)
+  file.create(tmp2)
 
   py_read <- function(input, output) {
     pyscript <- sprintf(r"[
 import pyarrow
 import pandas
+pandas.set_option("display.width", 150)
+pandas.set_option("display.max_columns", 150)
+pandas.set_option("display.max_colwidth", 150)
 df = pandas.read_parquet("%s", engine = "pyarrow")
 print(df)
 print(df.dtypes)
 df.to_parquet("%s", engine = "pyarrow")
-]", input, output)
+]", normalizePath(input, winslash = "/"), normalizePath(output, winslash = "/"))
     pytmp <- tempfile(fileext = ".py")
     on.exit(unlink(pytmp), add = TRUE)
     writeLines(pyscript, pytmp)
