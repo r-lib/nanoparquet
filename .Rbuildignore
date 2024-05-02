@@ -20,3 +20,4 @@ dependencies\.R
 ^\.github$
 ^codecov\.yml$
 ^.vscode$
+^[.]covrignore$
