@@ -61,7 +61,8 @@ df.to_parquet("%s", engine = "pyarrow")
     pytmp <- tempfile(fileext = ".py")
     on.exit(unlink(pytmp), add = TRUE)
     writeLines(pyscript, pytmp)
-    processx::run("python3", pytmp)
+    py <- if (Sys.which("python3") != "") "python3" else "python"
+    processx::run(py, pytmp)
   }
 
   write_parquet(mt, tmp1, compression = "uncompressed")
