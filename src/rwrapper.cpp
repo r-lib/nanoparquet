@@ -50,25 +50,13 @@ SEXP miniparquet_read(SEXP filesxp) {
     auto nrows = f.nrow;
 
     SEXP retlist = PROTECT(NEW_LIST(ncols));
-    if (!retlist) {
-      UNPROTECT(1); // retlist
-      Rf_error("miniparquet_read: Memory allocation failed");
-    }
     SEXP names = PROTECT(NEW_STRING(ncols));
-    if (!names) {
-      UNPROTECT(2); // retlist, names
-      Rf_error("miniparquet_read: Memory allocation failed");
-    }
     SET_NAMES(retlist, names);
     UNPROTECT(1); // names
 
     for (size_t col_idx = 0; col_idx < ncols; col_idx++) {
       SEXP varname =
           PROTECT(Rf_mkCharCE(f.columns[col_idx]->name.c_str(), CE_UTF8));
-      if (!varname) {
-        UNPROTECT(2); // varname, retlist
-        Rf_error("miniparquet_read: Memory allocation failed");
-      }
       SET_STRING_ELT(names, col_idx, varname);
       UNPROTECT(1); // varname
 
@@ -122,10 +110,6 @@ SEXP miniparquet_read(SEXP filesxp) {
             f.columns[col_idx]->type);
         Rf_error("miniparquet_read: Unknown column type %s",
                  it->second); // unlikely
-      }
-      if (!varvalue) {
-        UNPROTECT(2); // varvalue, retlist
-        Rf_error("miniparquet_read: Memory allocation failed");
       }
       SET_VECTOR_ELT(retlist, col_idx, varvalue);
       UNPROTECT(1); /* varvalue */

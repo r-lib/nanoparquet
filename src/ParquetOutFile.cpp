@@ -18,11 +18,13 @@ using namespace apache::thrift::transport;
 
 using namespace miniparquet;
 
+// # nocov start
 static string type_to_string(Type::type t) {
   std::ostringstream ss;
   ss << t;
   return ss.str();
 }
+// # nocov end
 
 ParquetOutFile::ParquetOutFile(
   std::string filename,
@@ -119,15 +121,15 @@ parquet::format::Type::type ParquetOutFile::get_type_from_logical_type(
   } else if (logical_type.__isset.INTEGER) {
     IntType it = logical_type.INTEGER;
     if (!it.isSigned) {
-      throw runtime_error("Unsigned integers are not implemented");
+      throw runtime_error("Unsigned integers are not implemented"); // # nocov
     }
     if (it.bitWidth != 32) {
-      throw runtime_error("Only 32 bit integers are implemented");
+      throw runtime_error("Only 32 bit integers are implemented");  // # nocov
     }
     return Type::INT32;
 
   } else {
-    throw runtime_error("Unimplemented logical type");
+    throw runtime_error("Unimplemented logical type");             // # nocov
   }
 }
 
@@ -141,21 +143,21 @@ ParquetOutFile::get_converted_type_from_logical_type(
   } else if (logical_type.__isset.INTEGER) {
     IntType it = logical_type.INTEGER;
     if (!it.isSigned) {
-      throw runtime_error("Unsigned integers are not implemented");
+      throw runtime_error("Unsigned integers are not implemented"); // # nocov
     }
     if (it.bitWidth != 32) {
-      throw runtime_error("Only 32 bit integers are implemented");
+      throw runtime_error("Only 32 bit integers are implemented");  // # nocov
     }
     return ConvertedType::INT_32;
 
   } else {
-    throw runtime_error("Unimplemented logical type");
+    throw runtime_error("Unimplemented logical type");              // # nocov
   }
 }
 
 void ParquetOutFile::write() {
   if (!num_rows_set) {
-    throw runtime_error("Need to set the number of rows before writing");
+    throw runtime_error("Need to set the number of rows before writing"); // # nocov
   }
   pfile.write("PAR1", 4);
   write_columns();
@@ -222,12 +224,12 @@ void ParquetOutFile::write_column_uncompressed(uint32_t idx) {
     write_boolean(pfile, idx);
     break;
   default:
-    throw runtime_error("Cannot write unknown column type");
+    throw runtime_error("Cannot write unknown column type");   // # nocov
   }
   uint32_t cb_end = pfile.tellp();
 
   if (cb_end - cb_start != data_size) {
-    throw runtime_error("Wrong number of bytes written for parquet column");
+    throw runtime_error("Wrong number of bytes written for parquet column"); // # nocov
   }
 
   ColumnMetaData *cmd = &(column_meta_data[idx]);
@@ -247,7 +249,7 @@ void ParquetOutFile::write_column_compressed(uint32_t idx) {
       buf_unc.reset();
       os = std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
   } else {
-    throw runtime_error("Only SNAPPY compression is supported at this time");
+    throw runtime_error("Only SNAPPY compression is supported at this time"); // # nocov
   }
 
   // data via callback
@@ -266,11 +268,11 @@ void ParquetOutFile::write_column_compressed(uint32_t idx) {
     write_boolean(*os, idx);
     break;
   default:
-    throw runtime_error("Cannot write unknown column type");
+    throw runtime_error("Cannot write unknown column type");  // # nocov
   }
 
   if (buf_unc.tellp != data_size) {
-    throw runtime_error("Wrong number of bytes written for parquet column");
+    throw runtime_error("Wrong number of bytes written for parquet column"); // # nocov
   }
 
   size_t cl = 0;
@@ -326,7 +328,7 @@ uint32_t ParquetOutFile::calculate_column_data_size(uint32_t idx) {
     return get_size_byte_array(idx);
   }
   default: {
-    throw runtime_error("Unknown type encountered: " + type_to_string(type));
+    throw runtime_error("Unknown type encountered: " + type_to_string(type)); // # nocov
   }
   }
 }
