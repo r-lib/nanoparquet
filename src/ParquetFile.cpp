@@ -543,19 +543,22 @@ public:
 
     switch (result_col.col->type) {
     case Type::BOOLEAN: {
-      // uargh, but unfortunately neccessary because sometimes bool values are >
-      // 1
       bool *result_arr = (bool *)result_col.data.ptr;
-      for (int32_t val_offset = 0;
-           val_offset < page_header.data_page_header.num_values; val_offset++) {
-
-        if (!defined_ptr[val_offset]) {
+      int32_t nv = page_header.data_page_header.num_values;
+      // current byte position
+      int byte_pos = 0;
+      for (int32_t idx = 0; idx < nv; idx++) {
+        // missing?
+        if (!defined_ptr[idx]) {
           continue;
         }
-
-        auto row_idx = page_start_row + val_offset;
-        result_arr[row_idx] = ((bool *)page_buf_ptr != 0);
-        page_buf_ptr += sizeof(bool);
+        result_arr[page_start_row + idx] =
+          ((*page_buf_ptr) >> byte_pos) & 1;
+        byte_pos++;
+        if (byte_pos == 8) {
+          byte_pos = 0;
+          page_buf_ptr++;
+        }
       }
 
     } break;
