@@ -75,20 +75,20 @@ data_comparable <- function(df1, df2, dlt = .0001) {
 }
 
 test_that("various error cases", {
-  expect_error(res <- parquet_read(""))
-  expect_error(res <- parquet_read("DONTEXIST"))
+  expect_error(res <- read_parquet(""))
+  expect_error(res <- read_parquet("DONTEXIST"))
   tf <- tempfile()
-  expect_error(res <- parquet_read(tf))
-  expect_error(res <- parquet_read(c(tf, tf)))
+  expect_error(res <- read_parquet(tf))
+  expect_error(res <- read_parquet(c(tf, tf)))
 })
 
 test_that("basic reading works", {
-  res <- parquet_read(test_path("data/alltypes_plain.parquet"))
+  res <- read_parquet(test_path("data/alltypes_plain.parquet"))
   expect_true(data_comparable(alltypes_plain, res))
 })
 
 test_that("basic reading works with snappy", {
-  res <- parquet_read(test_path("data/alltypes_plain.snappy.parquet"))
+  res <- read_parquet(test_path("data/alltypes_plain.snappy.parquet"))
   expect_true(data_comparable(alltypes_plain_snappy, res))
 })
 

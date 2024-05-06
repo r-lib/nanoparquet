@@ -23,9 +23,9 @@ install.packages("miniparquet")
 
 ## Usage
 
-Call `parquet_read()` to read a Parquet file:
+Call `read_parquet()` to read a Parquet file:
 ```r
-df <- miniparquet::parquet_read("example.parquet")
+df <- miniparquet::read_parquet("example.parquet")
 ```
 
 Folders of similar-structured Parquet files (e.g. produced by Spark)
@@ -34,20 +34,20 @@ can be read like this:
 ```r
 df <- data.table::rbindlist(lapply(
   Sys.glob("some-folder/part-*.parquet"),
-  miniparquet::parquet_read
+  miniparquet::read_parquet
 ))
 ```
 
-Call `parquet_read_metadata()` to show the metadata, e.g. the column
+Call `read_parquet_metadata()` to show the metadata, e.g. the column
 types, of a Parquet file, without reading the whole file into memory:
 
 ```r
-miniparquet::parquet_read_metadata("example.parquet")
+miniparquet::read_parquet_metadata("example.parquet")
 ```
 
-Call `parquet_write()` to write a data frame to a Parquet file:
+Call `write_parquet()` to write a data frame to a Parquet file:
 ```r
-parquet_write(mtcars, "mtcars.parquet")
+write_parquet(mtcars, "mtcars.parquet")
 
 If you find a file that should be supported but isn't, please open an
 issue here with a link to the file.

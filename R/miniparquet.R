@@ -8,10 +8,10 @@
 #' @seealso [read_parquet_metadata()], [write_parquet()].
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "miniparquet")
-#' parquet_df <- miniparquet::parquet_read(file_name)
+#' parquet_df <- miniparquet::read_parquet(file_name)
 #' print(str(parquet_df))
 
-parquet_read <- function(file) {
+read_parquet <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(miniparquet_read, file)
 	# some data.frame dress up
@@ -19,11 +19,6 @@ parquet_read <- function(file) {
 	class(res) <- "data.frame"
 	res
 }
-
-#' @export
-#' @rdname parquet_read
-
-read_parquet <- parquet_read
 
 type_names <- c(
 	BOOLEAN = 0L,
@@ -128,10 +123,9 @@ codecs <- c(
 #' @seealso [read_parquet()], [write_parquet()].
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "miniparquet")
-#' miniparquet::parquet_read_metadata(file_name)
+#' miniparquet::read_parquet_metadata(file_name)
 
-
-parquet_read_metadata <- function(file) {
+read_parquet_metadata <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(miniparquet_read_schema, file)
 
@@ -164,11 +158,6 @@ parquet_read_metadata <- function(file) {
 	res
 }
 
-#' @rdname parquet_read_metadata
-#' @export
-
-read_parquet_metadata <- parquet_read_metadata
-
 #' Write a data frame to a Parquet file
 #'
 #' Writes the contents of an R data frame into a Parquet file.
@@ -182,12 +171,12 @@ read_parquet_metadata <- parquet_read_metadata
 #' @export
 #' @seealso [read_parquet_metadata()], [read_parquet()].
 #' @examplesIf !miniparquet:::is_rcmd_check()
-#' # add row names as a column, because `parquet_write()` ignores them.
+#' # add row names as a column, because `write_parquet()` ignores them.
 #' mtcars2 <- cbind(name = rownames(mtcars), mtcars)
-#' parquet_write(mtcars2, "mtcars.parquet")
+#' write_parquet(mtcars2, "mtcars.parquet")
 #' \dontshow{if (Sys.getenv("NOT_CRAN") == "true") unlink("mtcars.parquet")}
 
-parquet_write <- function(
+write_parquet <- function(
 	x,
 	file,
 	compression = c("snappy", "uncompressed")) {
@@ -198,8 +187,3 @@ parquet_write <- function(
 	dim <- as.integer(dim(x))
 	invisible(.Call(miniparquet_write, x, file, dim, compression))
 }
-
-#' @export
-#' @rdname parquet_write
-
-write_parquet <- parquet_write
