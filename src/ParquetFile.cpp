@@ -39,7 +39,9 @@ static void thrift_unpack(const uint8_t *buf, uint32_t *len,
   *len = *len - bytes_left;
 }
 
-ParquetFile::ParquetFile(std::string filename) { initialize(filename); }
+ParquetFile::ParquetFile(std::string filename) {
+  initialize(filename);
+}
 
 void ParquetFile::initialize(string filename) {
   ByteBuffer buf;
@@ -82,6 +84,23 @@ void ParquetFile::initialize(string filename) {
   //	file_meta_data.printTo(cerr);
   //	cerr << "\n";
 
+  // skip the first column its the root and otherwise useless
+  for (uint64_t col_idx = 1; col_idx < file_meta_data.schema.size();
+       col_idx++) {
+    auto &s_ele = file_meta_data.schema[col_idx];
+
+    // TODO scale? precision? complain if set
+    auto col = unique_ptr<ParquetColumn>(new ParquetColumn());
+    col->id = col_idx - 1;
+    col->name = s_ele.name;
+    col->schema_element = &s_ele;
+    col->type = s_ele.type;
+    columns.push_back(std::move(col));
+  }
+  this->nrow = file_meta_data.num_rows;
+}
+
+void ParquetFile::read_checks() {
   if (file_meta_data.__isset.encryption_algorithm) {
     throw runtime_error("Encrypted Parquet files are not supported");
   }
@@ -97,7 +116,6 @@ void ParquetFile::initialize(string filename) {
 
   // TODO assert that the first col is root
 
-  // skip the first column its the root and otherwise useless
   for (uint64_t col_idx = 1; col_idx < file_meta_data.schema.size();
        col_idx++) {
     auto &s_ele = file_meta_data.schema[col_idx];
@@ -105,15 +123,7 @@ void ParquetFile::initialize(string filename) {
     if (!s_ele.__isset.type || s_ele.num_children > 0) {
       throw runtime_error("Only flat tables are supported (no nesting)");
     }
-    // TODO scale? precision? complain if set
-    auto col = unique_ptr<ParquetColumn>(new ParquetColumn());
-    col->id = col_idx - 1;
-    col->name = s_ele.name;
-    col->schema_element = &s_ele;
-    col->type = s_ele.type;
-    columns.push_back(std::move(col));
   }
-  this->nrow = file_meta_data.num_rows;
 }
 
 static string type_to_string(Type::type t) {
