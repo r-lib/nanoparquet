@@ -6,7 +6,7 @@
 [![](http://cranlogs.r-pkg.org/badges/miniparquet)](https://dgrtwo.shinyapps.io/cranview/)
 <!-- badges: end -->
 
-`miniparquet` is a reader for a common subset of Parquet files.
+`miniparquet` is a reader and writer for a common subset of Parquet files.
 miniparquet only supports rectangular-shaped data structures
 (no nested tables) and only the Snappy compression scheme.
 miniparquet has no (zero, none, 0)
@@ -37,6 +37,17 @@ df <- data.table::rbindlist(lapply(
   miniparquet::parquet_read
 ))
 ```
+
+Call `parquet_read_metadata()` to show the metadata, e.g. the column
+types, of a Parquet file, without reading the whole file into memory:
+
+```r
+miniparquet::parquet_read_metadata("example.parquet")
+```
+
+Call `parquet_write()` to write a data frame to a Parquet file:
+```r
+parquet_write(mtcars, "mtcars.parquet")
 
 If you find a file that should be supported but isn't, please open an
 issue here with a link to the file.
