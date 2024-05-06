@@ -31,3 +31,6 @@ parquet_write(mtcars2, "mtcars.parquet")
 \dontshow{if (Sys.getenv("NOT_CRAN") == "true") unlink("mtcars.parquet")}
 \dontshow{\}) # examplesIf}
 }
+\seealso{
+\code{\link[=read_parquet_metadata]{read_parquet_metadata()}}, \code{\link[=read_parquet]{read_parquet()}}.
+}

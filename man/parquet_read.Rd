@@ -23,3 +23,6 @@ file_name <- system.file("extdata/userdata1.parquet", package = "miniparquet")
 parquet_df <- miniparquet::parquet_read(file_name)
 print(str(parquet_df))
 }
+\seealso{
+\code{\link[=read_parquet_metadata]{read_parquet_metadata()}}, \code{\link[=write_parquet]{write_parquet()}}.
+}
