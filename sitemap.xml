@@ -22,6 +22,9 @@
     <loc>/reference/parquet_read.html</loc>
   </url>
   <url>
+    <loc>/reference/parquet_read_metadata.html</loc>
+  </url>
+  <url>
     <loc>/reference/parquet_write.html</loc>
   </url>
 </urlset>
