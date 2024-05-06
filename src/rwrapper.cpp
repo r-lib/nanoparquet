@@ -373,8 +373,8 @@ SEXP convert_logical_type(parquet::format::LogicalType ltype) {
     SET_VECTOR_ELT(rtype, 0, Rf_mkString("UNKNOWN"));
   }
 
-  if (!isNull(rtype)) {
-    SEXP cls = PROTECT(mkString("miniparquet_logical_type")); prot++;
+  if (!Rf_isNull(rtype)) {
+    SEXP cls = PROTECT(Rf_mkString("miniparquet_logical_type")); prot++;
     Rf_setAttrib(rtype, R_ClassSymbol, cls);
   }
 
@@ -445,7 +445,7 @@ SEXP convert_schema(vector<parquet::format::SchemaElement>& schema) {
 
   for (uint64_t idx = 0; idx < nc; idx++) {
     parquet::format::SchemaElement sch = schema[idx];
-    SET_STRING_ELT(name, idx, mkChar(sch.name.c_str()));
+    SET_STRING_ELT(name, idx, Rf_mkChar(sch.name.c_str()));
     INTEGER(type)[idx] = sch.__isset.type ? sch.type : NA_INTEGER;
     INTEGER(type_length)
     [idx] = sch.__isset.type_length ? sch.type_length : NA_INTEGER;
