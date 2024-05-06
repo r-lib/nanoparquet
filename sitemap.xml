@@ -18,4 +18,13 @@
   <url>
     <loc>/reference/miniparquet-package.html</loc>
   </url>
+  <url>
+    <loc>/reference/read_parquet.html</loc>
+  </url>
+  <url>
+    <loc>/reference/read_parquet_metadata.html</loc>
+  </url>
+  <url>
+    <loc>/reference/write_parquet.html</loc>
+  </url>
 </urlset>
