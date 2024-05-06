@@ -12,6 +12,7 @@
 #' print(str(parquet_df))
 
 parquet_read <- function(file) {
+	file <- path.expand(file)
 	res <- .Call(miniparquet_read, file)
 	# some data.frame dress up
 	attr(res, "row.names") <- c(NA_integer_, as.integer(-1 * length(res[[1]])))
@@ -131,6 +132,7 @@ codecs <- c(
 
 
 parquet_read_metadata <- function(file) {
+	file <- path.expand(file)
 	res <- .Call(miniparquet_read_schema, file)
 
 	res$schema$type <- names(type_names)[res$schema$type + 1L]
@@ -190,6 +192,7 @@ parquet_write <- function(
 	file,
 	compression = c("snappy", "uncompressed")) {
 
+  file <- path.expand(file)
 	codecs <- c("uncompressed" = 0L, "snappy" = 1L)
 	compression <- codecs[match.arg(compression)]
 	dim <- as.integer(dim(x))
