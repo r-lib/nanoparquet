@@ -117,7 +117,34 @@ codecs <- c(
 #'     - `num_children`: number of child nodes. Should be a non-negative
 #'       integer for the root node, and `NA` for a leaf node.
 #'   * `$row_groups`: a data frame, information about the row groups.
-#'   * `$column_chunks`: a data frame, information about all column chunks.
+#'   * `$column_chunks`: a data frame, information about all column chunks,
+#'     across all row groups. Some important columns:
+#'     - `row_group`: which row group this chunk belongs to.
+#'     - `column`: which leaf column this chunks belongs to. The order is
+#'       the same as in `$schema`, but only leaf columns (i.e. columns with
+#'       `NA` children) are counted.
+#'     - `file_path`: which file the chunk is stored in. `NA` means the
+#'       same file.
+#'     - `file_offset`: where the column chunk begins in the file.
+#'     - `type`: low level parquet data type.
+#'     - `encodings`: encodings used to store this chunk. It is a list
+#'       column of character vectors of encoding names. Current possible
+#'       encodings: `r paste0('"', names(encodings), '"', collapse = ", ")`.
+#'     - `path_in_scema`: list column of character vectors. It is simply
+#'       the path from the root node. It is simply the column name for
+#'       flat schemas.
+#'     - `codec`: compression codec used for the column chunk. Possible
+#'       values are: `r paste0('"', names(codecs), '"', collapse = ", ")`.
+#'     - `num_values`: number of values in this column chunk.
+#'     - `total_uncompressed_size`: total uncompressed size in bytes.
+#'     - `total_compressed_size`: total compressed size in bytes.
+#'     - `data_page_offset`: absolute position of the first data page of
+#'       the column chunk in the file.
+#'     - `index_page_offset`: absolute position of the first index page of
+#'       the column chunk in the file, or `NA` if there are no index pages.
+#'     - `dictionary_page_offset`: absolute position of the first
+#'       dictionary page of the column chunk in the file, or `NA` if there
+#'       are no dictionary pages.
 #'
 #' @export
 #' @seealso [read_parquet()], [write_parquet()].
@@ -145,6 +172,7 @@ read_parquet_metadata <- function(file) {
 	res$row_groups <- as.data.frame(res$row_groups)
 	class(res$row_groups) <- c("tbl", class(res$row_groups))
 
+	res$column_chunks$type <- names(type_names)[res$column_chunk$type + 1L]
 	res$column_chunks$encodings <- lapply(
 		res$column_chunks$encodings,
 		function(ec) { names(encodings)[ec + 1L] }

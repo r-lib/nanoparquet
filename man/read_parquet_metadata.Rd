@@ -42,7 +42,36 @@ additional entries, e.g. \code{bit_width}, \code{is_signed}, etc.
 integer for the root node, and \code{NA} for a leaf node.
 }
 \item \verb{$row_groups}: a data frame, information about the row groups.
-\item \verb{$column_chunks}: a data frame, information about all column chunks.
+\item \verb{$column_chunks}: a data frame, information about all column chunks,
+across all row groups. Some important columns:
+\itemize{
+\item \code{row_group}: which row group this chunk belongs to.
+\item \code{column}: which leaf column this chunks belongs to. The order is
+the same as in \verb{$schema}, but only leaf columns (i.e. columns with
+\code{NA} children) are counted.
+\item \code{file_path}: which file the chunk is stored in. \code{NA} means the
+same file.
+\item \code{file_offset}: where the column chunk begins in the file.
+\item \code{type}: low level parquet data type.
+\item \code{encodings}: encodings used to store this chunk. It is a list
+column of character vectors of encoding names. Current possible
+encodings: "PLAIN", "GROUP_VAR_INT", "PLAIN_DICTIONARY", "RLE", "BIT_PACKED", "DELTA_BINARY_PACKED", "DELTA_LENGTH_BYTE_ARRAY", "DELTA_BYTE_ARRAY", "RLE_DICTIONARY".
+\item \code{path_in_scema}: list column of character vectors. It is simply
+the path from the root node. It is simply the column name for
+flat schemas.
+\item \code{codec}: compression codec used for the column chunk. Possible
+values are: "UNCOMPRESSED", "SNAPPY", "GZIP", "LZO", "BROTLI", "LZ4", "ZSTD".
+\item \code{num_values}: number of values in this column chunk.
+\item \code{total_uncompressed_size}: total uncompressed size in bytes.
+\item \code{total_compressed_size}: total compressed size in bytes.
+\item \code{data_page_offset}: absolute position of the first data page of
+the column chunk in the file.
+\item \code{index_page_offset}: absolute position of the first index page of
+the column chunk in the file, or \code{NA} if there are no index pages.
+\item \code{dictionary_page_offset}: absolute position of the first
+dictionary page of the column chunk in the file, or \code{NA} if there
+are no dictionary pages.
+}
 }
 }
 \description{

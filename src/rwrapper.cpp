@@ -506,6 +506,7 @@ SEXP convert_row_groups(vector<parquet::format::RowGroup> &rgs) {
 SEXP convert_column_chunks(vector<parquet::format::RowGroup> &rgs) {
   const char *nms[] = {
     "row_group",
+    "column",
     "file_path",
     "file_offset",
     "offset_index_offset",
@@ -535,22 +536,23 @@ SEXP convert_column_chunks(vector<parquet::format::RowGroup> &rgs) {
 
   SEXP rccs = PROTECT(Rf_mkNamed(VECSXP, nms));
   SET_VECTOR_ELT(rccs,  0, Rf_allocVector(INTSXP, nccs));   // row_group
-  SET_VECTOR_ELT(rccs,  1, Rf_allocVector(STRSXP, nccs));   // file_path
-  SET_VECTOR_ELT(rccs,  2, Rf_allocVector(REALSXP, nccs));  // file_offset
-  SET_VECTOR_ELT(rccs,  3, Rf_allocVector(REALSXP, nccs));  // offset_index_offset
-  SET_VECTOR_ELT(rccs,  4, Rf_allocVector(INTSXP, nccs));   // offset_index_length
-  SET_VECTOR_ELT(rccs,  5, Rf_allocVector(REALSXP, nccs));  // column_index_offset
-  SET_VECTOR_ELT(rccs,  6, Rf_allocVector(INTSXP, nccs));   // column_index_length
-  SET_VECTOR_ELT(rccs,  7, Rf_allocVector(INTSXP, nccs));   // type
-  SET_VECTOR_ELT(rccs,  8, Rf_allocVector(VECSXP, nccs));   // encodings
-  SET_VECTOR_ELT(rccs,  9, Rf_allocVector(VECSXP, nccs));   // path_in_schema
-  SET_VECTOR_ELT(rccs, 10, Rf_allocVector(INTSXP, nccs));   // codec
-  SET_VECTOR_ELT(rccs, 11, Rf_allocVector(REALSXP, nccs));  // num_values
-  SET_VECTOR_ELT(rccs, 12, Rf_allocVector(REALSXP, nccs));  // total_uncompressed_size
-  SET_VECTOR_ELT(rccs, 13, Rf_allocVector(REALSXP, nccs));  // total_compressed_size
-  SET_VECTOR_ELT(rccs, 14, Rf_allocVector(REALSXP, nccs));  // data_page_offset
-  SET_VECTOR_ELT(rccs, 15, Rf_allocVector(REALSXP, nccs));  // index_page_offset
-  SET_VECTOR_ELT(rccs, 16, Rf_allocVector(REALSXP, nccs));  // dictionary_page_offset
+  SET_VECTOR_ELT(rccs,  1, Rf_allocVector(INTSXP, nccs));   // column
+  SET_VECTOR_ELT(rccs,  2, Rf_allocVector(STRSXP, nccs));   // file_path
+  SET_VECTOR_ELT(rccs,  3, Rf_allocVector(REALSXP, nccs));  // file_offset
+  SET_VECTOR_ELT(rccs,  4, Rf_allocVector(REALSXP, nccs));  // offset_index_offset
+  SET_VECTOR_ELT(rccs,  5, Rf_allocVector(INTSXP, nccs));   // offset_index_length
+  SET_VECTOR_ELT(rccs,  6, Rf_allocVector(REALSXP, nccs));  // column_index_offset
+  SET_VECTOR_ELT(rccs,  7, Rf_allocVector(INTSXP, nccs));   // column_index_length
+  SET_VECTOR_ELT(rccs,  8, Rf_allocVector(INTSXP, nccs));   // type
+  SET_VECTOR_ELT(rccs,  9, Rf_allocVector(VECSXP, nccs));   // encodings
+  SET_VECTOR_ELT(rccs, 10, Rf_allocVector(VECSXP, nccs));   // path_in_schema
+  SET_VECTOR_ELT(rccs, 11, Rf_allocVector(INTSXP, nccs));   // codec
+  SET_VECTOR_ELT(rccs, 12, Rf_allocVector(REALSXP, nccs));  // num_values
+  SET_VECTOR_ELT(rccs, 13, Rf_allocVector(REALSXP, nccs));  // total_uncompressed_size
+  SET_VECTOR_ELT(rccs, 14, Rf_allocVector(REALSXP, nccs));  // total_compressed_size
+  SET_VECTOR_ELT(rccs, 15, Rf_allocVector(REALSXP, nccs));  // data_page_offset
+  SET_VECTOR_ELT(rccs, 16, Rf_allocVector(REALSXP, nccs));  // index_page_offset
+  SET_VECTOR_ELT(rccs, 17, Rf_allocVector(REALSXP, nccs));  // dictionary_page_offset
 
   int idx = 0;
   for (int i = 0; i < rgs.size(); i++) {
@@ -558,35 +560,36 @@ SEXP convert_column_chunks(vector<parquet::format::RowGroup> &rgs) {
       parquet::format::ColumnChunk cc = rgs[i].columns[j];
       parquet::format::ColumnMetaData cmd = cc.meta_data;
       INTEGER(VECTOR_ELT(rccs, 0))[idx] = i;
-      SET_STRING_ELT(VECTOR_ELT(rccs, 1), idx,
+      INTEGER(VECTOR_ELT(rccs, 1))[idx] = j;
+      SET_STRING_ELT(VECTOR_ELT(rccs, 2), idx,
         cc.__isset.file_path ? Rf_mkChar(cc.file_path.c_str()) : NA_STRING);
-      REAL(VECTOR_ELT(rccs, 2))[idx] = cc.file_offset;
-      REAL(VECTOR_ELT(rccs, 3))[idx] =
+      REAL(VECTOR_ELT(rccs, 3))[idx] = cc.file_offset;
+      REAL(VECTOR_ELT(rccs, 4))[idx] =
         cc.__isset.offset_index_offset ? cc.offset_index_offset : NA_REAL;
-      INTEGER(VECTOR_ELT(rccs, 4))[idx] =
+      INTEGER(VECTOR_ELT(rccs, 5))[idx] =
         cc.__isset.offset_index_length ? cc.offset_index_length : NA_INTEGER;
-      REAL(VECTOR_ELT(rccs, 5))[idx] =
+      REAL(VECTOR_ELT(rccs, 6))[idx] =
         cc.__isset.column_index_offset ? cc.column_index_offset : NA_REAL;
-      INTEGER(VECTOR_ELT(rccs, 6))[idx] =
+      INTEGER(VECTOR_ELT(rccs, 7))[idx] =
         cc.__isset.column_index_length ? cc.column_index_length : NA_INTEGER;
-      INTEGER(VECTOR_ELT(rccs, 7))[idx] = cmd.type;
-      SET_VECTOR_ELT(VECTOR_ELT(rccs, 8), idx, Rf_allocVector(INTSXP, cmd.encodings.size()));
+      INTEGER(VECTOR_ELT(rccs, 8))[idx] = cmd.type;
+      SET_VECTOR_ELT(VECTOR_ELT(rccs, 9), idx, Rf_allocVector(INTSXP, cmd.encodings.size()));
       for (auto k = 0; k < cmd.encodings.size(); k++) {
-        INTEGER(VECTOR_ELT(VECTOR_ELT(rccs, 8), idx))[k] = cmd.encodings[k];
+        INTEGER(VECTOR_ELT(VECTOR_ELT(rccs, 9), idx))[k] = cmd.encodings[k];
       }
-      SET_VECTOR_ELT(VECTOR_ELT(rccs, 9), idx, Rf_allocVector(STRSXP, cmd.path_in_schema.size()));
+      SET_VECTOR_ELT(VECTOR_ELT(rccs, 10), idx, Rf_allocVector(STRSXP, cmd.path_in_schema.size()));
       for (auto k = 0; k < cmd.path_in_schema.size(); k++) {
-        SET_STRING_ELT(VECTOR_ELT(VECTOR_ELT(rccs, 9), idx), k,
+        SET_STRING_ELT(VECTOR_ELT(VECTOR_ELT(rccs, 10), idx), k,
           Rf_mkChar(cmd.path_in_schema[k].c_str()));
       }
-      INTEGER(VECTOR_ELT(rccs, 10))[idx] = cmd.codec;
-      REAL(VECTOR_ELT(rccs, 11))[idx] = cmd.num_values;
-      REAL(VECTOR_ELT(rccs, 12))[idx] = cmd.total_uncompressed_size;
-      REAL(VECTOR_ELT(rccs, 13))[idx] = cmd.total_compressed_size;
-      REAL(VECTOR_ELT(rccs, 14))[idx] = cmd.data_page_offset;
-      REAL(VECTOR_ELT(rccs, 15))[idx] =
-        cmd.__isset.index_page_offset ? cmd.index_page_offset : NA_REAL;
+      INTEGER(VECTOR_ELT(rccs, 11))[idx] = cmd.codec;
+      REAL(VECTOR_ELT(rccs, 12))[idx] = cmd.num_values;
+      REAL(VECTOR_ELT(rccs, 13))[idx] = cmd.total_uncompressed_size;
+      REAL(VECTOR_ELT(rccs, 14))[idx] = cmd.total_compressed_size;
+      REAL(VECTOR_ELT(rccs, 15))[idx] = cmd.data_page_offset;
       REAL(VECTOR_ELT(rccs, 16))[idx] =
+        cmd.__isset.index_page_offset ? cmd.index_page_offset : NA_REAL;
+      REAL(VECTOR_ELT(rccs, 17))[idx] =
         cmd.__isset.dictionary_page_offset ? cmd.dictionary_page_offset : NA_REAL;
 
       idx++;
