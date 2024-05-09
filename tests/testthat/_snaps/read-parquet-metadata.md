@@ -123,3 +123,28 @@
       12                     NA
       13                     NA
 
+---
+
+    Code
+      sch
+    Output
+      # A data frame: 14 x 11
+         file_name name  type  type_length repetition_type converted_type logical_type
+         <chr>     <chr> <chr>       <int> <chr>           <chr>          <I<list>>   
+       1 test.par~ sche~ <NA>           NA <NA>            <NA>           <NULL>      
+       2 test.par~ nam   BYTE~          NA REQUIRED        UTF8           <mnprqt__>  
+       3 test.par~ mpg   DOUB~          NA REQUIRED        <NA>           <NULL>      
+       4 test.par~ cyl   INT32          NA REQUIRED        INT_32         <mnprqt__>  
+       5 test.par~ disp  DOUB~          NA REQUIRED        <NA>           <NULL>      
+       6 test.par~ hp    DOUB~          NA REQUIRED        <NA>           <NULL>      
+       7 test.par~ drat  DOUB~          NA REQUIRED        <NA>           <NULL>      
+       8 test.par~ wt    DOUB~          NA REQUIRED        <NA>           <NULL>      
+       9 test.par~ qsec  DOUB~          NA REQUIRED        <NA>           <NULL>      
+      10 test.par~ vs    DOUB~          NA REQUIRED        <NA>           <NULL>      
+      11 test.par~ am    DOUB~          NA REQUIRED        <NA>           <NULL>      
+      12 test.par~ gear  DOUB~          NA REQUIRED        <NA>           <NULL>      
+      13 test.par~ carb  DOUB~          NA REQUIRED        <NA>           <NULL>      
+      14 test.par~ large BOOL~          NA REQUIRED        <NA>           <NULL>      
+      # i 4 more variables: num_children <int>, scale <int>, precision <int>,
+      #   field_id <int>
+

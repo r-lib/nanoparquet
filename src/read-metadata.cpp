@@ -407,4 +407,31 @@ SEXP miniparquet_read_metadata(SEXP filesxp) {
   return R_NilValue;
 }
 
+SEXP miniparquet_read_schema(SEXP filesxp) {
+  if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
+    Rf_error("miniparquet_read: Need single filename parameter");
+  }
+
+  char error_buffer[8192];
+  error_buffer[0] = '\0';
+
+  try {
+
+    const char *fname = CHAR(STRING_ELT(filesxp, 0));
+    ParquetFile f(fname);
+    parquet::format::FileMetaData fmd = f.file_meta_data;
+    return convert_schema(fname, fmd.schema);
+
+  } catch (std::exception &ex) {
+    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1);
+  }
+
+  if (error_buffer[0] != '\0') {
+    Rf_error("%s", error_buffer);
+  }
+
+  // never reached
+  return R_NilValue;
+}
+
 } // extern "C"

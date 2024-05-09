@@ -18,4 +18,7 @@ test_that("read_parquet_metadata", {
     as.data.frame(mtd$row_groups)
     as.data.frame(mtd$column_chunks)
   })
+
+  sch <- read_parquet_schema("test.parquet")
+  expect_snapshot(sch)
 })

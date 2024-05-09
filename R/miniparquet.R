@@ -83,6 +83,19 @@ codecs <- c(
 	ZSTD = 6L
 )
 
+format_schema_result <- function(sch) {
+  sch$type <- names(type_names)[sch$type + 1L]
+  sch$converted_type <-
+    names(ctype_names)[sch$converted_type + 1L]
+  sch$repetition_type <-
+    names(repetition_types)[sch$repetition_type + 1L]
+  sch$logical_type <- I(sch$logical_type)
+  sch <- as.data.frame(sch)
+  class(sch) <- c("tbl", class(sch))
+
+	sch
+}
+
 #' Read the metadata of a Parquet file
 #'
 #' This function should work on all files, even if [read_parquet()] is
@@ -100,7 +113,9 @@ codecs <- c(
 #'       metadata of the file. Arrow stores its schema here.
 #'     - `created_by`: A string scalar, usually the name of the software
 #'       that created the file.
-#'   * `schema`: data frame, the schema of the file. It has one row for
+#'   * `schema`:
+# -- If YOU UPDATE THIS, ALSO UPDATE read_parquet_schema BELOW ------------
+#'     data frame, the schema of the file. It has one row for
 #'     each node (inner node or leaf node). For flat files this means one
 #'     root node (inner node), always the first one, and then one row for
 #'     each "real" column. For nested schemas, the rows are in depth-first
@@ -116,6 +131,7 @@ codecs <- c(
 #'       additional entries, e.g. `bit_width`, `is_signed`, etc.
 #'     - `num_children`: number of child nodes. Should be a non-negative
 #'       integer for the root node, and `NA` for a leaf node.
+# -------------------------------------------------------------------------
 #'   * `$row_groups`: a data frame, information about the row groups.
 #'   * `$column_chunks`: a data frame, information about all column chunks,
 #'     across all row groups. Some important columns:
@@ -148,7 +164,8 @@ codecs <- c(
 #'       are no dictionary pages.
 #'
 #' @export
-#' @seealso [read_parquet()], [write_parquet()].
+#' @seealso [read_parquet_schema()] only reads the schema of the file,
+#'   [read_parquet()], [write_parquet()].
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "miniparquet")
 #' miniparquet::read_parquet_metadata(file_name)
@@ -166,14 +183,7 @@ read_parquet_metadata <- function(file) {
 	res$file_meta_data <- as.data.frame(res$file_meta_data)
 	class(res$file_meta_data) <- c("tbl", class(res$file_meta_data))
 
-	res$schema$type <- names(type_names)[res$schema$type + 1L]
-	res$schema$converted_type <-
-		names(ctype_names)[res$schema$converted_type + 1L]
-	res$schema$repetition_type <-
-		names(repetition_types)[res$schema$repetition_type + 1L]
-	res$schema$logical_type <-	I(res$schema$logical_type)
-	res$schema <- as.data.frame(res$schema)
-	class(res$schema) <- c("tbl", class(res$schema))
+	res$schema <- format_schema_result(res$schema)
 
 	res$row_groups <- as.data.frame(res$row_groups)
 	class(res$row_groups) <- c("tbl", class(res$row_groups))
@@ -189,6 +199,38 @@ read_parquet_metadata <- function(file) {
 	res$column_chunks <- as.data.frame(res$column_chunks)
 	class(res$column_chunks) <- c("tbl", class(res$column_chunks))
 
+	res
+}
+
+#' @param file
+#' @return
+# -- If YOU UPDATE THIS, ALSO UPDATE read_parquet_metadata ABOVE ----------
+#'     Data frame, the schema of the file. It has one row for
+#'     each node (inner node or leaf node). For flat files this means one
+#'     root node (inner node), always the first one, and then one row for
+#'     each "real" column. For nested schemas, the rows are in depth-first
+#'     search order. Most important columns are:
+#'     - `file_name`: file name.
+#'     - `name`: column name.
+#'     - `type`: data type. One of the low level data types.
+#'     - `type_length`: length for fixed length byte arrays.
+#'     - `repettion_type`: character, one of `REQUIRED`, `OPTIONAL` or
+#'       `REPEATED`.
+#'     - `logical_type`: a list column, the logical types of the columns.
+#'       An element has at least an entry called `type`, and potentially
+#'       additional entries, e.g. `bit_width`, `is_signed`, etc.
+#'     - `num_children`: number of child nodes. Should be a non-negative
+#'       integer for the root node, and `NA` for a leaf node.
+# -------------------------------------------------------------------------
+#'
+#' @seealso [read_parquet_metadata()] reads more metadata,
+#'   [read_parquet()], [write_parquet()].
+#' @export
+
+read_parquet_schema <- function(file) {
+	file <- path.expand(file)
+	res <- .Call(miniparquet_read_schema, file)
+	res <- format_schema_result(res)
 	res
 }
 

@@ -9,6 +9,7 @@ SEXP miniparquet_write(
   SEXP dim,
   SEXP compression);
 SEXP miniparquet_read_metadata(SEXP filesxp);
+SEXP miniparquet_read_schema(SEXP filesxp);
 
 // R native routine registration
 #define CALLDEF(name, n) \
@@ -17,6 +18,7 @@ SEXP miniparquet_read_metadata(SEXP filesxp);
 static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(miniparquet_read, 1),
   CALLDEF(miniparquet_read_metadata, 1),
+  CALLDEF(miniparquet_read_schema, 1),
   CALLDEF(miniparquet_write, 4),
   {NULL, NULL, 0}
 };
