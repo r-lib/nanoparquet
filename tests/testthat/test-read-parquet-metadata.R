@@ -12,8 +12,9 @@ test_that("read_parquet_metadata", {
   mtd <- read_parquet_metadata("test.parquet")
   mtd$file_meta_data$key_value_metadata <-
     as.data.frame(mtd$file_meta_data$key_value_metadata)
+
   expect_snapshot({
-    mtd$file_meta_data
+    as.data.frame(mtd$file_meta_data)
     as.data.frame(mtd$schema)
     as.data.frame(mtd$row_groups)
     as.data.frame(mtd$column_chunks)

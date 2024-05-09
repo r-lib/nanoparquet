@@ -1,14 +1,12 @@
 # read_parquet_metadata
 
     Code
-      mtd$file_meta_data
+      as.data.frame(mtd$file_meta_data)
     Output
-      # A data frame: 1 x 5
-        file_name    version num_rows key_value_metadata$mtd$file_meta_da~1 created_by
-        <chr>          <int>    <dbl> <I<list>>                             <chr>     
-      1 test.parquet       1       32 <tbl [0 x 2]>                         https://g~
-      # i abbreviated name:
-      #   1: key_value_metadata$`mtd$file_meta_data$key_value_metadata`
+           file_name version num_rows mtd$file_meta_data$key_value_metadata
+      1 test.parquet       1       32                          characte....
+                                        created_by
+      1 https://github.com/gaborcsardi/miniparquet
     Code
       as.data.frame(mtd$schema)
     Output
