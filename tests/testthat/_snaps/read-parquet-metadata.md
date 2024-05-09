@@ -126,25 +126,36 @@
 ---
 
     Code
-      sch
+      as.data.frame(sch)
     Output
-      # A data frame: 14 x 11
-         file_name name  type  type_length repetition_type converted_type logical_type
-         <chr>     <chr> <chr>       <int> <chr>           <chr>          <I<list>>   
-       1 test.par~ sche~ <NA>           NA <NA>            <NA>           <NULL>      
-       2 test.par~ nam   BYTE~          NA REQUIRED        UTF8           <mnprqt__>  
-       3 test.par~ mpg   DOUB~          NA REQUIRED        <NA>           <NULL>      
-       4 test.par~ cyl   INT32          NA REQUIRED        INT_32         <mnprqt__>  
-       5 test.par~ disp  DOUB~          NA REQUIRED        <NA>           <NULL>      
-       6 test.par~ hp    DOUB~          NA REQUIRED        <NA>           <NULL>      
-       7 test.par~ drat  DOUB~          NA REQUIRED        <NA>           <NULL>      
-       8 test.par~ wt    DOUB~          NA REQUIRED        <NA>           <NULL>      
-       9 test.par~ qsec  DOUB~          NA REQUIRED        <NA>           <NULL>      
-      10 test.par~ vs    DOUB~          NA REQUIRED        <NA>           <NULL>      
-      11 test.par~ am    DOUB~          NA REQUIRED        <NA>           <NULL>      
-      12 test.par~ gear  DOUB~          NA REQUIRED        <NA>           <NULL>      
-      13 test.par~ carb  DOUB~          NA REQUIRED        <NA>           <NULL>      
-      14 test.par~ large BOOL~          NA REQUIRED        <NA>           <NULL>      
-      # i 4 more variables: num_children <int>, scale <int>, precision <int>,
-      #   field_id <int>
+            file_name   name       type type_length repetition_type converted_type
+      1  test.parquet schema       <NA>          NA            <NA>           <NA>
+      2  test.parquet    nam BYTE_ARRAY          NA        REQUIRED           UTF8
+      3  test.parquet    mpg     DOUBLE          NA        REQUIRED           <NA>
+      4  test.parquet    cyl      INT32          NA        REQUIRED         INT_32
+      5  test.parquet   disp     DOUBLE          NA        REQUIRED           <NA>
+      6  test.parquet     hp     DOUBLE          NA        REQUIRED           <NA>
+      7  test.parquet   drat     DOUBLE          NA        REQUIRED           <NA>
+      8  test.parquet     wt     DOUBLE          NA        REQUIRED           <NA>
+      9  test.parquet   qsec     DOUBLE          NA        REQUIRED           <NA>
+      10 test.parquet     vs     DOUBLE          NA        REQUIRED           <NA>
+      11 test.parquet     am     DOUBLE          NA        REQUIRED           <NA>
+      12 test.parquet   gear     DOUBLE          NA        REQUIRED           <NA>
+      13 test.parquet   carb     DOUBLE          NA        REQUIRED           <NA>
+      14 test.parquet  large    BOOLEAN          NA        REQUIRED           <NA>
+         logical_type num_children scale precision field_id
+      1                         13    NA        NA       NA
+      2        STRING           NA    NA        NA       NA
+      3                         NA    NA        NA       NA
+      4  INT, 32,....           NA    NA        NA       NA
+      5                         NA    NA        NA       NA
+      6                         NA    NA        NA       NA
+      7                         NA    NA        NA       NA
+      8                         NA    NA        NA       NA
+      9                         NA    NA        NA       NA
+      10                        NA    NA        NA       NA
+      11                        NA    NA        NA       NA
+      12                        NA    NA        NA       NA
+      13                        NA    NA        NA       NA
+      14                        NA    NA        NA       NA
 

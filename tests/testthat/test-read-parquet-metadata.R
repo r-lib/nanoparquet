@@ -20,5 +20,5 @@ test_that("read_parquet_metadata", {
   })
 
   sch <- read_parquet_schema("test.parquet")
-  expect_snapshot(sch)
+  expect_snapshot(as.data.frame(sch))
 })
