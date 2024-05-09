@@ -87,7 +87,34 @@ additional entries, e.g. <code>bit_width</code>, <code>is_signed</code>, etc.</p
 integer for the root node, and <code>NA</code> for a leaf node.</p></li>
 </ul></li>
 <li><p><code>$row_groups</code>: a data frame, information about the row groups.</p></li>
-<li><p><code>$column_chunks</code>: a data frame, information about all column chunks.</p></li>
+<li><p><code>$column_chunks</code>: a data frame, information about all column chunks,
+across all row groups. Some important columns:</p><ul><li><p><code>row_group</code>: which row group this chunk belongs to.</p></li>
+<li><p><code>column</code>: which leaf column this chunks belongs to. The order is
+the same as in <code>$schema</code>, but only leaf columns (i.e. columns with
+<code>NA</code> children) are counted.</p></li>
+<li><p><code>file_path</code>: which file the chunk is stored in. <code>NA</code> means the
+same file.</p></li>
+<li><p><code>file_offset</code>: where the column chunk begins in the file.</p></li>
+<li><p><code>type</code>: low level parquet data type.</p></li>
+<li><p><code>encodings</code>: encodings used to store this chunk. It is a list
+column of character vectors of encoding names. Current possible
+encodings: "PLAIN", "GROUP_VAR_INT", "PLAIN_DICTIONARY", "RLE", "BIT_PACKED", "DELTA_BINARY_PACKED", "DELTA_LENGTH_BYTE_ARRAY", "DELTA_BYTE_ARRAY", "RLE_DICTIONARY".</p></li>
+<li><p><code>path_in_scema</code>: list column of character vectors. It is simply
+the path from the root node. It is simply the column name for
+flat schemas.</p></li>
+<li><p><code>codec</code>: compression codec used for the column chunk. Possible
+values are: "UNCOMPRESSED", "SNAPPY", "GZIP", "LZO", "BROTLI", "LZ4", "ZSTD".</p></li>
+<li><p><code>num_values</code>: number of values in this column chunk.</p></li>
+<li><p><code>total_uncompressed_size</code>: total uncompressed size in bytes.</p></li>
+<li><p><code>total_compressed_size</code>: total compressed size in bytes.</p></li>
+<li><p><code>data_page_offset</code>: absolute position of the first data page of
+the column chunk in the file.</p></li>
+<li><p><code>index_page_offset</code>: absolute position of the first index page of
+the column chunk in the file, or <code>NA</code> if there are no index pages.</p></li>
+<li><p><code>dictionary_page_offset</code>: absolute position of the first
+dictionary page of the column chunk in the file, or <code>NA</code> if there
+are no dictionary pages.</p></li>
+</ul></li>
 </ul></div>
     <div id="see-also">
     <h2>See also</h2>
@@ -147,27 +174,28 @@ integer for the root node, and <code>NA</code> for a leaf node.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     0          <span style="text-decoration: underline;">112</span>492     <span style="text-decoration: underline;">1</span>000          <span style="color: #BB0000;">NA</span>                    <span style="color: #BB0000;">NA</span>      <span style="color: #BB0000;">NA</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $column_chunks</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 13 × 17</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    row_group file_path file_offset offset_index_offset offset_index_length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>         0 <span style="color: #BB0000;">NA</span>                  4                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>         0 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">13</span>274                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>         0 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">17</span>317                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>         0 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">20</span>305                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>         0 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">23</span>855                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>         0 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">48</span>543                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>         0 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">48</span>871                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>         0 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">66</span>223                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>         0 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">81</span>686                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>         0 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">84</span>136                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span>         0 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">95</span>403                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span>         0 <span style="color: #BB0000;">NA</span>             <span style="text-decoration: underline;">103</span>034                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span>         0 <span style="color: #BB0000;">NA</span>             <span style="text-decoration: underline;">108</span>208                  <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 12 more variables: column_index_offset &lt;dbl&gt;, column_index_length &lt;int&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   type &lt;int&gt;, encodings &lt;I&lt;list&gt;&gt;, path_in_schema &lt;I&lt;list&gt;&gt;, codec &lt;chr&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   num_values &lt;dbl&gt;, total_uncompressed_size &lt;dbl&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   total_compressed_size &lt;dbl&gt;, data_page_offset &lt;dbl&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   index_page_offset &lt;dbl&gt;, dictionary_page_offset &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 13 × 18</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    row_group column file_path file_offset offset_index_offset</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>         0      0 <span style="color: #BB0000;">NA</span>                  4                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>         0      1 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">13</span>274                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>         0      2 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">17</span>317                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>         0      3 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">20</span>305                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>         0      4 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">23</span>855                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>         0      5 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">48</span>543                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>         0      6 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">48</span>871                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>         0      7 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">66</span>223                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>         0      8 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">81</span>686                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>         0      9 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">84</span>136                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span>         0     10 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">95</span>403                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span>         0     11 <span style="color: #BB0000;">NA</span>             <span style="text-decoration: underline;">103</span>034                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span>         0     12 <span style="color: #BB0000;">NA</span>             <span style="text-decoration: underline;">108</span>208                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 13 more variables: offset_index_length &lt;int&gt;, column_index_offset &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   column_index_length &lt;int&gt;, type &lt;chr&gt;, encodings &lt;I&lt;list&gt;&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   path_in_schema &lt;I&lt;list&gt;&gt;, codec &lt;chr&gt;, num_values &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   total_uncompressed_size &lt;dbl&gt;, total_compressed_size &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   data_page_offset &lt;dbl&gt;, index_page_offset &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   dictionary_page_offset &lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
