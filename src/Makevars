@@ -2,7 +2,7 @@ OBJECTS=parquet/parquet_constants.o parquet/parquet_types.o \
   thrift/protocol/TProtocol.o thrift/transport/TTransportException.o \
   thrift/transport/TBufferTransports.o \
   snappy/snappy.o snappy/snappy-sinksource.o \
-  ParquetFile.o ParquetOutFile.o \
-  rwrapper.o
+  lib/ParquetFile.o lib/ParquetOutFile.o \
+  rwrapper.o read.o write.o read-metadata.o
 
 PKG_CPPFLAGS = -Ithrift -I.

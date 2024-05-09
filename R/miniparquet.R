@@ -154,7 +154,7 @@ codecs <- c(
 
 read_parquet_metadata <- function(file) {
 	file <- path.expand(file)
-	res <- .Call(miniparquet_read_schema, file)
+	res <- .Call(miniparquet_read_metadata, file)
 
 	res$schema$type <- names(type_names)[res$schema$type + 1L]
 	res$schema$converted_type <-
