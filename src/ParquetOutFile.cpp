@@ -305,7 +305,7 @@ void ParquetOutFile::write_column_compressed(uint32_t idx) {
 
   int32_t column_bytes = ((int32_t)pfile.tellp()) - col_start;
   cmd->__set_num_values(num_rows);
-  cmd->__set_total_uncompressed_size(column_bytes);
+  cmd->__set_total_uncompressed_size(data_size);
   cmd->__set_total_compressed_size(column_bytes);
   cmd->__set_data_page_offset(data_offset);
 }
