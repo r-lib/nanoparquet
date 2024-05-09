@@ -91,21 +91,21 @@ codecs <- c(
 #'
 #' @param file Path to a Parquet file.
 #' @return A named list with entries:
-#'   * `file_meta_data`: a named list with file meta data:
+#'   * `file_meta_data`: a data frame with file meta data:
+#'     - `file_name`: file name.
 #'     - `version`: Parquet version, an integer.
 #'     - `num_rows`: total number of rows.
-#'     - `key_value_metadata`: a data frame with two character
-#'       columns called `key` and `value`. This is the key-value metadata
-#'       of the file. Arrow stores its schema here.
+#'     - `key_value_metadata`: list column of a data frames with two
+#'       character columns called `key` and `value`. This is the key-value
+#'       metadata of the file. Arrow stores its schema here.
 #'     - `created_by`: A string scalar, usually the name of the software
 #'       that created the file.
-#'     - `encryption_algorithm`: not implemented yet.
-#'     - `footer_signing_key_metadata`: not implemented yet.
 #'   * `schema`: data frame, the schema of the file. It has one row for
 #'     each node (inner node or leaf node). For flat files this means one
 #'     root node (inner node), always the first one, and then one row for
 #'     each "real" column. For nested schemas, the rows are in depth-first
 #'     search order. Most important columns are:
+#'     - `file_name`: file name.
 #'     - `name`: column name.
 #'     - `type`: data type. One of the low level data types.
 #'     - `type_length`: length for fixed length byte arrays.
@@ -119,6 +119,7 @@ codecs <- c(
 #'   * `$row_groups`: a data frame, information about the row groups.
 #'   * `$column_chunks`: a data frame, information about all column chunks,
 #'     across all row groups. Some important columns:
+#'     - `file_name`: file name.
 #'     - `row_group`: which row group this chunk belongs to.
 #'     - `column`: which leaf column this chunks belongs to. The order is
 #'       the same as in `$schema`, but only leaf columns (i.e. columns with
@@ -156,6 +157,15 @@ read_parquet_metadata <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(miniparquet_read_metadata, file)
 
+	res$file_meta_data$key_value_metadata <-
+		as.data.frame(res$file_meta_data$key_value_metadata)
+	class(res$file_meta_data$key_value_metadata) <-
+		c("tbl", class(res$file_meta_data$key_value_metadata))
+	res$file_meta_data$key_value_metadata <-
+		I(list(res$file_meta_data$key_value_metadata))
+	res$file_meta_data <- as.data.frame(res$file_meta_data)
+	class(res$file_meta_data) <- c("tbl", class(res$file_meta_data))
+
 	res$schema$type <- names(type_names)[res$schema$type + 1L]
 	res$schema$converted_type <-
 		names(ctype_names)[res$schema$converted_type + 1L]
@@ -164,10 +174,6 @@ read_parquet_metadata <- function(file) {
 	res$schema$logical_type <-	I(res$schema$logical_type)
 	res$schema <- as.data.frame(res$schema)
 	class(res$schema) <- c("tbl", class(res$schema))
-	res$file_meta_data$key_value_metadata <-
-		as.data.frame(res$file_meta_data$key_value_metadata)
-	class(res$file_meta_data$key_value_metadata) <-
-		c("tbl", class(res$file_meta_data$key_value_metadata))
 
 	res$row_groups <- as.data.frame(res$row_groups)
 	class(res$row_groups) <- c("tbl", class(res$row_groups))

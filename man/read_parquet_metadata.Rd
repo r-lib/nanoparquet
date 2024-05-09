@@ -12,17 +12,16 @@ read_parquet_metadata(file)
 \value{
 A named list with entries:
 \itemize{
-\item \code{file_meta_data}: a named list with file meta data:
+\item \code{file_meta_data}: a data frame with file meta data:
 \itemize{
+\item \code{file_name}: file name.
 \item \code{version}: Parquet version, an integer.
 \item \code{num_rows}: total number of rows.
-\item \code{key_value_metadata}: a data frame with two character
-columns called \code{key} and \code{value}. This is the key-value metadata
-of the file. Arrow stores its schema here.
+\item \code{key_value_metadata}: list column of a data frames with two
+character columns called \code{key} and \code{value}. This is the key-value
+metadata of the file. Arrow stores its schema here.
 \item \code{created_by}: A string scalar, usually the name of the software
 that created the file.
-\item \code{encryption_algorithm}: not implemented yet.
-\item \code{footer_signing_key_metadata}: not implemented yet.
 }
 \item \code{schema}: data frame, the schema of the file. It has one row for
 each node (inner node or leaf node). For flat files this means one
@@ -30,6 +29,7 @@ root node (inner node), always the first one, and then one row for
 each "real" column. For nested schemas, the rows are in depth-first
 search order. Most important columns are:
 \itemize{
+\item \code{file_name}: file name.
 \item \code{name}: column name.
 \item \code{type}: data type. One of the low level data types.
 \item \code{type_length}: length for fixed length byte arrays.
@@ -45,6 +45,7 @@ integer for the root node, and \code{NA} for a leaf node.
 \item \verb{$column_chunks}: a data frame, information about all column chunks,
 across all row groups. Some important columns:
 \itemize{
+\item \code{file_name}: file name.
 \item \code{row_group}: which row group this chunk belongs to.
 \item \code{column}: which leaf column this chunks belongs to. The order is
 the same as in \verb{$schema}, but only leaf columns (i.e. columns with

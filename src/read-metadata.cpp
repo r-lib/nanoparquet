@@ -368,20 +368,20 @@ SEXP miniparquet_read_metadata(SEXP filesxp) {
 
     parquet::format::FileMetaData fmd = f.file_meta_data;
     const char *fmd_nms[] = {
+      "file_name",
       "version",
       "num_rows",
       "key_value_metadata",
       "created_by",
-      "encryption_algorithm",
-      "footer_signing_key_metadata",
       ""
     };
     SEXP rfmd = PROTECT(Rf_mkNamed(VECSXP, fmd_nms));
-    SET_VECTOR_ELT(rfmd, 0, Rf_ScalarInteger(fmd.version));
-    SET_VECTOR_ELT(rfmd, 1, Rf_ScalarReal(fmd.num_rows));
-    SET_VECTOR_ELT(rfmd, 2, convert_key_value_metadata(fmd));
+    SET_VECTOR_ELT(rfmd, 0, Rf_mkString(fname));
+    SET_VECTOR_ELT(rfmd, 1, Rf_ScalarInteger(fmd.version));
+    SET_VECTOR_ELT(rfmd, 2, Rf_ScalarReal(fmd.num_rows));
+    SET_VECTOR_ELT(rfmd, 3, convert_key_value_metadata(fmd));
     if (fmd.__isset.created_by) {
-      SET_VECTOR_ELT(rfmd, 3, Rf_mkString(fmd.created_by.c_str()));
+      SET_VECTOR_ELT(rfmd, 4, Rf_mkString(fmd.created_by.c_str()));
     }
     // TODO: encryption algorithm
     // TODO: footer_signing_key_metadata
