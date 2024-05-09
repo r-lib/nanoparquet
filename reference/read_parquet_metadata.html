@@ -61,21 +61,21 @@ compression or other reason.</p>
     <h2>Value</h2>
     
 
-<p>A named list with entries:</p><ul><li><p><code>file_meta_data</code>: a named list with file meta data:</p><ul><li><p><code>version</code>: Parquet version, an integer.</p></li>
+<p>A named list with entries:</p><ul><li><p><code>file_meta_data</code>: a data frame with file meta data:</p><ul><li><p><code>file_name</code>: file name.</p></li>
+<li><p><code>version</code>: Parquet version, an integer.</p></li>
 <li><p><code>num_rows</code>: total number of rows.</p></li>
-<li><p><code>key_value_metadata</code>: a data frame with two character
-columns called <code>key</code> and <code>value</code>. This is the key-value metadata
-of the file. Arrow stores its schema here.</p></li>
+<li><p><code>key_value_metadata</code>: list column of a data frames with two
+character columns called <code>key</code> and <code>value</code>. This is the key-value
+metadata of the file. Arrow stores its schema here.</p></li>
 <li><p><code>created_by</code>: A string scalar, usually the name of the software
 that created the file.</p></li>
-<li><p><code>encryption_algorithm</code>: not implemented yet.</p></li>
-<li><p><code>footer_signing_key_metadata</code>: not implemented yet.</p></li>
 </ul></li>
 <li><p><code>schema</code>: data frame, the schema of the file. It has one row for
 each node (inner node or leaf node). For flat files this means one
 root node (inner node), always the first one, and then one row for
 each "real" column. For nested schemas, the rows are in depth-first
-search order. Most important columns are:</p><ul><li><p><code>name</code>: column name.</p></li>
+search order. Most important columns are:</p><ul><li><p><code>file_name</code>: file name.</p></li>
+<li><p><code>name</code>: column name.</p></li>
 <li><p><code>type</code>: data type. One of the low level data types.</p></li>
 <li><p><code>type_length</code>: length for fixed length byte arrays.</p></li>
 <li><p><code>repettion_type</code>: character, one of <code>REQUIRED</code>, <code>OPTIONAL</code> or
@@ -88,7 +88,8 @@ integer for the root node, and <code>NA</code> for a leaf node.</p></li>
 </ul></li>
 <li><p><code>$row_groups</code>: a data frame, information about the row groups.</p></li>
 <li><p><code>$column_chunks</code>: a data frame, information about all column chunks,
-across all row groups. Some important columns:</p><ul><li><p><code>row_group</code>: which row group this chunk belongs to.</p></li>
+across all row groups. Some important columns:</p><ul><li><p><code>file_name</code>: file name.</p></li>
+<li><p><code>row_group</code>: which row group this chunk belongs to.</p></li>
 <li><p><code>column</code>: which leaf column this chunks belongs to. The order is
 the same as in <code>$schema</code>, but only leaf columns (i.e. columns with
 <code>NA</code> children) are counted.</p></li>
@@ -126,70 +127,56 @@ are no dictionary pages.</p></li>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">file_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/userdata1.parquet"</span>, package <span class="op">=</span> <span class="st">"miniparquet"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">miniparquet</span><span class="fu">::</span><span class="fu">read_parquet_metadata</span><span class="op">(</span><span class="va">file_name</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $file_meta_data</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $file_meta_data$version</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $file_meta_data$num_rows</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $file_meta_data$key_value_metadata</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 0 × 2</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 2 variables: key &lt;chr&gt;, value &lt;chr&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $file_meta_data$created_by</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "parquet-mr version 1.8.1 (build 4aba4dae7bb0d4edbcf7923ae1339f28fd3f7fcf)"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $file_meta_data$encryption_algorithm</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $file_meta_data$footer_signing_key_metadata</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 1 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   file_name                       version num_rows key_value_metadata created_by</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;I&lt;list&gt;&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> /home/runner/work/_temp/Librar…       1     <span style="text-decoration: underline;">1</span>000 <span style="color: #949494;">&lt;tbl [0 × 2]&gt;</span>      parquet-m…</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $schema</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 14 × 10</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    name            type  type_length repetition_type converted_type logical_type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;I&lt;list&gt;&gt;</span>   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> hive_schema     <span style="color: #BB0000;">NA</span>             <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>              <span style="color: #BB0000;">NA</span>             <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> registration_d… INT96          <span style="color: #BB0000;">NA</span> OPTIONAL        <span style="color: #BB0000;">NA</span>             <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> id              INT32          <span style="color: #BB0000;">NA</span> OPTIONAL        <span style="color: #BB0000;">NA</span>             <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> first_name      BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> last_name       BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> email           BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> gender          BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> ip_address      BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> cc              BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> country         BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span> birthdate       BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> salary          DOUB…          <span style="color: #BB0000;">NA</span> OPTIONAL        <span style="color: #BB0000;">NA</span>             <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span> title           BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span> comments        BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 14 × 11</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    file_name name  type  type_length repetition_type converted_type logical_type</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;I&lt;list&gt;&gt;</span>   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> /home/ru… hive… <span style="color: #BB0000;">NA</span>             <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>              <span style="color: #BB0000;">NA</span>             <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> /home/ru… regi… INT96          <span style="color: #BB0000;">NA</span> OPTIONAL        <span style="color: #BB0000;">NA</span>             <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> /home/ru… id    INT32          <span style="color: #BB0000;">NA</span> OPTIONAL        <span style="color: #BB0000;">NA</span>             <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> /home/ru… firs… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> /home/ru… last… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> /home/ru… email BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> /home/ru… gend… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> /home/ru… ip_a… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> /home/ru… cc    BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> /home/ru… coun… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span> /home/ru… birt… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> /home/ru… sala… DOUB…          <span style="color: #BB0000;">NA</span> OPTIONAL        <span style="color: #BB0000;">NA</span>             <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span> /home/ru… title BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span> /home/ru… comm… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL        UTF8           <span style="color: #949494;">&lt;NULL&gt;</span>      </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: num_children &lt;int&gt;, scale &lt;int&gt;, precision &lt;int&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   field_id &lt;int&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $row_groups</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 1 × 6</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      id total_byte_size num_rows file_offset total_compressed_size ordinal</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     0          <span style="text-decoration: underline;">112</span>492     <span style="text-decoration: underline;">1</span>000          <span style="color: #BB0000;">NA</span>                    <span style="color: #BB0000;">NA</span>      <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 1 × 7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   file_name        id total_byte_size num_rows file_offset total_compressed_size</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> /home/runner…     0          <span style="text-decoration: underline;">112</span>492     <span style="text-decoration: underline;">1</span>000          <span style="color: #BB0000;">NA</span>                    <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: ordinal &lt;int&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $column_chunks</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 13 × 18</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    row_group column file_path file_offset offset_index_offset</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>         0      0 <span style="color: #BB0000;">NA</span>                  4                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>         0      1 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">13</span>274                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>         0      2 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">17</span>317                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>         0      3 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">20</span>305                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>         0      4 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">23</span>855                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>         0      5 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">48</span>543                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>         0      6 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">48</span>871                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>         0      7 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">66</span>223                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>         0      8 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">81</span>686                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>         0      9 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">84</span>136                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span>         0     10 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">95</span>403                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span>         0     11 <span style="color: #BB0000;">NA</span>             <span style="text-decoration: underline;">103</span>034                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span>         0     12 <span style="color: #BB0000;">NA</span>             <span style="text-decoration: underline;">108</span>208                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 13 × 19</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    file_name          row_group column file_path file_offset offset_index_offset</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> /home/runner/work…         0      0 <span style="color: #BB0000;">NA</span>                  4                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> /home/runner/work…         0      1 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">13</span>274                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> /home/runner/work…         0      2 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">17</span>317                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> /home/runner/work…         0      3 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">20</span>305                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> /home/runner/work…         0      4 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">23</span>855                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> /home/runner/work…         0      5 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">48</span>543                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> /home/runner/work…         0      6 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">48</span>871                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> /home/runner/work…         0      7 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">66</span>223                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> /home/runner/work…         0      8 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">81</span>686                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> /home/runner/work…         0      9 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">84</span>136                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span> /home/runner/work…         0     10 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">95</span>403                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> /home/runner/work…         0     11 <span style="color: #BB0000;">NA</span>             <span style="text-decoration: underline;">103</span>034                  <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span> /home/runner/work…         0     12 <span style="color: #BB0000;">NA</span>             <span style="text-decoration: underline;">108</span>208                  <span style="color: #BB0000;">NA</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 13 more variables: offset_index_length &lt;int&gt;, column_index_offset &lt;dbl&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   column_index_length &lt;int&gt;, type &lt;chr&gt;, encodings &lt;I&lt;list&gt;&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   path_in_schema &lt;I&lt;list&gt;&gt;, codec &lt;chr&gt;, num_values &lt;dbl&gt;,</span></span>
