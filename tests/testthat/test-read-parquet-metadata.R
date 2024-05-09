@@ -1,9 +1,15 @@
 test_that("read_parquet_metadata", {
   df <- test_df()
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp))
+  mkdirp(tmpdir <- tempfile())
+  tmp <- file.path(tmpdir, "test.parquet")
+  on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
   write_parquet(df, tmp, compression = "uncompressed")
-  mtd <- read_parquet_metadata(tmp)
+
+  wd <- getwd()
+  on.exit(setwd(wd), add = TRUE)
+  setwd(tmpdir)
+
+  mtd <- read_parquet_metadata("test.parquet")
   mtd$file_meta_data$key_value_metadata <-
     as.data.frame(mtd$file_meta_data$key_value_metadata)
   expect_snapshot({

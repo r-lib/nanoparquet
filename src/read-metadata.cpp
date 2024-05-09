@@ -130,10 +130,11 @@ SEXP convert_key_value_metadata(const parquet::format::FileMetaData &fmd) {
   return kv;
 }
 
-SEXP convert_schema(vector<parquet::format::SchemaElement>& schema) {
-
+SEXP convert_schema(const char *cfile_name,
+                    vector<parquet::format::SchemaElement>& schema) {
   uint64_t nc = schema.size();
   const char *col_nms[] = {
+    "file_name",
     "name",
     "type",
     "type_length",
@@ -148,29 +149,33 @@ SEXP convert_schema(vector<parquet::format::SchemaElement>& schema) {
   };
   SEXP columns = PROTECT(Rf_mkNamed(VECSXP, col_nms));
 
+  SEXP rfile_name = PROTECT(Rf_mkChar(cfile_name));
+  SEXP file_name = Rf_allocVector(STRSXP, nc);
+  SET_VECTOR_ELT(columns, 0, file_name);
   SEXP name = Rf_allocVector(STRSXP, nc);
-  SET_VECTOR_ELT(columns, 0, name);
+  SET_VECTOR_ELT(columns, 1, name);
   SEXP type = Rf_allocVector(INTSXP, nc);
-  SET_VECTOR_ELT(columns, 1, type);
+  SET_VECTOR_ELT(columns, 2, type);
   SEXP type_length = Rf_allocVector(INTSXP, nc);
-  SET_VECTOR_ELT(columns, 2, type_length);
+  SET_VECTOR_ELT(columns, 3, type_length);
   SEXP repetition_type = Rf_allocVector(INTSXP, nc);
-  SET_VECTOR_ELT(columns, 3, repetition_type);
+  SET_VECTOR_ELT(columns, 4, repetition_type);
   SEXP converted_type = Rf_allocVector(INTSXP, nc);
-  SET_VECTOR_ELT(columns, 4, converted_type);
+  SET_VECTOR_ELT(columns, 5, converted_type);
   SEXP logical_type = Rf_allocVector(VECSXP, nc);
-  SET_VECTOR_ELT(columns, 5, logical_type);
+  SET_VECTOR_ELT(columns, 6, logical_type);
   SEXP num_children = Rf_allocVector(INTSXP, nc);
-  SET_VECTOR_ELT(columns, 6, num_children);
+  SET_VECTOR_ELT(columns, 7, num_children);
   SEXP scale = Rf_allocVector(INTSXP, nc);
-  SET_VECTOR_ELT(columns, 7, scale);
+  SET_VECTOR_ELT(columns, 8, scale);
   SEXP precision = Rf_allocVector(INTSXP, nc);
-  SET_VECTOR_ELT(columns, 8, precision);
+  SET_VECTOR_ELT(columns, 9, precision);
   SEXP field_id = Rf_allocVector(INTSXP, nc);
-  SET_VECTOR_ELT(columns, 9, field_id);
+  SET_VECTOR_ELT(columns, 10, field_id);
 
   for (uint64_t idx = 0; idx < nc; idx++) {
     parquet::format::SchemaElement sch = schema[idx];
+    SET_STRING_ELT(file_name, idx, rfile_name);
     SET_STRING_ELT(name, idx, Rf_mkChar(sch.name.c_str()));
     INTEGER(type)[idx] = sch.__isset.type ? sch.type : NA_INTEGER;
     INTEGER(type_length)
@@ -190,12 +195,14 @@ SEXP convert_schema(vector<parquet::format::SchemaElement>& schema) {
     INTEGER(field_id)[idx] = sch.__isset.field_id ? sch.field_id : NA_INTEGER;
   }
 
-  UNPROTECT(1);
+  UNPROTECT(2);
   return columns;
 }
 
-SEXP convert_row_groups(vector<parquet::format::RowGroup> &rgs) {
+SEXP convert_row_groups(const char *cfile_name,
+                        vector<parquet::format::RowGroup> &rgs) {
   const char *nms[] = {
+    "file_name",
     "id",
     "total_byte_size",
     "num_rows",
@@ -206,31 +213,37 @@ SEXP convert_row_groups(vector<parquet::format::RowGroup> &rgs) {
   };
   auto nrgs = rgs.size();
   SEXP rrgs = PROTECT(Rf_mkNamed(VECSXP, nms));
-  SET_VECTOR_ELT(rrgs, 0, Rf_allocVector(INTSXP, nrgs));
-  SET_VECTOR_ELT(rrgs, 1, Rf_allocVector(REALSXP, nrgs));
+  SEXP rfile_name = PROTECT(Rf_mkChar(cfile_name));
+
+  SET_VECTOR_ELT(rrgs, 0, Rf_allocVector(STRSXP, nrgs));
+  SET_VECTOR_ELT(rrgs, 1, Rf_allocVector(INTSXP, nrgs));
   SET_VECTOR_ELT(rrgs, 2, Rf_allocVector(REALSXP, nrgs));
   SET_VECTOR_ELT(rrgs, 3, Rf_allocVector(REALSXP, nrgs));
   SET_VECTOR_ELT(rrgs, 4, Rf_allocVector(REALSXP, nrgs));
-  SET_VECTOR_ELT(rrgs, 5, Rf_allocVector(INTSXP, nrgs));
+  SET_VECTOR_ELT(rrgs, 5, Rf_allocVector(REALSXP, nrgs));
+  SET_VECTOR_ELT(rrgs, 6, Rf_allocVector(INTSXP, nrgs));
 
   for (auto i = 0; i < nrgs; i++) {
-    INTEGER(VECTOR_ELT(rrgs, 0))[i] = i;
-    REAL(VECTOR_ELT(rrgs, 1))[i] = rgs[i].total_byte_size;
-    REAL(VECTOR_ELT(rrgs, 2))[i] = rgs[i].num_rows;
-    REAL(VECTOR_ELT(rrgs, 3))[i] =
-      rgs[i].__isset.file_offset ? rgs[i].file_offset : NA_REAL;
+    SET_STRING_ELT(VECTOR_ELT(rrgs, 0), i, rfile_name);
+    INTEGER(VECTOR_ELT(rrgs, 1))[i] = i;
+    REAL(VECTOR_ELT(rrgs, 2))[i] = rgs[i].total_byte_size;
+    REAL(VECTOR_ELT(rrgs, 3))[i] = rgs[i].num_rows;
     REAL(VECTOR_ELT(rrgs, 4))[i] =
+      rgs[i].__isset.file_offset ? rgs[i].file_offset : NA_REAL;
+    REAL(VECTOR_ELT(rrgs, 5))[i] =
       rgs[i].__isset.total_compressed_size ? rgs[i].total_compressed_size : NA_REAL;
-    INTEGER(VECTOR_ELT(rrgs, 5))[i] =
+    INTEGER(VECTOR_ELT(rrgs, 6))[i] =
       rgs[i].__isset.ordinal ? rgs[i].ordinal : NA_INTEGER;
   }
 
-  UNPROTECT(1);
+  UNPROTECT(2);
   return rrgs;
 }
 
-SEXP convert_column_chunks(vector<parquet::format::RowGroup> &rgs) {
+SEXP convert_column_chunks(const char *file_name,
+                           vector<parquet::format::RowGroup> &rgs) {
   const char *nms[] = {
+    "file_name",
     "row_group",
     "column",
     "file_path",
@@ -261,68 +274,72 @@ SEXP convert_column_chunks(vector<parquet::format::RowGroup> &rgs) {
   }
 
   SEXP rccs = PROTECT(Rf_mkNamed(VECSXP, nms));
-  SET_VECTOR_ELT(rccs,  0, Rf_allocVector(INTSXP, nccs));   // row_group
-  SET_VECTOR_ELT(rccs,  1, Rf_allocVector(INTSXP, nccs));   // column
-  SET_VECTOR_ELT(rccs,  2, Rf_allocVector(STRSXP, nccs));   // file_path
-  SET_VECTOR_ELT(rccs,  3, Rf_allocVector(REALSXP, nccs));  // file_offset
-  SET_VECTOR_ELT(rccs,  4, Rf_allocVector(REALSXP, nccs));  // offset_index_offset
-  SET_VECTOR_ELT(rccs,  5, Rf_allocVector(INTSXP, nccs));   // offset_index_length
-  SET_VECTOR_ELT(rccs,  6, Rf_allocVector(REALSXP, nccs));  // column_index_offset
-  SET_VECTOR_ELT(rccs,  7, Rf_allocVector(INTSXP, nccs));   // column_index_length
-  SET_VECTOR_ELT(rccs,  8, Rf_allocVector(INTSXP, nccs));   // type
-  SET_VECTOR_ELT(rccs,  9, Rf_allocVector(VECSXP, nccs));   // encodings
-  SET_VECTOR_ELT(rccs, 10, Rf_allocVector(VECSXP, nccs));   // path_in_schema
-  SET_VECTOR_ELT(rccs, 11, Rf_allocVector(INTSXP, nccs));   // codec
-  SET_VECTOR_ELT(rccs, 12, Rf_allocVector(REALSXP, nccs));  // num_values
-  SET_VECTOR_ELT(rccs, 13, Rf_allocVector(REALSXP, nccs));  // total_uncompressed_size
-  SET_VECTOR_ELT(rccs, 14, Rf_allocVector(REALSXP, nccs));  // total_compressed_size
-  SET_VECTOR_ELT(rccs, 15, Rf_allocVector(REALSXP, nccs));  // data_page_offset
-  SET_VECTOR_ELT(rccs, 16, Rf_allocVector(REALSXP, nccs));  // index_page_offset
-  SET_VECTOR_ELT(rccs, 17, Rf_allocVector(REALSXP, nccs));  // dictionary_page_offset
+  SET_VECTOR_ELT(rccs,  0, Rf_allocVector(STRSXP, nccs));   // file_name
+  SET_VECTOR_ELT(rccs,  1, Rf_allocVector(INTSXP, nccs));   // row_group
+  SET_VECTOR_ELT(rccs,  2, Rf_allocVector(INTSXP, nccs));   // column
+  SET_VECTOR_ELT(rccs,  3, Rf_allocVector(STRSXP, nccs));   // file_path
+  SET_VECTOR_ELT(rccs,  4, Rf_allocVector(REALSXP, nccs));  // file_offset
+  SET_VECTOR_ELT(rccs,  5, Rf_allocVector(REALSXP, nccs));  // offset_index_offset
+  SET_VECTOR_ELT(rccs,  6, Rf_allocVector(INTSXP, nccs));   // offset_index_length
+  SET_VECTOR_ELT(rccs,  7, Rf_allocVector(REALSXP, nccs));  // column_index_offset
+  SET_VECTOR_ELT(rccs,  8, Rf_allocVector(INTSXP, nccs));   // column_index_length
+  SET_VECTOR_ELT(rccs,  9, Rf_allocVector(INTSXP, nccs));   // type
+  SET_VECTOR_ELT(rccs, 10, Rf_allocVector(VECSXP, nccs));   // encodings
+  SET_VECTOR_ELT(rccs, 11, Rf_allocVector(VECSXP, nccs));   // path_in_schema
+  SET_VECTOR_ELT(rccs, 12, Rf_allocVector(INTSXP, nccs));   // codec
+  SET_VECTOR_ELT(rccs, 13, Rf_allocVector(REALSXP, nccs));  // num_values
+  SET_VECTOR_ELT(rccs, 14, Rf_allocVector(REALSXP, nccs));  // total_uncompressed_size
+  SET_VECTOR_ELT(rccs, 15, Rf_allocVector(REALSXP, nccs));  // total_compressed_size
+  SET_VECTOR_ELT(rccs, 16, Rf_allocVector(REALSXP, nccs));  // data_page_offset
+  SET_VECTOR_ELT(rccs, 17, Rf_allocVector(REALSXP, nccs));  // index_page_offset
+  SET_VECTOR_ELT(rccs, 18, Rf_allocVector(REALSXP, nccs));  // dictionary_page_offset
+
+  SEXP rfile_name = PROTECT(Rf_mkChar(file_name));
 
   int idx = 0;
   for (int i = 0; i < rgs.size(); i++) {
     for (int j = 0; j < rgs[i].columns.size(); j++) {
       parquet::format::ColumnChunk cc = rgs[i].columns[j];
       parquet::format::ColumnMetaData cmd = cc.meta_data;
-      INTEGER(VECTOR_ELT(rccs, 0))[idx] = i;
-      INTEGER(VECTOR_ELT(rccs, 1))[idx] = j;
-      SET_STRING_ELT(VECTOR_ELT(rccs, 2), idx,
+      SET_STRING_ELT(VECTOR_ELT(rccs, 0), idx, rfile_name);
+      INTEGER(VECTOR_ELT(rccs, 1))[idx] = i;
+      INTEGER(VECTOR_ELT(rccs, 2))[idx] = j;
+      SET_STRING_ELT(VECTOR_ELT(rccs, 3), idx,
         cc.__isset.file_path ? Rf_mkChar(cc.file_path.c_str()) : NA_STRING);
-      REAL(VECTOR_ELT(rccs, 3))[idx] = cc.file_offset;
-      REAL(VECTOR_ELT(rccs, 4))[idx] =
+      REAL(VECTOR_ELT(rccs, 4))[idx] = cc.file_offset;
+      REAL(VECTOR_ELT(rccs, 5))[idx] =
         cc.__isset.offset_index_offset ? cc.offset_index_offset : NA_REAL;
-      INTEGER(VECTOR_ELT(rccs, 5))[idx] =
+      INTEGER(VECTOR_ELT(rccs, 6))[idx] =
         cc.__isset.offset_index_length ? cc.offset_index_length : NA_INTEGER;
-      REAL(VECTOR_ELT(rccs, 6))[idx] =
+      REAL(VECTOR_ELT(rccs, 7))[idx] =
         cc.__isset.column_index_offset ? cc.column_index_offset : NA_REAL;
-      INTEGER(VECTOR_ELT(rccs, 7))[idx] =
+      INTEGER(VECTOR_ELT(rccs, 8))[idx] =
         cc.__isset.column_index_length ? cc.column_index_length : NA_INTEGER;
-      INTEGER(VECTOR_ELT(rccs, 8))[idx] = cmd.type;
-      SET_VECTOR_ELT(VECTOR_ELT(rccs, 9), idx, Rf_allocVector(INTSXP, cmd.encodings.size()));
+      INTEGER(VECTOR_ELT(rccs, 9))[idx] = cmd.type;
+      SET_VECTOR_ELT(VECTOR_ELT(rccs, 10), idx, Rf_allocVector(INTSXP, cmd.encodings.size()));
       for (auto k = 0; k < cmd.encodings.size(); k++) {
-        INTEGER(VECTOR_ELT(VECTOR_ELT(rccs, 9), idx))[k] = cmd.encodings[k];
+        INTEGER(VECTOR_ELT(VECTOR_ELT(rccs, 10), idx))[k] = cmd.encodings[k];
       }
-      SET_VECTOR_ELT(VECTOR_ELT(rccs, 10), idx, Rf_allocVector(STRSXP, cmd.path_in_schema.size()));
+      SET_VECTOR_ELT(VECTOR_ELT(rccs, 11), idx, Rf_allocVector(STRSXP, cmd.path_in_schema.size()));
       for (auto k = 0; k < cmd.path_in_schema.size(); k++) {
-        SET_STRING_ELT(VECTOR_ELT(VECTOR_ELT(rccs, 10), idx), k,
+        SET_STRING_ELT(VECTOR_ELT(VECTOR_ELT(rccs, 11), idx), k,
           Rf_mkChar(cmd.path_in_schema[k].c_str()));
       }
-      INTEGER(VECTOR_ELT(rccs, 11))[idx] = cmd.codec;
-      REAL(VECTOR_ELT(rccs, 12))[idx] = cmd.num_values;
-      REAL(VECTOR_ELT(rccs, 13))[idx] = cmd.total_uncompressed_size;
-      REAL(VECTOR_ELT(rccs, 14))[idx] = cmd.total_compressed_size;
-      REAL(VECTOR_ELT(rccs, 15))[idx] = cmd.data_page_offset;
-      REAL(VECTOR_ELT(rccs, 16))[idx] =
-        cmd.__isset.index_page_offset ? cmd.index_page_offset : NA_REAL;
+      INTEGER(VECTOR_ELT(rccs, 12))[idx] = cmd.codec;
+      REAL(VECTOR_ELT(rccs, 13))[idx] = cmd.num_values;
+      REAL(VECTOR_ELT(rccs, 14))[idx] = cmd.total_uncompressed_size;
+      REAL(VECTOR_ELT(rccs, 15))[idx] = cmd.total_compressed_size;
+      REAL(VECTOR_ELT(rccs, 16))[idx] = cmd.data_page_offset;
       REAL(VECTOR_ELT(rccs, 17))[idx] =
+        cmd.__isset.index_page_offset ? cmd.index_page_offset : NA_REAL;
+      REAL(VECTOR_ELT(rccs, 18))[idx] =
         cmd.__isset.dictionary_page_offset ? cmd.dictionary_page_offset : NA_REAL;
 
       idx++;
     }
   }
 
-  UNPROTECT(1); // rccs
+  UNPROTECT(2); // rfile_name, rccs
   return rccs;
 }
 
@@ -337,7 +354,7 @@ SEXP miniparquet_read_metadata(SEXP filesxp) {
 
   try {
 
-    char *fname = (char *)CHAR(STRING_ELT(filesxp, 0));
+    const char *fname = CHAR(STRING_ELT(filesxp, 0));
     ParquetFile f(fname);
 
     const char *res_nms[] = {
@@ -371,9 +388,9 @@ SEXP miniparquet_read_metadata(SEXP filesxp) {
     SET_VECTOR_ELT(res, 0, rfmd);
     UNPROTECT(1); // rfmd
 
-    SET_VECTOR_ELT(res, 1, convert_schema(fmd.schema));
-    SET_VECTOR_ELT(res, 2, convert_row_groups(fmd.row_groups));
-    SET_VECTOR_ELT(res, 3, convert_column_chunks(fmd.row_groups));
+    SET_VECTOR_ELT(res, 1, convert_schema(fname, fmd.schema));
+    SET_VECTOR_ELT(res, 2, convert_row_groups(fname, fmd.row_groups));
+    SET_VECTOR_ELT(res, 3, convert_column_chunks(fname, fmd.row_groups));
 
     UNPROTECT(1); //res
     return res;

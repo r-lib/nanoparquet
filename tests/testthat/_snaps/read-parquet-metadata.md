@@ -25,58 +25,60 @@
     Code
       as.data.frame(mtd$schema)
     Output
-           name       type type_length repetition_type converted_type logical_type
-      1  schema       <NA>          NA            <NA>           <NA>             
-      2     nam BYTE_ARRAY          NA        REQUIRED           UTF8       STRING
-      3     mpg     DOUBLE          NA        REQUIRED           <NA>             
-      4     cyl      INT32          NA        REQUIRED         INT_32 INT, 32,....
-      5    disp     DOUBLE          NA        REQUIRED           <NA>             
-      6      hp     DOUBLE          NA        REQUIRED           <NA>             
-      7    drat     DOUBLE          NA        REQUIRED           <NA>             
-      8      wt     DOUBLE          NA        REQUIRED           <NA>             
-      9    qsec     DOUBLE          NA        REQUIRED           <NA>             
-      10     vs     DOUBLE          NA        REQUIRED           <NA>             
-      11     am     DOUBLE          NA        REQUIRED           <NA>             
-      12   gear     DOUBLE          NA        REQUIRED           <NA>             
-      13   carb     DOUBLE          NA        REQUIRED           <NA>             
-      14  large    BOOLEAN          NA        REQUIRED           <NA>             
-         num_children scale precision field_id
-      1            13    NA        NA       NA
-      2            NA    NA        NA       NA
-      3            NA    NA        NA       NA
-      4            NA    NA        NA       NA
-      5            NA    NA        NA       NA
-      6            NA    NA        NA       NA
-      7            NA    NA        NA       NA
-      8            NA    NA        NA       NA
-      9            NA    NA        NA       NA
-      10           NA    NA        NA       NA
-      11           NA    NA        NA       NA
-      12           NA    NA        NA       NA
-      13           NA    NA        NA       NA
-      14           NA    NA        NA       NA
+            file_name   name       type type_length repetition_type converted_type
+      1  test.parquet schema       <NA>          NA            <NA>           <NA>
+      2  test.parquet    nam BYTE_ARRAY          NA        REQUIRED           UTF8
+      3  test.parquet    mpg     DOUBLE          NA        REQUIRED           <NA>
+      4  test.parquet    cyl      INT32          NA        REQUIRED         INT_32
+      5  test.parquet   disp     DOUBLE          NA        REQUIRED           <NA>
+      6  test.parquet     hp     DOUBLE          NA        REQUIRED           <NA>
+      7  test.parquet   drat     DOUBLE          NA        REQUIRED           <NA>
+      8  test.parquet     wt     DOUBLE          NA        REQUIRED           <NA>
+      9  test.parquet   qsec     DOUBLE          NA        REQUIRED           <NA>
+      10 test.parquet     vs     DOUBLE          NA        REQUIRED           <NA>
+      11 test.parquet     am     DOUBLE          NA        REQUIRED           <NA>
+      12 test.parquet   gear     DOUBLE          NA        REQUIRED           <NA>
+      13 test.parquet   carb     DOUBLE          NA        REQUIRED           <NA>
+      14 test.parquet  large    BOOLEAN          NA        REQUIRED           <NA>
+         logical_type num_children scale precision field_id
+      1                         13    NA        NA       NA
+      2        STRING           NA    NA        NA       NA
+      3                         NA    NA        NA       NA
+      4  INT, 32,....           NA    NA        NA       NA
+      5                         NA    NA        NA       NA
+      6                         NA    NA        NA       NA
+      7                         NA    NA        NA       NA
+      8                         NA    NA        NA       NA
+      9                         NA    NA        NA       NA
+      10                        NA    NA        NA       NA
+      11                        NA    NA        NA       NA
+      12                        NA    NA        NA       NA
+      13                        NA    NA        NA       NA
+      14                        NA    NA        NA       NA
     Code
       as.data.frame(mtd$row_groups)
     Output
-        id total_byte_size num_rows file_offset total_compressed_size ordinal
-      1  0            3446       32          NA                    NA      NA
+           file_name id total_byte_size num_rows file_offset total_compressed_size
+      1 test.parquet  0            3446       32          NA                    NA
+        ordinal
+      1      NA
     Code
       as.data.frame(mtd$column_chunks)
     Output
-         row_group column file_path file_offset offset_index_offset
-      1          0      0      <NA>           4                  NA
-      2          0      1      <NA>         532                  NA
-      3          0      2      <NA>         807                  NA
-      4          0      3      <NA>         954                  NA
-      5          0      4      <NA>        1229                  NA
-      6          0      5      <NA>        1504                  NA
-      7          0      6      <NA>        1779                  NA
-      8          0      7      <NA>        2054                  NA
-      9          0      8      <NA>        2329                  NA
-      10         0      9      <NA>        2604                  NA
-      11         0     10      <NA>        2879                  NA
-      12         0     11      <NA>        3154                  NA
-      13         0     12      <NA>        3429                  NA
+            file_name row_group column file_path file_offset offset_index_offset
+      1  test.parquet         0      0      <NA>           4                  NA
+      2  test.parquet         0      1      <NA>         532                  NA
+      3  test.parquet         0      2      <NA>         807                  NA
+      4  test.parquet         0      3      <NA>         954                  NA
+      5  test.parquet         0      4      <NA>        1229                  NA
+      6  test.parquet         0      5      <NA>        1504                  NA
+      7  test.parquet         0      6      <NA>        1779                  NA
+      8  test.parquet         0      7      <NA>        2054                  NA
+      9  test.parquet         0      8      <NA>        2329                  NA
+      10 test.parquet         0      9      <NA>        2604                  NA
+      11 test.parquet         0     10      <NA>        2879                  NA
+      12 test.parquet         0     11      <NA>        3154                  NA
+      13 test.parquet         0     12      <NA>        3429                  NA
          offset_index_length column_index_offset column_index_length       type
       1                   NA                  NA                  NA BYTE_ARRAY
       2                   NA                  NA                  NA     DOUBLE
