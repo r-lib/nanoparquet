@@ -37,7 +37,7 @@ SEXP convert_logical_type(parquet::format::LogicalType ltype) {
     rtype = PROTECT(Rf_mkNamed(VECSXP, nms)); prot++;
     SET_VECTOR_ELT(rtype, 0, Rf_mkString("DECIMAL"));
     SET_VECTOR_ELT(rtype, 1, Rf_ScalarInteger(ltype.DECIMAL.scale));
-    SET_VECTOR_ELT(rtype, 2, Rf_ScalarLogical(ltype.DECIMAL.precision));
+    SET_VECTOR_ELT(rtype, 2, Rf_ScalarInteger(ltype.DECIMAL.precision));
 
   } else if (ltype.__isset.DATE) {
     const char *nms[] = { "type", "" };
