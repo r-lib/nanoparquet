@@ -157,3 +157,297 @@
       13                        NA    NA        NA       NA
       14                        NA    NA        NA       NA
 
+# ENUM type
+
+    Code
+      as.data.frame(sch)
+    Output
+                 file_name                   name       type type_length
+      1  data/enum.parquet             trace.Span       <NA>          NA
+      2  data/enum.parquet                     id BYTE_ARRAY          NA
+      3  data/enum.parquet              parent_id BYTE_ARRAY          NA
+      4  data/enum.parquet               trace_id BYTE_ARRAY          NA
+      5  data/enum.parquet                   name BYTE_ARRAY          NA
+      6  data/enum.parquet start_timestamp_micros      INT64          NA
+      7  data/enum.parquet        duration_micros      INT64          NA
+      8  data/enum.parquet                   tags       <NA>          NA
+      9  data/enum.parquet                    key BYTE_ARRAY          NA
+      10 data/enum.parquet                 v_type BYTE_ARRAY          NA
+      11 data/enum.parquet                  v_str BYTE_ARRAY          NA
+      12 data/enum.parquet                 v_bool    BOOLEAN          NA
+      13 data/enum.parquet                v_int64      INT64          NA
+      14 data/enum.parquet              v_float64     DOUBLE          NA
+      15 data/enum.parquet               v_binary BYTE_ARRAY          NA
+         repetition_type converted_type logical_type num_children scale precision
+      1             <NA>           <NA>                         7    NA        NA
+      2         OPTIONAL           <NA>                        NA    NA        NA
+      3         OPTIONAL           <NA>                        NA    NA        NA
+      4         OPTIONAL           <NA>                        NA    NA        NA
+      5         OPTIONAL           UTF8       STRING           NA    NA        NA
+      6         OPTIONAL           <NA>                        NA    NA        NA
+      7         OPTIONAL           <NA>                        NA    NA        NA
+      8         REPEATED           <NA>                         7    NA        NA
+      9         OPTIONAL           UTF8       STRING           NA    NA        NA
+      10        OPTIONAL           ENUM         ENUM           NA    NA        NA
+      11        OPTIONAL           UTF8       STRING           NA    NA        NA
+      12        OPTIONAL           <NA>                        NA    NA        NA
+      13        OPTIONAL           <NA>                        NA    NA        NA
+      14        OPTIONAL           <NA>                        NA    NA        NA
+      15        OPTIONAL           <NA>                        NA    NA        NA
+         field_id
+      1        NA
+      2         1
+      3         2
+      4         3
+      5         4
+      6         5
+      7         6
+      8         7
+      9         1
+      10        2
+      11        3
+      12        4
+      13        5
+      14        6
+      15        7
+
+# UUID type
+
+    Code
+      as.data.frame(sch)
+    Output
+                      file_name          name                 type type_length
+      1 data/uuid-arrow.parquet duckdb_schema                 <NA>          NA
+      2 data/uuid-arrow.parquet             u FIXED_LEN_BYTE_ARRAY          16
+        repetition_type converted_type logical_type num_children scale precision
+      1        REQUIRED           <NA>                         1    NA        NA
+      2        OPTIONAL           <NA>         UUID            0    NA        NA
+        field_id
+      1       NA
+      2       NA
+
+# DATE type
+
+    Code
+      as.data.frame(sch)
+    Output
+                file_name  name  type type_length repetition_type converted_type
+      1 data/date.parquet dates  <NA>          NA            <NA>           <NA>
+      2 data/date.parquet     d INT32          NA        OPTIONAL           DATE
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2         DATE           NA    NA        NA       NA
+
+# DECIMAL type
+
+    Code
+      as.data.frame(sch)
+    Output
+                    file_name   name                 type type_length repetition_type
+      1 data/decimals.parquet schema                 <NA>          NA        REQUIRED
+      2 data/decimals.parquet     l1 FIXED_LEN_BYTE_ARRAY           2        OPTIONAL
+      3 data/decimals.parquet     l2 FIXED_LEN_BYTE_ARRAY           4        OPTIONAL
+      4 data/decimals.parquet     l3 FIXED_LEN_BYTE_ARRAY           7        OPTIONAL
+      5 data/decimals.parquet     l4 FIXED_LEN_BYTE_ARRAY          13        OPTIONAL
+        converted_type logical_type num_children scale precision field_id
+      1           <NA>                         4    NA        NA       NA
+      2        DECIMAL DECIMAL,....           NA     2         3       NA
+      3        DECIMAL DECIMAL,....           NA     2         8       NA
+      4        DECIMAL DECIMAL,....           NA     2        15       NA
+      5        DECIMAL DECIMAL,....           NA     2        30       NA
+
+---
+
+    Code
+      sch$logical_type
+    Output
+      [[1]]
+      NULL
+      
+      [[2]]
+      $type
+      [1] "DECIMAL"
+      
+      $scale
+      [1] 2
+      
+      $precision
+      [1] 3
+      
+      attr(,"class")
+      [1] "miniparquet_logical_type"
+      
+      [[3]]
+      $type
+      [1] "DECIMAL"
+      
+      $scale
+      [1] 2
+      
+      $precision
+      [1] 8
+      
+      attr(,"class")
+      [1] "miniparquet_logical_type"
+      
+      [[4]]
+      $type
+      [1] "DECIMAL"
+      
+      $scale
+      [1] 2
+      
+      $precision
+      [1] 15
+      
+      attr(,"class")
+      [1] "miniparquet_logical_type"
+      
+      [[5]]
+      $type
+      [1] "DECIMAL"
+      
+      $scale
+      [1] 2
+      
+      $precision
+      [1] 30
+      
+      attr(,"class")
+      [1] "miniparquet_logical_type"
+      
+
+# TIME type
+
+    Code
+      as.data.frame(sch)
+    Output
+                  file_name          name  type type_length repetition_type
+      1 data/timetz.parquet duckdb_schema  <NA>          NA        REQUIRED
+      2 data/timetz.parquet            tt INT64          NA        OPTIONAL
+        converted_type logical_type num_children scale precision field_id
+      1           <NA>                         1    NA        NA       NA
+      2    TIME_MICROS TIME, TR....           NA    NA        NA       NA
+
+---
+
+    Code
+      sch$logical_type
+    Output
+      [[1]]
+      NULL
+      
+      [[2]]
+      $type
+      [1] "TIME"
+      
+      $is_adjusted_to_utc
+      [1] TRUE
+      
+      $unit
+      [1] "micros"
+      
+      attr(,"class")
+      [1] "miniparquet_logical_type"
+      
+
+# TIMESTAMP type
+
+    Code
+      as.data.frame(sch)
+    Output
+                     file_name   name  type type_length repetition_type
+      1 data/timestamp.parquet schema  <NA>          NA        REQUIRED
+      2 data/timestamp.parquet   Time INT64          NA        OPTIONAL
+          converted_type logical_type num_children scale precision field_id
+      1             <NA>                         1    NA        NA       NA
+      2 TIMESTAMP_MICROS TIME, FA....           NA    NA        NA       NA
+
+---
+
+    Code
+      sch$logical_type
+    Output
+      [[1]]
+      NULL
+      
+      [[2]]
+      $type
+      [1] "TIME"
+      
+      $is_adjusted_to_utc
+      [1] FALSE
+      
+      $unit
+      [1] "micros"
+      
+      attr(,"class")
+      [1] "miniparquet_logical_type"
+      
+
+# LIST type
+
+    Code
+      as.data.frame(sch)
+    Output
+                               file_name         name       type type_length
+      1 data/nested_lists.snappy.parquet spark_schema       <NA>          NA
+      2 data/nested_lists.snappy.parquet            a       <NA>          NA
+      3 data/nested_lists.snappy.parquet         list       <NA>          NA
+      4 data/nested_lists.snappy.parquet      element       <NA>          NA
+      5 data/nested_lists.snappy.parquet         list       <NA>          NA
+      6 data/nested_lists.snappy.parquet      element       <NA>          NA
+      7 data/nested_lists.snappy.parquet         list       <NA>          NA
+      8 data/nested_lists.snappy.parquet      element BYTE_ARRAY          NA
+      9 data/nested_lists.snappy.parquet            b      INT32          NA
+        repetition_type converted_type logical_type num_children scale precision
+      1            <NA>           <NA>                         2    NA        NA
+      2        OPTIONAL           LIST                         1    NA        NA
+      3        REPEATED           <NA>                         1    NA        NA
+      4        OPTIONAL           LIST                         1    NA        NA
+      5        REPEATED           <NA>                         1    NA        NA
+      6        OPTIONAL           LIST                         1    NA        NA
+      7        REPEATED           <NA>                         1    NA        NA
+      8        OPTIONAL           UTF8                        NA    NA        NA
+      9        REQUIRED           <NA>                        NA    NA        NA
+        field_id
+      1       NA
+      2       NA
+      3       NA
+      4       NA
+      5       NA
+      6       NA
+      7       NA
+      8       NA
+      9       NA
+
+# MAP type
+
+    Code
+      as.data.frame(sch)
+    Output
+               file_name        name       type type_length repetition_type
+      1 data/map.parquet hive_schema       <NA>          NA            <NA>
+      2 data/map.parquet  raw_header       <NA>          NA        OPTIONAL
+      3 data/map.parquet         map       <NA>          NA        REPEATED
+      4 data/map.parquet         key BYTE_ARRAY          NA        REQUIRED
+      5 data/map.parquet       value BYTE_ARRAY          NA        OPTIONAL
+        converted_type logical_type num_children scale precision field_id
+      1           <NA>                         1    NA        NA       NA
+      2            MAP                         1    NA        NA       NA
+      3  MAP_KEY_VALUE                         2    NA        NA       NA
+      4           UTF8                        NA    NA        NA       NA
+      5           UTF8                        NA    NA        NA       NA
+
+# key-value metadata
+
+    Code
+      as.data.frame(mtd$file_meta_data$key_value_metadata[[1]])
+    Output
+                 key
+      1            r
+      2 ARROW:schema
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               value
+      1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      A\n3\n263168\n197888\n5\nUTF-8\n531\n1\n531\n13\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n1026\n1\n262153\n5\nnames\n16\n13\n262153\n4\nname\n262153\n3\nmpg\n262153\n3\ncyl\n262153\n4\ndisp\n262153\n2\nhp\n262153\n4\ndrat\n262153\n2\nwt\n262153\n4\nqsec\n262153\n2\nvs\n262153\n2\nam\n262153\n4\ngear\n262153\n4\ncarb\n262153\n3\nfac\n254\n1026\n511\n16\n1\n262153\n7\ncolumns\n254\n
+      2 /////1AEAAAQAAAAAAAKAA4ABgAFAAgACgAAAAABBAAQAAAAAAAKAAwAAAAEAAgACgAAAHwBAAAEAAAAAQAAAAwAAAAIAAwABAAIAAgAAABYAQAABAAAAEkBAABBCjMKMjYzMTY4CjE5Nzg4OAo1ClVURi04CjUzMQoxCjUzMQoxMwoyNTQKMjU0CjI1NAoyNTQKMjU0CjI1NAoyNTQKMjU0CjI1NAoyNTQKMjU0CjI1NAoyNTQKMTAyNgoxCjI2MjE1Mwo1Cm5hbWVzCjE2CjEzCjI2MjE1Mwo0Cm5hbWUKMjYyMTUzCjMKbXBnCjI2MjE1MwozCmN5bAoyNjIxNTMKNApkaXNwCjI2MjE1MwoyCmhwCjI2MjE1Mwo0CmRyYXQKMjYyMTUzCjIKd3QKMjYyMTUzCjQKcXNlYwoyNjIxNTMKMgp2cwoyNjIxNTMKMgphbQoyNjIxNTMKNApnZWFyCjI2MjE1Mwo0CmNhcmIKMjYyMTUzCjMKZmFjCjI1NAoxMDI2CjUxMQoxNgoxCjI2MjE1Mwo3CmNvbHVtbnMKMjU0CgAAAAEAAAByAAAADQAAAHQCAAAwAgAABAIAANQBAACoAQAAeAEAAEwBAAAcAQAA8AAAAMQAAACUAAAAZAAAABQAAAAQABgACAAGAAcADAAQABQAEAAAAAAAAQUUAAAAPAAAABwAAAAEAAAAAAAAAAMAAABmYWMACAAIAAAABAAIAAAADAAAAAgADAAIAAcACAAAAAAAAAEIAAAA9P3//yz+//8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABjYXJiAAAAAF7+//8AAAIAWP7//wAAAQMQAAAAGAAAAAQAAAAAAAAABAAAAGdlYXIAAAAAiv7//wAAAgCE/v//AAABAxAAAAAUAAAABAAAAAAAAAACAAAAYW0AALL+//8AAAIArP7//wAAAQMQAAAAFAAAAAQAAAAAAAAAAgAAAHZzAADa/v//AAACANT+//8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABxc2VjAAAAAAb///8AAAIAAP///wAAAQMQAAAAFAAAAAQAAAAAAAAAAgAAAHd0AAAu////AAACACj///8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABkcmF0AAAAAFr///8AAAIAVP///wAAAQMQAAAAFAAAAAQAAAAAAAAAAgAAAGhwAACC////AAACAHz///8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABkaXNwAAAAAK7///8AAAIAqP///wAAAQMQAAAAFAAAAAQAAAAAAAAAAwAAAGN5bADW////AAACAND///8AAAEDEAAAABwAAAAEAAAAAAAAAAMAAABtcGcAAAAGAAgABgAGAAAAAAACABAAFAAIAAYABwAMAAAAEAAQAAAAAAABBRAAAAAcAAAABAAAAAAAAAAEAAAAbmFtZQAAAAAEAAQABAAAAAAAAAA=
+
