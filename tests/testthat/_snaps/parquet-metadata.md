@@ -1,4 +1,4 @@
-# read_parquet_metadata
+# parquet_metadata
 
     Code
       as.data.frame(mtd$file_meta_data)

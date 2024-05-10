@@ -5,7 +5,7 @@
 #' @param file Path to a Parquet file.
 #' @return A `data.frame` with the file's contents.
 #' @export
-#' @seealso [read_parquet_metadata()], [write_parquet()].
+#' @seealso [parquet_metadata()], [write_parquet()].
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "miniparquet")
 #' parquet_df <- miniparquet::read_parquet(file_name)
@@ -114,7 +114,7 @@ format_schema_result <- function(sch) {
 #'     - `created_by`: A string scalar, usually the name of the software
 #'       that created the file.
 #'   * `schema`:
-# -- If YOU UPDATE THIS, ALSO UPDATE read_parquet_schema BELOW ------------
+# -- If YOU UPDATE THIS, ALSO UPDATE parquet_schema BELOW -----------------
 #'     data frame, the schema of the file. It has one row for
 #'     each node (inner node or leaf node). For flat files this means one
 #'     root node (inner node), always the first one, and then one row for
@@ -164,13 +164,13 @@ format_schema_result <- function(sch) {
 #'       are no dictionary pages.
 #'
 #' @export
-#' @seealso [read_parquet_schema()] only reads the schema of the file,
+#' @seealso [parquet_schema()] only reads the schema of the file,
 #'   [read_parquet()], [write_parquet()].
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "miniparquet")
-#' miniparquet::read_parquet_metadata(file_name)
+#' miniparquet::parquet_metadata(file_name)
 
-read_parquet_metadata <- function(file) {
+parquet_metadata <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(miniparquet_read_metadata, file)
 
@@ -202,9 +202,15 @@ read_parquet_metadata <- function(file) {
 	res
 }
 
-#' @param file
+#' Read the schema of a Parquet file
+#'
+#' This function should work on all files, even if [read_parquet()] is
+#' unabled to read them, because of an unsupported schema, encoding,
+#' compression or other reason.
+#'
+#' @param file Path to a Parquet file.
 #' @return
-# -- If YOU UPDATE THIS, ALSO UPDATE read_parquet_metadata ABOVE ----------
+# -- If YOU UPDATE THIS, ALSO UPDATE parquet_metadata ABOVE ---------------
 #'     Data frame, the schema of the file. It has one row for
 #'     each node (inner node or leaf node). For flat files this means one
 #'     root node (inner node), always the first one, and then one row for
@@ -223,11 +229,11 @@ read_parquet_metadata <- function(file) {
 #'       integer for the root node, and `NA` for a leaf node.
 # -------------------------------------------------------------------------
 #'
-#' @seealso [read_parquet_metadata()] reads more metadata,
+#' @seealso [parquet_metadata()] reads more metadata,
 #'   [read_parquet()], [write_parquet()].
 #' @export
 
-read_parquet_schema <- function(file) {
+parquet_schema <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(miniparquet_read_schema, file)
 	res <- format_schema_result(res)
@@ -245,7 +251,7 @@ read_parquet_schema <- function(file) {
 #' @return `NULL`
 #'
 #' @export
-#' @seealso [read_parquet_metadata()], [read_parquet()].
+#' @seealso [parquet_metadata()], [read_parquet()].
 #' @examplesIf !miniparquet:::is_rcmd_check()
 #' # add row names as a column, because `write_parquet()` ignores them.
 #' mtcars2 <- cbind(name = rownames(mtcars), mtcars)

@@ -38,11 +38,13 @@ df <- data.table::rbindlist(lapply(
 ))
 ```
 
-Call `read_parquet_metadata()` to show the metadata, e.g. the column
-types, of a Parquet file, without reading the whole file into memory:
+Call `parquet_schema()` to show the schema (i.e. the column names and
+types) of a Parquet file, or `parquet_metadata()` to show the complete
+ metadata, without reading the whole file into memory:
 
 ```r
-miniparquet::read_parquet_metadata("example.parquet")
+miniparquet::parquet_schema("example.parquet")
+miniparquet::parquet_metadata("example.parquet")
 ```
 
 Call `write_parquet()` to write a data frame to a Parquet file:
