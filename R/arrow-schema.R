@@ -3,7 +3,7 @@ apply_arrow_schema <- function(tab, file) {
   kv <- mtd$file_meta_data$key_value_metadata[[1]]
   if ("ARROW:schema" %in% kv$key) {
     amd <- tryCatch(
-      parse_arrow_schema(kv$value[match("ARROW:schema", kv$key)]),
+      parse_arrow_schema(kv$value[match("ARROW:schema", kv$key)])$columns,
       error = function(e) {
         warning(sprintf(
           "Failed to parse Arrow schema from parquet file at '%s'",
@@ -53,12 +53,42 @@ arrow_types <- c(
   LargeListView = 26L
 )
 
+endianness_names <- c(
+  "Little" = 0L,
+  "Big" = 1L
+)
+
+features_names <- c(
+  UNUSED = 0L,
+  DICTIONARY_REPLACEMENT = 1L,
+  COMPRESSED_BODY = 2L
+)
+
 parse_arrow_schema <- function(schema) {
   ret <- .Call(miniparquet_parse_arrow_schema, schema)
-  ret$type <- names(arrow_types)[ret$type + 1L]
-  ret <- as.data.frame(ret)
-  class(ret) <- c("tbl", class(ret))
-  ret
+
+  columns <- ret[[1]]
+  columns$type <- names(arrow_types)[columns$type + 1L]
+  columns$custom_metadata <- I(columns$custom_metadata)
+  columns <- as.data.frame(columns)
+  class(columns) <- c("tbl", class(columns))
+
+  kv <- ret[[2]]
+  kv <- as.data.frame(kv)
+  class(kv) <- c("tbl", class(kv))
+
+  endianness <- ret[[3]]
+  endianness <- names(endianness_names)[endianness + 1L]
+
+  features <- ret[[4]]
+  features <- names(features_names)[features + 1L]
+
+  list(
+    columns = columns,
+    custom_metadata = kv,
+    endianness = endianness,
+    features = features
+  )
 }
 
 base64_decode <- function(x) {

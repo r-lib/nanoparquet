@@ -42,6 +42,7 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
     "nullable",
     "dictionary_bit_width",
     "dictionary_signed",
+    "custom_metadata",
     ""
   };
   SEXP res = PROTECT(Rf_mkNamed(VECSXP, nms));
@@ -51,6 +52,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
   SET_VECTOR_ELT(res, 2, Rf_allocVector(LGLSXP, ncols));
   SET_VECTOR_ELT(res, 3, Rf_allocVector(INTSXP, ncols));
   SET_VECTOR_ELT(res, 4, Rf_allocVector(LGLSXP, ncols));
+  SET_VECTOR_ELT(res, 5, Rf_allocVector(VECSXP, ncols));
+
+  const char *kvnms[] = { "key", "value", "" };
 
   for (auto i = 0; i < sch->fields.size(); i++) {
     bool dict = sch->fields[i]->dictionary != nullptr;
@@ -70,10 +74,55 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
       INTEGER(VECTOR_ELT(res, 3))[i] = NA_INTEGER;
       LOGICAL(VECTOR_ELT(res, 4))[i] = NA_LOGICAL;
     }
+    SET_VECTOR_ELT(VECTOR_ELT(res, 5), i, Rf_mkNamed(VECSXP, kvnms));
+    SEXP kv = VECTOR_ELT(VECTOR_ELT(res, 5), i);
+    size_t kvlen = sch->fields[i]->custom_metadata.size();
+    SET_VECTOR_ELT(kv, 0, Rf_allocVector(STRSXP, kvlen));
+    SET_VECTOR_ELT(kv, 1, Rf_allocVector(STRSXP, kvlen));
+    for (auto j = 0; j < kvlen; j++) {
+      SET_STRING_ELT(
+        VECTOR_ELT(kv, 0),
+        j,
+        Rf_mkChar(sch->fields[i]->custom_metadata[j]->key.c_str())
+      );
+      SET_STRING_ELT(
+        VECTOR_ELT(kv, 1),
+        j,
+        Rf_mkChar(sch->fields[i]->custom_metadata[j]->value.c_str())
+      );
+    }
   }
 
-  UNPROTECT(1);
-  return res;
+  SEXP kv = PROTECT(Rf_mkNamed(VECSXP, kvnms));
+  size_t kvlen = sch->custom_metadata.size();
+  SET_VECTOR_ELT(kv, 0, Rf_allocVector(STRSXP, kvlen));
+  SET_VECTOR_ELT(kv, 1, Rf_allocVector(STRSXP, kvlen));
+  for (auto i = 0; i < sch->custom_metadata.size(); i++) {
+    SET_STRING_ELT(
+      VECTOR_ELT(kv, 0),
+      i,
+      Rf_mkChar(sch->custom_metadata[i]->key.c_str())
+    );
+    SET_STRING_ELT(
+      VECTOR_ELT(kv, 1),
+      i,
+      Rf_mkChar(sch->custom_metadata[i]->value.c_str())
+    );
+  }
+
+  SEXP features = PROTECT(Rf_allocVector(INTSXP, sch->features.size()));
+  for (auto i = 0; i < sch->features.size(); i++) {
+    INTEGER(features)[i] = sch->features[i];
+  }
+
+  SEXP fres = PROTECT(Rf_allocVector(VECSXP, 4));
+  SET_VECTOR_ELT(fres, 0, res);
+  SET_VECTOR_ELT(fres, 1, kv);
+  SET_VECTOR_ELT(fres, 2, Rf_ScalarInteger(sch->endianness));
+  SET_VECTOR_ELT(fres, 3, features);
+
+  UNPROTECT(4);
+  return fres;
 }
 
 SEXP miniparquet_parse_arrow_schema(SEXP rbuf) {
