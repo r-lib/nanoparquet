@@ -1,0 +1,130 @@
+#include <iostream>
+
+#include <Rdefines.h>
+
+#include "flatbuffers/Message_generated.h"
+#include "simdutf/simdutf.h"
+
+#include "lib/bytebuffer.h"
+
+using namespace org::apache::arrow::flatbuf;
+using namespace flatbuffers;
+using namespace std;
+
+template <typename RootType>
+bool VerifyFlatbuffers(const uint8_t* data, int64_t size) {
+  Verifier verifier(
+      data, static_cast<size_t>(size),
+      /*max_depth=*/128,
+      /*max_tables=*/static_cast<flatbuffers::uoffset_t>(8 * size));
+  return verifier.VerifyBuffer<RootType>(nullptr);
+}
+
+extern "C" {
+
+SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
+  bool ok = VerifyFlatbuffers<Message>(buf, len);
+  if (!ok) {
+     return R_NilValue;
+  }
+
+  MessageT msg;
+  GetMessage(buf)->UnPackTo(&msg);
+
+  SchemaT *sch = msg.header.AsSchema();
+  if (sch == nullptr) {
+    return R_NilValue;
+  }
+
+  const char *nms[] = {
+    "name",
+    "type",
+    "nullable",
+    "dictionary_bit_width",
+    "dictionary_signed",
+    ""
+  };
+  SEXP res = PROTECT(Rf_mkNamed(VECSXP, nms));
+  uint32_t ncols = sch->fields.size();
+  SET_VECTOR_ELT(res, 0, Rf_allocVector(STRSXP, ncols));
+  SET_VECTOR_ELT(res, 1, Rf_allocVector(INTSXP, ncols));
+  SET_VECTOR_ELT(res, 2, Rf_allocVector(LGLSXP, ncols));
+  SET_VECTOR_ELT(res, 3, Rf_allocVector(INTSXP, ncols));
+  SET_VECTOR_ELT(res, 4, Rf_allocVector(LGLSXP, ncols));
+
+  for (auto i = 0; i < sch->fields.size(); i++) {
+    bool dict = sch->fields[i]->dictionary != nullptr;
+    SET_STRING_ELT(
+      VECTOR_ELT(res, 0),
+      i,
+      Rf_mkChar(sch->fields[i]->name.c_str())
+    );
+    INTEGER(VECTOR_ELT(res, 1))[i] = sch->fields[i]->type.type;
+    LOGICAL(VECTOR_ELT(res, 2))[i] = sch->fields[i]->nullable;
+    if (dict) {
+      INTEGER(VECTOR_ELT(res, 3))[i] =
+        sch->fields[i]->dictionary->indexType->bitWidth;
+      LOGICAL(VECTOR_ELT(res, 4))[i] =
+        sch->fields[i]->dictionary->indexType->is_signed;
+    } else {
+      INTEGER(VECTOR_ELT(res, 3))[i] = NA_INTEGER;
+      LOGICAL(VECTOR_ELT(res, 4))[i] = NA_LOGICAL;
+    }
+  }
+
+  UNPROTECT(1);
+  return res;
+}
+
+SEXP miniparquet_parse_arrow_schema(SEXP rbuf) {
+  // base64 decode first
+  if (TYPEOF(rbuf) != STRSXP) {
+    Rf_error("Arrow schema must be a RAW vector or a string");
+  }
+  const char *input = (const char*) CHAR(STRING_ELT(rbuf, 0));
+  size_t slen = strlen(input);
+
+  size_t olen = simdutf::maximal_binary_length_from_base64(
+    input,
+    slen
+  );
+  ByteBuffer bbuf;
+  bbuf.resize(olen);
+  simdutf::result bres = simdutf::base64_to_binary(
+    input,
+    slen,
+    (char*) bbuf.ptr
+  );
+  size_t rawlen = bres.count;
+  uint8_t *buf = (uint8_t*) bbuf.ptr;
+
+  if (rawlen < 4) {
+    Rf_error("Invalid serialized Arrow schema");
+  }
+  // The first four bytes may be an optional continuation token.
+  // We try to parse the schema with and without a token.
+  uint32_t len = ((uint32_t *) buf)[0];
+  SEXP res = R_NilValue;
+  if (len <= rawlen - 4) {
+    res = miniparquet_parse_arrow_schema_impl(buf + 4, len);
+  }
+
+  // If it failed, then try to skip the continuation token
+  if (Rf_isNull(res)) {
+    if (rawlen < 8) {
+      Rf_error("Invalid serialized Arrow schema");
+    }
+    len = ((uint32_t*) buf)[1];
+    if (len <= rawlen - 8) {
+      res = miniparquet_parse_arrow_schema_impl(buf + 8, len);
+    }
+  }
+
+  if (Rf_isNull(res)) {
+    Rf_error("Failed to parse serialized Arrow schema");
+  }
+
+  return res;
+}
+
+}

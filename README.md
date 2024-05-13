@@ -11,7 +11,7 @@ miniparquet only supports rectangular-shaped data structures
 (no nested tables) and only the Snappy compression scheme.
 miniparquet has no (zero, none, 0)
 [external dependencies](https://research.swtch.com/deps) and is very
-lightweight. It compiles in seconds to a binary size of under 1 MB.
+lightweight. It compiles in seconds to a binary size of about 2 MB.
 
 ## Installation
 

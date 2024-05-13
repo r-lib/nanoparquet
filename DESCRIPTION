@@ -20,7 +20,8 @@ Suggests:
     arrow,
     DBI,
     duckdb,
-		processx,
+    mockery,
+    processx,
     testthat,
 		withr
 Roxygen: list(markdown = TRUE)

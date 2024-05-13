@@ -14,6 +14,7 @@
 read_parquet <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(miniparquet_read, file)
+	res <- apply_arrow_schema(res, file)
 	# some data.frame dress up
 	attr(res, "row.names") <- c(NA_integer_, as.integer(-1 * length(res[[1]])))
 	class(res) <- "data.frame"
