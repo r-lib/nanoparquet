@@ -3778,11 +3778,11 @@ inline ::flatbuffers::Offset<Timestamp> CreateTimestamp(::flatbuffers::FlatBuffe
   (void)_o;
   struct _VectorArgs { ::flatbuffers::FlatBufferBuilder *__fbb; const TimestampT* __o; const ::flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
   auto _unit = _o->unit;
-  auto _timezone = _o->timezone.empty() ? 0 : _fbb.CreateString(_o->timezone);
+  auto _tz = _o->timezone.empty() ? 0 : _fbb.CreateString(_o->timezone);
   return org::apache::arrow::flatbuf::CreateTimestamp(
       _fbb,
       _unit,
-      _timezone);
+      _tz);
 }
 
 inline IntervalT *Interval::UnPack(const ::flatbuffers::resolver_function_t *_resolver) const {
