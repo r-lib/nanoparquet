@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "lib/miniparquet.h"
+#undef ERROR
 #include <Rdefines.h>
 
 using namespace miniparquet;
