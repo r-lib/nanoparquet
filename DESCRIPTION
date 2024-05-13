@@ -11,7 +11,7 @@ Authors@R: c(
 	person("Posit Software, PBC", role = "cph"))
 Description: Self-sufficient reader for a subset of Parquet files.
     Nested tables, compression besides Snappy and encryption are not
-		supported.
+    supported.
 Depends:
     R (>= 4.0.0)
 License: MIT + file LICENSE
@@ -23,7 +23,8 @@ Suggests:
     mockery,
     processx,
     testthat,
-		withr
+    withr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Config/testthat/edition: 3
+Biarch: true
