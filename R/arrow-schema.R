@@ -91,6 +91,10 @@ parse_arrow_schema <- function(schema) {
   )
 }
 
+create_arrow_schema <- function(df) {
+  # TODO
+}
+
 base64_decode <- function(x) {
   .Call(miniparquet_base64_decode, x)
 }

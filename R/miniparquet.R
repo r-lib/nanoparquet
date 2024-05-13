@@ -268,5 +268,12 @@ write_parquet <- function(
 	codecs <- c("uncompressed" = 0L, "snappy" = 1L)
 	compression <- codecs[match.arg(compression)]
 	dim <- as.integer(dim(x))
+
+	# convert factors to strings
+	fctrs <- which(vapply(x, function(c) inherits(c, "factor"), logical(1)))
+	for (idx in fctrs) {
+		x[[idx]] <- as.character(x[[idx]])
+	}
+
 	invisible(.Call(miniparquet_write, x, file, dim, compression))
 }

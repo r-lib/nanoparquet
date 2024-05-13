@@ -1,3 +1,26 @@
+# factors are written as strings
+
+    Code
+      as.data.frame(parquet_schema(tmp))[c("name", "type", "converted_type",
+        "logical_type")]
+    Output
+           name       type converted_type logical_type
+      1  schema       <NA>           <NA>             
+      2     nam BYTE_ARRAY           UTF8       STRING
+      3     mpg     DOUBLE           <NA>             
+      4     cyl      INT32         INT_32 INT, 32,....
+      5    disp     DOUBLE           <NA>             
+      6      hp     DOUBLE           <NA>             
+      7    drat     DOUBLE           <NA>             
+      8      wt     DOUBLE           <NA>             
+      9    qsec     DOUBLE           <NA>             
+      10     vs     DOUBLE           <NA>             
+      11     am     DOUBLE           <NA>             
+      12   gear     DOUBLE           <NA>             
+      13   carb     DOUBLE           <NA>             
+      14  large    BOOLEAN           <NA>             
+      15    fac BYTE_ARRAY           UTF8       STRING
+
 # round trip with pandas/pyarrow
 
     Code

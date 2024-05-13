@@ -1,3 +1,16 @@
+test_that("factors are written as strings", {
+  mt <- test_df(factor = TRUE)
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  write_parquet(mt, tmp)
+  expect_snapshot(
+    as.data.frame(parquet_schema(tmp))[
+      c("name", "type", "converted_type", "logical_type")
+    ]
+  )
+})
+
 test_that("round trip", {
   mt <- test_df()
   tmp <- tempfile(fileext = ".parquet")
