@@ -291,7 +291,7 @@ namespace flatbuffers {
 
 namespace flatbuffers {
   // This is constexpr function used for checking compile-time constants.
-  // Avoid `#pragma warning(disable: 4127) // C4127: expression is constant`.
+  // Avoid `# pragma warning(disable: 4127) // C4127: expression is constant`.
   template<typename T> FLATBUFFERS_CONSTEXPR inline bool IsConstTrue(T t) {
     return !!t;
   }
@@ -363,8 +363,8 @@ inline bool VerifyAlignmentRequirements(size_t align, size_t min_align = 1) {
 }
 
 #if defined(_MSC_VER)
-  #pragma warning(push)
-  #pragma warning(disable: 4127) // C4127: conditional expression is constant
+  # pragma warning(push)
+  # pragma warning(disable: 4127) // C4127: conditional expression is constant
 #endif
 
 template<typename T> T EndianSwap(T t) {
@@ -409,7 +409,7 @@ template<typename T> T EndianSwap(T t) {
 }
 
 #if defined(_MSC_VER)
-  #pragma warning(pop)
+  # pragma warning(pop)
 #endif
 
 
@@ -431,8 +431,8 @@ T ReadScalar(const void *p) {
 // See https://github.com/google/flatbuffers/issues/5950
 
 #if (FLATBUFFERS_GCC >= 100000) && (FLATBUFFERS_GCC < 110000)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wstringop-overflow"
+  # pragma GCC diagnostic push
+  # pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
 
 template<typename T>
@@ -448,7 +448,7 @@ template<typename T> FLATBUFFERS_SUPPRESS_UBSAN("alignment") void WriteScalar(vo
 }
 
 #if (FLATBUFFERS_GCC >= 100000) && (FLATBUFFERS_GCC < 110000)
-  #pragma GCC diagnostic pop
+  # pragma GCC diagnostic pop
 #endif
 
 // Computes how many bytes you'd have to pad to be able to write an
