@@ -15,7 +15,10 @@ apply_arrow_schema <- function(tab, file) {
     if (is.null(amd)) {
       return(tab)
     }
-    fct <- which(amd$type == "Utf8" & !is.na(amd$dictionary_bit_width))
+    # If the type is Utf8 and it is a dictionary, then it is a factor
+    fct <- which(
+      amd$type_type == "Utf8" & !vapply(amd$dictionary, is.null, logical(1))
+    )
     for (idx in fct) {
       tab[[idx]] <- as.factor(tab[[idx]])
     }
@@ -68,7 +71,9 @@ parse_arrow_schema <- function(schema) {
   ret <- .Call(miniparquet_parse_arrow_schema, schema)
 
   columns <- ret[[1]]
-  columns$type <- names(arrow_types)[columns$type + 1L]
+  columns$type_type <- names(arrow_types)[columns$type_type + 1L]
+  columns$type <- I(columns$type)
+  columns$dictionary <- I(columns$dictionary)
   columns$custom_metadata <- I(columns$custom_metadata)
   columns <- as.data.frame(columns)
   class(columns) <- c("tbl", class(columns))
