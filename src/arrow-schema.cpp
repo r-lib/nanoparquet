@@ -26,7 +26,7 @@ extern "C" {
 SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
   bool ok = VerifyFlatbuffers<Message>(buf, len);
   if (!ok) {
-     return R_NilValue;
+     Rf_error("Cannot parse arrow schema");
   }
 
   MessageT msg;
@@ -34,7 +34,7 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
 
   SchemaT *sch = msg.header.AsSchema();
   if (sch == nullptr) {
-    return R_NilValue;
+     Rf_error("Cannot parse arrow schema");
   }
 
   const char *nms[] = {
@@ -91,6 +91,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, intnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsInt();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0, Rf_ScalarInteger(ft->bitWidth));
         SET_VECTOR_ELT(el, 1, Rf_ScalarLogical(ft->is_signed));
         break;
@@ -100,6 +103,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, fltnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsFloatingPoint();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0,
           Rf_mkString(EnumNamesPrecision()[ft->precision]));
         break;
@@ -109,6 +115,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, decnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsDecimal();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0, Rf_ScalarInteger(ft->precision));
         SET_VECTOR_ELT(el, 1, Rf_ScalarInteger(ft->scale));
         SET_VECTOR_ELT(el, 2, Rf_ScalarInteger(ft->bitWidth));
@@ -119,6 +128,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, datnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsDate();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0,
           Rf_mkString(EnumNamesDateUnit()[ft->unit]));
         break;
@@ -128,6 +140,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, timnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsTime();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0,
           Rf_mkString(EnumNamesTimeUnit()[ft->unit]));
         SET_VECTOR_ELT(el, 1, Rf_ScalarInteger(ft->bitWidth));
@@ -138,6 +153,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, tstnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsTimestamp();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0,
           Rf_mkString(EnumNamesTimeUnit()[ft->unit]));
         SET_VECTOR_ELT(el, 1, Rf_mkString(ft->timezone.c_str()));
@@ -148,6 +166,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, ivlnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsInterval();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0,
           Rf_mkString(EnumNamesIntervalUnit()[ft->unit]));
         break;
@@ -157,6 +178,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, uninms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsUnion();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0,
           Rf_mkString(EnumNamesUnionMode()[ft->mode]));
         SET_VECTOR_ELT(el, 1, Rf_allocVector(INTSXP, ft->typeIds.size()));
@@ -170,6 +194,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, fsbnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsFixedSizeBinary();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0, Rf_ScalarInteger(ft->byteWidth));
         break;
       }
@@ -178,6 +205,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, fslnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsFixedSizeList();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0, Rf_ScalarInteger(ft->listSize));
         break;
       }
@@ -186,6 +216,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, mapnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsMap();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0, Rf_ScalarLogical(ft->keysSorted));
         break;
       }
@@ -194,6 +227,9 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
         SET_VECTOR_ELT(rtype, i, Rf_mkNamed(VECSXP, durnms));
         SEXP el = VECTOR_ELT(rtype, i);
         auto ft = sch->fields[i]->type.AsDuration();
+        if (!ft) {
+          Rf_error("Cannot parse arrow schema");
+        }
         SET_VECTOR_ELT(el, 0,
           Rf_mkString(EnumNamesTimeUnit()[ft->unit]));
         break;
