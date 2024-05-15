@@ -11,3 +11,4 @@ pqtest
 .project
 .settings
 *.tar.gz
+/src/Makevars

@@ -214,7 +214,8 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
       SET_VECTOR_ELT(rdictii, 0, Rf_ScalarInteger(fd->indexType->bitWidth));
       SET_VECTOR_ELT(rdictii, 1, Rf_ScalarLogical(fd->indexType->is_signed));
       SET_VECTOR_ELT(rdicti, 2, Rf_ScalarLogical(fd->isOrdered));
-      SET_VECTOR_ELT(rdicti, 3, Rf_ScalarInteger(fd->dictionaryKind));
+      SET_VECTOR_ELT(rdicti, 3,
+        Rf_mkString(EnumNamesDictionaryKind()[fd->dictionaryKind]));
     }
     SET_VECTOR_ELT(VECTOR_ELT(res, 5), i, Rf_mkNamed(VECSXP, kvnms));
     SEXP kv = VECTOR_ELT(VECTOR_ELT(res, 5), i);
@@ -316,6 +317,162 @@ SEXP miniparquet_parse_arrow_schema(SEXP rbuf) {
   }
 
   return res;
+}
+
+// ------------------------------------------------------------------------
+
+SEXP miniparquet_encode_arrow_schema(SEXP rschema) {
+  SEXP rfields = VECTOR_ELT(rschema, 0);
+  SEXP rmetadata = VECTOR_ELT(rschema, 1);
+  SEXP rmetakeys = VECTOR_ELT(rmetadata, 0);
+  SEXP rmetavals = VECTOR_ELT(rmetadata, 1);
+  SEXP rendianness = VECTOR_ELT(rschema, 2);
+  SEXP rfeatures = VECTOR_ELT(rschema, 3);
+
+  flatbuffers::FlatBufferBuilder builder(10 * 1024);
+
+  std::vector<Offset<Field>> field_vector;
+  SEXP f_nam = VECTOR_ELT(rfields, 0);
+  SEXP f_ttp = VECTOR_ELT(rfields, 1);
+  SEXP f_typ = VECTOR_ELT(rfields, 2);
+  SEXP f_nul = VECTOR_ELT(rfields, 3);
+  SEXP f_dct = VECTOR_ELT(rfields, 4);
+  // SEXP f_cmd = VECTOR_ELT(rfields, 5); we don't really need to write it
+  size_t nfields = Rf_xlength(f_nam);
+  for (auto i = 0; i < nfields; i++) {
+    auto name = builder.CreateString(CHAR(STRING_ELT(f_nam, i)));
+    Type ft = (Type) INTEGER(f_ttp)[i];
+    SEXP rtype = VECTOR_ELT(f_typ, i);
+    switch (ft) {
+      case Type_Int:
+      {
+        IntBuilder int_builder(builder);
+        int_builder.add_bitWidth(INTEGER(VECTOR_ELT(rtype, 0))[0]);
+        int_builder.add_is_signed(LOGICAL(VECTOR_ELT(rtype, 1))[0]);
+        auto int_ = int_builder.Finish();
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(int_.Union());
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
+      case Type_FloatingPoint:
+      {
+        FloatingPointBuilder fp_builder(builder);
+        fp_builder.add_precision((Precision) INTEGER(VECTOR_ELT(rtype, 0))[0]);
+        auto fp = fp_builder.Finish();
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(fp.Union());
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
+      case Type_Utf8:
+      {
+        Utf8Builder utf8_builder(builder);
+        auto utf8 = utf8_builder.Finish();
+        SEXP rdict = VECTOR_ELT(f_dct, i);
+        bool has_dict = !Rf_isNull(rdict);
+        Offset<DictionaryEncoding> dict_;
+        if (has_dict) {
+          // factor as string, add dictionary
+          SEXP rint = VECTOR_ELT(rdict, 1);
+          IntBuilder int_builder(builder);
+          int_builder.add_bitWidth(INTEGER(VECTOR_ELT(rint, 0))[0]);
+          int_builder.add_is_signed(LOGICAL(VECTOR_ELT(rint, 1))[0]);
+          auto int_ = int_builder.Finish();
+          DictionaryEncodingBuilder dict_builder(builder);
+          dict_builder.add_id(REAL(VECTOR_ELT(rdict, 0))[0]);
+          dict_builder.add_indexType(int_);
+          dict_builder.add_isOrdered(LOGICAL(VECTOR_ELT(rdict, 2))[0]);
+          dict_builder.add_dictionaryKind(
+            (DictionaryKind) INTEGER(VECTOR_ELT(rdict, 3))[0]
+          );
+          dict_ = dict_builder.Finish();
+        }
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(utf8.Union());
+        if (has_dict) {
+          field_builder.add_dictionary(dict_);
+        }
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
+      case Type_Bool:
+      {
+        BoolBuilder bool_builder(builder);
+        auto bool_ = bool_builder.Finish();
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(bool_.Union());
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
+      default:
+      {
+        Rf_error(
+          "Unsupported type when encoding arrow schema: %s",
+          EnumNamesType()[ft]
+        );
+        break;
+      }
+    };
+  }
+  auto fields = builder.CreateVector(field_vector);
+
+  std::vector<Offset<KeyValue>> metadata_vector;
+  for (auto i = 0; i < Rf_xlength(rmetakeys); i++) {
+    auto key = builder.CreateString(CHAR(STRING_ELT(rmetakeys, i)));
+    auto val = builder.CreateString(CHAR(STRING_ELT(rmetavals, i)));
+    auto kv = CreateKeyValue(builder, key, val);
+    metadata_vector.push_back(kv);
+  }
+  auto metadata = builder.CreateVector(metadata_vector);
+
+  std::vector<int64_t> features_vector;
+  auto features = builder.CreateVector(features_vector);
+  for (auto i = 0; i < Rf_xlength(rfeatures); i++) {
+    features_vector.push_back(INTEGER(rfeatures)[i]);
+  }
+
+  SchemaBuilder schema_builder(builder);
+  schema_builder.add_endianness((Endianness) INTEGER(rendianness)[0]);
+  schema_builder.add_fields(fields);
+  schema_builder.add_custom_metadata(metadata);
+  schema_builder.add_features(features);
+  auto schema = schema_builder.Finish();
+
+  MessageBuilder message_builder(builder);
+  message_builder.add_version(MetadataVersion_V5);
+  message_builder.add_header_type(MessageHeader_Schema);
+  message_builder.add_header(schema.Union());
+  auto ofs = message_builder.Finish();
+  builder.Finish(ofs);
+  uint8_t *buf = builder.GetBufferPointer();
+  int size = builder.GetSize();
+
+  SEXP result = PROTECT(Rf_allocVector(RAWSXP, size + 8));
+  char * presult = (char*) RAW(result);
+  presult[0] = presult[1] = presult[2] = presult[3] = 0xff;
+  int32_t isize = size;
+  memcpy(presult + 4, &isize, 4);
+  memcpy(presult + 8, buf, size);
+
+  UNPROTECT(1);
+  return result;
 }
 
 }

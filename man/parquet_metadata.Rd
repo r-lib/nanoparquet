@@ -87,5 +87,5 @@ miniparquet::parquet_metadata(file_name)
 }
 \seealso{
 \code{\link[=parquet_schema]{parquet_schema()}} only reads the schema of the file,
-\code{\link[=read_parquet]{read_parquet()}}, \code{\link[=write_parquet]{write_parquet()}}.
+\code{\link[=read_parquet]{read_parquet()}}, \code{\link[=write_parquet]{write_parquet()}}, \link{miniparquet-types}.
 }

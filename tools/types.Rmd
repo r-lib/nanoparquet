@@ -1,0 +1,40 @@
+# R's data types
+
+When writing out a data frame, miniparquet maps R's data types to Parquet
+logical types. This is how the mapping is performed.
+
+These rules will likely change until miniparquet reaches version 1.0.0.
+
+1. Factors (i.e. vectors that inherit the *factor* class) are converted
+   to character vectors using `as.character()`, then written as a
+   `STRSXP` (character vector) type.
+2. Integer vectors (`INTSXP`) are written as `INT(32, true)` logical type,
+   which corresponds to the `INT32` type.
+3. Real vectors (`REALSXP`) are written as the `DOUBLE` type.
+4. Character vectors (`STRSXP`) are written as the `STRING` logical type,
+   which has the `BYTE_ARRAY` type.
+5. Logical vectors (`LGLSXP`) are written as the `BOOLEAN` type.
+6. Other vectors error currently.
+
+# Parquet's data types
+
+When reading a Parquet file, currently miniparquet mostly relies on the
+(low level) data types, instead of the logical types. The exact rules are
+below.
+
+These rules will likely change until miniparquet reaches version 1.0.0.
+
+1. `BOOLEAN` is read as a logical vector (`LGLSXP`).
+2. `INT32` is read as an integer vector (`INTSXP`).
+3. `INT64`, `DOUBLE` and `FLOAT` are read as real vectors (`REALSXP`).
+4. `INT96` is read as a `POSIXct` read vector with the `tzone` attribute
+   set to `"UTC"`.
+5. The `DECIMAL` converted type (`FIXED_LEN_BYTE_ARRAY` type) is read
+   as a real vector (`REALSXP`).
+6. `BYTE_ARRAY` is read as a *factor* object if the file was written
+   by Arrow and the original data type of the column was a factor.
+   More precisely, the file has the Arrow schema in the key-value metadata
+   under the key `ARROW:schema` and the corresponding column is a `Utf8`
+   Arrow column with a dictionary. This does not happen if the
+   `miniparquet.use_arrow_metadata` option is set to `FALSE`.
+6. Otherwise `BYTE_ARRAY` is read a character vector (`STRSXP`).

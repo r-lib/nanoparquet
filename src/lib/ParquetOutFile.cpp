@@ -112,6 +112,14 @@ void ParquetOutFile::schema_add_column(
   num_cols++;
 }
 
+void ParquetOutFile::add_key_value_metadata(
+    std::string key, std::string value) {
+  KeyValue kv0;
+  kv0.__set_key(key);
+  kv0.__set_value(value);
+  kv.push_back(kv0);
+}
+
 parquet::format::Type::type ParquetOutFile::get_type_from_logical_type(
     parquet::format::LogicalType logical_type) {
 
@@ -354,6 +362,7 @@ void ParquetOutFile::write_footer() {
   fmd.__set_schema(schemas);
   fmd.__set_num_rows(num_rows);
   fmd.__set_row_groups(rgs);
+  fmd.__set_key_value_metadata(kv);
   fmd.__set_created_by("https://github.com/gaborcsardi/miniparquet");
   fmd.write(tproto.get());
   uint8_t *out_buffer;

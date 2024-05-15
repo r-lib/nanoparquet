@@ -8,6 +8,83 @@
 \description{
 Self-sufficient reader for a subset of Parquet files. Nested tables, compression besides Snappy and encryption are not supported.
 }
+\section{miniparquet}{
+\if{html}{\out{
+<div>
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/gaborcsardi/miniparquet/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gaborcsardi/miniparquet/actions/workflows/R-CMD-check.yaml)
+[![CRAN status](https://www.r-pkg.org/badges/version/miniparquet)](https://cran.r-project.org/package=miniparquet)
+[![](http://cranlogs.r-pkg.org/badges/miniparquet)](https://dgrtwo.shinyapps.io/cranview/)
+<!-- badges: end -->
+</div>
+}}
+
+
+\code{miniparquet} is a reader and writer for a common subset of Parquet files.
+miniparquet only supports rectangular-shaped data structures
+(no nested tables) and only the Snappy compression scheme.
+miniparquet has no (zero, none, 0)
+\href{https://research.swtch.com/deps}{external dependencies} and is very
+lightweight. It compiles in seconds to a binary size of about 2 MB.
+\subsection{Installation}{
+
+Install the R package from CRAN:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{install.packages("miniparquet")
+}\if{html}{\out{</div>}}
+}
+
+\subsection{Usage}{
+
+Call \code{read_parquet()} to read a Parquet file:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{df <- miniparquet::read_parquet("example.parquet")
+}\if{html}{\out{</div>}}
+
+Folders of similar-structured Parquet files (e.g. produced by Spark)
+can be read like this:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{df <- data.table::rbindlist(lapply(
+  Sys.glob("some-folder/part-*.parquet"),
+  miniparquet::read_parquet
+))
+}\if{html}{\out{</div>}}
+
+Call \code{parquet_schema()} to show the schema (i.e. the column names and
+types) of a Parquet file, or \code{parquet_metadata()} to show the complete
+metadata, without reading the whole file into memory:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{miniparquet::parquet_schema("example.parquet")
+miniparquet::parquet_metadata("example.parquet")
+}\if{html}{\out{</div>}}
+
+Call \code{write_parquet()} to write a data frame to a Parquet file:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{write_parquet(mtcars, "mtcars.parquet")
+}\if{html}{\out{</div>}}
+
+If you find a file that should be supported but isn't, please open an
+issue here with a link to the file.
+}
+
+\subsection{Options}{
+\itemize{
+\item \code{miniparquet.use_arrow_metadata}: unless this is set to \code{FALSE},
+\code{read_parquet()} will make use of Arrow metadata in the Parquet file.
+Currently this is used to detect factor columns.
+\item \code{miniparquet.write_arrow_metadata}: unless this is set to \code{FALSE},
+\code{write_parquet()} will add Arrow metadata to the Parquet file.
+This helps preserving classes of columns, e.g. factors will be read
+back as factors, both by miniparquet and Arrow.
+}
+}
+
+\subsection{License}{
+
+MIT
+}
+}
+
 \author{
 \strong{Maintainer}: Gábor Csárdi \email{csardi.gabor@gmail.com}
 
@@ -26,4 +103,3 @@ Other contributors:
 }
 
 }
-\keyword{internal}

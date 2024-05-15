@@ -35,5 +35,5 @@ compression or other reason.
 }
 \seealso{
 \code{\link[=parquet_metadata]{parquet_metadata()}} reads more metadata,
-\code{\link[=read_parquet]{read_parquet()}}, \code{\link[=write_parquet]{write_parquet()}}.
+\code{\link[=read_parquet]{read_parquet()}}, \code{\link[=write_parquet]{write_parquet()}}, \link{miniparquet-types}.
 }

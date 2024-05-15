@@ -1,10 +1,12 @@
 # miniparquet
 
+<div>
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/gaborcsardi/miniparquet/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gaborcsardi/miniparquet/actions/workflows/R-CMD-check.yaml)
 [![CRAN status](https://www.r-pkg.org/badges/version/miniparquet)](https://cran.r-project.org/package=miniparquet)
 [![](http://cranlogs.r-pkg.org/badges/miniparquet)](https://dgrtwo.shinyapps.io/cranview/)
 <!-- badges: end -->
+</div>
 
 `miniparquet` is a reader and writer for a common subset of Parquet files.
 miniparquet only supports rectangular-shaped data structures
@@ -50,6 +52,21 @@ miniparquet::parquet_metadata("example.parquet")
 Call `write_parquet()` to write a data frame to a Parquet file:
 ```r
 write_parquet(mtcars, "mtcars.parquet")
+```
 
 If you find a file that should be supported but isn't, please open an
 issue here with a link to the file.
+
+## Options
+
+* `miniparquet.use_arrow_metadata`: unless this is set to `FALSE`,
+  `read_parquet()` will make use of Arrow metadata in the Parquet file.
+  Currently this is used to detect factor columns.
+* `miniparquet.write_arrow_metadata`: unless this is set to `FALSE`,
+  `write_parquet()` will add Arrow metadata to the Parquet file.
+  This helps preserving classes of columns, e.g. factors will be read
+  back as factors, both by miniparquet and Arrow.
+
+## License
+
+MIT

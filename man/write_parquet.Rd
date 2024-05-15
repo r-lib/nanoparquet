@@ -4,7 +4,12 @@
 \alias{write_parquet}
 \title{Write a data frame to a Parquet file}
 \usage{
-write_parquet(x, file, compression = c("snappy", "uncompressed"))
+write_parquet(
+  x,
+  file,
+  compression = c("snappy", "uncompressed"),
+  metadata = NULL
+)
 }
 \arguments{
 \item{x}{Data frame to write.}
@@ -13,6 +18,10 @@ write_parquet(x, file, compression = c("snappy", "uncompressed"))
 
 \item{compression}{Compression algorithm to use. Currently only
 \code{"snappy"} (the default) and \code{"uncompressed"} are supported.}
+
+\item{metadata}{Additional key-value metadata to add to the file.
+This must be a named character vector, or a data frame with columns
+character columns called \code{key} and \code{value}.}
 }
 \value{
 \code{NULL}

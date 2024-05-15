@@ -28,16 +28,22 @@ test_that("round trip with arrow", {
   # Don't want to skip on the parquet capability missing, because then
   # this might not be tested on the CI. So rather we skip on CRAN.
   skip_on_cran()
-  mt <- test_df(tibble = TRUE)
+  mt <- test_df(tibble = TRUE, factor = TRUE)
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
   write_parquet(mt, tmp, compression = "uncompressed")
-  expect_equal(arrow::read_parquet(tmp), mt)
+  mt2 <- arrow::read_parquet(tmp)
+  expect_s3_class(mt2$fac, "factor")
+  mt2$fac <- as.factor(as.character(mt2$fac))
+  expect_equal(mt2, mt)
   unlink(tmp)
 
   write_parquet(mt, tmp, compression = "snappy")
-  expect_equal(arrow::read_parquet(tmp), mt)
+  mt2 <- arrow::read_parquet(tmp)
+  expect_s3_class(mt2$fac, "factor")
+  mt2$fac <- as.factor(as.character(mt2$fac))
+  expect_equal(mt2, mt)
 })
 
 test_that("round trip with duckdb", {

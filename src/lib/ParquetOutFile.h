@@ -15,6 +15,7 @@ public:
   void schema_add_column(std::string name, parquet::format::Type::type type);
   void schema_add_column(std::string name,
                          parquet::format::LogicalType logical_type);
+  void add_key_value_metadata(std::string key, std::string value);
   void write();
 
   // write out various parquet types, these must be implemented in
@@ -34,6 +35,7 @@ private:
 
   std::vector<parquet::format::SchemaElement> schemas;
   std::vector<parquet::format::ColumnMetaData> column_meta_data;
+  std::vector<parquet::format::KeyValue> kv;
 
   std::shared_ptr<apache::thrift::transport::TMemoryBuffer> mem_buffer;
   apache::thrift::protocol::TCompactProtocolFactoryT<

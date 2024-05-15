@@ -21,3 +21,4 @@ dependencies\.R
 ^codecov\.yml$
 ^.vscode$
 ^[.]covrignore$
+^src/Makevars$
