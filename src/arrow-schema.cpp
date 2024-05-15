@@ -3,9 +3,10 @@
 #include <Rdefines.h>
 
 #include "flatbuffers/Message_generated.h"
-#include "simdutf/simdutf.h"
 
 #include "lib/bytebuffer.h"
+
+#include "base64.h"
 
 using namespace org::apache::arrow::flatbuf;
 using namespace flatbuffers;
@@ -276,13 +277,13 @@ SEXP miniparquet_parse_arrow_schema(SEXP rbuf) {
   const char *input = (const char*) CHAR(STRING_ELT(rbuf, 0));
   size_t slen = strlen(input);
 
-  size_t olen = simdutf::maximal_binary_length_from_base64(
+  size_t olen = base64::maximal_binary_length_from_base64(
     input,
     slen
   );
   ByteBuffer bbuf;
   bbuf.resize(olen);
-  simdutf::result bres = simdutf::base64_to_binary(
+  base64::result bres = base64::base64_to_binary(
     input,
     slen,
     (char*) bbuf.ptr
