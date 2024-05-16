@@ -123,7 +123,6 @@ result base64_tail_decode(char *dst, const char *src, size_t length) {
 // Returns the number of bytes written. The destination buffer must be large
 // enough. It will add padding (=) if needed.
 size_t tail_encode_base64(char *dst, const char *src, size_t srclen) {
-  // This looks like 3 branches, but we expect the compiler to resolve this to a single branch:
   const char *e0 = base64::e0;
   const char *e1 = base64::e1;
   const char *e2 = base64::e2;

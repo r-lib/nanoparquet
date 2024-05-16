@@ -75,3 +75,43 @@
       dtype: object
       
 
+# errors
+
+    Code
+      write_parquet(mt, tmp)
+    Condition
+      Error in `encode_arrow_schema_r()`:
+      ! Unsuppoted types when writing Parquet file: list
+
+---
+
+    Code
+      write_parquet(mt, 1:10)
+    Condition
+      Error in `path.expand()`:
+      ! invalid 'path' argument
+
+---
+
+    Code
+      write_parquet(mt2, tmp, metadata = "bad")
+    Condition
+      Error in `write_parquet()`:
+      ! length(names(metadata)) == length(metadata) is not TRUE
+
+---
+
+    Code
+      write_parquet(mt2, tmp, metadata = mtcars)
+    Condition
+      Error in `write_parquet()`:
+      ! ncol(metadata) == 2 is not TRUE
+
+# writing metadata
+
+    Code
+      as.data.frame(kvm)[1, ]
+    Output
+        key value
+      1 foo   bar
+

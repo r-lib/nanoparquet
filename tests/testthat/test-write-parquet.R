@@ -97,3 +97,32 @@ df.to_parquet("%s", engine = "pyarrow")
   mt2 <- read_parquet(tmp2)
   expect_equal(mt2, mt)
 })
+
+test_that("errors", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  mt <- mt2 <- test_df(factor = TRUE)
+  mt$list <- I(replicate(nrow(mt), 1:4, simplify = FALSE))
+
+  expect_error(write_parquet(mt, tmp))
+  expect_snapshot(error = TRUE, write_parquet(mt, tmp))
+
+  expect_error(write_parquet(mt, 1:10))
+  expect_snapshot(error = TRUE, write_parquet(mt, 1:10))
+
+  expect_error(write_parquet(mt2, tmp, metadata = "bad"))
+  expect_snapshot(error = TRUE, write_parquet(mt2, tmp, metadata = "bad"))
+  expect_error(write_parquet(mt2, tmp, metadata = mtcars))
+  expect_snapshot(error = TRUE, write_parquet(mt2, tmp, metadata = mtcars))
+})
+
+test_that("writing metadata", {
+  mt <- mt2 <- test_df()
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  write_parquet(mt, tmp, metadata = c("foo" = "bar"))
+  kvm <- parquet_metadata(tmp)$file_meta_data$key_value_metadata[[1]]
+  expect_snapshot(as.data.frame(kvm)[1,])
+})

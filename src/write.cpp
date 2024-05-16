@@ -128,7 +128,7 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim, SEXP metadata) {
       break;
     }
     default:
-      throw runtime_error("Uninmplemented R type");
+      throw runtime_error("Uninmplemented R type");  // # nocov
     }
   }
 
@@ -157,7 +157,7 @@ SEXP miniparquet_write(
   SEXP metadata) {
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_error("miniparquet_write: filename must be a string");
+    Rf_error("miniparquet_write: filename must be a string"); // # nocov
   }
 
   int c_compression = INTEGER(compression)[0];
@@ -170,7 +170,7 @@ SEXP miniparquet_write(
       codec = parquet::format::CompressionCodec::SNAPPY;
       break;
     default:
-      Rf_error("Invalid compression type code: %d", c_compression);
+      Rf_error("Invalid compression type code: %d", c_compression); // # nocov
       break;
   }
 
@@ -184,15 +184,15 @@ SEXP miniparquet_write(
     return R_NilValue;
 
   } catch (std::exception &ex) {
-    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1);
+    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1); // # nocov
   }
 
-  if (error_buffer[0] != '\0') {
-    Rf_error("%s", error_buffer);
-  }
+  if (error_buffer[0] != '\0') {         // # nocov
+    Rf_error("%s", error_buffer);        // # nocov
+  }                                      // # nocov
 
   // never reached
-  return R_NilValue;
+  return R_NilValue; // # nocov
 }
 
 } // extern "C"
