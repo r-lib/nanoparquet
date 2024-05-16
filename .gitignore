@@ -1,1 +1,3 @@
 *.gcno
+*.o
+/src/miniparquet.so
