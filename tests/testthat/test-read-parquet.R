@@ -92,11 +92,33 @@ test_that("basic reading works with snappy", {
   expect_true(data_comparable(alltypes_plain_snappy, res))
 })
 
+test_that("read factors, marked by Arrow", {
+  res <- read_parquet(test_path("data/factor.parquet"))
+  expect_snapshot({
+    res[1:5,]
+    sapply(res, class)
+  })
+})
+
+test_that("Can't parse Arrow schema", {
+  pf <- test_path("data/factor.parquet")
+  res <- read_parquet(pf)
+  mockery::stub(
+    apply_arrow_schema,
+    "parse_arrow_schema",
+    function(...) stop("nope")
+  )
+  expect_snapshot(
+    res2 <- apply_arrow_schema(res, pf)
+  )
+  expect_equal(res2, res)
+})
+
 test_that("round trip with arrow", {
   # Don't want to skip on the parquet capability missing, because then
   # this might not be tested on the CI. So rather we skip on CRAN.
   skip_on_cran()
-  mt <- test_df()
+  mt <- test_df(factor = TRUE)
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 

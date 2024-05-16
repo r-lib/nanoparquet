@@ -4,7 +4,7 @@
       as.data.frame(mtd$file_meta_data)
     Output
            file_name version num_rows mtd$file_meta_data$key_value_metadata
-      1 test.parquet       1       32                          characte....
+      1 test.parquet       1       32                          ARROW:sc....
                                         created_by
       1 https://github.com/gaborcsardi/miniparquet
     Code

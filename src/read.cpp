@@ -1,14 +1,9 @@
-// buzz off
-#undef error
-#undef length
-
 #include <cmath>
 #include <iostream>
 
 #include "lib/miniparquet.h"
 #undef ERROR
 #include <Rdefines.h>
-#undef nrows
 
 using namespace miniparquet;
 using namespace std;

@@ -1,3 +1,5 @@
 src/parquet
 src/snappy
 src/thrift
+src/simdutf
+src/flatbuffers

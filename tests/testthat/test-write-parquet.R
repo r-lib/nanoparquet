@@ -1,3 +1,16 @@
+test_that("factors are written as strings", {
+  mt <- test_df(factor = TRUE)
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  write_parquet(mt, tmp)
+  expect_snapshot(
+    as.data.frame(parquet_schema(tmp))[
+      c("name", "type", "converted_type", "logical_type")
+    ]
+  )
+})
+
 test_that("round trip", {
   mt <- test_df()
   tmp <- tempfile(fileext = ".parquet")
@@ -15,16 +28,22 @@ test_that("round trip with arrow", {
   # Don't want to skip on the parquet capability missing, because then
   # this might not be tested on the CI. So rather we skip on CRAN.
   skip_on_cran()
-  mt <- test_df(tibble = TRUE)
+  mt <- test_df(tibble = TRUE, factor = TRUE)
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
   write_parquet(mt, tmp, compression = "uncompressed")
-  expect_equal(arrow::read_parquet(tmp), mt)
+  mt2 <- arrow::read_parquet(tmp)
+  expect_s3_class(mt2$fac, "factor")
+  mt2$fac <- as.factor(as.character(mt2$fac))
+  expect_equal(mt2, mt)
   unlink(tmp)
 
   write_parquet(mt, tmp, compression = "snappy")
-  expect_equal(arrow::read_parquet(tmp), mt)
+  mt2 <- arrow::read_parquet(tmp)
+  expect_s3_class(mt2$fac, "factor")
+  mt2$fac <- as.factor(as.character(mt2$fac))
+  expect_equal(mt2, mt)
 })
 
 test_that("round trip with duckdb", {
@@ -77,4 +96,33 @@ df.to_parquet("%s", engine = "pyarrow")
 
   mt2 <- read_parquet(tmp2)
   expect_equal(mt2, mt)
+})
+
+test_that("errors", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  mt <- mt2 <- test_df(factor = TRUE)
+  mt$list <- I(replicate(nrow(mt), 1:4, simplify = FALSE))
+
+  expect_error(write_parquet(mt, tmp))
+  expect_snapshot(error = TRUE, write_parquet(mt, tmp))
+
+  expect_error(write_parquet(mt, 1:10))
+  expect_snapshot(error = TRUE, write_parquet(mt, 1:10))
+
+  expect_error(write_parquet(mt2, tmp, metadata = "bad"))
+  expect_snapshot(error = TRUE, write_parquet(mt2, tmp, metadata = "bad"))
+  expect_error(write_parquet(mt2, tmp, metadata = mtcars))
+  expect_snapshot(error = TRUE, write_parquet(mt2, tmp, metadata = mtcars))
+})
+
+test_that("writing metadata", {
+  mt <- mt2 <- test_df()
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  write_parquet(mt, tmp, metadata = c("foo" = "bar"))
+  kvm <- parquet_metadata(tmp)$file_meta_data$key_value_metadata[[1]]
+  expect_snapshot(as.data.frame(kvm)[1,])
 })

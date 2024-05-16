@@ -21,5 +21,5 @@ parquet_df <- miniparquet::read_parquet(file_name)
 print(str(parquet_df))
 }
 \seealso{
-\code{\link[=parquet_metadata]{parquet_metadata()}}, \code{\link[=write_parquet]{write_parquet()}}.
+\code{\link[=parquet_metadata]{parquet_metadata()}}, \code{\link[=write_parquet]{write_parquet()}}, \link{miniparquet-types}.
 }

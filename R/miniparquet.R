@@ -5,7 +5,7 @@
 #' @param file Path to a Parquet file.
 #' @return A `data.frame` with the file's contents.
 #' @export
-#' @seealso [parquet_metadata()], [write_parquet()].
+#' @seealso [parquet_metadata()], [write_parquet()], [miniparquet-types].
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "miniparquet")
 #' parquet_df <- miniparquet::read_parquet(file_name)
@@ -14,6 +14,9 @@
 read_parquet <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(miniparquet_read, file)
+	if (!identical(getOption("miniparquet.use_arrow_metadata"), FALSE)) {
+		res <- apply_arrow_schema(res, file)
+	}
 	# some data.frame dress up
 	attr(res, "row.names") <- c(NA_integer_, as.integer(-1 * length(res[[1]])))
 	class(res) <- "data.frame"
@@ -165,7 +168,7 @@ format_schema_result <- function(sch) {
 #'
 #' @export
 #' @seealso [parquet_schema()] only reads the schema of the file,
-#'   [read_parquet()], [write_parquet()].
+#'   [read_parquet()], [write_parquet()], [miniparquet-types].
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "miniparquet")
 #' miniparquet::parquet_metadata(file_name)
@@ -230,7 +233,7 @@ parquet_metadata <- function(file) {
 # -------------------------------------------------------------------------
 #'
 #' @seealso [parquet_metadata()] reads more metadata,
-#'   [read_parquet()], [write_parquet()].
+#'   [read_parquet()], [write_parquet()], [miniparquet-types].
 #' @export
 
 parquet_schema <- function(file) {
@@ -248,6 +251,9 @@ parquet_schema <- function(file) {
 #' @param file Path to the output file.
 #' @param compression Compression algorithm to use. Currently only
 #'   `"snappy"` (the default) and `"uncompressed"` are supported.
+#' @param metadata Additional key-value metadata to add to the file.
+#'   This must be a named character vector, or a data frame with columns
+#'   character columns called `key` and `value`.
 #' @return `NULL`
 #'
 #' @export
@@ -261,11 +267,38 @@ parquet_schema <- function(file) {
 write_parquet <- function(
 	x,
 	file,
-	compression = c("snappy", "uncompressed")) {
+	compression = c("snappy", "uncompressed"),
+	metadata = NULL) {
 
   file <- path.expand(file)
 	codecs <- c("uncompressed" = 0L, "snappy" = 1L)
 	compression <- codecs[match.arg(compression)]
 	dim <- as.integer(dim(x))
-	invisible(.Call(miniparquet_write, x, file, dim, compression))
+
+	if (is.null(metadata)) {
+		metadata <- list(character(), character())
+	} else if (is.data.frame(metadata)) {
+		stopifnot(ncol(metadata) == 2)
+	} else {
+		stopifnot(
+			is.character(metadata),
+			length(names(metadata)) == length(metadata)
+		)
+		metadata <- list(names(metadata), unname(metadata))
+	}
+
+	if (!identical(getOption("miniparquet.write_arrow_metadata"), FALSE)) {
+		if (! "ARROW:schema" %in% metadata[[1]]) {
+			metadata[[1]] <- c(metadata[[1]], "ARROW:schema")
+			metadata[[2]] <- c(metadata[[2]], encode_arrow_schema(x))
+		}
+	}
+
+	# convert factors to strings
+	fctrs <- which(vapply(x, function(c) inherits(c, "factor"), logical(1)))
+	for (idx in fctrs) {
+		x[[idx]] <- as.character(x[[idx]])
+	}
+
+	invisible(.Call(miniparquet_write, x, file, dim, compression, metadata))
 }

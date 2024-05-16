@@ -1,13 +1,1 @@
-*.dylib
-.DS_Store
-pq2csv
-pqbench
-pqtest
-*.o
-*.so
-*.tsv
-*.dSYM
-.cproject
-.project
-.settings
-*.tar.gz
+*.gcno

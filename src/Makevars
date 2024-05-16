@@ -3,6 +3,22 @@ OBJECTS=parquet/parquet_constants.o parquet/parquet_types.o \
   thrift/transport/TBufferTransports.o \
   snappy/snappy.o snappy/snappy-sinksource.o \
   lib/ParquetFile.o lib/ParquetOutFile.o \
-  rwrapper.o read.o write.o read-metadata.o
+  rwrapper.o read.o write.o read-metadata.o \
+  arrow-schema.o base64.o r-base64.o
 
-PKG_CPPFLAGS = -Ithrift -I.
+PKG_CPPFLAGS = -Ithrift -I. -Iprotobuf
+# PKG_CFLAGS = -DR_NO_REMAP
+
+PKG_CXXFLAGS = -DR_NO_REMAP
+PKG_CXX11FLAGS = -DR_NO_REMAP
+PKG_CXX14FLAGS = -DR_NO_REMAP
+PKG_CXX17FLAGS = -DR_NO_REMAP
+PKG_CXX20FLAGS = -DR_NO_REMAP
+PKG_CXX23FLAGS = -DR_NO_REMAP
+PKG_CXX24FLAGS = -DR_NO_REMAP
+PKG_CXX25FLAGS = -DR_NO_REMAP
+PKG_CXX26FLAGS = -DR_NO_REMAP
+PKG_CXX27FLAGS = -DR_NO_REMAP
+PKG_CXX28FLAGS = -DR_NO_REMAP
+PKG_CXX29FLAGS = -DR_NO_REMAP
+PKG_CXX30FLAGS = -DR_NO_REMAP

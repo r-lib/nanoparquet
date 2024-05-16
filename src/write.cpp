@@ -17,7 +17,7 @@ public:
   uint32_t get_size_byte_array(uint32_t idx);
   void write_boolean(std::ostream &file, uint32_t idx);
 
-  void write(SEXP dfsxp, SEXP dim);
+  void write(SEXP dfsxp, SEXP dim, SEXP metadata);
 
 private:
   SEXP df = R_NilValue;
@@ -91,7 +91,7 @@ void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx) {
   }
 }
 
-void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
+void RParquetOutFile::write(SEXP dfsxp, SEXP dim, SEXP metadata) {
   df = dfsxp;
   SEXP nms = Rf_getAttrib(dfsxp, R_NamesSymbol);
   R_xlen_t nr = INTEGER(dim)[0];
@@ -128,7 +128,19 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim) {
       break;
     }
     default:
-      throw runtime_error("Uninmplemented R type");
+      throw runtime_error("Uninmplemented R type");  // # nocov
+    }
+  }
+
+  if (!Rf_isNull(metadata)) {
+    SEXP keys = VECTOR_ELT(metadata, 0);
+    SEXP vals = VECTOR_ELT(metadata, 1);
+    R_xlen_t len = Rf_xlength(keys);
+    for (auto i = 0; i < len; i++) {
+      add_key_value_metadata(
+        CHAR(STRING_ELT(keys, i)),
+        CHAR(STRING_ELT(vals, i))
+      );
     }
   }
 
@@ -141,10 +153,11 @@ SEXP miniparquet_write(
   SEXP dfsxp,
   SEXP filesxp,
   SEXP dim,
-  SEXP compression) {
+  SEXP compression,
+  SEXP metadata) {
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_error("miniparquet_write: filename must be a string");
+    Rf_error("miniparquet_write: filename must be a string"); // # nocov
   }
 
   int c_compression = INTEGER(compression)[0];
@@ -157,7 +170,7 @@ SEXP miniparquet_write(
       codec = parquet::format::CompressionCodec::SNAPPY;
       break;
     default:
-      Rf_error("Invalid compression type code: %d", c_compression);
+      Rf_error("Invalid compression type code: %d", c_compression); // # nocov
       break;
   }
 
@@ -167,19 +180,19 @@ SEXP miniparquet_write(
   try {
     char *fname = (char *)CHAR(STRING_ELT(filesxp, 0));
     RParquetOutFile of(fname, codec);
-    of.write(dfsxp, dim);
+    of.write(dfsxp, dim, metadata);
     return R_NilValue;
 
   } catch (std::exception &ex) {
-    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1);
+    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1); // # nocov
   }
 
-  if (error_buffer[0] != '\0') {
-    Rf_error("%s", error_buffer);
-  }
+  if (error_buffer[0] != '\0') {         // # nocov
+    Rf_error("%s", error_buffer);        // # nocov
+  }                                      // # nocov
 
   // never reached
-  return R_NilValue;
+  return R_NilValue; // # nocov
 }
 
 } // extern "C"
