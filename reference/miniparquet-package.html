@@ -44,6 +44,72 @@
     </div>
 
 
+    <div id="miniparquet">
+    <h2>miniparquet</h2>
+    <p></p><div>
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/gaborcsardi/miniparquet/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gaborcsardi/miniparquet/actions/workflows/R-CMD-check.yaml)
+[![CRAN status](https://www.r-pkg.org/badges/version/miniparquet)](https://cran.r-project.org/package=miniparquet)
+[![](http://cranlogs.r-pkg.org/badges/miniparquet)](https://dgrtwo.shinyapps.io/cranview/)
+<!-- badges: end -->
+</div>
+
+<p><code>miniparquet</code> is a reader and writer for a common subset of Parquet files.
+miniparquet only supports rectangular-shaped data structures
+(no nested tables) and only the Snappy compression scheme.
+miniparquet has no (zero, none, 0)
+<a href="https://research.swtch.com/deps" class="external-link">external dependencies</a> and is very
+lightweight. It compiles in seconds to a binary size of about 2 MB.</p><div class="section">
+<h3 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a></h3>
+
+
+<p>Install the R package from CRAN:</p>
+<p></p><div class="sourceCode r"><pre><code><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"miniparquet"</span><span class="op">)</span></span></code></pre><p></p></div>
+</div>
+
+<div class="section">
+<h3 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h3>
+
+
+<p>Call <code><a href="read_parquet.html">read_parquet()</a></code> to read a Parquet file:</p>
+<p></p><div class="sourceCode r"><pre><code><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">miniparquet</span><span class="fu">::</span><span class="fu"><a href="../reference/read_parquet.html">read_parquet</a></span><span class="op">(</span><span class="st">"example.parquet"</span><span class="op">)</span></span></code></pre><p></p></div>
+<p>Folders of similar-structured Parquet files (e.g. produced by Spark)
+can be read like this:</p>
+<p></p><div class="sourceCode r"><pre><code><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu">rbindlist</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Sys.glob.html" class="external-link">Sys.glob</a></span><span class="op">(</span><span class="st">"some-folder/part-*.parquet"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">miniparquet</span><span class="fu">::</span><span class="va"><a href="../reference/read_parquet.html">read_parquet</a></span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre><p></p></div>
+<p>Call <code><a href="parquet_schema.html">parquet_schema()</a></code> to show the schema (i.e. the column names and
+types) of a Parquet file, or <code><a href="parquet_metadata.html">parquet_metadata()</a></code> to show the complete
+metadata, without reading the whole file into memory:</p>
+<p></p><div class="sourceCode r"><pre><code><span><span class="fu">miniparquet</span><span class="fu">::</span><span class="fu"><a href="../reference/parquet_schema.html">parquet_schema</a></span><span class="op">(</span><span class="st">"example.parquet"</span><span class="op">)</span></span>
+<span><span class="fu">miniparquet</span><span class="fu">::</span><span class="fu"><a href="../reference/parquet_metadata.html">parquet_metadata</a></span><span class="op">(</span><span class="st">"example.parquet"</span><span class="op">)</span></span></code></pre><p></p></div>
+<p>Call <code><a href="write_parquet.html">write_parquet()</a></code> to write a data frame to a Parquet file:</p>
+<p></p><div class="sourceCode r"><pre><code><span><span class="fu"><a href="../reference/write_parquet.html">write_parquet</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="st">"mtcars.parquet"</span><span class="op">)</span></span></code></pre><p></p></div>
+<p>If you find a file that should be supported but isn't, please open an
+issue here with a link to the file.</p>
+</div>
+
+<div class="section">
+<h3 id="options">Options<a class="anchor" aria-label="anchor" href="#options"></a></h3>
+
+<ul><li><p><code>miniparquet.use_arrow_metadata</code>: unless this is set to <code>FALSE</code>,
+<code><a href="read_parquet.html">read_parquet()</a></code> will make use of Arrow metadata in the Parquet file.
+Currently this is used to detect factor columns.</p></li>
+<li><p><code>miniparquet.write_arrow_metadata</code>: unless this is set to <code>FALSE</code>,
+<code><a href="write_parquet.html">write_parquet()</a></code> will add Arrow metadata to the Parquet file.
+This helps preserving classes of columns, e.g. factors will be read
+back as factors, both by miniparquet and Arrow.</p></li>
+</ul></div>
+
+<div class="section">
+<h3 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a></h3>
+
+
+<p>MIT</p>
+</div>
+
+    </div>
     <div id="author">
     <h2>Author</h2>
     <p><strong>Maintainer</strong>: Gábor Csárdi <a href="mailto:csardi.gabor@gmail.com">csardi.gabor@gmail.com</a></p>

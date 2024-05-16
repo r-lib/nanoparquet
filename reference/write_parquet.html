@@ -44,7 +44,12 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">write_parquet</span><span class="op">(</span><span class="va">x</span>, <span class="va">file</span>, compression <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"snappy"</span>, <span class="st">"uncompressed"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">write_parquet</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">file</span>,</span>
+<span>  compression <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"snappy"</span>, <span class="st">"uncompressed"</span><span class="op">)</span>,</span>
+<span>  metadata <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -60,6 +65,12 @@
 <dt>compression</dt>
 <dd><p>Compression algorithm to use. Currently only
 <code>"snappy"</code> (the default) and <code>"uncompressed"</code> are supported.</p></dd>
+
+
+<dt>metadata</dt>
+<dd><p>Additional key-value metadata to add to the file.
+This must be a named character vector, or a data frame with columns
+character columns called <code>key</code> and <code>value</code>.</p></dd>
 
 </dl></div>
     <div id="value">

@@ -58,9 +58,11 @@
 <div class="section level1">
 <div class="page-header"><h1 id="miniparquet">miniparquet<a class="anchor" aria-label="anchor" href="#miniparquet"></a>
 </h1></div>
+<div>
 <!-- badges: start -->
 
-<p><code>miniparquet</code> is a reader and writer for a common subset of Parquet files. miniparquet only supports rectangular-shaped data structures (no nested tables) and only the Snappy compression scheme. miniparquet has no (zero, none, 0) <a href="https://research.swtch.com/deps" class="external-link">external dependencies</a> and is very lightweight. It compiles in seconds to a binary size of under 1 MB.</p>
+</div>
+<p><code>miniparquet</code> is a reader and writer for a common subset of Parquet files. miniparquet only supports rectangular-shaped data structures (no nested tables) and only the Snappy compression scheme. miniparquet has no (zero, none, 0) <a href="https://research.swtch.com/deps" class="external-link">external dependencies</a> and is very lightweight. It compiles in seconds to a binary size of about 2 MB.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -84,8 +86,25 @@
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">miniparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_schema.html">parquet_schema</a></span><span class="op">(</span><span class="st">"example.parquet"</span><span class="op">)</span></span>
 <span><span class="fu">miniparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_metadata.html">parquet_metadata</a></span><span class="op">(</span><span class="st">"example.parquet"</span><span class="op">)</span></span></code></pre></div>
-<p>Call <code><a href="reference/write_parquet.html">write_parquet()</a></code> to write a data frame to a Parquet file: ```r write_parquet(mtcars, “mtcars.parquet”)</p>
+<p>Call <code><a href="reference/write_parquet.html">write_parquet()</a></code> to write a data frame to a Parquet file:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/write_parquet.html">write_parquet</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="st">"mtcars.parquet"</span><span class="op">)</span></span></code></pre></div>
 <p>If you find a file that should be supported but isn’t, please open an issue here with a link to the file.</p>
+</div>
+<div class="section level2">
+<h2 id="options">Options<a class="anchor" aria-label="anchor" href="#options"></a>
+</h2>
+<ul>
+<li>
+<code>miniparquet.use_arrow_metadata</code>: unless this is set to <code>FALSE</code>, <code><a href="reference/read_parquet.html">read_parquet()</a></code> will make use of Arrow metadata in the Parquet file. Currently this is used to detect factor columns.</li>
+<li>
+<code>miniparquet.write_arrow_metadata</code>: unless this is set to <code>FALSE</code>, <code><a href="reference/write_parquet.html">write_parquet()</a></code> will add Arrow metadata to the Parquet file. This helps preserving classes of columns, e.g. factors will be read back as factors, both by miniparquet and Arrow.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
+</h2>
+<p>MIT</p>
 </div>
 </div>
   </div>
