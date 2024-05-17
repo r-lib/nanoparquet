@@ -56,6 +56,8 @@ void ParquetFile::initialize(string filename) {
   }
 
   // check for magic bytes at end of file
+  pfile.seekg( 0, ios_base::end );
+  file_size = pfile.tellg();
   pfile.seekg(-4, ios_base::end);
   pfile.read(buf.ptr, 4);
   if (strncmp(buf.ptr, "PAR1", 4) != 0) {
@@ -965,4 +967,34 @@ void ParquetFile::initialize_result(ResultChunk &result) {
 
     result.cols[col_idx].id = col_idx;
   }
+}
+
+pair<parquet::format::PageHeader, int64_t>
+ParquetFile::read_page_header(int64_t pos) {
+  uint32_t len = 2048;  // guessing, but this must be enough
+  // Avoid going EOF, file_size is set when we open the file
+  if (len > file_size - pos) {
+    len = file_size - pos - 4;
+  }
+  tmp_buf.resize(len);
+  pfile.seekg(pos, ios_base::beg);
+  pfile.read(tmp_buf.ptr, len);
+  if (pfile.eof()) {
+    throw runtime_error(
+      "End of file while reading Parquet file. This "
+      "should not happen, please report it"
+    );
+  }
+  PageHeader ph;
+  uint32_t ph_size = len;
+  thrift_unpack((const uint8_t *) tmp_buf.ptr, &ph_size, &ph);
+  return std::make_pair(ph, ph_size);
+}
+
+void ParquetFile::read_chunk(int64_t offset, int64_t size, int8_t *buffer) {
+  if (size > file_size - offset) {
+    throw runtime_error("Cannot read past the end of a Parquet file");
+  }
+  pfile.seekg(offset, ios_base::beg);
+  pfile.read((char*) buffer, size);
 }

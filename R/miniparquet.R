@@ -86,6 +86,13 @@ codecs <- c(
 	ZSTD = 6L
 )
 
+page_types <- c(
+  DATA_PAGE = 0L,
+  INDEX_PAGE = 1L,
+  DICTIONARY_PAGE = 2L,
+  DATA_PAGE_V2 = 3
+)
+
 format_schema_result <- function(sch) {
   sch$type <- names(type_names)[sch$type + 1L]
   sch$converted_type <-
