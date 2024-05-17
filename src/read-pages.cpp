@@ -345,6 +345,8 @@ SEXP miniparquet_read_page(SEXP filesxp, SEXP page) {
     SET_VECTOR_ELT(res, 10, Rf_ScalarInteger(NA_INTEGER));
     SET_VECTOR_ELT(res, 11, Rf_ScalarInteger(NA_INTEGER));
     SET_VECTOR_ELT(res, 12, Rf_ScalarInteger(NA_INTEGER));
+    SET_VECTOR_ELT(res, 13, Rf_ScalarInteger(NA_INTEGER));
+    SET_VECTOR_ELT(res, 14, Rf_ScalarInteger(NA_INTEGER));
     if (pd.page_type == parquet::format::PageType::DATA_PAGE ||
        pd.page_type == parquet::format::PageType::DICTIONARY_PAGE) {
       SET_VECTOR_ELT(res, 9, Rf_ScalarInteger(pd.num_values));
@@ -353,9 +355,9 @@ SEXP miniparquet_read_page(SEXP filesxp, SEXP page) {
       SET_VECTOR_ELT(res, 10, Rf_ScalarInteger(pd.encoding));
       SET_VECTOR_ELT(res, 11, Rf_ScalarInteger(pd.definition_level_encoding));
       SET_VECTOR_ELT(res, 12, Rf_ScalarInteger(pd.repetition_level_encoding));
+      SET_VECTOR_ELT(res, 13, Rf_ScalarLogical(pd.has_repetition_levels));
+      SET_VECTOR_ELT(res, 14, Rf_ScalarLogical(pd.has_definition_levels));
     }
-    SET_VECTOR_ELT(res, 13, Rf_ScalarLogical(pd.has_repetition_levels));
-    SET_VECTOR_ELT(res, 14, Rf_ScalarLogical(pd.has_definition_levels));
     SET_VECTOR_ELT(res, 15, Rf_ScalarInteger(pd.schema_column_no));
     SET_VECTOR_ELT(res, 16, Rf_ScalarInteger(pd.data_type));
     SET_VECTOR_ELT(res, 17, Rf_ScalarInteger(pd.repetition_type));
