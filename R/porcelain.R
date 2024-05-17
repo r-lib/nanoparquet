@@ -24,6 +24,10 @@ read_parquet_page <- function(file, offset) {
 		names(encodings)[res$repetition_level_encoding + 1L]
 	res$data_type <- names(type_names)[res$data_type + 1L]
 	res$repetition_type <- names(repetition_types)[res$repetition_type + 1L]
+	if (res$codec == "SNAPPY") {
+		res$compressed_data <- res$data
+		res$data <- snappy_uncompress(res$data)
+	}
 	res
 }
 
