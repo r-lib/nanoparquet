@@ -138,7 +138,8 @@ SEXP miniparquet_read_pages(SEXP filesxp) {
                      parquet::format::PageType::DICTIONARY_PAGE) {
             INTEGER(num_values)[page] =
               ph.first.dictionary_page_header.num_values;
-            INTEGER(encoding)[page] = NA_INTEGER;
+            INTEGER(encoding)[page] =
+              ph.first.dictionary_page_header.encoding;
             INTEGER(definition_level_encoding)[page] = NA_INTEGER;
             INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
           } else if (ph.first.type ==

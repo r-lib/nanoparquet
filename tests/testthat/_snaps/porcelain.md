@@ -31,31 +31,31 @@
       25 data/mtcars-arrow.parquet         0     12 DICTIONARY_PAGE
       26 data/mtcars-arrow.parquet         0     12       DATA_PAGE
          uncompressed_page_size compressed_page_size crc num_values       encoding
-      1                     509                  424  NA         32           <NA>
+      1                     509                  424  NA         32          PLAIN
       2                      28                   30  NA         32 RLE_DICTIONARY
-      3                     200                  131  NA         25           <NA>
+      3                     200                  131  NA         25          PLAIN
       4                      28                   30  NA         32 RLE_DICTIONARY
-      5                      24                   22  NA          3           <NA>
+      5                      24                   22  NA          3          PLAIN
       6                      16                   18  NA         32 RLE_DICTIONARY
-      7                     216                  149  NA         27           <NA>
+      7                     216                  149  NA         27          PLAIN
       8                      28                   30  NA         32 RLE_DICTIONARY
-      9                     176                  118  NA         22           <NA>
+      9                     176                  118  NA         22          PLAIN
       10                     28                   30  NA         32 RLE_DICTIONARY
-      11                    176                  149  NA         22           <NA>
+      11                    176                  149  NA         22          PLAIN
       12                     28                   30  NA         32 RLE_DICTIONARY
-      13                    232                  188  NA         29           <NA>
+      13                    232                  188  NA         29          PLAIN
       14                     28                   30  NA         32 RLE_DICTIONARY
-      15                    240                  195  NA         30           <NA>
+      15                    240                  195  NA         30          PLAIN
       16                     28                   30  NA         32 RLE_DICTIONARY
-      17                     16                   18  NA          2           <NA>
+      17                     16                   18  NA          2          PLAIN
       18                     12                   14  NA         32 RLE_DICTIONARY
-      19                     16                   18  NA          2           <NA>
+      19                     16                   18  NA          2          PLAIN
       20                     14                   16  NA         32 RLE_DICTIONARY
-      21                     24                   22  NA          3           <NA>
+      21                     24                   22  NA          3          PLAIN
       22                     16                   18  NA         32 RLE_DICTIONARY
-      23                     48                   35  NA          6           <NA>
+      23                     48                   35  NA          6          PLAIN
       24                     20                   22  NA         32 RLE_DICTIONARY
-      25                     25                   26  NA          5           <NA>
+      25                     25                   26  NA          5          PLAIN
       26                     20                   22  NA         32 RLE_DICTIONARY
          definition_level_encoding repetition_level_encoding page_header_offset
       1                       <NA>                      <NA>                  4
