@@ -145,10 +145,10 @@
       [1] "SNAPPY"
       
       $num_values
-      [1] 0
+      [1] 32
       
       $encoding
-      [1] NA
+      [1] "PLAIN"
       
       $definition_level_encoding
       [1] NA

@@ -254,7 +254,8 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
               ph.first.data_page_header.repetition_level_encoding;
           } else if (ph.first.type ==
                      parquet::format::PageType::DICTIONARY_PAGE) {
-            pd.num_values = ph.first.data_page_header.num_values;
+            pd.num_values = ph.first.dictionary_page_header.num_values;
+            pd.encoding = ph.first.dictionary_page_header.encoding;
           }
           pd.has_repetition_levels =
             pd.page_type == parquet::format::PageType::DATA_PAGE &&
@@ -352,9 +353,9 @@ SEXP miniparquet_read_page(SEXP filesxp, SEXP page) {
     if (pd.page_type == parquet::format::PageType::DATA_PAGE ||
        pd.page_type == parquet::format::PageType::DICTIONARY_PAGE) {
       SET_VECTOR_ELT(res, 9, Rf_ScalarInteger(pd.num_values));
+      SET_VECTOR_ELT(res, 10, Rf_ScalarInteger(pd.encoding));
     }
     if (pd.page_type == parquet::format::PageType::DATA_PAGE) {
-      SET_VECTOR_ELT(res, 10, Rf_ScalarInteger(pd.encoding));
       SET_VECTOR_ELT(res, 11, Rf_ScalarInteger(pd.definition_level_encoding));
       SET_VECTOR_ELT(res, 12, Rf_ScalarInteger(pd.repetition_level_encoding));
     }
