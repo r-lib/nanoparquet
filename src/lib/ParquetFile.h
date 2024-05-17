@@ -63,12 +63,16 @@ public:
   uint64_t nrow;
   std::vector<std::unique_ptr<ParquetColumn>> columns;
   parquet::format::FileMetaData file_meta_data;
+  std::pair<parquet::format::PageHeader, int64_t> read_page_header(int64_t pos);
+  void read_chunk(int64_t offset, int64_t size, int8_t *buffer);
 
 private:
   void initialize(std::string filename);
   void initialize_column(ResultColumn &col, uint64_t num_rows);
   void scan_column(ScanState &state, ResultColumn &result_col);
   std::ifstream pfile;
+  ByteBuffer tmp_buf;
+  uint64_t file_size;
 };
 
 } // namespace miniparquet

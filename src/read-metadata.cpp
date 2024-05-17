@@ -178,20 +178,20 @@ SEXP convert_schema(const char *cfile_name,
     SET_STRING_ELT(file_name, idx, rfile_name);
     SET_STRING_ELT(name, idx, Rf_mkChar(sch.name.c_str()));
     INTEGER(type)[idx] = sch.__isset.type ? sch.type : NA_INTEGER;
-    INTEGER(type_length)
-    [idx] = sch.__isset.type_length ? sch.type_length : NA_INTEGER;
-    INTEGER(repetition_type)
-    [idx] = sch.__isset.repetition_type ? sch.repetition_type : NA_INTEGER;
-    INTEGER(converted_type)
-    [idx] = sch.__isset.converted_type ? sch.converted_type : NA_INTEGER;
+    INTEGER(type_length)[idx] =
+      sch.__isset.type_length ? sch.type_length : NA_INTEGER;
+    INTEGER(repetition_type)[idx] =
+      sch.__isset.repetition_type ? sch.repetition_type : NA_INTEGER;
+    INTEGER(converted_type)[idx] =
+    sch.__isset.converted_type ? sch.converted_type : NA_INTEGER;
     if (sch.__isset.logicalType) {
       SET_VECTOR_ELT(logical_type, idx, convert_logical_type(sch.logicalType));
     }
-    INTEGER(num_children)
-    [idx] = sch.__isset.num_children ? sch.num_children : NA_INTEGER;
+    INTEGER(num_children)[idx] =
+      sch.__isset.num_children ? sch.num_children : NA_INTEGER;
     INTEGER(scale)[idx] = sch.__isset.scale ? sch.scale : NA_INTEGER;
-    INTEGER(precision)
-    [idx] = sch.__isset.precision ? sch.precision : NA_INTEGER;
+    INTEGER(precision)[idx] =
+      sch.__isset.precision ? sch.precision : NA_INTEGER;
     INTEGER(field_id)[idx] = sch.__isset.field_id ? sch.field_id : NA_INTEGER;
   }
 
