@@ -157,10 +157,10 @@
       [1] NA
       
       $has_repetition_levels
-      [1] NA
+      [1] FALSE
       
       $has_definition_levels
-      [1] NA
+      [1] FALSE
       
       $schema_column
       [1] 1

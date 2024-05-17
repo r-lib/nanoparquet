@@ -256,7 +256,9 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
                      parquet::format::PageType::DICTIONARY_PAGE) {
             pd.num_values = ph.first.data_page_header.num_values;
           }
-          pd.has_repetition_levels = cmd.path_in_schema.size() >= 2;
+          pd.has_repetition_levels =
+            pd.page_type == parquet::format::PageType::DATA_PAGE &&
+            cmd.path_in_schema.size() >= 2;
           return pd;
         }
         ofs += ph.second;
@@ -295,7 +297,9 @@ SEXP miniparquet_read_page(SEXP filesxp, SEXP page) {
         pd.data_type = se.type;
         // all columns but the root have one, so this must have one
         pd.repetition_type = se.repetition_type;
-        pd.has_definition_levels = se.repetition_type !=
+        pd.has_definition_levels = pd.page_type ==
+          parquet::format::PageType::DATA_PAGE &&
+          se.repetition_type !=
           parquet::format::FieldRepetitionType::REQUIRED;
         break;
       }
@@ -345,8 +349,6 @@ SEXP miniparquet_read_page(SEXP filesxp, SEXP page) {
     SET_VECTOR_ELT(res, 10, Rf_ScalarInteger(NA_INTEGER));
     SET_VECTOR_ELT(res, 11, Rf_ScalarInteger(NA_INTEGER));
     SET_VECTOR_ELT(res, 12, Rf_ScalarInteger(NA_INTEGER));
-    SET_VECTOR_ELT(res, 13, Rf_ScalarInteger(NA_INTEGER));
-    SET_VECTOR_ELT(res, 14, Rf_ScalarInteger(NA_INTEGER));
     if (pd.page_type == parquet::format::PageType::DATA_PAGE ||
        pd.page_type == parquet::format::PageType::DICTIONARY_PAGE) {
       SET_VECTOR_ELT(res, 9, Rf_ScalarInteger(pd.num_values));
@@ -355,9 +357,9 @@ SEXP miniparquet_read_page(SEXP filesxp, SEXP page) {
       SET_VECTOR_ELT(res, 10, Rf_ScalarInteger(pd.encoding));
       SET_VECTOR_ELT(res, 11, Rf_ScalarInteger(pd.definition_level_encoding));
       SET_VECTOR_ELT(res, 12, Rf_ScalarInteger(pd.repetition_level_encoding));
-      SET_VECTOR_ELT(res, 13, Rf_ScalarLogical(pd.has_repetition_levels));
-      SET_VECTOR_ELT(res, 14, Rf_ScalarLogical(pd.has_definition_levels));
     }
+    SET_VECTOR_ELT(res, 13, Rf_ScalarLogical(pd.has_repetition_levels));
+    SET_VECTOR_ELT(res, 14, Rf_ScalarLogical(pd.has_definition_levels));
     SET_VECTOR_ELT(res, 15, Rf_ScalarInteger(pd.schema_column_no));
     SET_VECTOR_ELT(res, 16, Rf_ScalarInteger(pd.data_type));
     SET_VECTOR_ELT(res, 17, Rf_ScalarInteger(pd.repetition_type));
