@@ -38,8 +38,8 @@ uint32_t RleBpEncode(const T *input, uint32_t input_len,
         if (rleidx > iidx) {
           // cerr << "@ " << iidx << " bp x " << rleidx - iidx << endl;
           bp.pack_varint(((rleidx - iidx) / 8) << 1 | 1);
-          for (auto i = iidx; i < rleidx; i++) {
-            bp.pack(input[iidx++]);
+          for (; iidx < rleidx; iidx++) {
+            bp.pack(input[iidx]);
           }
           bp.flush();
         }

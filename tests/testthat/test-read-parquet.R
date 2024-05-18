@@ -131,6 +131,7 @@ test_that("round trip with arrow", {
 })
 
 test_that("round trip with duckdb", {
+  skip_on_cran()
   mt <- test_df()
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

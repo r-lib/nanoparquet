@@ -40,7 +40,11 @@ snappy_uncompress <- function(buffer) {
 }
 
 rle_encode_int <- function(x) {
-	bw <- max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
+	bw <- if (length(x)) {
+		max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
+	} else {
+		1L
+	}
 	res <- .Call(miniparquet_rle_encode_int, x, bw)
 	attr(res, "bit_width") <- bw
 	attr(res, "length") <- length(x)

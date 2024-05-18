@@ -7,7 +7,7 @@ public:
   BitPacker(uint8_t *buffer, uint8_t bit_width)
   : start_(buffer), buffer_(buffer), bit_width_(bit_width), tmp(0),
     bit_offset(0) {
-    value_bytes = ceil((bit_width + 1) / 8.0);
+    value_bytes = ceil(bit_width / 8.0);
   }
 
   inline void pack_varint(uint64_t v) {
@@ -42,13 +42,14 @@ public:
 
   inline void flush() {
     if (bit_offset % 8 != 0) {
-      throw std::runtime_error(
+      throw std::runtime_error(                               // # nocov
         "Internal bit packer error, flushing partial bytes"
       );
     }
     std::memcpy(buffer_, &tmp, bit_offset / 8);
     buffer_ += bit_offset / 8;
     bit_offset = 0;
+    tmp = 0;
   }
 
   inline uint32_t size() const {
@@ -57,7 +58,7 @@ public:
 
   inline void check_zero_offset() {
     if (bit_offset != 0) {
-      throw std::runtime_error(
+      throw std::runtime_error(                               // # nocov
         "Internal bit packer error, raw value with packed data"
       );
     }
