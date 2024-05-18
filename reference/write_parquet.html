@@ -81,6 +81,11 @@ character columns called <code>key</code> and <code>value</code>.</p></dd>
 
 
     </div>
+    <div id="details">
+    <h2>Details</h2>
+    <p><code>write_parquet()</code> converts string columns to UTF-8 encoding by calling
+<code><a href="https://rdrr.io/r/base/Encoding.html" class="external-link">base::enc2utf8()</a></code>. It does the same for factor levels.</p>
+    </div>
     <div id="see-also">
     <h2>See also</h2>
     <div class="dont-index"><p><code><a href="parquet_metadata.html">parquet_metadata()</a></code>, <code><a href="read_parquet.html">read_parquet()</a></code>.</p></div>
