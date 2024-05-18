@@ -254,6 +254,9 @@ parquet_schema <- function(file) {
 #'
 #' Writes the contents of an R data frame into a Parquet file.
 #'
+#' `write_parquet()` converts string columns to UTF-8 encoding by calling
+#' [base::enc2utf8()]. It does the same for factor levels.
+#'
 #' @param x Data frame to write.
 #' @param file Path to the output file.
 #' @param compression Compression algorithm to use. Currently only
@@ -305,6 +308,12 @@ write_parquet <- function(
 	fctrs <- which(vapply(x, function(c) inherits(c, "factor"), logical(1)))
 	for (idx in fctrs) {
 		x[[idx]] <- as.character(x[[idx]])
+	}
+
+	# convert strings to UTF-8
+	strs <- which(vapply(x, is.character, logical(1)))
+	for (idx in strs) {
+		x[[idx]] <- enc2utf8(x[[idx]])
 	}
 
 	invisible(.Call(miniparquet_write, x, file, dim, compression, metadata))

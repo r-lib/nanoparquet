@@ -115,3 +115,33 @@
         key value
       1 foo   bar
 
+# strings are converted to UTF-8
+
+    Code
+      charToRaw(utf8)
+    Output
+       [1] 43 73 c3 a1 72 64 69 20 47 c3 a1 62 6f 72
+    Code
+      charToRaw(df$utf8)
+    Output
+       [1] 43 73 c3 a1 72 64 69 20 47 c3 a1 62 6f 72
+    Code
+      charToRaw(df$latin1)
+    Output
+       [1] 43 73 e1 72 64 69 20 47 e1 62 6f 72
+
+---
+
+    Code
+      charToRaw(utf8)
+    Output
+       [1] 43 73 c3 a1 72 64 69 20 47 c3 a1 62 6f 72
+    Code
+      charToRaw(df2$utf8)
+    Output
+       [1] 43 73 c3 a1 72 64 69 20 47 c3 a1 62 6f 72
+    Code
+      charToRaw(df2$latin1)
+    Output
+       [1] 43 73 c3 a1 72 64 69 20 47 c3 a1 62 6f 72
+

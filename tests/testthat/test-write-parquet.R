@@ -126,3 +126,31 @@ test_that("writing metadata", {
   kvm <- parquet_metadata(tmp)$file_meta_data$key_value_metadata[[1]]
   expect_snapshot(as.data.frame(kvm)[1,])
 })
+
+test_that("strings are converted to UTF-8", {
+  utf8 <- paste(
+    "\u0043\u0073\u00e1\u0072\u0064\u0069",
+    "\u0047\u00e1\u0062\u006f\u0072"
+  )
+  df <- data.frame(
+    stringsAsFactors = FALSE,
+    utf8 = utf8,
+    latin1 = iconv(utf8, "UTf-8", "latin1")
+  )
+  expect_snapshot({
+    charToRaw(utf8)
+    charToRaw(df$utf8)
+    charToRaw(df$latin1)
+  })
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  write_parquet(df, tmp)
+  df2 <- read_parquet(tmp)
+
+  expect_snapshot({
+    charToRaw(utf8)
+    charToRaw(df2$utf8)
+    charToRaw(df2$latin1)
+  })
+})
