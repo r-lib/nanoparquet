@@ -97,6 +97,11 @@ void ParquetOutFile::schema_add_column(
   cmd.__set_type(type);
   vector<Encoding::type> encs;
   encs.push_back(Encoding::PLAIN);
+  // We dictionary encode strings, if we can
+  if (has_byte_array_dictionary() && logical_type.__isset.STRING) {
+    encs.push_back(Encoding::RLE);
+    encs.push_back(Encoding::RLE_DICTIONARY);
+  }
   cmd.__set_encodings(encs);
   vector<string> paths;
   paths.push_back(name);
@@ -186,16 +191,103 @@ void ParquetOutFile::write_columns() {
 void ParquetOutFile::write_column(uint32_t idx) {
   // Do we need compression? If yes, then we first write into a buffer
   ColumnMetaData *cmd = &(column_meta_data[idx]);
+  SchemaElement se = schemas[idx + 1];
+  bool dict = has_byte_array_dictionary() && se.logicalType.__isset.STRING;
   if (cmd->codec == CompressionCodec::UNCOMPRESSED) {
-    write_column_uncompressed(idx);
+    if (dict) {
+      write_column_uncompressed_dictionary(idx);
+    } else {
+      write_column_uncompressed_plain(idx);
+    }
   } else {
-    write_column_compressed(idx);
+    if (dict) {
+      write_column_compressed_dictionary(idx);
+    } else {
+      write_column_compressed_plain(idx);
+    }
   }
 }
 
-void ParquetOutFile::write_column_uncompressed(uint32_t idx) {
+void ParquetOutFile::write_column_uncompressed_dictionary(uint32_t idx) {
+  // Currently only byte arrays
+  ColumnMetaData *cmd = &(column_meta_data[idx]);
+  parquet::format::Type::type type = schemas[idx + 1].type;
   uint32_t col_start = pfile.tellp();
-  // TODO: dictionary here
+
+  // dictionary page header -----------------------------------------------
+  uint32_t dictionary_page_offset = pfile.tellp();
+  uint32_t dict_size = get_size_byte_array_dictionary(idx);
+  PageHeader ph0;
+  ph0.__set_type(PageType::DICTIONARY_PAGE);
+  ph0.__set_uncompressed_page_size(dict_size);
+  ph0.__set_compressed_page_size(dict_size);
+  DictionaryPageHeader diph;
+  uint32_t num_dict_values;
+  switch (type) {
+  case Type::BYTE_ARRAY:
+    num_dict_values = get_num_values_byte_array_dictionary(idx);
+    break;
+  default:
+    throw runtime_error("Cannot write this column as dictionary");
+  }
+  diph.__set_num_values(num_dict_values);
+  diph.__set_encoding(Encoding::PLAIN);
+  ph0.__set_dictionary_page_header(diph);
+  ph0.write(tproto.get());
+  uint8_t *out_buffer;
+  uint32_t out_length;
+  mem_buffer->getBuffer(&out_buffer, &out_length);
+  pfile.write((char*) out_buffer, out_length);
+  mem_buffer->resetBuffer();
+
+  // dictionary page data -------------------------------------------------
+  uint32_t cb_start = pfile.tellp();
+  switch (type) {
+  case Type::BYTE_ARRAY:
+    write_byte_array_dictionary(pfile, idx);
+    break;
+  default:
+    throw runtime_error("Cannot write this column as dictionary");
+  }
+  uint32_t cb_end = pfile.tellp();
+
+  if (cb_end - cb_start != dict_size) {
+    throw runtime_error("Wrong number of bytes written for parquet dictionary"); // # nocov
+  }
+
+  // data page header -----------------------------------------------------
+  uint32_t data_offset = pfile.tellp();
+  uint32_t idx_size = sizeof(uint32_t) * num_rows;
+  PageHeader ph;
+  ph.__set_type(PageType::DATA_PAGE);
+  DataPageHeader dph;
+  dph.__set_num_values(num_rows);
+  dph.__set_encoding(Encoding::RLE_DICTIONARY);
+  ph.__set_data_page_header(dph);
+
+  std::unique_ptr<std::ostream> os;
+  buf_unc.resize(idx_size);
+  buf_unc.reset();
+  os = std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+
+  switch (type) {
+  case Type::BYTE_ARRAY:
+    write_byte_array_dictionary(*os, idx);
+    break;
+  default:
+    throw runtime_error("Cannot write this column as dictionary");
+  }
+
+  if (buf_unc.tellp != idx_size) {
+    throw runtime_error("Wrong number of bytes written for parquet dictionary index"); // # nocov
+  }
+
+  // TODO: RleBpEncode here
+  throw runtime_error("Not implemented yet");
+}
+
+void ParquetOutFile::write_column_uncompressed_plain(uint32_t idx) {
+  uint32_t col_start = pfile.tellp();
   // data page header
   uint32_t data_offset = pfile.tellp();
   uint32_t data_size = calculate_column_data_size(idx);
@@ -213,7 +305,6 @@ void ParquetOutFile::write_column_uncompressed(uint32_t idx) {
   mem_buffer->getBuffer(&out_buffer, &out_length);
   pfile.write((char *)out_buffer, out_length);
   mem_buffer->resetBuffer();
-
 
   // data via callback
   uint32_t cb_start = pfile.tellp();
@@ -248,7 +339,11 @@ void ParquetOutFile::write_column_uncompressed(uint32_t idx) {
   cmd->__set_data_page_offset(data_offset);
 }
 
-void ParquetOutFile::write_column_compressed(uint32_t idx) {
+void ParquetOutFile::write_column_compressed_dictionary(uint32_t idx) {
+
+}
+
+void ParquetOutFile::write_column_compressed_plain(uint32_t idx) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   uint32_t data_size = calculate_column_data_size(idx);
   std::unique_ptr<std::ostream> os;

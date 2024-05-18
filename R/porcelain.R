@@ -38,3 +38,15 @@ snappy_compress <- function(buffer) {
 snappy_uncompress <- function(buffer) {
   .Call(snappy_uncompress_raw, buffer)
 }
+
+rle_encode_int <- function(x) {
+	bw <- max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
+	res <- .Call(miniparquet_rle_encode_int, x, bw)
+	attr(res, "bit_width") <- bw
+	attr(res, "length") <- length(x)
+	res
+}
+
+rle_decode_int <- function(x, bit_width, length = NA) {
+	.Call(miniparquet_rle_decode_int, x, bit_width, is.na(length), length)
+}

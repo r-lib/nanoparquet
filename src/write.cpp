@@ -1,4 +1,5 @@
 #include "lib/miniparquet.h"
+#include "lib/bitpacker.h"
 
 #include <Rdefines.h>
 
