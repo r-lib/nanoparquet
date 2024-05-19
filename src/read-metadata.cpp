@@ -61,7 +61,7 @@ SEXP convert_logical_type(parquet::format::LogicalType ltype) {
   } else if (ltype.__isset.TIMESTAMP) {
     const char *nms[] = { "type", "is_adjusted_to_utc", "unit", "" };
     rtype = PROTECT(Rf_mkNamed(VECSXP, nms)); prot++;
-    SET_VECTOR_ELT(rtype, 0, Rf_mkString("TIME"));
+    SET_VECTOR_ELT(rtype, 0, Rf_mkString("TIMESTAMP"));
     SET_VECTOR_ELT(rtype, 1, Rf_ScalarLogical(ltype.TIMESTAMP.isAdjustedToUTC));
     if (ltype.TIMESTAMP.unit.__isset.MILLIS) {
       SET_VECTOR_ELT(rtype, 2, Rf_mkString("millis"));

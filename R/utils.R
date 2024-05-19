@@ -14,3 +14,7 @@ capitalize <- function(x) {
   substr(x, 1, 1) <- toupper(substr(x, 1, 1))
   x
 }
+
+vcapply <- function(X, FUN, ...) {
+  vapply(X, FUN, FUN.VALUE = character(1), ...)
+}

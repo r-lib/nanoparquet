@@ -383,7 +383,7 @@ parquet_columns <- function(file) {
 #' # add row names as a column, because `write_parquet()` ignores them.
 #' mtcars2 <- cbind(name = rownames(mtcars), mtcars)
 #' write_parquet(mtcars2, "mtcars.parquet")
-#' \dontshow{if (Sys.getenv("NOT_CRAN") == "true") unlink("mtcars.parquet")}
+#' \dontshow{if (!nanoparquet:::is_rcmd_check()) unlink("mtcars.parquet")}
 
 write_parquet <- function(
 	x,

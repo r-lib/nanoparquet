@@ -361,7 +361,7 @@
       2 data/timestamp.parquet   Time INT64          NA        OPTIONAL
           converted_type logical_type num_children scale precision field_id
       1             <NA>                         1    NA        NA       NA
-      2 TIMESTAMP_MICROS TIME, FA....           NA    NA        NA       NA
+      2 TIMESTAMP_MICROS TIMESTAM....           NA    NA        NA       NA
 
 ---
 
@@ -373,7 +373,7 @@
       
       [[2]]
       $type
-      [1] "TIME"
+      [1] "TIMESTAMP"
       
       $is_adjusted_to_utc
       [1] FALSE
@@ -462,12 +462,12 @@
        1 data/enum.parquet id                BYTE~ chara~ OPTIONAL        <NULL>      
        2 data/enum.parquet parent_id         BYTE~ chara~ OPTIONAL        <NULL>      
        3 data/enum.parquet trace_id          BYTE~ chara~ OPTIONAL        <NULL>      
-       4 data/enum.parquet name              BYTE~ chara~ OPTIONAL        <nnprqt__>  
+       4 data/enum.parquet name              BYTE~ chara~ OPTIONAL        <STRING>    
        5 data/enum.parquet start_timestamp_~ INT64 double OPTIONAL        <NULL>      
        6 data/enum.parquet duration_micros   INT64 double OPTIONAL        <NULL>      
-       7 data/enum.parquet key               BYTE~ chara~ OPTIONAL        <nnprqt__>  
-       8 data/enum.parquet v_type            BYTE~ chara~ OPTIONAL        <nnprqt__>  
-       9 data/enum.parquet v_str             BYTE~ chara~ OPTIONAL        <nnprqt__>  
+       7 data/enum.parquet key               BYTE~ chara~ OPTIONAL        <STRING>    
+       8 data/enum.parquet v_type            BYTE~ chara~ OPTIONAL        <ENUM>      
+       9 data/enum.parquet v_str             BYTE~ chara~ OPTIONAL        <STRING>    
       10 data/enum.parquet v_bool            BOOL~ logic~ OPTIONAL        <NULL>      
       11 data/enum.parquet v_int64           INT64 double OPTIONAL        <NULL>      
       12 data/enum.parquet v_float64         DOUB~ double OPTIONAL        <NULL>      
@@ -478,7 +478,7 @@
       # A data frame: 14 x 6
          file_name           name  type       r_type    repetition_type logical_type
        * <chr>               <chr> <chr>      <chr>     <chr>           <I<list>>   
-       1 data/factor.parquet nam   BYTE_ARRAY character OPTIONAL        <nnprqt__>  
+       1 data/factor.parquet nam   BYTE_ARRAY character OPTIONAL        <STRING>    
        2 data/factor.parquet mpg   DOUBLE     double    OPTIONAL        <NULL>      
        3 data/factor.parquet cyl   INT32      integer   OPTIONAL        <NULL>      
        4 data/factor.parquet disp  DOUBLE     double    OPTIONAL        <NULL>      
@@ -491,17 +491,17 @@
       11 data/factor.parquet gear  DOUBLE     double    OPTIONAL        <NULL>      
       12 data/factor.parquet carb  DOUBLE     double    OPTIONAL        <NULL>      
       13 data/factor.parquet large BOOLEAN    logical   OPTIONAL        <NULL>      
-      14 data/factor.parquet fac   BYTE_ARRAY factor    OPTIONAL        <nnprqt__>  
+      14 data/factor.parquet fac   BYTE_ARRAY factor    OPTIONAL        <STRING>    
     Code
       parquet_columns(test_path("data/decimals.parquet"))
     Output
       # A data frame: 4 x 6
-        file_name             name  type           r_type repetition_type logical_type
-      * <chr>                 <chr> <chr>          <chr>  <chr>           <I<list>>   
-      1 data/decimals.parquet l1    FIXED_LEN_BYT~ double OPTIONAL        <nnprqt__>  
-      2 data/decimals.parquet l2    FIXED_LEN_BYT~ double OPTIONAL        <nnprqt__>  
-      3 data/decimals.parquet l3    FIXED_LEN_BYT~ double OPTIONAL        <nnprqt__>  
-      4 data/decimals.parquet l4    FIXED_LEN_BYT~ double OPTIONAL        <nnprqt__>  
+        file_name             name  type       r_type repetition_type logical_type    
+      * <chr>                 <chr> <chr>      <chr>  <chr>           <I<list>>       
+      1 data/decimals.parquet l1    FIXED_LEN~ double OPTIONAL        <DECIMAL(2, 3)> 
+      2 data/decimals.parquet l2    FIXED_LEN~ double OPTIONAL        <DECIMAL(2, 8)> 
+      3 data/decimals.parquet l3    FIXED_LEN~ double OPTIONAL        <DECIMAL(2, 15)>
+      4 data/decimals.parquet l4    FIXED_LEN~ double OPTIONAL        <DECIMAL(2, 30)>
 
 # parquet_info
 

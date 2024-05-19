@@ -45,7 +45,7 @@ df <- data.table::rbindlist(lapply(
 ### Write
 
 Call `write_parquet()` to write a data frame to a Parquet file:
-```{r}
+```r
 nanoparquet::write_parquet(mtcars, "mtcars.parquet")
 ```
 
