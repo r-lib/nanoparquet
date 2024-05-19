@@ -82,3 +82,21 @@ test_that("key-value metadata", {
     as.data.frame(mtd$file_meta_data$key_value_metadata[[1]])
   )
 })
+
+test_that("parquet_columns", {
+  library(pillar)
+  expect_snapshot({
+    parquet_columns(test_path("data/enum.parquet"))
+    parquet_columns(test_path("data/factor.parquet"))
+    parquet_columns(test_path("data/decimals.parquet"))
+  })
+})
+
+test_that("parquet_info", {
+  library(pillar)
+  expect_snapshot({
+    parquet_info(test_path("data/enum.parquet"))
+    parquet_info(test_path("data/factor.parquet"))
+    parquet_info(test_path("data/decimals.parquet"))
+  })
+})

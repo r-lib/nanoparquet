@@ -28,8 +28,10 @@
 # Can't parse Arrow schema
 
     Code
-      res2 <- apply_arrow_schema(res, pf)
+      arrow_find_factors(base64_encode("foobar"), "myfile")
     Condition
       Warning in `value[[3L]]()`:
-      Failed to parse Arrow schema from parquet file at 'data/factor.parquet'
+      Failed to parse Arrow schema from parquet file at 'myfile'
+    Output
+      integer(0)
 

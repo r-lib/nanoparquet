@@ -25,6 +25,8 @@ install.packages("nanoparquet")
 
 ## Usage
 
+### Read
+
 Call `read_parquet()` to read a Parquet file:
 ```r
 df <- nanoparquet::read_parquet("example.parquet")
@@ -40,18 +42,31 @@ df <- data.table::rbindlist(lapply(
 ))
 ```
 
-Call `parquet_schema()` to show the schema (i.e. the column names and
-types) of a Parquet file, or `parquet_metadata()` to show the complete
- metadata, without reading the whole file into memory:
-
-```r
-nanoparquet::parquet_schema("example.parquet")
-nanoparquet::parquet_metadata("example.parquet")
-```
+### Write
 
 Call `write_parquet()` to write a data frame to a Parquet file:
+```{r}
+nanoparquet::write_parquet(mtcars, "mtcars.parquet")
+```
+
+### Inspect
+
+Call `parquet_info()`, `parquet_columns()`, `parquet_schema()` or
+`parquet_metadata()` to see various kinds of metadata from a Parquet
+file:
+* `parquet_info()` shows a basic summary of the file.
+* `parquet_columns()` shows the leaf columns, these are are the ones
+  that `read_parquet()` reads into R.
+* `parquet_schema()` shows all columns, including non-leaf columns.
+* `parquet_metadat()` shows the most complete metadata information:
+  file meta data, the schema, the row groups and column chunks of the
+  file.
+
 ```r
-write_parquet(mtcars, "mtcars.parquet")
+nanoparquet::parquet_info("mtcars.parquet")
+nanoparquet::parquet_columns("mtcars.parquet")
+nanoparquet::parquet_schema("mtcars.parquet")
+nanoparquet::parquet_metadata("mtcars.parquet")
 ```
 
 If you find a file that should be supported but isn't, please open an

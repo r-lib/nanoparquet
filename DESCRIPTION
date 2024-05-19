@@ -21,6 +21,7 @@ Suggests:
     DBI,
     duckdb,
     mockery,
+    pillar,
     processx,
     testthat,
     withr
