@@ -64,9 +64,8 @@ private:
   void write_columns();
   void write_column(uint32_t idx);
   void write_column_uncompressed_plain(uint32_t idx);
-  void write_column_uncompressed_dictionary(uint32_t idx);
   void write_column_compressed_plain(uint32_t idx);
-  void write_column_compressed_dictionary(uint32_t idx);
+  void write_column_dictionary(uint32_t idx);
   void write_footer();
 
   ByteBuffer buf_unc;

@@ -34,15 +34,11 @@ test_that("round trip with arrow", {
 
   write_parquet(mt, tmp, compression = "uncompressed")
   mt2 <- arrow::read_parquet(tmp)
-  expect_s3_class(mt2$fac, "factor")
-  mt2$fac <- as.factor(as.character(mt2$fac))
   expect_equal(mt2, mt)
   unlink(tmp)
 
   write_parquet(mt, tmp, compression = "snappy")
   mt2 <- arrow::read_parquet(tmp)
-  expect_s3_class(mt2$fac, "factor")
-  mt2$fac <- as.factor(as.character(mt2$fac))
   expect_equal(mt2, mt)
 })
 
