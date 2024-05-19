@@ -5,16 +5,16 @@
 #' @param file Path to a Parquet file.
 #' @return A `data.frame` with the file's contents.
 #' @export
-#' @seealso [parquet_metadata()], [write_parquet()], [miniparquet-types].
+#' @seealso [parquet_metadata()], [write_parquet()], [nanoparquet-types].
 #' @examples
-#' file_name <- system.file("extdata/userdata1.parquet", package = "miniparquet")
-#' parquet_df <- miniparquet::read_parquet(file_name)
+#' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
+#' parquet_df <- nanoparquet::read_parquet(file_name)
 #' print(str(parquet_df))
 
 read_parquet <- function(file) {
 	file <- path.expand(file)
-	res <- .Call(miniparquet_read, file)
-	if (!identical(getOption("miniparquet.use_arrow_metadata"), FALSE)) {
+	res <- .Call(nanoparquet_read, file)
+	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
 		res <- apply_arrow_schema(res, file)
 	}
 	# some data.frame dress up
@@ -175,14 +175,14 @@ format_schema_result <- function(sch) {
 #'
 #' @export
 #' @seealso [parquet_schema()] only reads the schema of the file,
-#'   [read_parquet()], [write_parquet()], [miniparquet-types].
+#'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @examples
-#' file_name <- system.file("extdata/userdata1.parquet", package = "miniparquet")
-#' miniparquet::parquet_metadata(file_name)
+#' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
+#' nanoparquet::parquet_metadata(file_name)
 
 parquet_metadata <- function(file) {
 	file <- path.expand(file)
-	res <- .Call(miniparquet_read_metadata, file)
+	res <- .Call(nanoparquet_read_metadata, file)
 
 	res$file_meta_data$key_value_metadata <-
 		as.data.frame(res$file_meta_data$key_value_metadata)
@@ -240,12 +240,12 @@ parquet_metadata <- function(file) {
 # -------------------------------------------------------------------------
 #'
 #' @seealso [parquet_metadata()] reads more metadata,
-#'   [read_parquet()], [write_parquet()], [miniparquet-types].
+#'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @export
 
 parquet_schema <- function(file) {
 	file <- path.expand(file)
-	res <- .Call(miniparquet_read_schema, file)
+	res <- .Call(nanoparquet_read_schema, file)
 	res <- format_schema_result(res)
 	res
 }
@@ -268,7 +268,7 @@ parquet_schema <- function(file) {
 #'
 #' @export
 #' @seealso [parquet_metadata()], [read_parquet()].
-#' @examplesIf !miniparquet:::is_rcmd_check()
+#' @examplesIf !nanoparquet:::is_rcmd_check()
 #' # add row names as a column, because `write_parquet()` ignores them.
 #' mtcars2 <- cbind(name = rownames(mtcars), mtcars)
 #' write_parquet(mtcars2, "mtcars.parquet")
@@ -297,7 +297,7 @@ write_parquet <- function(
 		metadata <- list(names(metadata), unname(metadata))
 	}
 
-	if (!identical(getOption("miniparquet.write_arrow_metadata"), FALSE)) {
+	if (!identical(getOption("nanoparquet.write_arrow_metadata"), FALSE)) {
 		if (! "ARROW:schema" %in% metadata[[1]]) {
 			metadata[[1]] <- c(metadata[[1]], "ARROW:schema")
 			metadata[[2]] <- c(metadata[[2]], encode_arrow_schema(x))
@@ -315,5 +315,5 @@ write_parquet <- function(
 		levels(x[[idx]]) <- enc2utf8(levels(x[[idx]]))
 	}
 
-	invisible(.Call(miniparquet_write, x, file, dim, compression, metadata))
+	invisible(.Call(nanoparquet_write, x, file, dim, compression, metadata))
 }

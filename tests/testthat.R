@@ -1,1 +1,1 @@
-testthat::test_check("miniparquet")
+testthat::test_check("nanoparquet")

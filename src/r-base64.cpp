@@ -8,7 +8,7 @@ extern "C" {
 
 // TODO: exceptions?
 
-SEXP miniparquet_base64_decode(SEXP x) {
+SEXP nanoparquet_base64_decode(SEXP x) {
   const char *input;
   size_t len;
   if (TYPEOF(x) == STRSXP) {
@@ -46,7 +46,7 @@ SEXP miniparquet_base64_decode(SEXP x) {
 
 // TODO: exceptions?
 
-SEXP miniparquet_base64_encode(SEXP x) {
+SEXP nanoparquet_base64_encode(SEXP x) {
   const char *input;
   size_t len;
   if (TYPEOF(x) == STRSXP) {

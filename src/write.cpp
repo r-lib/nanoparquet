@@ -1,9 +1,9 @@
-#include "lib/miniparquet.h"
+#include "lib/nanoparquet.h"
 #include "lib/bitpacker.h"
 
 #include <Rdefines.h>
 
-using namespace miniparquet;
+using namespace nanoparquet;
 using namespace std;
 
 class RParquetOutFile : public ParquetOutFile {
@@ -208,7 +208,7 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim, SEXP metadata) {
 
 extern "C" {
 
-SEXP miniparquet_write(
+SEXP nanoparquet_write(
   SEXP dfsxp,
   SEXP filesxp,
   SEXP dim,
@@ -216,7 +216,7 @@ SEXP miniparquet_write(
   SEXP metadata) {
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_error("miniparquet_write: filename must be a string"); // # nocov
+    Rf_error("nanoparquet_write: filename must be a string"); // # nocov
   }
 
   int c_compression = INTEGER(compression)[0];

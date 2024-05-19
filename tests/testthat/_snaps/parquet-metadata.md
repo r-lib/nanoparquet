@@ -6,7 +6,7 @@
            file_name version num_rows mtd$file_meta_data$key_value_metadata
       1 test.parquet       1       32                          ARROW:sc....
                                         created_by
-      1 https://github.com/gaborcsardi/miniparquet
+      1 https://github.com/gaborcsardi/nanoparquet
     Code
       as.data.frame(mtd$schema)
     Output
@@ -275,7 +275,7 @@
       [1] 3
       
       attr(,"class")
-      [1] "miniparquet_logical_type"
+      [1] "nanoparquet_logical_type"
       
       [[3]]
       $type
@@ -288,7 +288,7 @@
       [1] 8
       
       attr(,"class")
-      [1] "miniparquet_logical_type"
+      [1] "nanoparquet_logical_type"
       
       [[4]]
       $type
@@ -301,7 +301,7 @@
       [1] 15
       
       attr(,"class")
-      [1] "miniparquet_logical_type"
+      [1] "nanoparquet_logical_type"
       
       [[5]]
       $type
@@ -314,7 +314,7 @@
       [1] 30
       
       attr(,"class")
-      [1] "miniparquet_logical_type"
+      [1] "nanoparquet_logical_type"
       
 
 # TIME type
@@ -348,7 +348,7 @@
       [1] "micros"
       
       attr(,"class")
-      [1] "miniparquet_logical_type"
+      [1] "nanoparquet_logical_type"
       
 
 # TIMESTAMP type
@@ -382,7 +382,7 @@
       [1] "micros"
       
       attr(,"class")
-      [1] "miniparquet_logical_type"
+      [1] "nanoparquet_logical_type"
       
 
 # LIST type

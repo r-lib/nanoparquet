@@ -102,7 +102,7 @@ dict_kind_names <- c(
 )
 
 parse_arrow_schema <- function(schema) {
-  ret <- .Call(miniparquet_parse_arrow_schema, schema)
+  ret <- .Call(nanoparquet_parse_arrow_schema, schema)
 
   columns <- ret[[1]]
   columns$type_type <- names(arrow_types)[columns$type_type + 1L]
@@ -240,7 +240,7 @@ fill_arrow_schema_enums <- function(schema) {
 encode_arrow_schema<- function(df) {
   schema <- encode_arrow_schema_r(df)
   schema <- fill_arrow_schema_enums(schema)
-  rawenc <- .Call(miniparquet_encode_arrow_schema, schema)
+  rawenc <- .Call(nanoparquet_encode_arrow_schema, schema)
   enc <- base64_encode(rawenc)
   enc
 }
@@ -261,9 +261,9 @@ factor_bits <- function(x) {
 }
 
 base64_decode <- function(x) {
-  .Call(miniparquet_base64_decode, x)
+  .Call(nanoparquet_base64_decode, x)
 }
 
 base64_encode <- function(x) {
-  .Call(miniparquet_base64_encode, x)
+  .Call(nanoparquet_base64_encode, x)
 }

@@ -5,7 +5,7 @@
 
 extern "C" {
 
-SEXP miniparquet_rle_decode_int(SEXP x, SEXP bit_width,
+SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width,
                                 SEXP includes_length, SEXP length) {
   uint8_t *buf = (uint8_t *) RAW(x);
   R_xlen_t len = Rf_xlength(x);
@@ -45,7 +45,7 @@ SEXP miniparquet_rle_decode_int(SEXP x, SEXP bit_width,
   return R_NilValue; // # nocov
 }
 
-SEXP miniparquet_rle_encode_int(SEXP x, SEXP bit_width) {
+SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
   int *input = INTEGER(x);
   R_xlen_t input_len = Rf_xlength(x);
   uint8_t bw = INTEGER(bit_width)[0];

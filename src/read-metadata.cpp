@@ -1,8 +1,8 @@
-#include "lib/miniparquet.h"
+#include "lib/nanoparquet.h"
 
 #include <Rdefines.h>
 
-using namespace miniparquet;
+using namespace nanoparquet;
 using namespace std;
 
 extern "C" {
@@ -100,7 +100,7 @@ SEXP convert_logical_type(parquet::format::LogicalType ltype) {
   }
 
   if (!Rf_isNull(rtype)) {
-    SEXP cls = PROTECT(Rf_mkString("miniparquet_logical_type")); prot++;
+    SEXP cls = PROTECT(Rf_mkString("nanoparquet_logical_type")); prot++;
     Rf_setAttrib(rtype, R_ClassSymbol, cls);
   }
 
@@ -343,10 +343,10 @@ SEXP convert_column_chunks(const char *file_name,
   return rccs;
 }
 
-SEXP miniparquet_read_metadata(SEXP filesxp) {
+SEXP nanoparquet_read_metadata(SEXP filesxp) {
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_error("miniparquet_read: Need single filename parameter");
+    Rf_error("nanoparquet_read: Need single filename parameter");
   }
 
   char error_buffer[8192];
@@ -407,9 +407,9 @@ SEXP miniparquet_read_metadata(SEXP filesxp) {
   return R_NilValue;
 }
 
-SEXP miniparquet_read_schema(SEXP filesxp) {
+SEXP nanoparquet_read_schema(SEXP filesxp) {
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_error("miniparquet_read: Need single filename parameter");
+    Rf_error("nanoparquet_read: Need single filename parameter");
   }
 
   char error_buffer[8192];

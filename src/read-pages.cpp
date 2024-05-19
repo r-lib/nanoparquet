@@ -1,15 +1,15 @@
-#include "lib/miniparquet.h"
+#include "lib/nanoparquet.h"
 
 #include <Rdefines.h>
 
-using namespace miniparquet;
+using namespace nanoparquet;
 using namespace std;
 
 extern "C" {
 
-SEXP miniparquet_read_pages(SEXP filesxp) {
+SEXP nanoparquet_read_pages(SEXP filesxp) {
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_error("miniparquet_read: Need single filename parameter");
+    Rf_error("nanoparquet_read: Need single filename parameter");
   }
 
   char error_buffer[8192];
@@ -273,9 +273,9 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
   );
 }
 
-SEXP miniparquet_read_page(SEXP filesxp, SEXP page) {
+SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_error("miniparquet_read: Need single filename parameter");
+    Rf_error("nanoparquet_read: Need single filename parameter");
   }
   int64_t page_header_offset = REAL(page)[0];
 

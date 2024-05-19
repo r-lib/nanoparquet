@@ -3,7 +3,7 @@
 
 #include "parquet/parquet_types.h"
 
-namespace miniparquet {
+namespace nanoparquet {
 
 class ParquetOutFile {
 public:
@@ -79,4 +79,4 @@ private:
   uint32_t calculate_column_data_size(uint32_t idx);
 };
 
-} // namespace miniparquet
+} // namespace nanoparquet

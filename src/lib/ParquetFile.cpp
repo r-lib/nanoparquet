@@ -8,7 +8,7 @@
 #include <transport/TBufferTransports.h>
 
 #include "snappy/snappy.h"
-#include "miniparquet.h"
+#include "nanoparquet.h"
 #include "RleBpDecoder.h"
 
 using namespace std;
@@ -19,7 +19,7 @@ using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 
-using namespace miniparquet;
+using namespace nanoparquet;
 
 static TCompactProtocolFactoryT<TMemoryBuffer> tproto_factory;
 

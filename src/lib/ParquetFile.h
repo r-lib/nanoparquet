@@ -9,7 +9,7 @@
 
 #include "parquet/parquet_types.h"
 
-namespace miniparquet {
+namespace nanoparquet {
 
 class ParquetColumn {
 public:
@@ -75,4 +75,4 @@ private:
   uint64_t file_size;
 };
 
-} // namespace miniparquet
+} // namespace nanoparquet

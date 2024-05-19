@@ -1,6 +1,6 @@
 parquet_pages <- function(file) {
 	file <- path.expand(file)
-	res <- .Call(miniparquet_read_pages, file)
+	res <- .Call(nanoparquet_read_pages, file)
 	res$encoding <- names(encodings)[res$encoding + 1L]
 	res$definition_level_encoding <-
 		names(encodings)[res$definition_level_encoding + 1L]
@@ -14,7 +14,7 @@ parquet_pages <- function(file) {
 
 read_parquet_page <- function(file, offset) {
 	file <- path.expand(file)
-	res <- .Call(miniparquet_read_page, file, as.double(offset))
+	res <- .Call(nanoparquet_read_page, file, as.double(offset))
 	res$page_type <- names(page_types)[res$page_type + 1L]
 	res$codec <- names(codecs)[res$codec + 1L]
 	res$encoding <- names(encodings)[res$encoding + 1L]
@@ -45,12 +45,12 @@ rle_encode_int <- function(x) {
 	} else {
 		1L
 	}
-	res <- .Call(miniparquet_rle_encode_int, x, bw)
+	res <- .Call(nanoparquet_rle_encode_int, x, bw)
 	attr(res, "bit_width") <- bw
 	attr(res, "length") <- length(x)
 	res
 }
 
 rle_decode_int <- function(x, bit_width, length = NA) {
-	.Call(miniparquet_rle_decode_int, x, bit_width, is.na(length), length)
+	.Call(nanoparquet_rle_decode_int, x, bit_width, is.na(length), length)
 }
