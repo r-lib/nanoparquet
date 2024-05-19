@@ -1,4 +1,4 @@
-#' @export
+#' @exportS3Method pillar::obj_sum
 obj_sum.nanoparquet_logical_type <- function(x, ...) {
   type <- x$type
   paste0(
