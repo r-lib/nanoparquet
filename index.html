@@ -89,13 +89,15 @@
 <div class="section level3">
 <h3 id="write">Write<a class="anchor" aria-label="anchor" href="#write"></a>
 </h3>
-<p>Call <code><a href="reference/write_parquet.html">write_parquet()</a></code> to write a data frame to a Parquet file: <code>{r} nanoparquet::write_parquet(mtcars, "mtcars.parquet")</code></p>
+<p>Call <code><a href="reference/write_parquet.html">write_parquet()</a></code> to write a data frame to a Parquet file:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/write_parquet.html">write_parquet</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="st">"mtcars.parquet"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="inspect">Inspect<a class="anchor" aria-label="anchor" href="#inspect"></a>
 </h3>
 <p>Call <code><a href="reference/parquet_info.html">parquet_info()</a></code>, <code><a href="reference/parquet_columns.html">parquet_columns()</a></code>, <code><a href="reference/parquet_schema.html">parquet_schema()</a></code> or <code><a href="reference/parquet_metadata.html">parquet_metadata()</a></code> to see various kinds of metadata from a Parquet file: * <code><a href="reference/parquet_info.html">parquet_info()</a></code> shows a basic summary of the file. * <code><a href="reference/parquet_columns.html">parquet_columns()</a></code> shows the leaf columns, these are are the ones that <code><a href="reference/read_parquet.html">read_parquet()</a></code> reads into R. * <code><a href="reference/parquet_schema.html">parquet_schema()</a></code> shows all columns, including non-leaf columns. * <code><a href="reference/parquet_metadata.html">parquet_metadata()</a></code> shows the most complete metadata information: file meta data, the schema, the row groups and column chunks of the file.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_info.html">parquet_info</a></span><span class="op">(</span><span class="st">"mtcars.parquet"</span><span class="op">)</span></span>
 <span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_columns.html">parquet_columns</a></span><span class="op">(</span><span class="st">"mtcars.parquet"</span><span class="op">)</span></span>
 <span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_schema.html">parquet_schema</a></span><span class="op">(</span><span class="st">"mtcars.parquet"</span><span class="op">)</span></span>
