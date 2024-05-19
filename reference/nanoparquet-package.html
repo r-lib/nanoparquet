@@ -119,7 +119,11 @@ issue here with a link to the file.</p>
 <div class="section">
 <h3 id="options">Options<a class="anchor" aria-label="anchor" href="#options"></a></h3>
 
-<ul><li><p><code>nanoparquet.use_arrow_metadata</code>: unless this is set to <code>FALSE</code>,
+<ul><li><p><code>nanoparquet.class</code>: extra class to add to data frames returned by
+<code><a href="read_parquet.html">read_parquet()</a></code>. If it is not defined, the default is <code>"tbl"</code>,
+which changes how the data frame is printed if the pillar package is
+loaded.</p></li>
+<li><p><code>nanoparquet.use_arrow_metadata</code>: unless this is set to <code>FALSE</code>,
 <code><a href="read_parquet.html">read_parquet()</a></code> will make use of Arrow metadata in the Parquet file.
 Currently this is used to detect factor columns.</p></li>
 <li><p><code>nanoparquet.write_arrow_metadata</code>: unless this is set to <code>FALSE</code>,
