@@ -1,10 +1,15 @@
+#pragma once
+
+#include <cstdint>
+
+#include "miniparquet.h"
 
 using namespace std;
 
 // adapted from arrow parquet reader
 class RleBpDecoder {
 public:
-  /// Create a decoder object. buffer/buffer_len is the decoded data.
+  /// Create a decoder object. buffer/buffer_len is the encoded data.
   /// bit_width is the width of each value (before encoding).
   RleBpDecoder(const uint8_t *buffer, uint32_t buffer_len,
                uint32_t bit_width)
@@ -222,12 +227,3 @@ private:
     return count;
   }
 };
-
-const uint32_t RleBpDecoder::BITPACK_MASKS[] = {
-    0,         1,         3,          7,         15,       31,       63,
-    127,       255,       511,        1023,      2047,     4095,     8191,
-    16383,     32767,     65535,      131071,    262143,   524287,   1048575,
-    2097151,   4194303,   8388607,    16777215,  33554431, 67108863, 134217727,
-    268435455, 536870911, 1073741823, 2147483647};
-
-const uint8_t RleBpDecoder::BITPACK_DLEN = 8;

@@ -1,4 +1,5 @@
 #include "lib/miniparquet.h"
+#include "lib/bitpacker.h"
 
 #include <Rdefines.h>
 
@@ -16,6 +17,12 @@ public:
   void write_byte_array(std::ostream &file, uint32_t idx);
   uint32_t get_size_byte_array(uint32_t idx);
   void write_boolean(std::ostream &file, uint32_t idx);
+
+  // for factors
+  uint32_t get_num_values_byte_array_dictionary(uint32_t idx);
+  uint32_t get_size_byte_array_dictionary(uint32_t idx);
+  void write_byte_array_dictionary(std::ostream &file, uint32_t idx);
+  void write_dictionary_indices(std::ostream &file, uint32_t idx);
 
   void write(SEXP dfsxp, SEXP dim, SEXP metadata);
 
@@ -91,6 +98,51 @@ void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx) {
   }
 }
 
+uint32_t RParquetOutFile::get_num_values_byte_array_dictionary(
+    uint32_t idx) {
+  SEXP col = VECTOR_ELT(df, idx);
+  return Rf_nlevels(col);
+}
+
+uint32_t RParquetOutFile::get_size_byte_array_dictionary(uint32_t idx) {
+  SEXP col = VECTOR_ELT(df, idx);
+  SEXP levels = PROTECT(Rf_getAttrib(col, R_LevelsSymbol));
+  R_xlen_t len = Rf_xlength(levels);
+  uint32_t size = len * 4; // 4 bytes of length for each CHARSXP
+  for (R_xlen_t i = 0; i < len; i++) {
+    const char *c = CHAR(STRING_ELT(levels, i));
+    size += strlen(c);
+  }
+  UNPROTECT(1);
+  return size;
+}
+
+void RParquetOutFile::write_byte_array_dictionary(
+    std::ostream &file,
+    uint32_t idx) {
+  SEXP col = VECTOR_ELT(df, idx);
+  SEXP levels = PROTECT(Rf_getAttrib(col, R_LevelsSymbol));
+  R_xlen_t len = XLENGTH(levels);
+  for (R_xlen_t i = 0; i < len; i++) {
+    const char *c = CHAR(STRING_ELT(levels, i));
+    uint32_t len1 = strlen(c);
+    file.write((const char *)&len1, 4);
+    file.write(c, len1);
+  }
+  UNPROTECT(1);
+}
+
+void RParquetOutFile::write_dictionary_indices(
+    std::ostream &file,
+    uint32_t idx) {
+  SEXP col = VECTOR_ELT(df, idx);
+  R_xlen_t len = Rf_xlength(col);
+  for (R_xlen_t i = 0; i < len; i++) {
+    int el = INTEGER(col)[i] - 1;
+    file.write((const char *) &el, sizeof(int));
+  }
+}
+
 void RParquetOutFile::write(SEXP dfsxp, SEXP dim, SEXP metadata) {
   df = dfsxp;
   SEXP nms = Rf_getAttrib(dfsxp, R_NamesSymbol);
@@ -102,12 +154,19 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim, SEXP metadata) {
     int rtype = TYPEOF(col);
     switch (rtype) {
     case INTSXP: {
-      parquet::format::IntType it;
-      it.__set_isSigned(true);
-      it.__set_bitWidth(32);
-      parquet::format::LogicalType logical_type;
-      logical_type.__set_INTEGER(it);
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type);
+      if (Rf_isFactor(col)) {
+        parquet::format::StringType st;
+        parquet::format::LogicalType logical_type;
+        logical_type.__set_STRING(st);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, true);
+      } else {
+        parquet::format::IntType it;
+        it.__set_isSigned(true);
+        it.__set_bitWidth(32);
+        parquet::format::LogicalType logical_type;
+        logical_type.__set_INTEGER(it);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type);
+      }
       break;
     }
     case REALSXP: {
