@@ -1,9 +1,9 @@
 # R's data types
 
-When writing out a data frame, miniparquet maps R's data types to Parquet
+When writing out a data frame, nanoparquet maps R's data types to Parquet
 logical types. This is how the mapping is performed.
 
-These rules will likely change until miniparquet reaches version 1.0.0.
+These rules will likely change until nanoparquet reaches version 1.0.0.
 
 1. Factors (i.e. vectors that inherit the *factor* class) are converted
    to character vectors using `as.character()`, then written as a
@@ -18,11 +18,11 @@ These rules will likely change until miniparquet reaches version 1.0.0.
 
 # Parquet's data types
 
-When reading a Parquet file, currently miniparquet mostly relies on the
+When reading a Parquet file, currently nanoparquet mostly relies on the
 (low level) data types, instead of the logical types. The exact rules are
 below.
 
-These rules will likely change until miniparquet reaches version 1.0.0.
+These rules will likely change until nanoparquet reaches version 1.0.0.
 
 1. `BOOLEAN` is read as a logical vector (`LGLSXP`).
 2. `INT32` is read as an integer vector (`INTSXP`).
@@ -36,5 +36,5 @@ These rules will likely change until miniparquet reaches version 1.0.0.
    More precisely, the file has the Arrow schema in the key-value metadata
    under the key `ARROW:schema` and the corresponding column is a `Utf8`
    Arrow column with a dictionary. This does not happen if the
-   `miniparquet.use_arrow_metadata` option is set to `FALSE`.
+   `nanoparquet.use_arrow_metadata` option is set to `FALSE`.
 6. Otherwise `BYTE_ARRAY` is read a character vector (`STRSXP`).

@@ -23,7 +23,7 @@ bool VerifyFlatbuffers(const uint8_t* data, int64_t size) {
 
 extern "C" {
 
-SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
+SEXP nanoparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
   bool ok = VerifyFlatbuffers<Message>(buf, len);
   if (!ok) {
      Rf_error("Cannot parse arrow schema");
@@ -305,7 +305,7 @@ SEXP miniparquet_parse_arrow_schema_impl(uint8_t *buf, uint32_t len) {
   return fres;
 }
 
-SEXP miniparquet_parse_arrow_schema(SEXP rbuf) {
+SEXP nanoparquet_parse_arrow_schema(SEXP rbuf) {
   // base64 decode first
   if (TYPEOF(rbuf) != STRSXP) {
     Rf_error("Arrow schema must be a RAW vector or a string");
@@ -335,7 +335,7 @@ SEXP miniparquet_parse_arrow_schema(SEXP rbuf) {
   uint32_t len = ((uint32_t *) buf)[0];
   SEXP res = R_NilValue;
   if (len <= rawlen - 4) {
-    res = miniparquet_parse_arrow_schema_impl(buf + 4, len);
+    res = nanoparquet_parse_arrow_schema_impl(buf + 4, len);
   }
 
   // If it failed, then try to skip the continuation token
@@ -345,7 +345,7 @@ SEXP miniparquet_parse_arrow_schema(SEXP rbuf) {
     }
     len = ((uint32_t*) buf)[1];
     if (len <= rawlen - 8) {
-      res = miniparquet_parse_arrow_schema_impl(buf + 8, len);
+      res = nanoparquet_parse_arrow_schema_impl(buf + 8, len);
     }
   }
 
@@ -358,7 +358,7 @@ SEXP miniparquet_parse_arrow_schema(SEXP rbuf) {
 
 // ------------------------------------------------------------------------
 
-SEXP miniparquet_encode_arrow_schema(SEXP rschema) {
+SEXP nanoparquet_encode_arrow_schema(SEXP rschema) {
   SEXP rfields = VECTOR_ELT(rschema, 0);
   SEXP rmetadata = VECTOR_ELT(rschema, 1);
   SEXP rmetakeys = VECTOR_ELT(rmetadata, 0);

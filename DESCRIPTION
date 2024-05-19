@@ -1,4 +1,4 @@
-Package: miniparquet
+Package: nanoparquet
 Title: Read Parquet Files
 Version: 0.1.2.9000
 Authors@R: c(

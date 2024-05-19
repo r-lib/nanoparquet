@@ -1,11 +1,11 @@
 #include <cmath>
 #include <iostream>
 
-#include "lib/miniparquet.h"
+#include "lib/nanoparquet.h"
 #undef ERROR
 #include <Rdefines.h>
 
-using namespace miniparquet;
+using namespace nanoparquet;
 using namespace std;
 
 // surely they are joking
@@ -23,10 +23,10 @@ static int64_t impala_timestamp_to_nanoseconds(const Int96 &impala_timestamp) {
 
 extern "C" {
 
-SEXP miniparquet_read(SEXP filesxp) {
+SEXP nanoparquet_read(SEXP filesxp) {
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_error("miniparquet_read: Need single filename parameter");
+    Rf_error("nanoparquet_read: Need single filename parameter");
   }
 
   char error_buffer[8192];
@@ -95,7 +95,7 @@ SEXP miniparquet_read(SEXP filesxp) {
           UNPROTECT(1); // retlist
           auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
               s_ele->converted_type);
-          Rf_error("miniparquet_read: Unknown FLBA type %s", it->second);
+          Rf_error("nanoparquet_read: Unknown FLBA type %s", it->second);
         }
         break;
       }
@@ -106,7 +106,7 @@ SEXP miniparquet_read(SEXP filesxp) {
         UNPROTECT(1); // retlist
         auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
             f.columns[col_idx]->type);
-        Rf_error("miniparquet_read: Unknown column type %s",
+        Rf_error("nanoparquet_read: Unknown column type %s",
                  it->second); // unlikely
       }
       SET_VECTOR_ELT(retlist, col_idx, varvalue);
@@ -157,7 +157,7 @@ SEXP miniparquet_read(SEXP filesxp) {
                 UNPROTECT(1); // retlist
                 auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
                     s_ele->converted_type);
-                Rf_error("miniparquet_read: Unknown FLBA type %s", it->second);
+                Rf_error("nanoparquet_read: Unknown FLBA type %s", it->second);
               }
               break;
             }
@@ -170,7 +170,7 @@ SEXP miniparquet_read(SEXP filesxp) {
               UNPROTECT(1); // retlist
               auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
                   f.columns[col_idx]->type);
-              Rf_error("miniparquet_read: Unknown column type %s",
+              Rf_error("nanoparquet_read: Unknown column type %s",
                        it->second); // unlikely
             }
             }
@@ -235,7 +235,7 @@ SEXP miniparquet_read(SEXP filesxp) {
               UNPROTECT(1); // retlist
               auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
                   s_ele->converted_type);
-              Rf_error("miniparquet_read: Unknown FLBA type %s", it->second);
+              Rf_error("nanoparquet_read: Unknown FLBA type %s", it->second);
             }
             break;
           }
@@ -250,7 +250,7 @@ SEXP miniparquet_read(SEXP filesxp) {
             auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
                 f.columns[col_idx]->type);
             UNPROTECT(1); // retlist
-            Rf_error("miniparquet_read: Unknown column type %s",
+            Rf_error("nanoparquet_read: Unknown column type %s",
                      it->second); // unlikely
           }
           }

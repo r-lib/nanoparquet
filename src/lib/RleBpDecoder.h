@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "miniparquet.h"
+#include "nanoparquet.h"
 
 using namespace std;
 

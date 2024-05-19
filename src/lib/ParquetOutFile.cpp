@@ -7,7 +7,7 @@
 #include <transport/TBufferTransports.h>
 
 #include "snappy/snappy.h"
-#include "miniparquet.h"
+#include "nanoparquet.h"
 #include "RleBpEncoder.h"
 
 using namespace std;
@@ -18,7 +18,7 @@ using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 
-using namespace miniparquet;
+using namespace nanoparquet;
 
 // # nocov start
 static string type_to_string(Type::type t) {
@@ -525,7 +525,7 @@ void ParquetOutFile::write_footer() {
   fmd.__set_num_rows(num_rows);
   fmd.__set_row_groups(rgs);
   fmd.__set_key_value_metadata(kv);
-  fmd.__set_created_by("https://github.com/gaborcsardi/miniparquet");
+  fmd.__set_created_by("https://github.com/gaborcsardi/nanoparquet");
   fmd.write(tproto.get());
   uint8_t *out_buffer;
   uint32_t out_length;
