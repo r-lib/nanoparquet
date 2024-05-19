@@ -14,7 +14,8 @@ public:
   void set_num_rows(uint32_t nr);
   void schema_add_column(std::string name, parquet::format::Type::type type);
   void schema_add_column(std::string name,
-                         parquet::format::LogicalType logical_type);
+                         parquet::format::LogicalType logical_type,
+                         bool dict = false);
   void add_key_value_metadata(std::string key, std::string value);
   void write();
 
@@ -49,6 +50,7 @@ private:
   uint32_t total_size; // for the single row group we have for now
   parquet::format::CompressionCodec::type codec;
 
+  std::vector<parquet::format::Encoding::type> encodings;
   std::vector<parquet::format::SchemaElement> schemas;
   std::vector<parquet::format::ColumnMetaData> column_meta_data;
   std::vector<parquet::format::KeyValue> kv;

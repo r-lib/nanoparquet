@@ -304,16 +304,15 @@ write_parquet <- function(
 		}
 	}
 
-	# convert factors to strings
-	fctrs <- which(vapply(x, function(c) inherits(c, "factor"), logical(1)))
-	for (idx in fctrs) {
-		x[[idx]] <- as.character(x[[idx]])
-	}
-
 	# convert strings to UTF-8
 	strs <- which(vapply(x, is.character, logical(1)))
 	for (idx in strs) {
 		x[[idx]] <- enc2utf8(x[[idx]])
+	}
+	# factor levels as well
+	fctrs <- which(vapply(x, function(c) inherits(c, "factor"), logical(1)))
+	for (idx in fctrs) {
+		levels(x[[idx]]) <- enc2utf8(levels(x[[idx]]))
 	}
 
 	invisible(.Call(miniparquet_write, x, file, dim, compression, metadata))
