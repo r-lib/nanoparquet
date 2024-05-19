@@ -5,7 +5,11 @@
 #' @param file Path to a Parquet file.
 #' @return A `data.frame` with the file's contents.
 #' @export
-#' @seealso [parquet_metadata()], [write_parquet()], [nanoparquet-types].
+#' @seealso See [write_parquet()] to write Parquet files,
+#'   [nanoparquet-types] for the R <-> Parquet type mapping.
+#'   See [parquet_info()], for general information,
+#'   [parquet_columns()] and [parquet_schema()] for information about the
+#'   columns, and [parquet_metadata()] for the complete metadata.
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
 #' parquet_df <- nanoparquet::read_parquet(file_name)
@@ -174,8 +178,10 @@ format_schema_result <- function(sch) {
 #'       are no dictionary pages.
 #'
 #' @export
-#' @seealso [parquet_schema()] only reads the schema of the file,
-#'   [read_parquet()], [write_parquet()], [nanoparquet-types].
+#' @seealso [parquet_info()] for a much shorter summary.
+#'   [parquet_columns()] and [parquet_schema()] for column information.
+#'   [read_parquet()] to read, [write_parquet()] to write Parquet files,
+#'   [nanoparquet-types] for the R <-> Parquet type mappings.
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
 #' nanoparquet::parquet_metadata(file_name)
@@ -239,7 +245,9 @@ parquet_metadata <- function(file) {
 #'       integer for the root node, and `NA` for a leaf node.
 # -------------------------------------------------------------------------
 #'
-#' @seealso [parquet_metadata()] reads more metadata,
+#' @seealso [parquet_metadata()] to read more metadata,
+#'   [parquet_columns()] to show the columns R would read,
+#'   [parquet_info()] to show only basic information.
 #'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @export
 
@@ -248,6 +256,109 @@ parquet_schema <- function(file) {
 	res <- .Call(nanoparquet_read_schema, file)
 	res <- format_schema_result(res)
 	res
+}
+
+#' Short summary of a Parquet file
+#'
+#' @param file Path to a Parquet file.
+#' @return Data frame with columns:
+#'   * `file_name`: file name.
+#'   * `num_cols`: number of (leaf) columns.
+#'   * `num_rows`: number of rows.
+#'   * `num_row_groups`: number of row groups.
+#'   * `file_size`: file size in bytes.
+#'   * `parquet_version`: Parquet version.
+#'   * `created_by`: A string scalar, usually the name of the software
+#'       that created the file. `NA` if not available.
+#'
+#' @seealso [parquet_metadata()] to read more metadata,
+#'   [parquet_columns()] and [parquet_schema()] for column information.
+#'   [read_parquet()], [write_parquet()], [nanoparquet-types].
+#' @export
+
+parquet_info <- function(file) {
+	file <- path.expand(file)
+	mtd <- parquet_metadata(file)
+	info <- data.frame(
+		stringsAsFactors = FALSE,
+		file_name = file,
+		num_cols = sum(is.na(mtd$schema$num_children)),
+		num_rows = mtd$file_meta_data$num_rows,
+		num_row_groups = nrow(mtd$row_groups),
+		file_size = file.size(file),
+		parquet_version = mtd$file_meta_data$version,
+		created_by = mtd$file_meta_data$created_by
+	)
+	class(info) <- c("tbl", class(info))
+	info
+}
+
+#' Parquet file column information
+#'
+#' It includes the leaf columns, i.e. the columns that [read_parquet()]
+#' would read.
+#'
+#' @param file Path to a Parquet file.
+#' @return Data frame with columns:
+#'   * `file_name`: file name.
+#'   * `name`: column name.
+#'   * `type`: (low level) Parquet data type.
+#'   * `r_type`: the R type that corresponds to the Parquet type.
+#'     Might be `NA` if [read_parquet()] cannot read this column. See
+#'     [nanoparquet-types] for the type mapping rules.
+#'   * `repetition_type`: whether the column in `REQUIRED` (cannot be
+#'     `NA`) or `OPTIONAL` (may be `NA`). `REPEATED` columns are not
+#'     currently supported by nanoparquet.
+#'   * `logical_type`: Parquet logical type in a list column.
+#'      An element has at least an entry called `type`, and potentially
+#'      additional entries, e.g. `bit_width`, `is_signed`, etc.
+#'
+#' @seealso [parquet_metadata()] to read more metadata,
+#'   [parquet_info()] for a very short sumamry.
+#'   [parquet_schema()] for the complete Parquet schema.
+#'   [read_parquet()], [write_parquet()], [nanoparquet-types].
+#' @export
+
+parquet_columns <- function(file) {
+  mtd <- parquet_metadata(file)
+	sch <- mtd$schema
+
+	kv <- mtd$file_meta_data$key_value_metadata[[1]]
+
+  fct <- if ("ARROW:schema" %in% kv$key) {
+		kv <- mtd$file_meta_data$key_value_metadata[[1]]
+		arrow_find_factors(
+			kv$value[match("ARROW:schema", kv$key)],
+			file
+		)
+	}
+	type_map <- c(
+		BOOLEAN = "logical",
+		INT32 = "integer",
+		INT64 = "double",
+		DOUBLE = "double",
+		FLOAT = "double",
+		INT96 = "POSIXct",
+		FIXED_LENGTH_BYTE_ARRAY = NA,
+		BYTE_ARRAY = "character"
+	)
+
+	# keep leaf columns only, arrow schema is for leaf columns
+	sch <- sch[is.na(sch$num_children) | sch$num_children == 0L, ]
+	sch$r_type <- unname(type_map[sch$type])
+	if (length(fct)) sch$r_type[fct] <- "factor"
+	sch$r_type[
+		sch$type == "FIXED_LEN_BYTE_ARRAY" &
+		sch$converted_type == "DECIMAL"] <- "double"
+	cols <- c(
+		"file_name",
+		"name",
+		"type",
+		"r_type",
+		"repetition_type",
+		"logical_type"
+	)
+	sch[, cols]
 }
 
 #' Write a data frame to a Parquet file

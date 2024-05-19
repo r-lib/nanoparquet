@@ -86,6 +86,8 @@ file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
 nanoparquet::parquet_metadata(file_name)
 }
 \seealso{
-\code{\link[=parquet_schema]{parquet_schema()}} only reads the schema of the file,
-\code{\link[=read_parquet]{read_parquet()}}, \code{\link[=write_parquet]{write_parquet()}}, \link{nanoparquet-types}.
+\code{\link[=parquet_info]{parquet_info()}} for a much shorter summary.
+\code{\link[=parquet_columns]{parquet_columns()}} and \code{\link[=parquet_schema]{parquet_schema()}} for column information.
+\code{\link[=read_parquet]{read_parquet()}} to read, \code{\link[=write_parquet]{write_parquet()}} to write Parquet files,
+\link{nanoparquet-types} for the R <-> Parquet type mappings.
 }

@@ -2,28 +2,36 @@ apply_arrow_schema <- function(tab, file) {
   mtd <- parquet_metadata(file)
   kv <- mtd$file_meta_data$key_value_metadata[[1]]
   if ("ARROW:schema" %in% kv$key) {
-    amd <- tryCatch(
-      parse_arrow_schema(kv$value[match("ARROW:schema", kv$key)])$columns,
-      error = function(e) {
-        warning(sprintf(
-          "Failed to parse Arrow schema from parquet file at '%s'",
-          file
-        ), call. = TRUE)
-        NULL
-      }
-    )
-    if (is.null(amd)) {
-      return(tab)
-    }
-    # If the type is Utf8 and it is a dictionary, then it is a factor
-    fct <- which(
-      amd$type_type == "Utf8" & !vapply(amd$dictionary, is.null, logical(1))
+    fct <- arrow_find_factors(
+      kv$value[match("ARROW:schema", kv$key)],
+      file
     )
     for (idx in fct) {
       tab[[idx]] <- as.factor(tab[[idx]])
     }
   }
   tab
+}
+
+arrow_find_factors <- function(asch, file) {
+  amd <- tryCatch(
+    parse_arrow_schema(asch)$columns,
+    error = function(e) {
+      warning(sprintf(
+        "Failed to parse Arrow schema from parquet file at '%s'",
+        file
+      ), call. = TRUE)
+      NULL
+    }
+  )
+  if (is.null(amd)) {
+    return(integer())
+  }
+  # If the type is Utf8 and it is a dictionary, then it is a factor
+  fct <- which(
+    amd$type_type == "Utf8" & !vapply(amd$dictionary, is.null, logical(1))
+  )
+  fct
 }
 
 arrow_types <- c(

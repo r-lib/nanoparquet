@@ -451,3 +451,82 @@
       1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      A\n3\n263168\n197888\n5\nUTF-8\n531\n1\n531\n13\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n1026\n1\n262153\n5\nnames\n16\n13\n262153\n4\nname\n262153\n3\nmpg\n262153\n3\ncyl\n262153\n4\ndisp\n262153\n2\nhp\n262153\n4\ndrat\n262153\n2\nwt\n262153\n4\nqsec\n262153\n2\nvs\n262153\n2\nam\n262153\n4\ngear\n262153\n4\ncarb\n262153\n3\nfac\n254\n1026\n511\n16\n1\n262153\n7\ncolumns\n254\n
       2 /////1AEAAAQAAAAAAAKAA4ABgAFAAgACgAAAAABBAAQAAAAAAAKAAwAAAAEAAgACgAAAHwBAAAEAAAAAQAAAAwAAAAIAAwABAAIAAgAAABYAQAABAAAAEkBAABBCjMKMjYzMTY4CjE5Nzg4OAo1ClVURi04CjUzMQoxCjUzMQoxMwoyNTQKMjU0CjI1NAoyNTQKMjU0CjI1NAoyNTQKMjU0CjI1NAoyNTQKMjU0CjI1NAoyNTQKMTAyNgoxCjI2MjE1Mwo1Cm5hbWVzCjE2CjEzCjI2MjE1Mwo0Cm5hbWUKMjYyMTUzCjMKbXBnCjI2MjE1MwozCmN5bAoyNjIxNTMKNApkaXNwCjI2MjE1MwoyCmhwCjI2MjE1Mwo0CmRyYXQKMjYyMTUzCjIKd3QKMjYyMTUzCjQKcXNlYwoyNjIxNTMKMgp2cwoyNjIxNTMKMgphbQoyNjIxNTMKNApnZWFyCjI2MjE1Mwo0CmNhcmIKMjYyMTUzCjMKZmFjCjI1NAoxMDI2CjUxMQoxNgoxCjI2MjE1Mwo3CmNvbHVtbnMKMjU0CgAAAAEAAAByAAAADQAAAHQCAAAwAgAABAIAANQBAACoAQAAeAEAAEwBAAAcAQAA8AAAAMQAAACUAAAAZAAAABQAAAAQABgACAAGAAcADAAQABQAEAAAAAAAAQUUAAAAPAAAABwAAAAEAAAAAAAAAAMAAABmYWMACAAIAAAABAAIAAAADAAAAAgADAAIAAcACAAAAAAAAAEIAAAA9P3//yz+//8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABjYXJiAAAAAF7+//8AAAIAWP7//wAAAQMQAAAAGAAAAAQAAAAAAAAABAAAAGdlYXIAAAAAiv7//wAAAgCE/v//AAABAxAAAAAUAAAABAAAAAAAAAACAAAAYW0AALL+//8AAAIArP7//wAAAQMQAAAAFAAAAAQAAAAAAAAAAgAAAHZzAADa/v//AAACANT+//8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABxc2VjAAAAAAb///8AAAIAAP///wAAAQMQAAAAFAAAAAQAAAAAAAAAAgAAAHd0AAAu////AAACACj///8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABkcmF0AAAAAFr///8AAAIAVP///wAAAQMQAAAAFAAAAAQAAAAAAAAAAgAAAGhwAACC////AAACAHz///8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABkaXNwAAAAAK7///8AAAIAqP///wAAAQMQAAAAFAAAAAQAAAAAAAAAAwAAAGN5bADW////AAACAND///8AAAEDEAAAABwAAAAEAAAAAAAAAAMAAABtcGcAAAAGAAgABgAGAAAAAAACABAAFAAIAAYABwAMAAAAEAAQAAAAAAABBRAAAAAcAAAABAAAAAAAAAAEAAAAbmFtZQAAAAAEAAQABAAAAAAAAAA=
 
+# parquet_columns
+
+    Code
+      parquet_columns(test_path("data/enum.parquet"))
+    Output
+      # A data frame: 13 x 6
+         file_name         name              type  r_type repetition_type logical_type
+       * <chr>             <chr>             <chr> <chr>  <chr>           <I<list>>   
+       1 data/enum.parquet id                BYTE~ chara~ OPTIONAL        <NULL>      
+       2 data/enum.parquet parent_id         BYTE~ chara~ OPTIONAL        <NULL>      
+       3 data/enum.parquet trace_id          BYTE~ chara~ OPTIONAL        <NULL>      
+       4 data/enum.parquet name              BYTE~ chara~ OPTIONAL        <nnprqt__>  
+       5 data/enum.parquet start_timestamp_~ INT64 double OPTIONAL        <NULL>      
+       6 data/enum.parquet duration_micros   INT64 double OPTIONAL        <NULL>      
+       7 data/enum.parquet key               BYTE~ chara~ OPTIONAL        <nnprqt__>  
+       8 data/enum.parquet v_type            BYTE~ chara~ OPTIONAL        <nnprqt__>  
+       9 data/enum.parquet v_str             BYTE~ chara~ OPTIONAL        <nnprqt__>  
+      10 data/enum.parquet v_bool            BOOL~ logic~ OPTIONAL        <NULL>      
+      11 data/enum.parquet v_int64           INT64 double OPTIONAL        <NULL>      
+      12 data/enum.parquet v_float64         DOUB~ double OPTIONAL        <NULL>      
+      13 data/enum.parquet v_binary          BYTE~ chara~ OPTIONAL        <NULL>      
+    Code
+      parquet_columns(test_path("data/factor.parquet"))
+    Output
+      # A data frame: 14 x 6
+         file_name           name  type       r_type    repetition_type logical_type
+       * <chr>               <chr> <chr>      <chr>     <chr>           <I<list>>   
+       1 data/factor.parquet nam   BYTE_ARRAY character OPTIONAL        <nnprqt__>  
+       2 data/factor.parquet mpg   DOUBLE     double    OPTIONAL        <NULL>      
+       3 data/factor.parquet cyl   INT32      integer   OPTIONAL        <NULL>      
+       4 data/factor.parquet disp  DOUBLE     double    OPTIONAL        <NULL>      
+       5 data/factor.parquet hp    DOUBLE     double    OPTIONAL        <NULL>      
+       6 data/factor.parquet drat  DOUBLE     double    OPTIONAL        <NULL>      
+       7 data/factor.parquet wt    DOUBLE     double    OPTIONAL        <NULL>      
+       8 data/factor.parquet qsec  DOUBLE     double    OPTIONAL        <NULL>      
+       9 data/factor.parquet vs    DOUBLE     double    OPTIONAL        <NULL>      
+      10 data/factor.parquet am    DOUBLE     double    OPTIONAL        <NULL>      
+      11 data/factor.parquet gear  DOUBLE     double    OPTIONAL        <NULL>      
+      12 data/factor.parquet carb  DOUBLE     double    OPTIONAL        <NULL>      
+      13 data/factor.parquet large BOOLEAN    logical   OPTIONAL        <NULL>      
+      14 data/factor.parquet fac   BYTE_ARRAY factor    OPTIONAL        <nnprqt__>  
+    Code
+      parquet_columns(test_path("data/decimals.parquet"))
+    Output
+      # A data frame: 4 x 6
+        file_name             name  type           r_type repetition_type logical_type
+      * <chr>                 <chr> <chr>          <chr>  <chr>           <I<list>>   
+      1 data/decimals.parquet l1    FIXED_LEN_BYT~ double OPTIONAL        <nnprqt__>  
+      2 data/decimals.parquet l2    FIXED_LEN_BYT~ double OPTIONAL        <nnprqt__>  
+      3 data/decimals.parquet l3    FIXED_LEN_BYT~ double OPTIONAL        <nnprqt__>  
+      4 data/decimals.parquet l4    FIXED_LEN_BYT~ double OPTIONAL        <nnprqt__>  
+
+# parquet_info
+
+    Code
+      parquet_info(test_path("data/enum.parquet"))
+    Output
+      # A data frame: 1 x 7
+        file_name         num_cols num_rows num_row_groups file_size parquet_version
+        <chr>                <int>    <dbl>          <int>     <dbl>           <int>
+      1 data/enum.parquet       13        2              1      3930               1
+      # i 1 more variable: created_by <chr>
+    Code
+      parquet_info(test_path("data/factor.parquet"))
+    Output
+      # A data frame: 1 x 7
+        file_name           num_cols num_rows num_row_groups file_size parquet_version
+        <chr>                  <int>    <dbl>          <int>     <dbl>           <int>
+      1 data/factor.parquet       14       32              1      7469               2
+      # i 1 more variable: created_by <chr>
+    Code
+      parquet_info(test_path("data/decimals.parquet"))
+    Output
+      # A data frame: 1 x 7
+        file_name           num_cols num_rows num_row_groups file_size parquet_version
+        <chr>                  <int>    <dbl>          <int>     <dbl>           <int>
+      1 data/decimals.parq~        4        2              1      1653               1
+      # i 1 more variable: created_by <chr>
+

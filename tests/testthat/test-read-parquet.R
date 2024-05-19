@@ -101,17 +101,9 @@ test_that("read factors, marked by Arrow", {
 })
 
 test_that("Can't parse Arrow schema", {
-  pf <- test_path("data/factor.parquet")
-  res <- read_parquet(pf)
-  mockery::stub(
-    apply_arrow_schema,
-    "parse_arrow_schema",
-    function(...) stop("nope")
-  )
   expect_snapshot(
-    res2 <- apply_arrow_schema(res, pf)
+    arrow_find_factors(base64_encode("foobar"), "myfile")
   )
-  expect_equal(res2, res)
 })
 
 test_that("round trip with arrow", {
