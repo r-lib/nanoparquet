@@ -9,7 +9,7 @@ Authors@R: c(
 	person("Daniel", "Lemire", role = "cph"),
 	person("Chad", "Walters", role = "cph"),
 	person("Posit Software, PBC", role = "cph"))
-Description: Self-sufficient reader for a subset of Parquet files.
+Description: Self-sufficient reader and writer for a flat Parquet files.
     Nested tables, compression besides Snappy and encryption are not
     supported.
 Depends:

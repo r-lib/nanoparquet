@@ -58,7 +58,7 @@ file:
 * `parquet_columns()` shows the leaf columns, these are are the ones
   that `read_parquet()` reads into R.
 * `parquet_schema()` shows all columns, including non-leaf columns.
-* `parquet_metadat()` shows the most complete metadata information:
+* `parquet_metadata()` shows the most complete metadata information:
   file meta data, the schema, the row groups and column chunks of the
   file.
 
