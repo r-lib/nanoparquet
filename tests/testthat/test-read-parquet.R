@@ -95,7 +95,7 @@ test_that("basic reading works with snappy", {
 test_that("read factors, marked by Arrow", {
   res <- read_parquet(test_path("data/factor.parquet"))
   expect_snapshot({
-    res[1:5,]
+    as.data.frame(res[1:5,])
     sapply(res, class)
   })
 })
@@ -131,7 +131,7 @@ test_that("round trip with duckdb", {
   drv <- duckdb::duckdb()
   con <- DBI::dbConnect(drv)
   on.exit(DBI::dbDisconnect(con), add = TRUE)
-  DBI::dbWriteTable(con, "mtcars", mt)
+  DBI::dbWriteTable(con, "mtcars", as.data.frame(mt))
 
   DBI::dbExecute(con, DBI::sqlInterpolate(con,
     "COPY mtcars TO ?filename (FORMAT 'parquet', COMPRESSION 'uncompressed')",

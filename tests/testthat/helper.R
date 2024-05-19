@@ -8,6 +8,8 @@ test_df <- function(tibble = FALSE, factor = FALSE) {
   rownames(df) <- NULL
   if (tibble) {
     class(df) <- c("tbl_df", "tbl", "data.frame")
+  } else {
+    class(df) <- c("tbl", "data.frame")
   }
   df
 }

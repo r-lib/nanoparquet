@@ -1,7 +1,7 @@
 # read factors, marked by Arrow
 
     Code
-      res[1:5, ]
+      as.data.frame(res[1:5, ])
     Output
                       nam  mpg cyl disp  hp drat    wt  qsec vs am gear carb large
       1         Mazda RX4 21.0   6  160 110 3.90 2.620 16.46  0  1    4    4  TRUE

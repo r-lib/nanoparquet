@@ -74,6 +74,10 @@ issue here with a link to the file.
 
 ## Options
 
+* `nanoparquet.class`: extra class to add to data frames returned by
+  `read_parquet()`. If it is not defined, the default is `"tbl"`,
+  which changes how the data frame is printed if the pillar package is
+  loaded.
 * `nanoparquet.use_arrow_metadata`: unless this is set to `FALSE`,
   `read_parquet()` will make use of Arrow metadata in the Parquet file.
   Currently this is used to detect factor columns.

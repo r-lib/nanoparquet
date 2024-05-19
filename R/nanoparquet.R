@@ -23,7 +23,7 @@ read_parquet <- function(file) {
 	}
 	# some data.frame dress up
 	attr(res, "row.names") <- c(NA_integer_, as.integer(-1 * length(res[[1]])))
-	class(res) <- "data.frame"
+	class(res) <- c(getOption("nanoparquet.class", "tbl"), "data.frame")
 	res
 }
 

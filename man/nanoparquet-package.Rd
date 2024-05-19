@@ -89,6 +89,10 @@ issue here with a link to the file.
 
 \subsection{Options}{
 \itemize{
+\item \code{nanoparquet.class}: extra class to add to data frames returned by
+\code{read_parquet()}. If it is not defined, the default is \code{"tbl"},
+which changes how the data frame is printed if the pillar package is
+loaded.
 \item \code{nanoparquet.use_arrow_metadata}: unless this is set to \code{FALSE},
 \code{read_parquet()} will make use of Arrow metadata in the Parquet file.
 Currently this is used to detect factor columns.
