@@ -16,10 +16,10 @@
     <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/miniparquet-package.html</loc>
+    <loc>/reference/nanoparquet-package.html</loc>
   </url>
   <url>
-    <loc>/reference/miniparquet-types.html</loc>
+    <loc>/reference/nanoparquet-types.html</loc>
   </url>
   <url>
     <loc>/reference/parquet_metadata.html</loc>
