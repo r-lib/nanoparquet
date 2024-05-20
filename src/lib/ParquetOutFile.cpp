@@ -223,6 +223,45 @@ void ParquetOutFile::write_data_(
   );
 }
 
+void ParquetOutFile::write_present_data_(
+  std::ostream &file,
+  uint32_t idx,
+  uint32_t size,
+  uint32_t num_present) {
+
+  streampos cb_start = file.tellp();
+  parquet::format::Type::type type = schemas[idx + 1].type;
+  switch (type) {
+  case Type::INT32:
+    write_present_int32(file, idx, num_present);
+    break;
+  case Type::DOUBLE:
+    write_present_double(file, idx, num_present);
+    break;
+  case Type::BYTE_ARRAY:
+    write_present_byte_array(file, idx, num_present);
+    break;
+  case Type::BOOLEAN:
+    write_present_boolean(file, idx, num_present);
+    break;
+  default:
+    throw runtime_error("Cannot write unknown column type");   // # nocov
+  }
+  streampos cb_end = file.tellp();
+
+  // TODO: why does tellp() not work for ByteBuffer?
+  if (cb_start != -1 && cb_end - cb_start != size) {
+    throw runtime_error(
+      "Wrong number of bytes written for parquet column"
+    );
+  }
+
+  ColumnMetaData *cmd = &(column_meta_data[idx]);
+  cmd->__set_total_uncompressed_size(
+    cmd->total_uncompressed_size + size
+  );
+}
+
 void ParquetOutFile::write_byte_array_dictionary_(
   std::ostream &file,
   uint32_t idx,
@@ -420,7 +459,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
       cmd->codec == CompressionCodec::UNCOMPRESSED) {
     // CASE 1: REQ, PLAIN, UNC
     // 1. write directly to file
-    uint32_t data_size = calculate_column_data_size(idx);
+    uint32_t data_size = calculate_column_data_size(idx, num_rows);
     ph.__set_uncompressed_page_size(data_size);
     ph.__set_compressed_page_size(data_size);
     write_page_header(idx, ph);
@@ -431,7 +470,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
              cmd->codec != CompressionCodec::UNCOMPRESSED) {
     // CASE 2: REQ, PLAIN, COMP
     // 1. write data to buf_unc
-    uint32_t data_size = calculate_column_data_size(idx);
+    uint32_t data_size = calculate_column_data_size(idx, num_rows);
     ph.__set_uncompressed_page_size(data_size);
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
@@ -522,13 +561,13 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_missing(*os0, idx);
+    uint32_t num_present = write_present(*os0, idx);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(buf_unc, num_rows, buf_com, 1, false);
 
     // 3. Write buf_unc to file
-    uint32_t data_size = calculate_column_data_size(idx);
+    uint32_t data_size = calculate_column_data_size(idx, num_present);
     ph.__set_uncompressed_page_size(data_size + rle_size + 4);
     ph.__set_compressed_page_size(data_size + rle_size + 4);
     write_page_header(idx, ph);
@@ -539,7 +578,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     );
 
     // 4. write data to file
-    write_data_(pfile, idx, data_size);
+    write_present_data_(pfile, idx, data_size, num_present);
 
   } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
              encodings[idx] == Encoding::PLAIN &&
@@ -556,22 +595,23 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
   }
 }
 
-uint32_t ParquetOutFile::calculate_column_data_size(uint32_t idx) {
+uint32_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
+                                                    uint32_t num_present) {
   // +1 is to skip the root schema
   parquet::format::Type::type type = schemas[idx + 1].type;
   switch (type) {
   case Type::BOOLEAN: {
-    return num_rows / 8 + (num_rows % 8 > 0);
+    return num_present / 8 + (num_present % 8 > 0);
   }
   case Type::INT32: {
-    return num_rows * sizeof(int32_t);
+    return num_present * sizeof(int32_t);
   }
   case Type::DOUBLE: {
-    return num_rows * sizeof(double);
+    return num_present * sizeof(double);
   }
   case Type::BYTE_ARRAY: {
     // not known yet
-    return get_size_byte_array(idx);
+    return get_size_byte_array(idx, num_present);
   }
   default: {
     throw runtime_error("Unknown type encountered: " + type_to_string(type)); // # nocov
