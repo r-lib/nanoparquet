@@ -12,9 +12,12 @@ public:
     parquet::format::CompressionCodec::type codec
   );
   void set_num_rows(uint32_t nr);
-  void schema_add_column(std::string name, parquet::format::Type::type type);
+  void schema_add_column(std::string name,
+                         parquet::format::Type::type type,
+                         bool required = false);
   void schema_add_column(std::string name,
                          parquet::format::LogicalType logical_type,
+                         bool required = false,
                          bool dict = false);
   void add_key_value_metadata(std::string key, std::string value);
   void write();
@@ -27,21 +30,15 @@ public:
   virtual void write_boolean(std::ostream &file, uint32_t idx) = 0;
   virtual uint32_t get_size_byte_array(uint32_t idx) = 0;
 
+  // callbacks for missing values
+  virtual void write_missing(std::ostream &file, uint32_t idx) = 0;
+
   // callbacks to write a byte array dictionary
-  virtual bool has_byte_array_dictionary() { return false; }
-  virtual uint32_t get_num_values_byte_array_dictionary(uint32_t idx) {
-    throw std::runtime_error("Not implemented");
-  }
-  virtual uint32_t get_size_byte_array_dictionary(uint32_t idx) {
-    throw std::runtime_error("Not implemented");
-  }
+  virtual uint32_t get_num_values_byte_array_dictionary(uint32_t idx) = 0;
+  virtual uint32_t get_size_byte_array_dictionary(uint32_t idx) = 0;
   // Needs to write indices as int32_t
-  virtual void write_byte_array_dictionary(std::ostream &file, uint32_t idx) {
-    throw std::runtime_error("Not implemented");
-  }
-  virtual void write_dictionary_indices(std::ostream &file, uint32_t idx) {
-    throw std::runtime_error("Not implemented");
-  }
+  virtual void write_byte_array_dictionary(std::ostream &file, uint32_t idx) = 0;
+  virtual void write_dictionary_indices(std::ostream &file, uint32_t idx) = 0;
 
 private:
   std::ofstream pfile;
@@ -63,10 +60,21 @@ private:
 
   void write_columns();
   void write_column(uint32_t idx);
-  void write_column_uncompressed_plain(uint32_t idx);
-  void write_column_compressed_plain(uint32_t idx);
-  void write_column_dictionary(uint32_t idx);
+  void write_dictionary_page(uint32_t idx);
+  void write_data_pages(uint32_t idx);
+  void write_page_header(uint32_t idx, parquet::format::PageHeader &ph);
   void write_footer();
+
+  void write_data_(std::ostream &file, uint32_t idx, uint32_t size);
+  void write_byte_array_dictionary_(std::ostream &file, uint32_t idx,
+                                    uint32_t size);
+  void write_dictionary_indices_(std::ostream &file, uint32_t idx,
+                                uint32_t size);
+
+  size_t compress(parquet::format::CompressionCodec::type codec,
+                  ByteBuffer &src, uint32_t src_size, ByteBuffer &tgt);
+  uint32_t rle_encode(ByteBuffer &src, uint32_t src_size, ByteBuffer &tgt,
+                      uint8_t bit_width, bool add_bit_width = false);
 
   ByteBuffer buf_unc;
   ByteBuffer buf_com;

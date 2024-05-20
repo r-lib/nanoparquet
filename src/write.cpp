@@ -18,6 +18,8 @@ public:
   uint32_t get_size_byte_array(uint32_t idx);
   void write_boolean(std::ostream &file, uint32_t idx);
 
+  void write_missing(std::ostream &file, uint32_t idx);
+
   // for factors
   uint32_t get_num_values_byte_array_dictionary(uint32_t idx);
   uint32_t get_size_byte_array_dictionary(uint32_t idx);
@@ -98,6 +100,10 @@ void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx) {
   }
 }
 
+void RParquetOutFile:: write_missing(std::ostream &file, uint32_t idx) {
+  throw std::runtime_error("Not implemented");
+}
+
 uint32_t RParquetOutFile::get_num_values_byte_array_dictionary(
     uint32_t idx) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -158,32 +164,32 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim, SEXP metadata) {
         parquet::format::StringType st;
         parquet::format::LogicalType logical_type;
         logical_type.__set_STRING(st);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, true);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, true, true);
       } else {
         parquet::format::IntType it;
         it.__set_isSigned(true);
         it.__set_bitWidth(32);
         parquet::format::LogicalType logical_type;
         logical_type.__set_INTEGER(it);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, true);
       }
       break;
     }
     case REALSXP: {
       parquet::format::Type::type type = parquet::format::Type::DOUBLE;
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), type);
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, true);
       break;
     }
     case STRSXP: {
       parquet::format::StringType st;
       parquet::format::LogicalType logical_type;
       logical_type.__set_STRING(st);
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type);
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, true);
       break;
     }
     case LGLSXP: {
       parquet::format::Type::type type = parquet::format::Type::BOOLEAN;
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), type);
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, true);
       break;
     }
     default:

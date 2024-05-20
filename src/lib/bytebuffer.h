@@ -7,7 +7,6 @@ class ByteBuffer : public std::streambuf {
 public:
   char *ptr = nullptr;
   uint64_t len = 0;
-  uint64_t tellp = 0;
 
   void resize(uint64_t new_size, bool copy = true) {
     if (new_size > len) {
@@ -19,6 +18,7 @@ public:
       ptr = holder.get();
       sptr = ptr;
       len = new_size;
+      setp(sptr, sptr + new_size);
     }
   }
 
@@ -30,12 +30,12 @@ public:
     if (space < n) {
       memcpy(sptr, s, space);                  // # nocov
       sptr += space;                           // # nocov
-      tellp += space;                          // # nocov
+      pbump(space);
       return space;                            // # nocov
     } else {
       memcpy(sptr, s, n);
       sptr += n;
-      tellp += n;
+      pbump(n);
       return n;
     }
   };
@@ -44,9 +44,12 @@ public:
     return (int) xsputn((const char*) &ch, 1);             // # nocov
   }                                                        // # nocov
 
-  void reset() {
+  void reset(uint64_t new_size = 0) {
+    if (new_size > 0) {
+      resize(new_size, false);
+    }
     sptr = ptr;
-    tellp = 0;
+    setp(sptr, sptr + new_size);
   }
 
 private:

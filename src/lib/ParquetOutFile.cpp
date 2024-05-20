@@ -52,12 +52,17 @@ void ParquetOutFile::set_num_rows(uint32_t nr) {
 }
 
 void ParquetOutFile::schema_add_column(std::string name,
-                                       parquet::format::Type::type type) {
+                                       parquet::format::Type::type type,
+                                       bool required) {
 
   SchemaElement sch;
   sch.__set_name(name);
   sch.__set_type(type);
-  sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
+  if (required) {
+    sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
+  } else {
+    sch.__set_repetition_type(FieldRepetitionType::OPTIONAL);
+  }
   schemas.push_back(sch);
   schemas[0].__set_num_children(schemas[0].num_children + 1);
 
@@ -84,6 +89,7 @@ void ParquetOutFile::schema_add_column(std::string name,
 void ParquetOutFile::schema_add_column(
     std::string name,
     parquet::format::LogicalType logical_type,
+    bool required,
     bool dict) {
 
   SchemaElement sch;
@@ -91,7 +97,11 @@ void ParquetOutFile::schema_add_column(
   Type::type type = get_type_from_logical_type(logical_type);
   sch.__set_type(type);
   sch.__set_logicalType(logical_type);
-  sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
+  if (required) {
+    sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
+  } else {
+    sch.__set_repetition_type(FieldRepetitionType::OPTIONAL);
+  }
   ConvertedType::type converted_type =
       get_converted_type_from_logical_type(logical_type);
   sch.__set_converted_type(converted_type);
@@ -175,6 +185,125 @@ ParquetOutFile::get_converted_type_from_logical_type(
   }
 }
 
+void ParquetOutFile::write_data_(
+  std::ostream &file,
+  uint32_t idx,
+  uint32_t size) {
+
+  streampos cb_start = file.tellp();
+  parquet::format::Type::type type = schemas[idx + 1].type;
+  switch (type) {
+  case Type::INT32:
+    write_int32(file, idx);
+    break;
+  case Type::DOUBLE:
+    write_double(file, idx);
+    break;
+  case Type::BYTE_ARRAY:
+    write_byte_array(file, idx);
+    break;
+  case Type::BOOLEAN:
+    write_boolean(file, idx);
+    break;
+  default:
+    throw runtime_error("Cannot write unknown column type");   // # nocov
+  }
+  streampos cb_end = file.tellp();
+
+  // TODO: why does tellp() not work for ByteBuffer?
+  if (cb_start != -1 && cb_end - cb_start != size) {
+    throw runtime_error(
+      "Wrong number of bytes written for parquet column"
+    );
+  }
+
+  ColumnMetaData *cmd = &(column_meta_data[idx]);
+  cmd->__set_total_uncompressed_size(
+    cmd->total_uncompressed_size + size
+  );
+}
+
+void ParquetOutFile::write_byte_array_dictionary_(
+  std::ostream &file,
+  uint32_t idx,
+  uint32_t size) {
+
+  ColumnMetaData *cmd = &(column_meta_data[idx]);
+  uint32_t start = file.tellp();
+  write_byte_array_dictionary(file, idx);
+  uint32_t end = file.tellp();
+  if (end != -1 && end - start != size) {
+    throw runtime_error(
+      "Wrong number of bytes written for parquet dictionary"
+    );
+  }
+  cmd->__set_total_uncompressed_size(
+    cmd->total_uncompressed_size + size
+  );
+}
+
+void ParquetOutFile::write_dictionary_indices_(
+  std::ostream &file,
+  uint32_t idx,
+  uint32_t size) {
+
+  streampos start = file.tellp();
+  write_dictionary_indices(file, idx);
+  streampos end = file.tellp();
+  if (start != -1 && end - start != size) {
+    throw runtime_error(
+      "Wrong number of bytes written for parquet dictionary"
+    );
+  }
+  // these are still RLE encoded, so they do not increase the
+  // total uncompressed size
+}
+
+size_t ParquetOutFile::compress(
+  parquet::format::CompressionCodec::type codec,
+  ByteBuffer &src,
+  uint32_t src_size,
+  ByteBuffer &tgt) {
+
+  if (codec == CompressionCodec::SNAPPY) {
+    size_t tgt_size_est = snappy::MaxCompressedLength(src_size);
+    tgt.reset(tgt_size_est);
+    size_t tgt_size;
+    snappy::RawCompress(src.ptr, src_size, tgt.ptr, &tgt_size);
+    return tgt_size;
+  } else {
+    throw runtime_error(
+      "Only SNAPPY compression is supported at this time"
+    );
+  }
+}
+
+uint32_t ParquetOutFile::rle_encode(
+  ByteBuffer &src,
+  uint32_t src_size,
+  ByteBuffer &tgt,
+  uint8_t bit_width,
+  bool add_bit_width) {
+
+  size_t tgt_size_est = MaxRleBpSize((int*) src.ptr, src_size, bit_width);
+  tgt.reset(tgt_size_est + (add_bit_width ? 1 : 0));
+  if (add_bit_width) {
+    tgt.ptr[0] = bit_width;
+  }
+  size_t tgt_size = RleBpEncode(
+    (int*) src.ptr,
+    src_size,
+    bit_width,
+    (uint8_t *) tgt.ptr + (add_bit_width ? 1 : 0),
+    tgt_size_est
+  );
+  if (add_bit_width) {
+    tgt_size++;
+  }
+
+  return tgt_size;
+}
+
 void ParquetOutFile::write() {
   if (!num_rows_set) {
     throw runtime_error("Need to set the number of rows before writing"); // # nocov
@@ -196,288 +325,208 @@ void ParquetOutFile::write_columns() {
 }
 
 void ParquetOutFile::write_column(uint32_t idx) {
-  // Do we need compression? If yes, then we first write into a buffer
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1];
-  bool dict = encodings[idx] == Encoding::RLE_DICTIONARY;
-  if (dict) {
-    write_column_dictionary(idx);
-  } else if (cmd->codec == CompressionCodec::UNCOMPRESSED) {
-    write_column_uncompressed_plain(idx);
-  } else {
-    write_column_compressed_plain(idx);
+  uint32_t col_start = pfile.tellp();
+  // we increase this as needed
+  cmd->__set_total_uncompressed_size(0);
+  if (encodings[idx] == Encoding::RLE_DICTIONARY) {
+    uint32_t dictionary_page_offset = pfile.tellp();
+    write_dictionary_page(idx);
+    cmd->__set_dictionary_page_offset(dictionary_page_offset);
   }
+  uint32_t data_offset = pfile.tellp();
+  write_data_pages(idx);
+  int32_t column_bytes = ((int32_t) pfile.tellp()) - col_start;
+  cmd->__set_num_values(num_rows);
+  cmd->__set_total_compressed_size(column_bytes);
+  cmd->__set_data_page_offset(data_offset);
 }
 
-void ParquetOutFile::write_column_dictionary(uint32_t idx) {
-  // Currently only byte arrays
-  ColumnMetaData *cmd = &(column_meta_data[idx]);
-  parquet::format::Type::type type = schemas[idx + 1].type;
-  uint32_t col_start = pfile.tellp();
-
-  // dictionary page header -----------------------------------------------
-  uint32_t dictionary_page_offset = pfile.tellp();
-  uint32_t dict_size = get_size_byte_array_dictionary(idx);
-  PageHeader ph0;
-  ph0.__set_type(PageType::DICTIONARY_PAGE);
-  ph0.__set_uncompressed_page_size(dict_size);
-  DictionaryPageHeader diph;
-  uint32_t num_dict_values;
-  switch (type) {
-  case Type::BYTE_ARRAY:
-    num_dict_values = get_num_values_byte_array_dictionary(idx);
-    break;
-  default:
-    throw runtime_error("Cannot write this column as dictionary");
-  }
-  diph.__set_num_values(num_dict_values);
-  diph.__set_encoding(Encoding::PLAIN);
-  ph0.__set_dictionary_page_header(diph);
-
-  // dictionary page data -------------------------------------------------
-  std::unique_ptr<std::ostream> os0;
-  buf_unc.resize(dict_size);
-  buf_unc.reset();
-  os0 = std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-
-  switch (type) {
-  case Type::BYTE_ARRAY:
-    write_byte_array_dictionary(*os0, idx);
-    break;
-  default:
-    throw runtime_error("Cannot write this column as dictionary");
-  }
-
-  if (buf_unc.tellp != dict_size) {
-    throw runtime_error("Wrong number of bytes written for parquet dictionary"); // # nocov
-  }
-
-  size_t cdict_size;
-  const char *cdata_ptr;
-
-  if (cmd->codec == CompressionCodec::UNCOMPRESSED) {
-    cdict_size = dict_size;
-    cdata_ptr = (const char *) buf_unc.ptr;
-
-  } else if (cmd->codec == CompressionCodec::SNAPPY) {
-    size_t ms = snappy::MaxCompressedLength(dict_size);
-    buf_com.resize(ms);
-    buf_com.reset();
-    snappy::RawCompress(buf_unc.ptr, dict_size, buf_com.ptr, &cdict_size);
-    cdata_ptr = (const char *) buf_com.ptr;
-
-  } else {
-    throw runtime_error("Only SNAPPY compression is supported at this time"); // # nocov
-  }
-
-  ph0.__set_compressed_page_size(cdict_size);
-  ph0.write(tproto.get());
+void ParquetOutFile::write_page_header(uint32_t idx, PageHeader &ph) {
   uint8_t *out_buffer;
   uint32_t out_length;
+  ph.write(tproto.get());
   mem_buffer->getBuffer(&out_buffer, &out_length);
   pfile.write((char*) out_buffer, out_length);
   mem_buffer->resetBuffer();
-
-  pfile.write(cdata_ptr, cdict_size);
-
-  // data page header -----------------------------------------------------
-  uint32_t data_offset = pfile.tellp();
-  uint32_t idx_size = sizeof(uint32_t) * num_rows;
-  PageHeader ph;
-  ph.__set_type(PageType::DATA_PAGE);
-  DataPageHeader dph;
-  dph.__set_num_values(num_rows);
-  dph.__set_encoding(Encoding::RLE_DICTIONARY);
-  ph.__set_data_page_header(dph);
-
-  std::unique_ptr<std::ostream> os;
-  buf_unc.resize(idx_size);
-  buf_unc.reset();
-  os = std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-
-  switch (type) {
-  case Type::BYTE_ARRAY:
-    write_dictionary_indices(*os, idx);
-    break;
-  default:
-    throw runtime_error("Cannot write this column as dictionary");
-  }
-
-  if (buf_unc.tellp != idx_size) {
-    throw runtime_error("Wrong number of bytes written for parquet dictionary index"); // # nocov
-  }
-
-  // RLE-encode from buf_unc -> buf_com
-  uint8_t bit_width = ceil(log2((double) num_dict_values));
-  size_t data_size = MaxRleBpSize((int*) buf_unc.ptr, num_rows, bit_width);
-  buf_com.resize(data_size + 1);
-  buf_com.reset();
-  buf_com.ptr[0] = bit_width;
-  data_size = RleBpEncode(
-    (int *) buf_unc.ptr,
-    num_rows,
-    bit_width,
-    (uint8_t *) buf_com.ptr + 1,
-    data_size
+  ColumnMetaData *cmd = &(column_meta_data[idx]);
+  cmd->__set_total_uncompressed_size(
+    cmd->total_uncompressed_size + out_length
   );
-  data_size++; // bit_width
+}
 
-  size_t cl;
-  const char *data_ptr;
+// Currently only for byte arrays, more later
 
+void ParquetOutFile::write_dictionary_page(uint32_t idx) {
+  ColumnMetaData *cmd = &(column_meta_data[idx]);
+  SchemaElement se = schemas[idx + 1];
+  // Uncompresed size of the dictionary in bytes
+  uint32_t dict_size = get_size_byte_array_dictionary(idx);
+  // Number of entries in the dicitonary
+  uint32_t num_dict_values = get_num_values_byte_array_dictionary(idx);
+
+  // Init page header
+  PageHeader ph;
+  ph.__set_type(PageType::DICTIONARY_PAGE);
+  ph.__set_uncompressed_page_size(dict_size);
+  DictionaryPageHeader diph;
+  diph.__set_num_values(num_dict_values);
+  diph.__set_encoding(Encoding::PLAIN);
+  ph.__set_dictionary_page_header(diph);
+
+  // If uncompressed, then write it out directly, otherwise to a buffer
   if (cmd->codec == CompressionCodec::UNCOMPRESSED) {
-    cl = data_size;
-    data_ptr = (const char *) buf_com.ptr;
-
-  } else if (cmd->codec == CompressionCodec::SNAPPY) {
-    size_t ms = snappy::MaxCompressedLength(data_size);
-    buf_unc.resize(ms);
-    buf_unc.reset();
-    snappy::RawCompress(buf_com.ptr, data_size, buf_unc.ptr, &cl);
-    data_ptr = (const char *) buf_unc.ptr;
+    // we knpw the compressed size, so we can write out the header first,
+    // then the data directly to the file
+    ph.__set_compressed_page_size(dict_size);
+    write_page_header(idx, ph);
+    write_byte_array_dictionary_(pfile, idx, dict_size);
 
   } else {
-    throw runtime_error("Only SNAPPY compression is supported at this time"); // # nocov
+    // With compression we need two temporary buffers
+    // 1. write data to buf_unc
+    buf_unc.reset(dict_size);
+    std::unique_ptr<std::ostream> os0 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    write_byte_array_dictionary_(*os0, idx, dict_size);
+
+    // 2. compress buf_unc to buf_com
+    size_t cdict_size = compress(cmd->codec, buf_unc, dict_size, buf_com);
+
+    // 3. write buf_com to file
+    ph.__set_compressed_page_size(cdict_size);
+    write_page_header(idx, ph);
+    pfile.write((const char *) buf_com.ptr, cdict_size);
   }
-
-  // Ready to fill rest of page header
-  ph.__set_uncompressed_page_size(data_size);
-  ph.__set_compressed_page_size(cl);
-  ph.write(tproto.get());
-  mem_buffer->getBuffer(&out_buffer, &out_length);
-  pfile.write((char *) out_buffer, out_length);
-  mem_buffer->resetBuffer();
-
-  pfile.write(data_ptr, cl);
-  int32_t column_bytes = ((int32_t) pfile.tellp()) - col_start;
-  cmd->__set_num_values(num_rows);
-  cmd->__set_total_uncompressed_size(column_bytes);
-  cmd->__set_total_compressed_size(column_bytes);
-  cmd->__set_data_page_offset(data_offset);
-  cmd->__set_dictionary_page_offset(dictionary_page_offset);
 }
 
-void ParquetOutFile::write_column_uncompressed_plain(uint32_t idx) {
-  uint32_t col_start = pfile.tellp();
-  // data page header
-  uint32_t data_offset = pfile.tellp();
-  uint32_t data_size = calculate_column_data_size(idx);
+// Single data page for now
+void ParquetOutFile::write_data_pages(uint32_t idx) {
+  ColumnMetaData *cmd = &(column_meta_data[idx]);
+  SchemaElement se = schemas[idx + 1];
   PageHeader ph;
   ph.__set_type(PageType::DATA_PAGE);
-  ph.__set_uncompressed_page_size(data_size);
-  ph.__set_compressed_page_size(data_size);
   DataPageHeader dph;
   dph.__set_num_values(num_rows);
-  dph.__set_encoding(Encoding::PLAIN);
+  dph.__set_encoding(encodings[idx]);
   ph.__set_data_page_header(dph);
-  ph.write(tproto.get());
-  uint8_t *out_buffer;
-  uint32_t out_length;
-  mem_buffer->getBuffer(&out_buffer, &out_length);
-  pfile.write((char *)out_buffer, out_length);
-  mem_buffer->resetBuffer();
 
-  // data via callback
-  uint32_t cb_start = pfile.tellp();
-  parquet::format::Type::type type = schemas[idx + 1].type;
-  switch (type) {
-  case Type::INT32:
-    write_int32(pfile, idx);
-    break;
-  case Type::DOUBLE:
-    write_double(pfile, idx);
-    break;
-  case Type::BYTE_ARRAY:
-    write_byte_array(pfile, idx);
-    break;
-  case Type::BOOLEAN:
-    write_boolean(pfile, idx);
-    break;
-  default:
-    throw runtime_error("Cannot write unknown column type");   // # nocov
+  if (se.repetition_type == FieldRepetitionType::REQUIRED &&
+      encodings[idx] == Encoding::PLAIN &&
+      cmd->codec == CompressionCodec::UNCOMPRESSED) {
+    // CASE 1: REQ, PLAIN, UNC
+    // 1. write directly to file
+    uint32_t data_size = calculate_column_data_size(idx);
+    ph.__set_uncompressed_page_size(data_size);
+    ph.__set_compressed_page_size(data_size);
+    write_page_header(idx, ph);
+    write_data_(pfile, idx, data_size);
+
+  } else if (se.repetition_type == FieldRepetitionType::REQUIRED &&
+             encodings[idx] == Encoding::PLAIN &&
+             cmd->codec != CompressionCodec::UNCOMPRESSED) {
+    // CASE 2: REQ, PLAIN, COMP
+    // 1. write data to buf_unc
+    uint32_t data_size = calculate_column_data_size(idx);
+    ph.__set_uncompressed_page_size(data_size);
+    buf_unc.reset(data_size);
+    std::unique_ptr<std::ostream> os0 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    write_data_(*os0, idx, data_size);
+
+    // 2. compress buf_unc to buf_com
+    size_t cdata_size = compress(cmd->codec, buf_unc, data_size, buf_com);
+
+    // 3. write buf_com to file
+    ph.__set_compressed_page_size(cdata_size);
+    write_page_header(idx, ph);
+    pfile.write((const char *) buf_com.ptr, cdata_size);
+
+  } else if (se.repetition_type == FieldRepetitionType::REQUIRED &&
+             encodings[idx] == Encoding::RLE_DICTIONARY &&
+             cmd->codec == CompressionCodec::UNCOMPRESSED) {
+    // CASE 3: REQ, RLE, UNC
+    // 1. write dictionary to buf_unc
+    uint32_t data_size = num_rows * sizeof(int);
+    ph.__set_uncompressed_page_size(data_size);
+    buf_unc.reset(data_size);
+    std::unique_ptr<std::ostream> os0 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    write_dictionary_indices_(*os0, idx, data_size);
+
+    // 2. RLE encode buf_unc to buf_com
+    uint32_t num_dict_values = get_num_values_byte_array_dictionary(idx);
+    uint8_t bit_width = ceil(log2((double) num_dict_values));
+    uint32_t rle_size = rle_encode(
+      buf_unc,
+      num_rows,
+      buf_com,
+      bit_width,
+      true
+    );
+
+    // 3. write buf_com to file
+    ph.__set_uncompressed_page_size(rle_size);
+    ph.__set_compressed_page_size(rle_size);
+    write_page_header(idx, ph);
+    pfile.write((const char*) buf_com.ptr, rle_size);
+    cmd->__set_total_uncompressed_size(
+      cmd->total_uncompressed_size + rle_size
+    );
+
+  } else if (se.repetition_type == FieldRepetitionType::REQUIRED &&
+             encodings[idx] == Encoding::RLE_DICTIONARY &&
+             cmd->codec != CompressionCodec::UNCOMPRESSED) {
+    // CASE 4: REQ, RLE, COMP
+    // 1. write dictionary to buf_unc
+    uint32_t data_size = num_rows * sizeof(int);
+    ph.__set_uncompressed_page_size(data_size);
+    buf_unc.reset(data_size);
+    std::unique_ptr<std::ostream> os0 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    write_dictionary_indices_(*os0, idx, data_size);
+
+    // 2. RLE encode buf_unc to buf_com
+    uint32_t num_dict_values = get_num_values_byte_array_dictionary(idx);
+    uint8_t bit_width = ceil(log2((double) num_dict_values));
+    uint32_t rle_size = rle_encode(
+      buf_unc,
+      num_rows,
+      buf_com,
+      bit_width,
+      true
+    );
+
+    // 3. compress buf_com to buf_unc
+    size_t crle_size = compress(cmd->codec, buf_com, rle_size, buf_unc);
+
+    // 4. write buf_unc to file
+    ph.__set_uncompressed_page_size(rle_size);
+    ph.__set_compressed_page_size(crle_size);
+    write_page_header(idx, ph);
+    pfile.write((const char*) buf_unc.ptr, crle_size);
+    cmd->__set_total_uncompressed_size(
+      cmd->total_uncompressed_size + rle_size
+    );
+
+  } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
+             encodings[idx] == Encoding::PLAIN &&
+             cmd->codec == CompressionCodec::UNCOMPRESSED) {
+
+  } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
+             encodings[idx] == Encoding::PLAIN &&
+             cmd->codec != CompressionCodec::UNCOMPRESSED) {
+
+  } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
+             encodings[idx] == Encoding::RLE_DICTIONARY &&
+             cmd->codec == CompressionCodec::UNCOMPRESSED) {
+
+  } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
+             encodings[idx] == Encoding::RLE_DICTIONARY &&
+             cmd->codec != CompressionCodec::UNCOMPRESSED) {
+
   }
-  uint32_t cb_end = pfile.tellp();
-
-  if (cb_end - cb_start != data_size) {
-    throw runtime_error("Wrong number of bytes written for parquet column"); // # nocov
-  }
-
-  ColumnMetaData *cmd = &(column_meta_data[idx]);
-  int32_t column_bytes = ((int32_t)pfile.tellp()) - col_start;
-  cmd->__set_num_values(num_rows);
-  cmd->__set_total_uncompressed_size(column_bytes);
-  cmd->__set_total_compressed_size(column_bytes);
-  cmd->__set_data_page_offset(data_offset);
-}
-
-void ParquetOutFile::write_column_compressed_plain(uint32_t idx) {
-  ColumnMetaData *cmd = &(column_meta_data[idx]);
-  uint32_t data_size = calculate_column_data_size(idx);
-  std::unique_ptr<std::ostream> os;
-  if (cmd->codec == CompressionCodec::SNAPPY) {
-      buf_unc.resize(data_size);
-      buf_unc.reset();
-      os = std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-  } else {
-    throw runtime_error("Only SNAPPY compression is supported at this time"); // # nocov
-  }
-
-  // data via callback
-  parquet::format::Type::type type = schemas[idx + 1].type;
-  switch (type) {
-  case Type::INT32:
-    write_int32(*os, idx);
-    break;
-  case Type::DOUBLE:
-    write_double(*os, idx);
-    break;
-  case Type::BYTE_ARRAY:
-    write_byte_array(*os, idx);
-    break;
-  case Type::BOOLEAN:
-    write_boolean(*os, idx);
-    break;
-  default:
-    throw runtime_error("Cannot write unknown column type");  // # nocov
-  }
-
-  if (buf_unc.tellp != data_size) {
-    throw runtime_error("Wrong number of bytes written for parquet column"); // # nocov
-  }
-
-  size_t cl = 0;
-  if (cmd->codec == CompressionCodec::SNAPPY) {
-    size_t ms = snappy::MaxCompressedLength(data_size);
-    buf_com.resize(ms);
-    snappy::RawCompress(buf_unc.ptr, data_size, buf_com.ptr, &cl);
-  }
-
-  uint32_t col_start = pfile.tellp();
-  // TODO: dictionary here
-  // data page header
-  uint32_t data_offset = pfile.tellp();
-  PageHeader ph;
-  ph.__set_type(PageType::DATA_PAGE);
-  ph.__set_uncompressed_page_size(data_size);
-  ph.__set_compressed_page_size(cl);
-  DataPageHeader dph;
-  dph.__set_num_values(num_rows);
-  dph.__set_encoding(Encoding::PLAIN);
-  ph.__set_data_page_header(dph);
-  ph.write(tproto.get());
-  uint8_t *out_buffer;
-  uint32_t out_length;
-  mem_buffer->getBuffer(&out_buffer, &out_length);
-  pfile.write((char *)out_buffer, out_length);
-  mem_buffer->resetBuffer();
-
-  pfile.write(buf_com.ptr, cl);
-
-  int32_t column_bytes = ((int32_t)pfile.tellp()) - col_start;
-  cmd->__set_num_values(num_rows);
-  cmd->__set_total_uncompressed_size(data_size);
-  cmd->__set_total_compressed_size(column_bytes);
-  cmd->__set_data_page_offset(data_offset);
 }
 
 uint32_t ParquetOutFile::calculate_column_data_size(uint32_t idx) {
