@@ -410,6 +410,9 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
   DataPageHeader dph;
   dph.__set_num_values(num_rows);
   dph.__set_encoding(encodings[idx]);
+  if (se.repetition_type == FieldRepetitionType::OPTIONAL) {
+    dph.__set_definition_level_encoding(Encoding::RLE);
+  }
   ph.__set_data_page_header(dph);
 
   if (se.repetition_type == FieldRepetitionType::REQUIRED &&
@@ -513,6 +516,30 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
   } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
              encodings[idx] == Encoding::PLAIN &&
              cmd->codec == CompressionCodec::UNCOMPRESSED) {
+    // CASE 5: OPT, PLAIN, UNC
+    // 1. write definition levels to buf_unc
+    uint32_t miss_size = num_rows * sizeof(int);
+    buf_unc.reset(miss_size);
+    std::unique_ptr<std::ostream> os0 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    write_missing(*os0, idx);
+
+    // 2. RLE buf_unc to buf_com
+    uint32_t rle_size = rle_encode(buf_unc, num_rows, buf_com, 1, false);
+
+    // 3. Write buf_unc to file
+    uint32_t data_size = calculate_column_data_size(idx);
+    ph.__set_uncompressed_page_size(data_size + rle_size + 4);
+    ph.__set_compressed_page_size(data_size + rle_size + 4);
+    write_page_header(idx, ph);
+    pfile.write((const char*) &rle_size, 4);
+    pfile.write((const char*) buf_com.ptr, rle_size);
+    cmd->__set_total_uncompressed_size(
+      cmd->total_uncompressed_size + rle_size + 4
+    );
+
+    // 4. write data to file
+    write_data_(pfile, idx, data_size);
 
   } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
              encodings[idx] == Encoding::PLAIN &&

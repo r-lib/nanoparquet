@@ -101,7 +101,12 @@ void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx) {
 }
 
 void RParquetOutFile:: write_missing(std::ostream &file, uint32_t idx) {
-  throw std::runtime_error("Not implemented");
+  SEXP col = VECTOR_ELT(df, idx);
+  R_xlen_t len = XLENGTH(col);
+  int present = 1;
+  for (auto i = 0; i < len; i++) {
+    file.write((const char *) &present, sizeof(int));
+  }
 }
 
 uint32_t RParquetOutFile::get_num_values_byte_array_dictionary(
@@ -164,32 +169,32 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim, SEXP metadata) {
         parquet::format::StringType st;
         parquet::format::LogicalType logical_type;
         logical_type.__set_STRING(st);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, true, true);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, false, true);
       } else {
         parquet::format::IntType it;
         it.__set_isSigned(true);
         it.__set_bitWidth(32);
         parquet::format::LogicalType logical_type;
         logical_type.__set_INTEGER(it);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, true);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, false);
       }
       break;
     }
     case REALSXP: {
       parquet::format::Type::type type = parquet::format::Type::DOUBLE;
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, true);
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, false);
       break;
     }
     case STRSXP: {
       parquet::format::StringType st;
       parquet::format::LogicalType logical_type;
       logical_type.__set_STRING(st);
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, true);
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, false);
       break;
     }
     case LGLSXP: {
       parquet::format::Type::type type = parquet::format::Type::BOOLEAN;
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, true);
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, false);
       break;
     }
     default:
