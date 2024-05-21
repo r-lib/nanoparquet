@@ -147,3 +147,17 @@ test_that("round trip with duckdb", {
   arrow::write_parquet(mt, tmp, compression = "snappy")
   expect_equal(read_parquet(tmp), mt)
 })
+
+test_that("read Date", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    d = c(Sys.Date() - 1, Sys.Date(), Sys.Date() + 1)
+  )
+  write_parquet(d, tmp)
+
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$d, "Date")
+  expect_equal(d$d, d2$d)
+})

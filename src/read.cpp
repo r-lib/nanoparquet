@@ -65,9 +65,19 @@ SEXP nanoparquet_read(SEXP filesxp) {
       case parquet::format::Type::BOOLEAN:
         varvalue = PROTECT(NEW_LOGICAL(nrows));
         break;
-      case parquet::format::Type::INT32:
+      case parquet::format::Type::INT32: {
         varvalue = PROTECT(NEW_INTEGER(nrows));
+        auto &s_ele = f.columns[col_idx]->schema_element;
+        if ((s_ele->__isset.logicalType &&
+             s_ele->logicalType.__isset.DATE) ||
+            (s_ele->__isset.converted_type &&
+             s_ele->converted_type == parquet::format::ConvertedType::DATE)) {
+          SEXP cl = PROTECT(Rf_mkString("Date"));
+          SET_CLASS(varvalue, cl);
+          UNPROTECT(1);
+        }
         break;
+      }
       case parquet::format::Type::INT64:
       case parquet::format::Type::DOUBLE:
       case parquet::format::Type::FLOAT:
