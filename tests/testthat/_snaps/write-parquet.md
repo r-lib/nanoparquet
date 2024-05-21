@@ -145,3 +145,175 @@
     Output
        [1] 43 73 c3 a1 72 64 69 20 47 c3 a1 62 6f 72
 
+# REQ PLAIN
+
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    Output
+       [1] 01 00 00 00 02 00 00 00 02 00 00 00 02 00 00 00 03 00 00 00 03 00 00 00 03
+      [26] 00 00 00 03 00 00 00
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[2])$data
+    Output
+       [1] 00 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00
+      [26] 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00
+      [51] 00 00 00 00 00 40 00 00 00 00 00 00 24 40
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[3])$data
+    Output
+      [1] d1
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[4])$data
+    Output
+       [1] 01 00 00 00 41 01 00 00 00 41 01 00 00 00 41 01 00 00 00 42 01 00 00 00 43
+      [26] 01 00 00 00 44 01 00 00 00 44 01 00 00 00 44
+
+---
+
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    Output
+       [1] 01 00 00 00 02 00 00 00 02 00 00 00 02 00 00 00 03 00 00 00 03 00 00 00 03
+      [26] 00 00 00 03 00 00 00
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[2])$data
+    Output
+       [1] 00 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00
+      [26] 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00
+      [51] 00 00 00 00 00 40 00 00 00 00 00 00 24 40
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[3])$data
+    Output
+      [1] d1
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[4])$data
+    Output
+       [1] 01 00 00 00 41 01 00 00 00 41 01 00 00 00 41 01 00 00 00 42 01 00 00 00 43
+      [26] 01 00 00 00 44 01 00 00 00 44 01 00 00 00 44
+
+# OPT PLAIN
+
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
+    Output
+       [1] 02 00 00 00 03 e5 01 00 00 00 02 00 00 00 03 00 00 00 03 00 00 00 03 00 00
+      [26] 00
+    Code
+      readBin(data[-(1:6)], "integer", sum(!is.na(d$i)))
+    Output
+      [1] 1 2 3 3 3
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[2])$data)
+    Output
+       [1] 02 00 00 00 03 3f 00 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00 00
+      [26] 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00 00 00
+      [51] 00 00 f0 3f
+    Code
+      readBin(data[-(1:6)], "double", sum(!is.na(d$r)))
+    Output
+      [1] 1 1 1 1 1 1
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[3])$data)
+    Output
+      [1] 02 00 00 00 03 73 15
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[4])$data)
+    Output
+       [1] 02 00 00 00 03 5c 01 00 00 00 41 01 00 00 00 42 01 00 00 00 43 01 00 00 00
+      [26] 44
+
+---
+
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
+    Output
+       [1] 02 00 00 00 03 e5 01 00 00 00 02 00 00 00 03 00 00 00 03 00 00 00 03 00 00
+      [26] 00
+    Code
+      readBin(data[-(1:6)], "integer", sum(!is.na(d$i)))
+    Output
+      [1] 1 2 3 3 3
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[2])$data)
+    Output
+       [1] 02 00 00 00 03 3f 00 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00 00
+      [26] 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00 00 00 00 00 f0 3f 00 00 00 00
+      [51] 00 00 f0 3f
+    Code
+      readBin(data[-(1:6)], "double", sum(!is.na(d$r)))
+    Output
+      [1] 1 1 1 1 1 1
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[3])$data)
+    Output
+      [1] 02 00 00 00 03 73 15
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[4])$data)
+    Output
+       [1] 02 00 00 00 03 5c 01 00 00 00 41 01 00 00 00 42 01 00 00 00 43 01 00 00 00
+      [26] 44
+
+# REQ RLE
+
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    Output
+       [1] 01 00 00 00 41 01 00 00 00 42 01 00 00 00 43 01 00 00 00 44 01 00 00 00 45
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[2])$data)
+    Output
+      [1] 03 03 40 22 8d
+    Code
+      rle_decode_int(data[-1], bit_width = as.integer(data[1]), nrow(d))
+    Output
+      [1] 0 0 1 1 2 2 3 4
+
+---
+
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    Output
+       [1] 01 00 00 00 41 01 00 00 00 42 01 00 00 00 43 01 00 00 00 44 01 00 00 00 45
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[2])$data
+    Output
+      [1] 03 03 40 22 8d
+
+# OPT RLE
+
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    Output
+       [1] 01 00 00 00 41 01 00 00 00 42 01 00 00 00 43 01 00 00 00 44 01 00 00 00 45
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[2])$data)
+    Output
+       [1] 02 00 00 00 03 e6 03 03 88 46 00
+    Code
+      rle_decode_int(data[-(1:7)], bit_width = as.integer(data[7]), sum(!is.na(d$f)))
+    Output
+      [1] 0 1 2 3 4
+
+---
+
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    Output
+       [1] 01 00 00 00 41 01 00 00 00 42 01 00 00 00 43 01 00 00 00 44 01 00 00 00 45
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[2])$data
+    Output
+       [1] 02 00 00 00 03 e6 03 03 88 46 00
+
+# Factor levels not in the data
+
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    Output
+        [1] 01 00 00 00 61 01 00 00 00 62 01 00 00 00 63 01 00 00 00 64 01 00 00 00 65
+       [26] 01 00 00 00 66 01 00 00 00 67 01 00 00 00 68 01 00 00 00 69 01 00 00 00 6a
+       [51] 01 00 00 00 6b 01 00 00 00 6c 01 00 00 00 6d 01 00 00 00 6e 01 00 00 00 6f
+       [76] 01 00 00 00 70 01 00 00 00 71 01 00 00 00 72 01 00 00 00 73 01 00 00 00 74
+      [101] 01 00 00 00 75 01 00 00 00 76 01 00 00 00 77 01 00 00 00 78 01 00 00 00 79
+      [126] 01 00 00 00 7a
+
