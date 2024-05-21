@@ -423,9 +423,16 @@ write_parquet <- function(
 		x[[idx]] <- enc2utf8(x[[idx]])
 	}
 	# factor levels as well
-	fctrs <- which(vapply(x, function(c) inherits(c, "factor"), logical(1)))
+	fctrs <- which(vapply(x, "inherits", "factor", FUN.VALUE = logical(1)))
 	for (idx in fctrs) {
 		levels(x[[idx]]) <- enc2utf8(levels(x[[idx]]))
+	}
+
+	# Date must be integer
+	dates <- which(vapply(x, "inherits", "Date", FUN.VALUE = logical(1)))
+	for (idx in dates) {
+		# this keeps the class
+		mode(x[[idx]]) <- "integer"
 	}
 
 	# easier here than calling back to R

@@ -158,6 +158,9 @@ parquet::format::Type::type ParquetOutFile::get_type_from_logical_type(
     }
     return Type::INT32;
 
+  } else if (logical_type.__isset.DATE) {
+    return Type::INT32;
+
   } else {
     throw runtime_error("Unimplemented logical type");             // # nocov
   }
@@ -179,6 +182,9 @@ ParquetOutFile::get_converted_type_from_logical_type(
       throw runtime_error("Only 32 bit integers are implemented");  // # nocov
     }
     return ConvertedType::INT_32;
+
+  } else if (logical_type.__isset.DATE) {
+    return ConvertedType::DATE;
 
   } else {
     throw runtime_error("Unimplemented logical type");              // # nocov

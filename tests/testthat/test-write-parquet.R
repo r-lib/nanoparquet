@@ -294,3 +294,18 @@ test_that("Factor levels not in the data", {
     as.integer(d$f) -1L
   )
 })
+
+test_that("write Date", {
+  skip_on_cran()
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    d = c(Sys.Date() - 1, Sys.Date(), Sys.Date() + 1)
+  )
+  write_parquet(d, tmp)
+
+  d2 <- arrow::read_parquet(tmp)
+  expect_equal(d$d, d2$d)
+})

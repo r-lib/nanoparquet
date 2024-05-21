@@ -300,6 +300,11 @@ void RParquetOutFile::write(
         parquet::format::LogicalType logical_type;
         logical_type.__set_STRING(st);
         schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, true);
+      } else if (Rf_inherits(col, "Date")) {
+        parquet::format::DateType dt;
+        parquet::format::LogicalType logical_type;
+        logical_type.__set_DATE(dt);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req);
       } else {
         parquet::format::IntType it;
         it.__set_isSigned(true);
