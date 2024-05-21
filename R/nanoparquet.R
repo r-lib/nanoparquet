@@ -426,5 +426,16 @@ write_parquet <- function(
 		levels(x[[idx]]) <- enc2utf8(levels(x[[idx]]))
 	}
 
-	invisible(.Call(nanoparquet_write, x, file, dim, compression, metadata))
+	# easier here than calling back to R
+	required <- !vapply(x, anyNA, logical(1))
+
+	invisible(.Call(
+		nanoparquet_write,
+		x,
+		file,
+		dim,
+		compression,
+		metadata,
+		required
+	))
 }

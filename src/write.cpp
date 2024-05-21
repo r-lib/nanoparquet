@@ -30,10 +30,11 @@ public:
   void write_byte_array_dictionary(std::ostream &file, uint32_t idx);
   void write_dictionary_indices(std::ostream &file, uint32_t idx);
 
-  void write(SEXP dfsxp, SEXP dim, SEXP metadata);
+  void write(SEXP dfsxp, SEXP dim, SEXP metadata, SEXP rrequired);
 
 private:
   SEXP df = R_NilValue;
+  SEXP required = R_NilValue;
   ByteBuffer present;
 };
 
@@ -221,7 +222,7 @@ void RParquetOutFile::write_present_boolean(
 
   for (i = 0, o = 0; i < len; i++) {
     if (LOGICAL(col)[i] != NA_LOGICAL) {
-      LOGICAL(col)[o++] = LOGICAL(col)[i];
+      LOGICAL(col2)[o++] = LOGICAL(col)[i];
     }
   }
   write_boolean_impl(file, col2);
@@ -277,8 +278,13 @@ void RParquetOutFile::write_dictionary_indices(
   }
 }
 
-void RParquetOutFile::write(SEXP dfsxp, SEXP dim, SEXP metadata) {
+void RParquetOutFile::write(
+    SEXP dfsxp,
+    SEXP dim,
+    SEXP metadata,
+    SEXP rrequired) {
   df = dfsxp;
+  required = rrequired;
   SEXP nms = Rf_getAttrib(dfsxp, R_NamesSymbol);
   R_xlen_t nr = INTEGER(dim)[0];
   set_num_rows(nr);
@@ -286,38 +292,39 @@ void RParquetOutFile::write(SEXP dfsxp, SEXP dim, SEXP metadata) {
   for (R_xlen_t idx = 0; idx < nc; idx++) {
     SEXP col = VECTOR_ELT(dfsxp, idx);
     int rtype = TYPEOF(col);
+    bool req = LOGICAL(required)[idx];
     switch (rtype) {
     case INTSXP: {
       if (Rf_isFactor(col)) {
         parquet::format::StringType st;
         parquet::format::LogicalType logical_type;
         logical_type.__set_STRING(st);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, false, true);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, true);
       } else {
         parquet::format::IntType it;
         it.__set_isSigned(true);
         it.__set_bitWidth(32);
         parquet::format::LogicalType logical_type;
         logical_type.__set_INTEGER(it);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, false);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req);
       }
       break;
     }
     case REALSXP: {
       parquet::format::Type::type type = parquet::format::Type::DOUBLE;
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, false);
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req);
       break;
     }
     case STRSXP: {
       parquet::format::StringType st;
       parquet::format::LogicalType logical_type;
       logical_type.__set_STRING(st);
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, false);
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req);
       break;
     }
     case LGLSXP: {
       parquet::format::Type::type type = parquet::format::Type::BOOLEAN;
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, false);
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req);
       break;
     }
     default:
@@ -347,7 +354,8 @@ SEXP nanoparquet_write(
   SEXP filesxp,
   SEXP dim,
   SEXP compression,
-  SEXP metadata) {
+  SEXP metadata,
+  SEXP required) {
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_write: filename must be a string"); // # nocov
@@ -373,7 +381,7 @@ SEXP nanoparquet_write(
   try {
     char *fname = (char *)CHAR(STRING_ELT(filesxp, 0));
     RParquetOutFile of(fname, codec);
-    of.write(dfsxp, dim, metadata);
+    of.write(dfsxp, dim, metadata, required);
     return R_NilValue;
 
   } catch (std::exception &ex) {

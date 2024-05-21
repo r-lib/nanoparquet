@@ -8,7 +8,8 @@ SEXP nanoparquet_write(
   SEXP filesxp,
   SEXP dim,
   SEXP compression,
-  SEXP metadata
+  SEXP metadata,
+  SEXP required
 );
 SEXP nanoparquet_read_metadata(SEXP filesxp);
 SEXP nanoparquet_read_schema(SEXP filesxp);
@@ -33,11 +34,11 @@ SEXP snappy_uncompress_raw(SEXP x);
 
 static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_read, 1),
+  CALLDEF(nanoparquet_write, 6),
   CALLDEF(nanoparquet_read_metadata, 1),
   CALLDEF(nanoparquet_read_schema, 1),
   CALLDEF(nanoparquet_read_pages, 1),
   CALLDEF(nanoparquet_read_page, 2),
-  CALLDEF(nanoparquet_write, 5),
   CALLDEF(nanoparquet_parse_arrow_schema, 1),
   CALLDEF(nanoparquet_encode_arrow_schema, 1),
   CALLDEF(nanoparquet_rle_decode_int, 4),
