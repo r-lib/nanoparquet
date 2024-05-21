@@ -79,7 +79,8 @@ private:
   size_t compress(parquet::format::CompressionCodec::type codec,
                   ByteBuffer &src, uint32_t src_size, ByteBuffer &tgt);
   uint32_t rle_encode(ByteBuffer &src, uint32_t src_size, ByteBuffer &tgt,
-                      uint8_t bit_width, bool add_bit_width = false);
+                      uint8_t bit_width, bool add_bit_width = false,
+                      bool add_size = false, uint32_t skip = 0);
 
   ByteBuffer buf_unc;
   ByteBuffer buf_com;

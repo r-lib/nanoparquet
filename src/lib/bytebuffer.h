@@ -44,12 +44,20 @@ public:
     return (int) xsputn((const char*) &ch, 1);             // # nocov
   }                                                        // # nocov
 
-  void reset(uint64_t new_size = 0) {
+  void reset(uint64_t new_size = 0, bool copy = false) {
     if (new_size > 0) {
-      resize(new_size, false);
+      resize(new_size, copy);
     }
     sptr = ptr;
     setp(sptr, sptr + new_size);
+  }
+
+  void skip(uint64_t bytes) {
+    uint64_t space = len - (sptr - ptr);
+    if (space < bytes) {
+      throw std::runtime_error("Cannot write past the end of the buffer");
+    }
+    sptr += bytes;
   }
 
 private:

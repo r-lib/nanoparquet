@@ -269,8 +269,11 @@ void RParquetOutFile::write_dictionary_indices(
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = Rf_xlength(col);
   for (R_xlen_t i = 0; i < len; i++) {
-    int el = INTEGER(col)[i] - 1;
-    file.write((const char *) &el, sizeof(int));
+    int el = INTEGER(col)[i];
+    if (el != NA_INTEGER) {
+      el--;
+      file.write((const char *) &el, sizeof(int));
+    }
   }
 }
 
