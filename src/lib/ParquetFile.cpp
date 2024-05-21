@@ -530,7 +530,7 @@ public:
       break;
     case Type::BYTE_ARRAY:
     case Type::FIXED_LEN_BYTE_ARRAY:
-      delete (Dictionary<char *> *)dict;
+      result_col.dict.reset((Dictionary<char *> *)dict);
       break;
     default:
       throw runtime_error("Unsupported type for dictionary: " +

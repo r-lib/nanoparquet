@@ -283,8 +283,7 @@ test_that("Factor levels not in the data", {
   write_parquet(d, tmp)
   d2 <- read_parquet(tmp)
   expect_s3_class(d2$f, "factor")
-  # Not yet
-  # expect_equal(levels(d2$f), letters)
+  expect_equal(levels(d2$f), letters)
   pgs <- parquet_pages(tmp)
   expect_snapshot({
     read_parquet_page(tmp, pgs$page_header_offset[1])$data

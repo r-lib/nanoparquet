@@ -52,6 +52,8 @@ SEXP nanoparquet_read(SEXP filesxp) {
     SET_NAMES(retlist, names);
     UNPROTECT(1); // names
 
+    SEXP dicts = PROTECT(Rf_allocVector(VECSXP, ncols));
+
     for (size_t col_idx = 0; col_idx < ncols; col_idx++) {
       SEXP varname =
           PROTECT(Rf_mkCharCE(f.columns[col_idx]->name.c_str(), CE_UTF8));
@@ -113,7 +115,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
       UNPROTECT(1); /* varvalue */
     }
 
-    // at this point retlist is fully allocated and the only protected SEXP
+    // at this point retlist, dicts are the only protected SEXPs
 
     ResultChunk rc;
     ScanState s;
@@ -124,6 +126,16 @@ SEXP nanoparquet_read(SEXP filesxp) {
     while (f.scan(s, rc)) {
       for (size_t col_idx = 0; col_idx < ncols; col_idx++) {
         auto &col = rc.cols[col_idx];
+        if (col.dict) {
+          auto strings = col.dict->dict;
+          SEXP rd = PROTECT(Rf_allocVector(STRSXP, strings.size()));
+          for (auto i = 0; i < strings.size(); i++) {
+            SET_STRING_ELT(rd, i, Rf_mkCharCE(strings[i], CE_UTF8));
+          }
+          SET_VECTOR_ELT(dicts, col_idx, rd);
+          UNPROTECT(1);
+          col.dict.reset();
+        }
         SEXP dest = VECTOR_ELT(retlist, col_idx);
 
         for (uint64_t row_idx = 0; row_idx < rc.nrows; row_idx++) {
@@ -259,8 +271,13 @@ SEXP nanoparquet_read(SEXP filesxp) {
       dest_offset += rc.nrows;
     }
     assert(dest_offset == nrows);
-    UNPROTECT(1); // retlist
-    return retlist;
+
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(res, 0, retlist);
+    SET_VECTOR_ELT(res, 1, dicts);
+
+    UNPROTECT(3); // + retlist, dicts
+    return res;
 
   } catch (std::exception &ex) {
     strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1);

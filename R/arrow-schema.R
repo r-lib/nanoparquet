@@ -1,4 +1,4 @@
-apply_arrow_schema <- function(tab, file) {
+apply_arrow_schema <- function(tab, file, dicts) {
   mtd <- parquet_metadata(file)
   kv <- mtd$file_meta_data$key_value_metadata[[1]]
   if ("ARROW:schema" %in% kv$key) {
@@ -7,7 +7,7 @@ apply_arrow_schema <- function(tab, file) {
       file
     )
     for (idx in fct) {
-      tab[[idx]] <- as.factor(tab[[idx]])
+      tab[[idx]] <- factor(tab[[idx]], levels = dicts[[idx]])
     }
   }
   tab

@@ -18,8 +18,10 @@
 read_parquet <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(nanoparquet_read, file)
+	dicts <- res[[2]]
+	res <- res[[1]]
 	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
-		res <- apply_arrow_schema(res, file)
+		res <- apply_arrow_schema(res, file, dicts)
 	}
 	# some data.frame dress up
 	attr(res, "row.names") <- c(NA_integer_, as.integer(-1 * length(res[[1]])))
