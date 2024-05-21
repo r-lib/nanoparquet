@@ -30,87 +30,87 @@
       24 data/mtcars-arrow.parquet         0     11       DATA_PAGE
       25 data/mtcars-arrow.parquet         0     12 DICTIONARY_PAGE
       26 data/mtcars-arrow.parquet         0     12       DATA_PAGE
-         uncompressed_page_size compressed_page_size crc num_values       encoding
-      1                     509                  424  NA         32          PLAIN
-      2                      28                   30  NA         32 RLE_DICTIONARY
-      3                     200                  131  NA         25          PLAIN
-      4                      28                   30  NA         32 RLE_DICTIONARY
-      5                      24                   22  NA          3          PLAIN
-      6                      16                   18  NA         32 RLE_DICTIONARY
-      7                     216                  149  NA         27          PLAIN
-      8                      28                   30  NA         32 RLE_DICTIONARY
-      9                     176                  118  NA         22          PLAIN
-      10                     28                   30  NA         32 RLE_DICTIONARY
-      11                    176                  149  NA         22          PLAIN
-      12                     28                   30  NA         32 RLE_DICTIONARY
-      13                    232                  188  NA         29          PLAIN
-      14                     28                   30  NA         32 RLE_DICTIONARY
-      15                    240                  195  NA         30          PLAIN
-      16                     28                   30  NA         32 RLE_DICTIONARY
-      17                     16                   18  NA          2          PLAIN
-      18                     12                   14  NA         32 RLE_DICTIONARY
-      19                     16                   18  NA          2          PLAIN
-      20                     14                   16  NA         32 RLE_DICTIONARY
-      21                     24                   22  NA          3          PLAIN
-      22                     16                   18  NA         32 RLE_DICTIONARY
-      23                     48                   35  NA          6          PLAIN
-      24                     20                   22  NA         32 RLE_DICTIONARY
-      25                     25                   26  NA          5          PLAIN
-      26                     20                   22  NA         32 RLE_DICTIONARY
-         definition_level_encoding repetition_level_encoding page_header_offset
-      1                       <NA>                      <NA>                  4
-      2                        RLE                       RLE                444
-      3                       <NA>                      <NA>                600
-      4                        RLE                       RLE                747
-      5                       <NA>                      <NA>                933
-      6                        RLE                       RLE                969
-      7                       <NA>                      <NA>               1143
-      8                        RLE                       RLE               1308
-      9                       <NA>                      <NA>               1495
-      10                       RLE                       RLE               1629
-      11                      <NA>                      <NA>               1814
-      12                       RLE                       RLE               1979
-      13                      <NA>                      <NA>               2166
-      14                       RLE                       RLE               2370
-      15                      <NA>                      <NA>               2555
-      16                       RLE                       RLE               2766
-      17                      <NA>                      <NA>               2953
-      18                       RLE                       RLE               2985
-      19                      <NA>                      <NA>               3154
-      20                       RLE                       RLE               3186
-      21                      <NA>                      <NA>               3357
-      22                       RLE                       RLE               3393
-      23                      <NA>                      <NA>               3568
-      24                       RLE                       RLE               3617
-      25                      <NA>                      <NA>               3796
-      26                       RLE                       RLE               3836
-         data_offset page_header_length
-      1           20                 16
-      2          490                 46
-      3          616                 16
-      4          808                 61
-      5          947                 14
-      6         1030                 61
-      7         1159                 16
-      8         1369                 61
-      9         1511                 16
-      10        1690                 61
-      11        1830                 16
-      12        2040                 61
-      13        2182                 16
-      14        2431                 61
-      15        2571                 16
-      16        2827                 61
-      17        2967                 14
-      18        3046                 61
-      19        3168                 14
-      20        3247                 61
-      21        3371                 14
-      22        3454                 61
-      23        3582                 14
-      24        3678                 61
-      25        3810                 14
-      26        3863                 27
+         page_header_offset uncompressed_page_size compressed_page_size crc
+      1                   4                    509                  424  NA
+      2                 444                     28                   30  NA
+      3                 600                    200                  131  NA
+      4                 747                     28                   30  NA
+      5                 933                     24                   22  NA
+      6                 969                     16                   18  NA
+      7                1143                    216                  149  NA
+      8                1308                     28                   30  NA
+      9                1495                    176                  118  NA
+      10               1629                     28                   30  NA
+      11               1814                    176                  149  NA
+      12               1979                     28                   30  NA
+      13               2166                    232                  188  NA
+      14               2370                     28                   30  NA
+      15               2555                    240                  195  NA
+      16               2766                     28                   30  NA
+      17               2953                     16                   18  NA
+      18               2985                     12                   14  NA
+      19               3154                     16                   18  NA
+      20               3186                     14                   16  NA
+      21               3357                     24                   22  NA
+      22               3393                     16                   18  NA
+      23               3568                     48                   35  NA
+      24               3617                     20                   22  NA
+      25               3796                     25                   26  NA
+      26               3836                     20                   22  NA
+         num_values       encoding definition_level_encoding
+      1          32          PLAIN                      <NA>
+      2          32 RLE_DICTIONARY                       RLE
+      3          25          PLAIN                      <NA>
+      4          32 RLE_DICTIONARY                       RLE
+      5           3          PLAIN                      <NA>
+      6          32 RLE_DICTIONARY                       RLE
+      7          27          PLAIN                      <NA>
+      8          32 RLE_DICTIONARY                       RLE
+      9          22          PLAIN                      <NA>
+      10         32 RLE_DICTIONARY                       RLE
+      11         22          PLAIN                      <NA>
+      12         32 RLE_DICTIONARY                       RLE
+      13         29          PLAIN                      <NA>
+      14         32 RLE_DICTIONARY                       RLE
+      15         30          PLAIN                      <NA>
+      16         32 RLE_DICTIONARY                       RLE
+      17          2          PLAIN                      <NA>
+      18         32 RLE_DICTIONARY                       RLE
+      19          2          PLAIN                      <NA>
+      20         32 RLE_DICTIONARY                       RLE
+      21          3          PLAIN                      <NA>
+      22         32 RLE_DICTIONARY                       RLE
+      23          6          PLAIN                      <NA>
+      24         32 RLE_DICTIONARY                       RLE
+      25          5          PLAIN                      <NA>
+      26         32 RLE_DICTIONARY                       RLE
+         repetition_level_encoding data_offset page_header_length
+      1                       <NA>          20                 16
+      2                        RLE         490                 46
+      3                       <NA>         616                 16
+      4                        RLE         808                 61
+      5                       <NA>         947                 14
+      6                        RLE        1030                 61
+      7                       <NA>        1159                 16
+      8                        RLE        1369                 61
+      9                       <NA>        1511                 16
+      10                       RLE        1690                 61
+      11                      <NA>        1830                 16
+      12                       RLE        2040                 61
+      13                      <NA>        2182                 16
+      14                       RLE        2431                 61
+      15                      <NA>        2571                 16
+      16                       RLE        2827                 61
+      17                      <NA>        2967                 14
+      18                       RLE        3046                 61
+      19                      <NA>        3168                 14
+      20                       RLE        3247                 61
+      21                      <NA>        3371                 14
+      22                       RLE        3454                 61
+      23                      <NA>        3582                 14
+      24                       RLE        3678                 61
+      25                      <NA>        3810                 14
+      26                       RLE        3863                 27
 
 # read_parquet_page
 

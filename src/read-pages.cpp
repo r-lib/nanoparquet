@@ -53,6 +53,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
       "row_group",
       "column",
       "page_type",
+      "page_header_offset",
       "uncompressed_page_size",
       "compressed_page_size",
       "crc",
@@ -60,7 +61,6 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
       "encoding",
       "definition_level_encoding",
       "repetition_level_encoding",
-      "page_header_offset",
       "data_offset",
       "page_header_length",
       ""
@@ -74,22 +74,22 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
     SET_VECTOR_ELT(res, 2, column);
     SEXP page_type = Rf_allocVector(INTSXP, num_pages);
     SET_VECTOR_ELT(res, 3, page_type);
-    SEXP uncompressed_page_size = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 4, uncompressed_page_size);
-    SEXP compressed_page_size = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 5, compressed_page_size);
-    SEXP crc = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 6, crc);
-    SEXP num_values = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 7, num_values);
-    SEXP encoding = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 8, encoding);
-    SEXP definition_level_encoding = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 9, definition_level_encoding);
-    SEXP repetition_level_encoding = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 10, repetition_level_encoding);
     SEXP page_header_offset = Rf_allocVector(REALSXP, num_pages);
-    SET_VECTOR_ELT(res, 11, page_header_offset);
+    SET_VECTOR_ELT(res, 4, page_header_offset);
+    SEXP uncompressed_page_size = Rf_allocVector(INTSXP, num_pages);
+    SET_VECTOR_ELT(res, 5, uncompressed_page_size);
+    SEXP compressed_page_size = Rf_allocVector(INTSXP, num_pages);
+    SET_VECTOR_ELT(res, 6, compressed_page_size);
+    SEXP crc = Rf_allocVector(INTSXP, num_pages);
+    SET_VECTOR_ELT(res, 7, crc);
+    SEXP num_values = Rf_allocVector(INTSXP, num_pages);
+    SET_VECTOR_ELT(res, 8, num_values);
+    SEXP encoding = Rf_allocVector(INTSXP, num_pages);
+    SET_VECTOR_ELT(res, 9, encoding);
+    SEXP definition_level_encoding = Rf_allocVector(INTSXP, num_pages);
+    SET_VECTOR_ELT(res, 10, definition_level_encoding);
+    SEXP repetition_level_encoding = Rf_allocVector(INTSXP, num_pages);
+    SET_VECTOR_ELT(res, 11, repetition_level_encoding);
     SEXP data_offset = Rf_allocVector(REALSXP, num_pages);
     SET_VECTOR_ELT(res, 12, data_offset);
     SEXP page_header_length = Rf_allocVector(INTSXP, num_pages);

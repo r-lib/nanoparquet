@@ -150,3 +150,147 @@ test_that("strings are converted to UTF-8", {
     charToRaw(df2$latin1)
   })
 })
+
+test_that("REQ PLAIN", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    stringsAsFactors = FALSE,
+    i = c(1L, 2L, 2L, 2L, 3L, 3L, 3L, 3L),
+    r = c(1, 1, 1, 1, 1, 1, 2, 10),
+    l = c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE, TRUE),
+    s = c("A", "A", "A", "B", "C", "D", "D", "D")
+  )
+
+  write_parquet(d, tmp, compression = "uncompressed")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    read_parquet_page(tmp, pgs$page_header_offset[2])$data
+    read_parquet_page(tmp, pgs$page_header_offset[3])$data
+    read_parquet_page(tmp, pgs$page_header_offset[4])$data
+  })
+
+  write_parquet(d, tmp, compression = "snappy")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    read_parquet_page(tmp, pgs$page_header_offset[2])$data
+    read_parquet_page(tmp, pgs$page_header_offset[3])$data
+    read_parquet_page(tmp, pgs$page_header_offset[4])$data
+  })
+
+})
+
+test_that("OPT PLAIN", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    stringsAsFactors = FALSE,
+    i = c(1L, NA, 2L, NA, NA, 3L, 3L, 3L),
+    r = c(1, 1, 1, 1, 1, 1, NA, NA),
+    l = c(TRUE, FALSE, NA, NA, TRUE, FALSE, TRUE, NA),
+    s = c(NA, NA, "A", "B", "C", NA, "D", NA)
+  )
+
+  write_parquet(d, tmp, compression = "uncompressed")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
+    readBin(data[-(1:6)], "integer", sum(!is.na(d$i)))
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[2])$data)
+    readBin(data[-(1:6)], "double", sum(!is.na(d$r)))
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[3])$data)
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[4])$data)
+  })
+
+  write_parquet(d, tmp, compression = "snappy")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
+    readBin(data[-(1:6)], "integer", sum(!is.na(d$i)))
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[2])$data)
+    readBin(data[-(1:6)], "double", sum(!is.na(d$r)))
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[3])$data)
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[4])$data)
+  })
+})
+
+test_that("REQ RLE", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    stringsAsFactors = FALSE,
+    f = as.factor(c("A", "A", "B", "B", "C", "C", "D", "E"))
+  )
+
+  write_parquet(d, tmp, compression = "uncompressed")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[2])$data)
+    rle_decode_int(data[-1], bit_width = as.integer(data[1]), nrow(d))
+  })
+
+  write_parquet(d, tmp, compression = "snappy")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    read_parquet_page(tmp, pgs$page_header_offset[2])$data
+  })
+})
+
+test_that("OPT RLE", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    stringsAsFactors = FALSE,
+    f = as.factor(c(NA, "A", "B", NA, NA, "C", "D", "E"))
+  )
+
+  write_parquet(d, tmp, compression = "uncompressed")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[2])$data)
+    rle_decode_int(
+      data[-(1:7)],
+      bit_width = as.integer(data[7]),
+      sum(!is.na(d$f))
+    )
+  })
+
+  write_parquet(d, tmp, compression = "snappy")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    read_parquet_page(tmp, pgs$page_header_offset[2])$data
+  })
+})
+
+test_that("Factor levels not in the data", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    f = factor(sample(letters[1:5], 100, replace = TRUE), levels = letters)
+  )
+
+  write_parquet(d, tmp)
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$f, "factor")
+  expect_equal(levels(d2$f), letters)
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
+  })
+  data <- read_parquet_page(tmp, pgs$page_header_offset[2])$data
+  expect_equal(
+    rle_decode_int(data[-1], as.integer(data[1]), nrow(d)),
+    as.integer(d$f) -1L
+  )
+})
