@@ -19,6 +19,7 @@ read_parquet <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(nanoparquet_read, file)
 	dicts <- res[[2]]
+	types <- res[[3]]
 	res <- res[[1]]
 	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
 		res <- apply_arrow_schema(res, file, dicts)
@@ -27,13 +28,19 @@ read_parquet <- function(file) {
 	# convert hms from milliseconds to seconds, also integer -> double
 	hmss <- which(vapply(res, "inherits", "hms", FUN.VALUE = logical(1)))
 	for (idx in hmss) {
-		res[[idx]][] <- res[[idx]] / 1000
+		res[[idx]] <- structure(
+			unclass(res[[idx]]) / 1000,
+			class = class(res[[idx]])
+		)
 	}
 
 	# convert POSIXct from microseconds to seconds
 	posixcts <- which(vapply(res, "inherits", "POSIXct", FUN.VALUE = logical(1)))
 	for (idx in posixcts) {
-		res[[idx]][] <- unclass(res[[idx]]) / 1000 / 1000
+		res[[idx]][] <- structure(
+			unclass(res[[idx]]) / 1000 / 1000,
+			class = class(res[[idx]])
+		)
 	}
 
 	# some data.frame dress up

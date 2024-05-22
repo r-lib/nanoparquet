@@ -53,12 +53,15 @@ SEXP nanoparquet_read(SEXP filesxp) {
     UNPROTECT(1); // names
 
     SEXP dicts = PROTECT(Rf_allocVector(VECSXP, ncols));
+    SEXP types = PROTECT(Rf_allocVector(INTSXP, ncols));
 
     for (size_t col_idx = 0; col_idx < ncols; col_idx++) {
       SEXP varname =
           PROTECT(Rf_mkCharCE(f.columns[col_idx]->name.c_str(), CE_UTF8));
       SET_STRING_ELT(names, col_idx, varname);
       UNPROTECT(1); // varname
+
+      INTEGER(types)[col_idx] = f.columns[col_idx]->type;
 
       SEXP varvalue = NULL;
       switch (f.columns[col_idx]->type) {
@@ -79,8 +82,11 @@ SEXP nanoparquet_read(SEXP filesxp) {
                     s_ele->logicalType.__isset.TIME) ||
                    (s_ele->__isset.converted_type &&
                     s_ele->converted_type == parquet::format::ConvertedType::TIME_MILLIS)) {
-          SEXP cl = PROTECT(Rf_mkString("hms"));
+          SEXP cl = PROTECT(Rf_allocVector(STRSXP, 2));
+          SET_STRING_ELT(cl, 0, Rf_mkChar("hms"));
+          SET_STRING_ELT(cl, 1, Rf_mkChar("difftime"));
           SET_CLASS(varvalue, cl);
+          Rf_setAttrib(varvalue, Rf_install("units"), Rf_mkString("secs"));
           UNPROTECT(1);
         }
         break;
@@ -304,11 +310,12 @@ SEXP nanoparquet_read(SEXP filesxp) {
     }
     assert(dest_offset == nrows);
 
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
     SET_VECTOR_ELT(res, 0, retlist);
     SET_VECTOR_ELT(res, 1, dicts);
+    SET_VECTOR_ELT(res, 2, types);
 
-    UNPROTECT(3); // + retlist, dicts
+    UNPROTECT(4); // + retlist, dicts, types
     return res;
 
   } catch (std::exception &ex) {
