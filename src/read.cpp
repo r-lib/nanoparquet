@@ -87,9 +87,22 @@ SEXP nanoparquet_read(SEXP filesxp) {
       }
       case parquet::format::Type::INT64:
       case parquet::format::Type::DOUBLE:
-      case parquet::format::Type::FLOAT:
+      case parquet::format::Type::FLOAT: {
         varvalue = PROTECT(NEW_NUMERIC(nrows));
+        auto &s_ele = f.columns[col_idx]->schema_element;
+        if ((s_ele->__isset.logicalType &&
+             s_ele->logicalType.__isset.TIMESTAMP) ||
+            (s_ele->__isset.converted_type &&
+             s_ele->converted_type == parquet::format::ConvertedType::TIMESTAMP_MICROS)) {
+          SEXP cl = PROTECT(Rf_allocVector(STRSXP, 2));
+          SET_STRING_ELT(cl, 0, Rf_mkChar("POSIXct"));
+          SET_STRING_ELT(cl, 1, Rf_mkChar("POSIXt"));
+          SET_CLASS(varvalue, cl);
+          Rf_setAttrib(varvalue, Rf_install("tzone"), Rf_mkString("UTC"));
+          UNPROTECT(1);
+        }
         break;
+      }
       case parquet::format::Type::INT96: {
         varvalue = PROTECT(NEW_NUMERIC(nrows));
         SEXP cl = PROTECT(NEW_STRING(2));
@@ -229,10 +242,12 @@ SEXP nanoparquet_read(SEXP filesxp) {
             [row_idx + dest_offset] = (double)((float *)col.data.ptr)[row_idx];
             break;
           case parquet::format::Type::INT96:
+            // it is further adjusted in the R code, so that we can have
+            // the same adjustments as for TIMESTAMPs
             NUMERIC_POINTER(dest)
             [row_idx + dest_offset] = impala_timestamp_to_nanoseconds(
                                           ((Int96 *)col.data.ptr)[row_idx]) /
-                                      1000000000;
+                                      1000;
             break;
 
           case parquet::format::Type::FIXED_LEN_BYTE_ARRAY: { // oof, TODO

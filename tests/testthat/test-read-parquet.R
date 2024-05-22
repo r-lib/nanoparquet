@@ -175,3 +175,17 @@ test_that("read hms", {
   expect_s3_class(d2$h, "hms")
   expect_equal(d$h, d2$h)
 })
+
+test_that("read POSIXct", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    h = .POSIXct(Sys.time(), tz = "UTC")
+  )
+  write_parquet(d, tmp)
+
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d$h, "POSIXct")
+  expect_equal(d$h, d2$h)
+})

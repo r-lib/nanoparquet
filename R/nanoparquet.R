@@ -30,6 +30,12 @@ read_parquet <- function(file) {
 		res[[idx]][] <- res[[idx]] / 1000
 	}
 
+	# convert POSIXct from microseconds to seconds
+	posixcts <- which(vapply(res, "inherits", "POSIXct", FUN.VALUE = logical(1)))
+	for (idx in posixcts) {
+		res[[idx]][] <- unclass(res[[idx]]) / 1000 / 1000
+	}
+
 	# some data.frame dress up
 	attr(res, "row.names") <- c(NA_integer_, as.integer(-1 * length(res[[1]])))
 	class(res) <- c(getOption("nanoparquet.class", "tbl"), "data.frame")
@@ -450,6 +456,15 @@ write_parquet <- function(
 		# this keeps the class
 		mode(x[[idx]]) <- "integer"
 	}
+
+	# Make sure POSIXct is double
+	posixcts <- which(vapply(x, "inherits", "POSIXct", FUN.VALUE = logical(1)))
+	for (idx in posixcts) {
+		# keeps the class
+		mode(x[[idx]]) <- "double"
+	}
+
+	# TODO: POSIXlt?
 
 	# easier here than calling back to R
 	required <- !vapply(x, anyNA, logical(1))

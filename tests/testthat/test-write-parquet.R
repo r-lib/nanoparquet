@@ -324,3 +324,18 @@ test_that("write hms", {
   d2 <- arrow::read_parquet(tmp)
   expect_equal(d$h, d2$h)
 })
+
+test_that("write POSIXct", {
+  skip_on_cran()
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    h = .POSIXct(Sys.time(), tz = "UTC")
+  )
+  write_parquet(d, tmp)
+
+  d2 <- arrow::read_parquet(tmp)
+  expect_equal(d$h, d2$h)
+})
