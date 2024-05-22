@@ -101,7 +101,7 @@ test_that("parquet_columns", {
   tmp <- tempfile(fileext = ".parquet")
   write_parquet(d, tmp)
   expect_snapshot({
-    parquet_columns(tmp)
+    parquet_columns(tmp)[-1]
     parquet_columns(tmp)$r_type
   })
 })

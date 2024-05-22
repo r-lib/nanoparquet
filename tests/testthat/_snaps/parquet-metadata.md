@@ -506,15 +506,15 @@
 ---
 
     Code
-      parquet_columns(tmp)
+      parquet_columns(tmp)[-1]
     Output
-      # A data frame: 4 x 6
-        file_name         name  type  r_type repetition_type logical_type             
-      * <chr>             <chr> <chr> <chr>  <chr>           <I<list>>                
-      1 /var/folders/ph/~ Date  INT32 Date   REQUIRED        <DATE>                   
-      2 /var/folders/ph/~ POSI~ INT64 POSIX~ REQUIRED        <TIMESTAMP(TRUE, micros)>
-      3 /var/folders/ph/~ hms   INT32 hms    REQUIRED        <TIME(TRUE, millis)>     
-      4 /var/folders/ph/~ diff~ INT64 difft~ REQUIRED        <NULL>                   
+      # A data frame: 4 x 5
+        name     type  r_type   repetition_type logical_type             
+      * <chr>    <chr> <chr>    <chr>           <I<list>>                
+      1 Date     INT32 Date     REQUIRED        <DATE>                   
+      2 POSIXct  INT64 POSIXct  REQUIRED        <TIMESTAMP(TRUE, micros)>
+      3 hms      INT32 hms      REQUIRED        <TIME(TRUE, millis)>     
+      4 difftime INT64 difftime REQUIRED        <NULL>                   
     Code
       parquet_columns(tmp)$r_type
     Output
