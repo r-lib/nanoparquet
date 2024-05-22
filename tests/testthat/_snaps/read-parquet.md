@@ -28,10 +28,18 @@
 # Can't parse Arrow schema
 
     Code
-      arrow_find_factors(base64_encode("foobar"), "myfile")
+      arrow_find_special(base64_encode("foobar"), "myfile")
     Condition
       Warning in `value[[3L]]()`:
       Failed to parse Arrow schema from parquet file at 'myfile'
     Output
-      integer(0)
+      list()
+
+# read difftime
+
+    Code
+      as.data.frame(d2)
+    Output
+               h
+      1 600 secs
 

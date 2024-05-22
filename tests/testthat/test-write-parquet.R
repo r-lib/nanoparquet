@@ -339,3 +339,29 @@ test_that("write POSIXct", {
   d2 <- arrow::read_parquet(tmp)
   expect_equal(d$h, d2$h)
 })
+
+test_that("write difftime", {
+  skip_on_cran()
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  # Fractional seconds are kept
+  d <- data.frame(
+    h = as.difftime(10 + 1/9, units = "secs")
+  )
+  write_parquet(d, tmp)
+
+  d2 <- arrow::read_parquet(tmp)
+  expect_equal(d$h, d2$h)
+
+  # Other units are converted to secs
+  d <- data.frame(
+    h = as.difftime(10, units = "mins")
+  )
+  write_parquet(d, tmp)
+  d2 <- arrow::read_parquet(tmp)
+  expect_snapshot({
+    as.data.frame(d2)
+  })
+})

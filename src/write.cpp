@@ -64,6 +64,13 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx) {
       file.write((const char*) &el, sizeof(int64_t));
     }
 
+  } else if (Rf_inherits(col, "difftime")) {
+    // need to convert seconds to nanoseconds
+    for (R_xlen_t i = 0; i < len; i++) {
+      int64_t el = REAL(col)[i] * 1000 * 1000 * 1000;
+      file.write((const char*) &el, sizeof(int64_t));
+    }
+
   } else {
     for (R_xlen_t i = 0; i < len; i++) {
       int64_t el = REAL(col)[i];
@@ -212,6 +219,15 @@ void RParquetOutFile::write_present_int64(
       int64_t el2 = el * 1000 * 1000;
       file.write((const char*) &el2, sizeof(int64_t));
     }
+  } else if (Rf_inherits(col, "difftime")) {
+    // need to convert seconds to nanoseconds
+    for (R_xlen_t i = 0; i < len; i++) {
+      double el = REAL(col)[i];
+      if (R_IsNA(el)) continue;
+      int64_t el2 = el * 1000 * 1000 * 1000;
+      file.write((const char*) &el2, sizeof(int64_t));
+    }
+
   } else {
     for (R_xlen_t i = 0; i < len; i++) {
       double el = REAL(col)[i];
@@ -378,6 +394,10 @@ void RParquetOutFile::write(
         parquet::format::LogicalType logical_type;
         logical_type.__set_TIMESTAMP(ttt);
         schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req);
+      } else if (Rf_inherits(col, "difftime")) {
+        parquet::format::Type::type type = parquet::format::Type::INT64;
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req);
+
       } else {
         parquet::format::Type::type type = parquet::format::Type::DOUBLE;
         schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req);

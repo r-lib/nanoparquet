@@ -102,7 +102,7 @@ test_that("read factors, marked by Arrow", {
 
 test_that("Can't parse Arrow schema", {
   expect_snapshot(
-    arrow_find_factors(base64_encode("foobar"), "myfile")
+    arrow_find_special(base64_encode("foobar"), "myfile")
   )
 })
 
@@ -188,4 +188,29 @@ test_that("read POSIXct", {
   d2 <- read_parquet(tmp)
   expect_s3_class(d$h, "POSIXct")
   expect_equal(d$h, d2$h)
+})
+
+test_that("read difftime", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  # Fractional seconds are kept
+  d <- data.frame(
+    h = as.difftime(10 + 1/9, units = "secs")
+  )
+  write_parquet(d, tmp)
+
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$h, "difftime")
+  expect_equal(d$h, d2$h)
+
+  # Other units are converted to secs
+  d <- data.frame(
+    h = as.difftime(10, units = "mins")
+  )
+  write_parquet(d, tmp)
+  d2 <- read_parquet(tmp)
+  expect_snapshot({
+    as.data.frame(d2)
+  })
 })

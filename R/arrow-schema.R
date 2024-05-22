@@ -1,19 +1,43 @@
-apply_arrow_schema <- function(tab, file, dicts) {
+# read Arrow metadata from a file
+parquet_arrow_metadata <- function(file) {
+  fmd <- parquet_metadata(file)$file_meta_data
+  kv <- fmd$key_value_metadata[[1]]
+  if (! "ARROW:schema" %in% kv$key) {
+    stop("No Arrow metadata in file")
+  }
+  amd <- kv$value[match("ARROW:schema", kv$key)]
+  parse_arrow_schema(amd)
+}
+
+apply_arrow_schema <- function(tab, file, dicts, types) {
   mtd <- parquet_metadata(file)
   kv <- mtd$file_meta_data$key_value_metadata[[1]]
   if ("ARROW:schema" %in% kv$key) {
-    fct <- arrow_find_factors(
+    spec <- arrow_find_special(
       kv$value[match("ARROW:schema", kv$key)],
       file
     )
-    for (idx in fct) {
+    for (idx in spec$factor) {
       tab[[idx]] <- factor(tab[[idx]], levels = dicts[[idx]])
+    }
+    for (idx in spec$difftime) {
+      # only if INT64, otherwise hms, probably
+      if (types[[idx]] != 2) next
+      mult <- switch(
+        spec$columns$type[[idx]]$unit,
+        SECOND = 1,
+        MILLISECOND = 1000,
+        MICROSECOND = 1000 * 1000,
+        NANOSECOND = 1000 * 1000 * 1000,
+        stop("Unknown Arrow time unit")
+      )
+      tab[[idx]] <- as.difftime(tab[[idx]] / mult, units = "secs")
     }
   }
   tab
 }
 
-arrow_find_factors <- function(asch, file) {
+arrow_find_special <- function(asch, file) {
   amd <- tryCatch(
     parse_arrow_schema(asch)$columns,
     error = function(e) {
@@ -25,13 +49,14 @@ arrow_find_factors <- function(asch, file) {
     }
   )
   if (is.null(amd)) {
-    return(integer())
+    return(list())
   }
   # If the type is Utf8 and it is a dictionary, then it is a factor
   fct <- which(
     amd$type_type == "Utf8" & !vapply(amd$dictionary, is.null, logical(1))
   )
-  fct
+  dft <- which(amd$type_type == "Duration")
+  list(factor = fct, difftime = dft, columns = amd)
 }
 
 arrow_types <- c(
@@ -147,6 +172,7 @@ parse_arrow_schema <- function(schema) {
 encode_arrow_schema_r <- function(df) {
   endianness <- capitalize(.Platform$endian)
 	fctrs <- vapply(df, function(c) inherits(c, "factor"), logical(1))
+  dfts <- vapply(df, function(c) inherits(c, "difftime"), logical(1))
   typemap <- c(
     "integer" = "Int",
     "double" = "FloatingPoint",
@@ -156,6 +182,7 @@ encode_arrow_schema_r <- function(df) {
   dftypes <- vapply(df, typeof, character(1))
   artypes <- typemap[dftypes]
   artypes[fctrs] <- "Utf8"
+  artypes[dfts] <- "Duration"
   if (anyNA(artypes)) {
     stop(
       "Unsuppoted types when writing Parquet file: ",
@@ -166,7 +193,8 @@ encode_arrow_schema_r <- function(df) {
     "Int" = list(bit_width = 32L, is_signed = TRUE),
     "FloatingPoint" = list(precision = "DOUBLE"),
     "Utf8" = NULL,
-    "Bool" = NULL
+    "Bool" = NULL,
+    "Duration" = list(unit = "NANOSECOND")
   )
   schema <- list(
     columns = data.frame(

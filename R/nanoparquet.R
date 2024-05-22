@@ -22,7 +22,7 @@ read_parquet <- function(file) {
 	types <- res[[3]]
 	res <- res[[1]]
 	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
-		res <- apply_arrow_schema(res, file, dicts)
+		res <- apply_arrow_schema(res, file, dicts, types)
 	}
 
 	# convert hms from milliseconds to seconds, also integer -> double
@@ -347,13 +347,6 @@ parquet_columns <- function(file) {
 
 	kv <- mtd$file_meta_data$key_value_metadata[[1]]
 
-  fct <- if ("ARROW:schema" %in% kv$key) {
-		kv <- mtd$file_meta_data$key_value_metadata[[1]]
-		arrow_find_factors(
-			kv$value[match("ARROW:schema", kv$key)],
-			file
-		)
-	}
 	type_map <- c(
 		BOOLEAN = "logical",
 		INT32 = "integer",
@@ -368,7 +361,43 @@ parquet_columns <- function(file) {
 	# keep leaf columns only, arrow schema is for leaf columns
 	sch <- sch[is.na(sch$num_children) | sch$num_children == 0L, ]
 	sch$r_type <- unname(type_map[sch$type])
-	if (length(fct)) sch$r_type[fct] <- "factor"
+
+	# detected from Arrow schema
+	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
+		spec <- if ("ARROW:schema" %in% kv$key) {
+			kv <- mtd$file_meta_data$key_value_metadata[[1]]
+			arrow_find_special(
+				kv$value[match("ARROW:schema", kv$key)],
+				file
+			)
+		}
+		if (length(spec$factor)) sch$r_type[spec$factor] <- "factor"
+		if (length(spec$difftime)) sch$r_type[spec$difftime] <- "difftime"
+	}
+
+	# TODO: this is duplicated in the C++ code
+	# our own conversions
+	dates <- vapply(
+		sch$logical_type,
+		function(lt) !is.null(lt$type) && lt$type == "DATE",
+		logical(1)
+	) | sch$converted_type == "DATE"
+	sch$r_type[dates] <- "Date"
+
+	hmss <- vapply(
+		sch$logical_type,
+		function(lt) !is.null(lt$type) && lt$type == "TIME",
+		logical(1)
+	) | sch$converted_type == "TIME_MILLIS"
+	sch$r_type[hmss] <- "hms"
+
+	poscts <- vapply(
+		sch$logical_type,
+		function(lt) !is.null(lt) && lt$type == "TIMESTAMP",
+		logical(1)
+	) | sch$converted_type == "TIMESTAMP_MICROS"
+	sch$r_type[poscts] <- "POSIXct"
+
 	sch$r_type[
 		sch$type == "FIXED_LEN_BYTE_ARRAY" &
 		sch$converted_type == "DECIMAL"] <- "double"
@@ -467,11 +496,18 @@ write_parquet <- function(
 	# Make sure POSIXct is double
 	posixcts <- which(vapply(x, "inherits", "POSIXct", FUN.VALUE = logical(1)))
 	for (idx in posixcts) {
-		# keeps the class
-		mode(x[[idx]]) <- "double"
+    # keeps the class
+    mode(x[[idx]]) <- "double"
 	}
 
-	# TODO: POSIXlt?
+	# difftime must be saved in seconds
+	difftimes <- which(vapply(x, "inherits", "difftime", FUN.VALUE = logical(1)))
+	for (idx in setdiff(difftimes, hmss)) {
+		x[[idx]] <- as.difftime(
+			as.double(x[[idx]], units = "secs"),
+		  units = "secs"
+		)
+	}
 
 	# easier here than calling back to R
 	required <- !vapply(x, anyNA, logical(1))
