@@ -356,11 +356,15 @@ test_that("write difftime", {
   expect_equal(d$h, d2$h)
 
   # Other units are converted to secs
+  tmp2 <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp2), add = TRUE)
+
   d <- data.frame(
     h = as.difftime(10, units = "mins")
   )
-  write_parquet(d, tmp)
-  d2 <- arrow::read_parquet(tmp)
+  write_parquet(d, tmp2)
+  d2 <- arrow::read_parquet(tmp2)
+
   expect_snapshot({
     as.data.frame(d2)
   })
