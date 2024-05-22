@@ -305,6 +305,15 @@ void RParquetOutFile::write(
         parquet::format::LogicalType logical_type;
         logical_type.__set_DATE(dt);
         schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req);
+      } else if (Rf_inherits(col, "hms")) {
+        parquet::format::TimeUnit tu;
+        tu.__set_MILLIS(parquet::format::MilliSeconds());
+        parquet::format::TimeType tt;
+        tt.__set_isAdjustedToUTC(true);
+        tt.__set_unit(tu);
+        parquet::format::LogicalType logical_type;
+        logical_type.__set_TIME(tt);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req);
       } else {
         parquet::format::IntType it;
         it.__set_isSigned(true);

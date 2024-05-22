@@ -161,3 +161,17 @@ test_that("read Date", {
   expect_s3_class(d2$d, "Date")
   expect_equal(d$d, d2$d)
 })
+
+test_that("read hms", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    h = hms::hms(1, 2, 3)
+  )
+  write_parquet(d, tmp)
+
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$h, "hms")
+  expect_equal(d$h, d2$h)
+})

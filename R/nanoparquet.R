@@ -23,6 +23,13 @@ read_parquet <- function(file) {
 	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
 		res <- apply_arrow_schema(res, file, dicts)
 	}
+
+	# convert hms from milliseconds to seconds, also integer -> double
+	hmss <- which(vapply(res, "inherits", "hms", FUN.VALUE = logical(1)))
+	for (idx in hmss) {
+		res[[idx]][] <- res[[idx]] / 1000
+	}
+
 	# some data.frame dress up
 	attr(res, "row.names") <- c(NA_integer_, as.integer(-1 * length(res[[1]])))
 	class(res) <- c(getOption("nanoparquet.class", "tbl"), "data.frame")
@@ -431,6 +438,15 @@ write_parquet <- function(
 	# Date must be integer
 	dates <- which(vapply(x, "inherits", "Date", FUN.VALUE = logical(1)))
 	for (idx in dates) {
+		# this keeps the class
+		mode(x[[idx]]) <- "integer"
+	}
+
+	# Convert hms to milliseconds in integer
+	hmss <- which(vapply(x, "inherits", "hms", FUN.VALUE = logical(1)))
+	for (idx in hmss) {
+		# convert seconds and milliseconds
+		x[[idx]][] <- x[[idx]] * 1000
 		# this keeps the class
 		mode(x[[idx]]) <- "integer"
 	}

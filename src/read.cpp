@@ -75,6 +75,13 @@ SEXP nanoparquet_read(SEXP filesxp) {
           SEXP cl = PROTECT(Rf_mkString("Date"));
           SET_CLASS(varvalue, cl);
           UNPROTECT(1);
+        } else if ((s_ele->__isset.logicalType &&
+                    s_ele->logicalType.__isset.TIME) ||
+                   (s_ele->__isset.converted_type &&
+                    s_ele->converted_type == parquet::format::ConvertedType::TIME_MILLIS)) {
+          SEXP cl = PROTECT(Rf_mkString("hms"));
+          SET_CLASS(varvalue, cl);
+          UNPROTECT(1);
         }
         break;
       }

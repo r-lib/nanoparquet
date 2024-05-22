@@ -161,6 +161,11 @@ parquet::format::Type::type ParquetOutFile::get_type_from_logical_type(
   } else if (logical_type.__isset.DATE) {
     return Type::INT32;
 
+  } else if (logical_type.__isset.TIME &&
+             logical_type.TIME.isAdjustedToUTC &&
+             logical_type.TIME.unit.__isset.MILLIS) {
+    return Type::INT32;
+
   } else {
     throw runtime_error("Unimplemented logical type");             // # nocov
   }
@@ -185,6 +190,11 @@ ParquetOutFile::get_converted_type_from_logical_type(
 
   } else if (logical_type.__isset.DATE) {
     return ConvertedType::DATE;
+
+  } else if (logical_type.__isset.TIME &&
+             logical_type.TIME.isAdjustedToUTC &&
+             logical_type.TIME.unit.__isset.MILLIS) {
+    return ConvertedType::TIME_MILLIS;
 
   } else {
     throw runtime_error("Unimplemented logical type");              // # nocov

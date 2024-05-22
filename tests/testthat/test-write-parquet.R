@@ -309,3 +309,18 @@ test_that("write Date", {
   d2 <- arrow::read_parquet(tmp)
   expect_equal(d$d, d2$d)
 })
+
+test_that("write hms", {
+  skip_on_cran()
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    h = hms::hms(1, 2, 3)
+  )
+  write_parquet(d, tmp)
+
+  d2 <- arrow::read_parquet(tmp)
+  expect_equal(d$h, d2$h)
+})
