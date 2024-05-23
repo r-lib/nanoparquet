@@ -1,0 +1,40 @@
+url: https://r-lib.github.io/nanoparquet
+template:
+  package: tidytemplate
+  bootstrap: 5
+  includes:
+    in_header: |
+      <script defer data-domain="r-lib.github.io/nanoparquet,all.tidyverse.org" src="https://plausible.io/js/plausible.js"></script>
+
+destination: docs
+
+development:
+  mode: auto
+
+reference:
+- title: Type mappings
+  desc: |
+    How nanoparquet maps R data types to Parquet data types
+    and vice versa.
+  contents:
+  - nanoparquet-types
+
+- title: Read Parquet files
+  contents:
+  - read_parquet
+
+- title: Write Parquet files
+  contents:
+  - write_parquet
+
+- title: Extract Parquet metadata
+  contents:
+  - parquet_columns
+  - parquet_info
+  - parquet_metadata
+  - parquet_schema
+
+- title: internal
+  contents:
+  - nanoparquet-package
+  - nanoparquet
