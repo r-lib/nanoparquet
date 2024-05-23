@@ -218,25 +218,27 @@ ParquetOutFile::get_converted_type_from_logical_type(
 void ParquetOutFile::write_data_(
   std::ostream &file,
   uint32_t idx,
-  uint32_t size) {
+  uint32_t size,
+  uint64_t from,
+  uint64_t until) {
 
   streampos cb_start = file.tellp();
   parquet::format::Type::type type = schemas[idx + 1].type;
   switch (type) {
   case Type::INT32:
-    write_int32(file, idx);
+    write_int32(file, idx, from, until);
     break;
   case Type::INT64:
-    write_int64(file, idx);
+    write_int64(file, idx, from, until);
     break;
   case Type::DOUBLE:
-    write_double(file, idx);
+    write_double(file, idx, from, until);
     break;
   case Type::BYTE_ARRAY:
-    write_byte_array(file, idx);
+    write_byte_array(file, idx, from, until);
     break;
   case Type::BOOLEAN:
-    write_boolean(file, idx);
+    write_boolean(file, idx, from, until);
     break;
   default:
     throw runtime_error("Cannot write unknown column type");   // # nocov
@@ -260,22 +262,24 @@ void ParquetOutFile::write_present_data_(
   std::ostream &file,
   uint32_t idx,
   uint32_t size,
-  uint32_t num_present) {
+  uint32_t num_present,
+  uint64_t from,
+  uint64_t until) {
 
   streampos cb_start = file.tellp();
   parquet::format::Type::type type = schemas[idx + 1].type;
   switch (type) {
   case Type::INT32:
-    write_present_int32(file, idx, num_present);
+    write_present_int32(file, idx, num_present, from, until);
     break;
   case Type::DOUBLE:
-    write_present_double(file, idx, num_present);
+    write_present_double(file, idx, num_present, from, until);
     break;
   case Type::BYTE_ARRAY:
-    write_present_byte_array(file, idx, num_present);
+    write_present_byte_array(file, idx, num_present, from, until);
     break;
   case Type::BOOLEAN:
-    write_present_boolean(file, idx, num_present);
+    write_present_boolean(file, idx, num_present, from, until);
     break;
   default:
     throw runtime_error("Cannot write unknown column type");   // # nocov
@@ -317,10 +321,12 @@ void ParquetOutFile::write_byte_array_dictionary_(
 void ParquetOutFile::write_dictionary_indices_(
   std::ostream &file,
   uint32_t idx,
-  uint32_t size) {
+  uint32_t size,
+  uint64_t from,
+  uint64_t until) {
 
   streampos start = file.tellp();
-  write_dictionary_indices(file, idx);
+  write_dictionary_indices(file, idx, from, until);
   streampos end = file.tellp();
   if (start != -1 && end - start != size) {
     throw runtime_error(
@@ -505,7 +511,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     ph.__set_uncompressed_page_size(data_size);
     ph.__set_compressed_page_size(data_size);
     write_page_header(idx, ph);
-    write_data_(pfile, idx, data_size);
+    write_data_(pfile, idx, data_size, 0, num_rows);
 
   } else if (se.repetition_type == FieldRepetitionType::REQUIRED &&
              encodings[idx] == Encoding::PLAIN &&
@@ -517,7 +523,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_data_(*os0, idx, data_size);
+    write_data_(*os0, idx, data_size, 0, num_rows);
 
     // 2. compress buf_unc to buf_com
     size_t cdata_size = compress(cmd->codec, buf_unc, data_size, buf_com);
@@ -537,7 +543,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size);
+    write_dictionary_indices_(*os0, idx, data_size, 0, num_rows);
 
     // 2. RLE encode buf_unc to buf_com
     uint32_t num_dict_values = get_num_values_byte_array_dictionary(idx);
@@ -569,7 +575,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size);
+    write_dictionary_indices_(*os0, idx, data_size, 0, num_rows);
 
     // 2. RLE encode buf_unc to buf_com
     uint32_t num_dict_values = get_num_values_byte_array_dictionary(idx);
@@ -604,7 +610,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os0, idx);
+    uint32_t num_present = write_present(*os0, idx, 0, num_rows);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(buf_unc, num_rows, buf_com, 1, false);
@@ -621,7 +627,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     );
 
     // 4. write data to file
-    write_present_data_(pfile, idx, data_size, num_present);
+    write_present_data_(pfile, idx, data_size, num_present, 0, num_rows);
 
   } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
              encodings[idx] == Encoding::PLAIN &&
@@ -632,7 +638,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os0, idx);
+    uint32_t num_present = write_present(*os0, idx, 0, num_rows);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -650,7 +656,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_com));
     buf_com.skip(rle_size);
-    write_present_data_(*os1, idx, data_size, num_present);
+    write_present_data_(*os1, idx, data_size, num_present, 0, num_rows);
 
     // 4. compress buf_com to buf_unc
     size_t comp_size = compress(cmd->codec, buf_com, rle_size + data_size, buf_unc);
@@ -673,7 +679,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os1, idx);
+    uint32_t num_present = write_present(*os1, idx, 0, num_rows);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -690,7 +696,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size);
+    write_dictionary_indices_(*os0, idx, data_size, 0, num_rows);
 
     // 4. append RLE buf_unc to buf_com
     uint32_t num_dict_values = get_num_values_byte_array_dictionary(idx);
@@ -723,7 +729,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os1, idx);
+    uint32_t num_present = write_present(*os1, idx, 0, num_rows);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -740,7 +746,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size);
+    write_dictionary_indices_(*os0, idx, data_size, 0, num_rows);
 
     // 4. append RLE buf_unc to buf_com
     uint32_t num_dict_values = get_num_values_byte_array_dictionary(idx);
@@ -788,7 +794,7 @@ uint32_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
   }
   case Type::BYTE_ARRAY: {
     // not known yet
-    return get_size_byte_array(idx, num_present);
+    return get_size_byte_array(idx, num_present, 0, num_rows);
   }
   default: {
     throw runtime_error("Unknown type encountered: " + type_to_string(type)); // # nocov

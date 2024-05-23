@@ -12,25 +12,41 @@ public:
     std::string filename,
     parquet::format::CompressionCodec::type codec
   );
-  void write_int32(std::ostream &file, uint32_t idx);
-  void write_int64(std::ostream &file, uint32_t idx);
-  void write_double(std::ostream &file, uint32_t idx);
-  void write_byte_array(std::ostream &file, uint32_t idx);
-  uint32_t get_size_byte_array(uint32_t idx, uint32_t num_present);
-  void write_boolean(std::ostream &file, uint32_t idx);
+  void write_int32(std::ostream &file, uint32_t idx, uint64_t from,
+                   uint64_t until);
+  void write_int64(std::ostream &file, uint32_t idx, uint64_t from,
+                   uint64_t until);
+  void write_double(std::ostream &file, uint32_t idx, uint64_t from,
+                    uint64_t until);
+  void write_byte_array(std::ostream &file, uint32_t id, uint64_t from,
+                        uint64_t until);
+  uint32_t get_size_byte_array(uint32_t idx, uint32_t num_present,
+                               uint64_t from, uint64_t until);
+  void write_boolean(std::ostream &file, uint32_t idx, uint64_t from,
+                     uint64_t until);
 
-  uint32_t write_present(std::ostream &file, uint32_t idx);
-  void write_present_int32(std::ostream &file, uint32_t idx, uint32_t num_present);
-  void write_present_int64(std::ostream &file, uint32_t idx, uint32_t num_present);
-  void write_present_double(std::ostream &file, uint32_t idx, uint32_t num_present);
-  void write_present_byte_array(std::ostream &file, uint32_t idx, uint32_t num_present);
-  void write_present_boolean(std::ostream &file, uint32_t idx, uint32_t num_present);
+  uint32_t write_present(std::ostream &file, uint32_t idx, uint64_t from,
+                         uint64_t until);
+  void write_present_int32(std::ostream &file, uint32_t idx,
+                           uint32_t num_present, uint64_t from, uint64_t until);
+  void write_present_int64(std::ostream &file, uint32_t idx,
+                           uint32_t num_present, uint64_t from, uint64_t until);
+  void write_present_double(std::ostream &file, uint32_t idx,
+                            uint32_t num_present, uint64_t from,
+                            uint64_t until);
+  void write_present_byte_array(std::ostream &file, uint32_t idx,
+                                uint32_t num_present, uint64_t from,
+                                uint64_t until);
+  void write_present_boolean(std::ostream &file, uint32_t idx,
+                             uint32_t num_present, uint64_t from,
+                             uint64_t until);
 
   // for factors
   uint32_t get_num_values_byte_array_dictionary(uint32_t idx);
   uint32_t get_size_byte_array_dictionary(uint32_t idx);
   void write_byte_array_dictionary(std::ostream &file, uint32_t idx);
-  void write_dictionary_indices(std::ostream &file, uint32_t idx);
+  void write_dictionary_indices(std::ostream &file, uint32_t idx,
+                                uint64_t from, uint64_t until);
 
   void write(SEXP dfsxp, SEXP dim, SEXP metadata, SEXP rrequired);
 
@@ -47,13 +63,15 @@ RParquetOutFile::RParquetOutFile(
   // nothing to do here
 }
 
-void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx) {
+void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
+                                  uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = XLENGTH(col);
   file.write((const char *)INTEGER(col), sizeof(int) * len);
 }
 
-void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx) {
+void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
+                                  uint64_t from, uint64_t until) {
   // This is double in R, so we need to convert
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = Rf_xlength(col);
@@ -79,13 +97,15 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx) {
   }
 }
 
-void RParquetOutFile::write_double(std::ostream &file, uint32_t idx) {
+void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
+                                   uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = XLENGTH(col);
   file.write((const char *)REAL(col), sizeof(double) * len);
 }
 
-void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx) {
+void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
+                                       uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = XLENGTH(col);
   for (R_xlen_t i = 0; i < len; i++) {
@@ -96,7 +116,12 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx) {
   }
 }
 
-uint32_t RParquetOutFile::get_size_byte_array(uint32_t idx, uint32_t num_present) {
+uint32_t RParquetOutFile::get_size_byte_array(
+  uint32_t idx,
+  uint32_t num_present,
+  uint64_t from,
+  uint64_t until) {
+
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = Rf_xlength(col);
   uint32_t size = 0;
@@ -135,12 +160,14 @@ void write_boolean_impl(std::ostream &file, SEXP col) {
   }
 }
 
-void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx) {
+void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx,
+                                    uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   write_boolean_impl(file, col);
 }
 
-uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx) {
+uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
+                                         uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = XLENGTH(col);
   R_xlen_t num_pres = 0;
@@ -193,7 +220,9 @@ uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx) {
 void RParquetOutFile::write_present_int32(
   std::ostream &file,
   uint32_t idx,
-  uint32_t num_present) {
+  uint32_t num_present,
+  uint64_t from,
+  uint64_t until) {
 
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = XLENGTH(col);
@@ -208,7 +237,9 @@ void RParquetOutFile::write_present_int32(
 void RParquetOutFile::write_present_int64(
   std::ostream &file,
   uint32_t idx,
-  uint32_t num_present) {
+  uint32_t num_present,
+  uint64_t from,
+  uint64_t until) {
 
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = Rf_xlength(col);
@@ -241,7 +272,9 @@ void RParquetOutFile::write_present_int64(
 void RParquetOutFile::write_present_double(
   std::ostream &file,
   uint32_t idx,
-  uint32_t num_present) {
+  uint32_t num_present,
+  uint64_t from,
+  uint64_t until) {
 
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = XLENGTH(col);
@@ -256,7 +289,9 @@ void RParquetOutFile::write_present_double(
 void RParquetOutFile::write_present_byte_array(
   std::ostream &file,
   uint32_t idx,
-  uint32_t num_present) {
+  uint32_t num_present,
+  uint64_t from,
+  uint64_t until) {
 
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = XLENGTH(col);
@@ -274,7 +309,9 @@ void RParquetOutFile::write_present_byte_array(
 void RParquetOutFile::write_present_boolean(
   std::ostream &file,
   uint32_t idx,
-  uint32_t num_present) {
+  uint32_t num_present,
+  uint64_t from,
+  uint64_t until) {
 
   SEXP col = VECTOR_ELT(df, idx);
   SEXP col2 = PROTECT(Rf_allocVector(LGLSXP, num_present));
@@ -325,8 +362,11 @@ void RParquetOutFile::write_byte_array_dictionary(
 }
 
 void RParquetOutFile::write_dictionary_indices(
-    std::ostream &file,
-    uint32_t idx) {
+  std::ostream &file,
+  uint32_t idx,
+  uint64_t from,
+  uint64_t until) {
+
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = Rf_xlength(col);
   for (R_xlen_t i = 0; i < len; i++) {
