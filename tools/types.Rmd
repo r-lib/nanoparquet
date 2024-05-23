@@ -7,34 +7,107 @@ These rules will likely change until nanoparquet reaches version 1.0.0.
 
 1. Factors (i.e. vectors that inherit the *factor* class) are converted
    to character vectors using `as.character()`, then written as a
-   `STRSXP` (character vector) type.
-2. Integer vectors (`INTSXP`) are written as `INT(32, true)` logical type,
+   `STRSXP` (character vector) type. The fact that a column is a factor
+   is stored in the Arrow metadata (see below), unless the
+   `nanoparquet.write_arrow_metadata` option is set to `FALSE`.
+1. Dates (i.e. the `Date` class) is written as `DATE` logical type, which
+   is an `INT32` type internally.
+1. `hms` objects (from the hms package) are written as `TIME(true, MILLIS)`.
+   logical type, which is internally the `INT32` Parquet type.
+   Sub-milliseconds precision is lost.
+1. `POSIXct` objects are written as `TIMESTAMP(true, MICROS)` logical type,
+   which is internally the `INT64` Parquet type.
+   Sub-microsecond precision is lost.
+1. `difftime` objects (that are not `hms` objects, see above), are
+   written as an `INT64` ParQuet type, and noting in the Arrow metadata
+   (see below) that this column has type `Duration` with `NANOSECONDS`
+   unit.
+1. Integer vectors (`INTSXP`) are written as `INT(32, true)` logical type,
    which corresponds to the `INT32` type.
-3. Real vectors (`REALSXP`) are written as the `DOUBLE` type.
-4. Character vectors (`STRSXP`) are written as the `STRING` logical type,
-   which has the `BYTE_ARRAY` type.
-5. Logical vectors (`LGLSXP`) are written as the `BOOLEAN` type.
-6. Other vectors error currently.
+1. Real vectors (`REALSXP`) are written as the `DOUBLE` type.
+1. Character vectors (`STRSXP`) are written as the `STRING` logical type,
+   which has the `BYTE_ARRAY` type. They are always converted to UTF-8
+   before writing.
+1. Logical vectors (`LGLSXP`) are written as the `BOOLEAN` type.
+1. Other vectors error currently.
 
 # Parquet's data types
 
-When reading a Parquet file, currently nanoparquet mostly relies on the
-(low level) data types, instead of the logical types. The exact rules are
-below.
+When reading a Parquet file nanoparquet also relies on logical types and
+the Arrow metadata (if present, see below) in addition to the low level
+data types. The exact rules are below.
 
 These rules will likely change until nanoparquet reaches version 1.0.0.
 
-1. `BOOLEAN` is read as a logical vector (`LGLSXP`).
-2. `INT32` is read as an integer vector (`INTSXP`).
-3. `INT64`, `DOUBLE` and `FLOAT` are read as real vectors (`REALSXP`).
-4. `INT96` is read as a `POSIXct` read vector with the `tzone` attribute
-   set to `"UTC"`.
-5. The `DECIMAL` converted type (`FIXED_LEN_BYTE_ARRAY` type) is read
+1. The `BOOLEAN` type is read as a logical vector (`LGLSXP`).
+1. The `DATE` logical type and the `DATE` converted type are read as a
+   `Date` R object.
+1. The `TIME` logical type and the `TIME_MILLIS` and `TIME_MICROS`
+   converted types are read as an `hms` object, see the hms package.
+1. The `TIMESTAMP` logical type and the `TIMESTAMP_MILLIS` and
+   `TIMESTAMP_MICROS` converted types are read as `POSIXct` objects.
+   If the logical type has the `UTC` flag set, then the time zone of the
+   `POSIXct` object is set to `UTC`.
+1. `INT32` is read as an integer vector (`INTSXP`).
+1. `INT64`, `DOUBLE` and `FLOAT` are read as real vectors (`REALSXP`).
+1. `INT96` is read as a `POSIXct` read vector with the `tzone` attribute
+   set to `"UTC"`. It was an old convention to store time stamps as
+   `INT96` objects.
+1. The `DECIMAL` converted type (`FIXED_LEN_BYTE_ARRAY` type) is read
    as a real vector (`REALSXP`).
-6. `BYTE_ARRAY` is read as a *factor* object if the file was written
+1. `BYTE_ARRAY` is read as a *factor* object if the file was written
    by Arrow and the original data type of the column was a factor.
-   More precisely, the file has the Arrow schema in the key-value metadata
-   under the key `ARROW:schema` and the corresponding column is a `Utf8`
-   Arrow column with a dictionary. This does not happen if the
-   `nanoparquet.use_arrow_metadata` option is set to `FALSE`.
-6. Otherwise `BYTE_ARRAY` is read a character vector (`STRSXP`).
+   (See 'The Arrow metadata below.)
+1. Otherwise `BYTE_ARRAY` is read a character vector (`STRSXP`).
+
+Other logical and converted types are read as their annotated low level
+types:
+
+1. `ENUM` is read as a character vector (`STRSXP`).
+1. `UUID` is a fixed length byte array, and nanoparquet cannot read it
+   currently.
+1. `INT(8, true)`, `INT(16, true)` and `INT(32, true)` are read as
+   integer vectors because they are `INT32` internally in Parquet.
+1. `INT(64, true)` is read as a real vector (`REALSXP`).
+1. Unsigned integer types `INT(8, false)`, `INT(16, false)` and
+   `INT(32, false)` are read as integer vectors (`INTSXP`). Large
+   positive values may overflow into negative values, this is a known
+   issue that we will fix.
+1. `INT(64, false)` is read as a real vector (`REALSXP`). Large
+   positive values may overflow into negative values, this is a known
+   issue that we will fix.
+1. `FLOAT16` is a fixed length byte array, and nanoparquet cannot read it
+   currently.
+1. `INTERVAL` is a fixed length byte array, and nanoparquet cannot read
+   it currently.
+1. `JSON` and `BSON` are read as character vectors (`STRSXP`).
+1. Nested types (`LIST`, `MAP`) and the `UNKNOWN` logical types are
+   not supported currently.
+
+You can use the `parquet_columns()` function to see how R would read
+the columns of a Parquet file. Look at the `r_type` column.
+
+# The Arrow metadata
+
+Apache Arrow (i.e. the arrow R package) adds additional metadata to
+Parquet files when writing them in `arrow::write_parquet()`. Then,
+when reading the file in `arrow::read_parquet()`, it uses this metadata
+to recreate the same Arrow and R data types as before writing.
+
+`nanoparquet::write_parquet()` also adds the Arrow metadata to Parquet
+files, unless the `nanoparquet.write_arrow_metadata` option is set to
+`FALSE`.
+
+Similarly, `nanoparquet::read_parquet()` uses the Arrow metadata in the
+Parquet file (if present), unless the `nanoparquet.use_arrow_metadata`
+option is set to FALSE.
+
+The Arrow metadata is stored in the file level key-value metadata, with
+key `ARROW:schema`.
+
+Currently nanoparquet uses the Arrow metadata for two things:
+- It uses it to detect factors. Without the Arrow metadata factors are
+  read as string vectors.
+- It uses it to detect `difftime` ofjects. Without the arrow metadata
+  these are read as `INT64` columns, containing the time difference in
+  nanoseconds.

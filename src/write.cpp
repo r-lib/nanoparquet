@@ -13,6 +13,7 @@ public:
     parquet::format::CompressionCodec::type codec
   );
   void write_int32(std::ostream &file, uint32_t idx);
+  void write_int64(std::ostream &file, uint32_t idx);
   void write_double(std::ostream &file, uint32_t idx);
   void write_byte_array(std::ostream &file, uint32_t idx);
   uint32_t get_size_byte_array(uint32_t idx, uint32_t num_present);
@@ -20,6 +21,7 @@ public:
 
   uint32_t write_present(std::ostream &file, uint32_t idx);
   void write_present_int32(std::ostream &file, uint32_t idx, uint32_t num_present);
+  void write_present_int64(std::ostream &file, uint32_t idx, uint32_t num_present);
   void write_present_double(std::ostream &file, uint32_t idx, uint32_t num_present);
   void write_present_byte_array(std::ostream &file, uint32_t idx, uint32_t num_present);
   void write_present_boolean(std::ostream &file, uint32_t idx, uint32_t num_present);
@@ -51,6 +53,32 @@ void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx) {
   file.write((const char *)INTEGER(col), sizeof(int) * len);
 }
 
+void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx) {
+  // This is double in R, so we need to convert
+  SEXP col = VECTOR_ELT(df, idx);
+  R_xlen_t len = Rf_xlength(col);
+  if (Rf_inherits(col, "POSIXct")) {
+    // need to convert seconds to microseconds
+    for (R_xlen_t i = 0; i < len; i++) {
+      int64_t el = REAL(col)[i] * 1000 * 1000;
+      file.write((const char*) &el, sizeof(int64_t));
+    }
+
+  } else if (Rf_inherits(col, "difftime")) {
+    // need to convert seconds to nanoseconds
+    for (R_xlen_t i = 0; i < len; i++) {
+      int64_t el = REAL(col)[i] * 1000 * 1000 * 1000;
+      file.write((const char*) &el, sizeof(int64_t));
+    }
+
+  } else {
+    for (R_xlen_t i = 0; i < len; i++) {
+      int64_t el = REAL(col)[i];
+      file.write((const char*) &el, sizeof(int64_t));
+    }
+  }
+}
+
 void RParquetOutFile::write_double(std::ostream &file, uint32_t idx) {
   SEXP col = VECTOR_ELT(df, idx);
   R_xlen_t len = XLENGTH(col);
@@ -70,7 +98,7 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx) {
 
 uint32_t RParquetOutFile::get_size_byte_array(uint32_t idx, uint32_t num_present) {
   SEXP col = VECTOR_ELT(df, idx);
-  R_xlen_t len = XLENGTH(col);
+  R_xlen_t len = Rf_xlength(col);
   uint32_t size = 0;
   for (R_xlen_t i = 0; i < len; i++) {
     SEXP csxp = STRING_ELT(col, i);
@@ -108,7 +136,6 @@ void write_boolean_impl(std::ostream &file, SEXP col) {
 }
 
 void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx) {
-  // TODO: this is a very inefficient implementation
   SEXP col = VECTOR_ELT(df, idx);
   write_boolean_impl(file, col);
 }
@@ -174,6 +201,39 @@ void RParquetOutFile::write_present_int32(
     int el = INTEGER(col)[i];
     if (el != NA_INTEGER) {
       file.write((const char*) &el, sizeof(int));
+    }
+  }
+}
+
+void RParquetOutFile::write_present_int64(
+  std::ostream &file,
+  uint32_t idx,
+  uint32_t num_present) {
+
+  SEXP col = VECTOR_ELT(df, idx);
+  R_xlen_t len = Rf_xlength(col);
+  if (Rf_inherits(col, "POSIXct")) {
+    for (R_xlen_t i = 0; i < len; i++) {
+      double el = REAL(col)[i];
+      if (R_IsNA(el)) continue;
+      int64_t el2 = el * 1000 * 1000;
+      file.write((const char*) &el2, sizeof(int64_t));
+    }
+  } else if (Rf_inherits(col, "difftime")) {
+    // need to convert seconds to nanoseconds
+    for (R_xlen_t i = 0; i < len; i++) {
+      double el = REAL(col)[i];
+      if (R_IsNA(el)) continue;
+      int64_t el2 = el * 1000 * 1000 * 1000;
+      file.write((const char*) &el2, sizeof(int64_t));
+    }
+
+  } else {
+    for (R_xlen_t i = 0; i < len; i++) {
+      double el = REAL(col)[i];
+      if (R_IsNA(el)) continue;
+      int64_t el2 = el;
+      file.write((const char*) &el2, sizeof(int64_t));
     }
   }
 }
@@ -300,6 +360,20 @@ void RParquetOutFile::write(
         parquet::format::LogicalType logical_type;
         logical_type.__set_STRING(st);
         schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, true);
+      } else if (Rf_inherits(col, "Date")) {
+        parquet::format::DateType dt;
+        parquet::format::LogicalType logical_type;
+        logical_type.__set_DATE(dt);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req);
+      } else if (Rf_inherits(col, "hms")) {
+        parquet::format::TimeUnit tu;
+        tu.__set_MILLIS(parquet::format::MilliSeconds());
+        parquet::format::TimeType tt;
+        tt.__set_isAdjustedToUTC(true);
+        tt.__set_unit(tu);
+        parquet::format::LogicalType logical_type;
+        logical_type.__set_TIME(tt);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req);
       } else {
         parquet::format::IntType it;
         it.__set_isSigned(true);
@@ -311,8 +385,23 @@ void RParquetOutFile::write(
       break;
     }
     case REALSXP: {
-      parquet::format::Type::type type = parquet::format::Type::DOUBLE;
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req);
+      if (Rf_inherits(col, "POSIXct")) {
+        parquet::format::TimeUnit tu;
+        tu.__set_MICROS(parquet::format::MicroSeconds());
+        parquet::format::TimestampType ttt;
+        ttt.__set_isAdjustedToUTC(true);
+        ttt.__set_unit(tu);
+        parquet::format::LogicalType logical_type;
+        logical_type.__set_TIMESTAMP(ttt);
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req);
+      } else if (Rf_inherits(col, "difftime")) {
+        parquet::format::Type::type type = parquet::format::Type::INT64;
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req);
+
+      } else {
+        parquet::format::Type::type type = parquet::format::Type::DOUBLE;
+        schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req);
+      }
       break;
     }
     case STRSXP: {

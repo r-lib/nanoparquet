@@ -102,7 +102,7 @@ test_that("read factors, marked by Arrow", {
 
 test_that("Can't parse Arrow schema", {
   expect_snapshot(
-    arrow_find_factors(base64_encode("foobar"), "myfile")
+    arrow_find_special(base64_encode("foobar"), "myfile")
   )
 })
 
@@ -146,4 +146,91 @@ test_that("round trip with duckdb", {
   ))
   arrow::write_parquet(mt, tmp, compression = "snappy")
   expect_equal(read_parquet(tmp), mt)
+})
+
+test_that("read Date", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    d = c(Sys.Date() - 1, Sys.Date(), Sys.Date() + 1)
+  )
+  write_parquet(d, tmp)
+
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$d, "Date")
+  expect_equal(d$d, d2$d)
+})
+
+test_that("read hms", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    h = hms::hms(1, 2, 3)
+  )
+  write_parquet(d, tmp)
+
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$h, "hms")
+  expect_equal(d$h, d2$h)
+})
+
+test_that("read hms in MICROS", {
+  pf <- test_path("data/timetz.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet(pf))
+  })
+})
+
+test_that("read POSIXct", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    h = .POSIXct(Sys.time(), tz = "UTC")
+  )
+  write_parquet(d, tmp)
+
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d$h, "POSIXct")
+  expect_equal(d$h, d2$h)
+})
+
+test_that("read POSIXct in MILLIS", {
+  skip_on_cran() # arrow
+  # This file has UTC = FALSE, so the exact result depends on the current
+  # time zone. But it should match Arrow.
+  pf <- test_path("data/timestamp-ms.parquet")
+  d1 <- read_parquet(pf)
+  d2 <- arrow::read_parquet(pf)
+  expect_equal(
+    as.data.frame(d1),
+    as.data.frame(d2)
+  )
+})
+
+test_that("read difftime", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  # Fractional seconds are kept
+  d <- data.frame(
+    h = as.difftime(10 + 1/9, units = "secs")
+  )
+  write_parquet(d, tmp)
+
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$h, "difftime")
+  expect_equal(d$h, d2$h)
+
+  # Other units are converted to secs
+  d <- data.frame(
+    h = as.difftime(10, units = "mins")
+  )
+  write_parquet(d, tmp)
+  d2 <- read_parquet(tmp)
+  expect_snapshot({
+    as.data.frame(d2)
+  })
 })

@@ -294,3 +294,78 @@ test_that("Factor levels not in the data", {
     as.integer(d$f) -1L
   )
 })
+
+test_that("write Date", {
+  skip_on_cran()
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    d = c(Sys.Date() - 1, Sys.Date(), Sys.Date() + 1)
+  )
+  write_parquet(d, tmp)
+
+  d2 <- arrow::read_parquet(tmp)
+  expect_equal(d$d, d2$d)
+})
+
+test_that("write hms", {
+  skip_on_cran()
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    h = hms::hms(1, 2, 3)
+  )
+  write_parquet(d, tmp)
+
+  d2 <- arrow::read_parquet(tmp)
+  expect_equal(d$h, d2$h)
+})
+
+test_that("write POSIXct", {
+  skip_on_cran()
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    h = .POSIXct(Sys.time(), tz = "UTC")
+  )
+  write_parquet(d, tmp)
+
+  d2 <- arrow::read_parquet(tmp)
+  expect_equal(d$h, d2$h)
+})
+
+test_that("write difftime", {
+  skip_on_cran()
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  # Fractional seconds are kept
+  d <- data.frame(
+    h = as.difftime(10 + 1/9, units = "secs")
+  )
+  write_parquet(d, tmp)
+
+  d2 <- arrow::read_parquet(tmp)
+  expect_equal(d$h, d2$h)
+
+  # Other units are converted to secs
+  tmp2 <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp2), add = TRUE)
+
+  d <- data.frame(
+    h = as.difftime(10, units = "mins")
+  )
+  write_parquet(d, tmp2)
+  d2 <- arrow::read_parquet(tmp2)
+
+  expect_snapshot({
+    as.data.frame(d2)
+  })
+})

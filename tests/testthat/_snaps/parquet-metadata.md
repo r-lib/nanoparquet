@@ -503,6 +503,23 @@
       3 data/decimals.parquet l3    FIXED_LEN~ double OPTIONAL        <DECIMAL(2, 15)>
       4 data/decimals.parquet l4    FIXED_LEN~ double OPTIONAL        <DECIMAL(2, 30)>
 
+---
+
+    Code
+      parquet_columns(tmp)[-1]
+    Output
+      # A data frame: 4 x 5
+        name     type  r_type   repetition_type logical_type             
+      * <chr>    <chr> <chr>    <chr>           <I<list>>                
+      1 Date     INT32 Date     REQUIRED        <DATE>                   
+      2 POSIXct  INT64 POSIXct  REQUIRED        <TIMESTAMP(TRUE, micros)>
+      3 hms      INT32 hms      REQUIRED        <TIME(TRUE, millis)>     
+      4 difftime INT64 difftime REQUIRED        <NULL>                   
+    Code
+      parquet_columns(tmp)$r_type
+    Output
+      [1] "Date"     "POSIXct"  "hms"      "difftime"
+
 # parquet_info
 
     Code

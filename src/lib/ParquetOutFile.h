@@ -25,6 +25,7 @@ public:
   // write out various parquet types, these must be implemented in
   // the subclass
   virtual void write_int32(std::ostream &file, uint32_t idx) = 0;
+  virtual void write_int64(std::ostream &file, uint32_t idx) = 0;
   virtual void write_double(std::ostream &file, uint32_t idx) = 0;
   virtual void write_byte_array(std::ostream &file, uint32_t idx) = 0;
   virtual void write_boolean(std::ostream &file, uint32_t idx) = 0;
@@ -32,6 +33,7 @@ public:
   // callbacks for missing values
   virtual uint32_t write_present(std::ostream &file, uint32_t idx) = 0;
   virtual void write_present_int32(std::ostream &file, uint32_t idx, uint32_t num_present) = 0;
+  virtual void write_present_int64(std::ostream &file, uint32_t idx, uint32_t num_present) = 0;
   virtual void write_present_double(std::ostream &file, uint32_t idx, uint32_t num_present) = 0;
   virtual void write_present_byte_array(std::ostream &file, uint32_t idx, uint32_t num_present) = 0;
   virtual void write_present_boolean(std::ostream &file, uint32_t idx, uint32_t num_present) = 0;

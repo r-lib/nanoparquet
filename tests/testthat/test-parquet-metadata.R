@@ -90,6 +90,20 @@ test_that("parquet_columns", {
     parquet_columns(test_path("data/factor.parquet"))
     parquet_columns(test_path("data/decimals.parquet"))
   })
+
+  # some special types
+  d <- data.frame(
+    Date = Sys.Date(),
+    POSIXct = Sys.time(),
+    hms = hms::hms(1,2,3),
+    difftime = as.difftime(10, units = "mins")
+  )
+  tmp <- tempfile(fileext = ".parquet")
+  write_parquet(d, tmp)
+  expect_snapshot({
+    parquet_columns(tmp)[-1]
+    parquet_columns(tmp)$r_type
+  })
 })
 
 test_that("parquet_info", {

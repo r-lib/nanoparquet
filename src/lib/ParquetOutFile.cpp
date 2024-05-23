@@ -158,6 +158,19 @@ parquet::format::Type::type ParquetOutFile::get_type_from_logical_type(
     }
     return Type::INT32;
 
+  } else if (logical_type.__isset.DATE) {
+    return Type::INT32;
+
+  } else if (logical_type.__isset.TIME &&
+             logical_type.TIME.isAdjustedToUTC &&
+             logical_type.TIME.unit.__isset.MILLIS) {
+    return Type::INT32;
+
+  } else if (logical_type.__isset.TIMESTAMP &&
+             logical_type.TIMESTAMP.isAdjustedToUTC &&
+             logical_type.TIMESTAMP.unit.__isset.MICROS) {
+    return Type::INT64;
+
   } else {
     throw runtime_error("Unimplemented logical type");             // # nocov
   }
@@ -180,6 +193,23 @@ ParquetOutFile::get_converted_type_from_logical_type(
     }
     return ConvertedType::INT_32;
 
+  } else if (logical_type.__isset.DATE) {
+    return ConvertedType::DATE;
+
+  } else if (logical_type.__isset.TIME &&
+             logical_type.TIME.unit.__isset.MILLIS) {
+    // we do this even if not adjusted to UTC, according to the spec
+    // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-time-convertedtype
+    // (Although we only create UTC TIME right now)
+    return ConvertedType::TIME_MILLIS;
+
+  } else if (logical_type.__isset.TIMESTAMP &&
+             logical_type.TIMESTAMP.unit.__isset.MICROS) {
+    // we do this even if not adjusted to UTC, according to the spec
+    // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-timestamp-convertedtype
+    // (Although we only create UTC TIMESTAMP right now)
+    return ConvertedType::TIMESTAMP_MICROS;
+
   } else {
     throw runtime_error("Unimplemented logical type");              // # nocov
   }
@@ -195,6 +225,9 @@ void ParquetOutFile::write_data_(
   switch (type) {
   case Type::INT32:
     write_int32(file, idx);
+    break;
+  case Type::INT64:
+    write_int64(file, idx);
     break;
   case Type::DOUBLE:
     write_double(file, idx);
@@ -746,6 +779,9 @@ uint32_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
   }
   case Type::INT32: {
     return num_present * sizeof(int32_t);
+  }
+  case Type::INT64: {
+    return num_present * sizeof(int64_t);
   }
   case Type::DOUBLE: {
     return num_present * sizeof(double);

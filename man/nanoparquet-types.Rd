@@ -14,38 +14,114 @@ These rules will likely change until nanoparquet reaches version 1.0.0.
 \enumerate{
 \item Factors (i.e. vectors that inherit the \emph{factor} class) are converted
 to character vectors using \code{as.character()}, then written as a
-\code{STRSXP} (character vector) type.
+\code{STRSXP} (character vector) type. The fact that a column is a factor
+is stored in the Arrow metadata (see below), unless the
+\code{nanoparquet.write_arrow_metadata} option is set to \code{FALSE}.
+\item Dates (i.e. the \code{Date} class) is written as \code{DATE} logical type, which
+is an \code{INT32} type internally.
+\item \code{hms} objects (from the hms package) are written as \code{TIME(true, MILLIS)}.
+logical type, which is internally the \code{INT32} Parquet type.
+Sub-milliseconds precision is lost.
+\item \code{POSIXct} objects are written as \code{TIMESTAMP(true, MICROS)} logical type,
+which is internally the \code{INT64} Parquet type.
+Sub-microsecond precision is lost.
+\item \code{difftime} objects (that are not \code{hms} objects, see above), are
+written as an \code{INT64} ParQuet type, and noting in the Arrow metadata
+(see below) that this column has type \code{Duration} with \code{NANOSECONDS}
+unit.
 \item Integer vectors (\code{INTSXP}) are written as \code{INT(32, true)} logical type,
 which corresponds to the \code{INT32} type.
 \item Real vectors (\code{REALSXP}) are written as the \code{DOUBLE} type.
 \item Character vectors (\code{STRSXP}) are written as the \code{STRING} logical type,
-which has the \code{BYTE_ARRAY} type.
+which has the \code{BYTE_ARRAY} type. They are always converted to UTF-8
+before writing.
 \item Logical vectors (\code{LGLSXP}) are written as the \code{BOOLEAN} type.
 \item Other vectors error currently.
 }
 }
 
 \section{Parquet's data types}{
-When reading a Parquet file, currently nanoparquet mostly relies on the
-(low level) data types, instead of the logical types. The exact rules are
-below.
+When reading a Parquet file nanoparquet also relies on logical types and
+the Arrow metadata (if present, see below) in addition to the low level
+data types. The exact rules are below.
 
 These rules will likely change until nanoparquet reaches version 1.0.0.
 \enumerate{
-\item \code{BOOLEAN} is read as a logical vector (\code{LGLSXP}).
+\item The \code{BOOLEAN} type is read as a logical vector (\code{LGLSXP}).
+\item The \code{DATE} logical type and the \code{DATE} converted type are read as a
+\code{Date} R object.
+\item The \code{TIME} logical type and the \code{TIME_MILLIS} and \code{TIME_MICROS}
+converted types are read as an \code{hms} object, see the hms package.
+\item The \code{TIMESTAMP} logical type and the \code{TIMESTAMP_MILLIS} and
+\code{TIMESTAMP_MICROS} converted types are read as \code{POSIXct} objects.
+If the logical type has the \code{UTC} flag set, then the time zone of the
+\code{POSIXct} object is set to \code{UTC}.
 \item \code{INT32} is read as an integer vector (\code{INTSXP}).
 \item \code{INT64}, \code{DOUBLE} and \code{FLOAT} are read as real vectors (\code{REALSXP}).
 \item \code{INT96} is read as a \code{POSIXct} read vector with the \code{tzone} attribute
-set to \code{"UTC"}.
+set to \code{"UTC"}. It was an old convention to store time stamps as
+\code{INT96} objects.
 \item The \code{DECIMAL} converted type (\code{FIXED_LEN_BYTE_ARRAY} type) is read
 as a real vector (\code{REALSXP}).
 \item \code{BYTE_ARRAY} is read as a \emph{factor} object if the file was written
 by Arrow and the original data type of the column was a factor.
-More precisely, the file has the Arrow schema in the key-value metadata
-under the key \code{ARROW:schema} and the corresponding column is a \code{Utf8}
-Arrow column with a dictionary. This does not happen if the
-\code{nanoparquet.use_arrow_metadata} option is set to \code{FALSE}.
+(See 'The Arrow metadata below.)
 \item Otherwise \code{BYTE_ARRAY} is read a character vector (\code{STRSXP}).
+}
+
+Other logical and converted types are read as their annotated low level
+types:
+\enumerate{
+\item \code{ENUM} is read as a character vector (\code{STRSXP}).
+\item \code{UUID} is a fixed length byte array, and nanoparquet cannot read it
+currently.
+\item \code{INT(8, true)}, \code{INT(16, true)} and \code{INT(32, true)} are read as
+integer vectors because they are \code{INT32} internally in Parquet.
+\item \code{INT(64, true)} is read as a real vector (\code{REALSXP}).
+\item Unsigned integer types \code{INT(8, false)}, \code{INT(16, false)} and
+\code{INT(32, false)} are read as integer vectors (\code{INTSXP}). Large
+positive values may overflow into negative values, this is a known
+issue that we will fix.
+\item \code{INT(64, false)} is read as a real vector (\code{REALSXP}). Large
+positive values may overflow into negative values, this is a known
+issue that we will fix.
+\item \code{FLOAT16} is a fixed length byte array, and nanoparquet cannot read it
+currently.
+\item \code{INTERVAL} is a fixed length byte array, and nanoparquet cannot read
+it currently.
+\item \code{JSON} and \code{BSON} are read as character vectors (\code{STRSXP}).
+\item Nested types (\code{LIST}, \code{MAP}) and the \code{UNKNOWN} logical types are
+not supported currently.
+}
+
+You can use the \code{parquet_columns()} function to see how R would read
+the columns of a Parquet file. Look at the \code{r_type} column.
+}
+
+\section{The Arrow metadata}{
+Apache Arrow (i.e. the arrow R package) adds additional metadata to
+Parquet files when writing them in \code{arrow::write_parquet()}. Then,
+when reading the file in \code{arrow::read_parquet()}, it uses this metadata
+to recreate the same Arrow and R data types as before writing.
+
+\code{nanoparquet::write_parquet()} also adds the Arrow metadata to Parquet
+files, unless the \code{nanoparquet.write_arrow_metadata} option is set to
+\code{FALSE}.
+
+Similarly, \code{nanoparquet::read_parquet()} uses the Arrow metadata in the
+Parquet file (if present), unless the \code{nanoparquet.use_arrow_metadata}
+option is set to FALSE.
+
+The Arrow metadata is stored in the file level key-value metadata, with
+key \code{ARROW:schema}.
+
+Currently nanoparquet uses the Arrow metadata for two things:
+\itemize{
+\item It uses it to detect factors. Without the Arrow metadata factors are
+read as string vectors.
+\item It uses it to detect \code{difftime} ofjects. Without the arrow metadata
+these are read as \code{INT64} columns, containing the time difference in
+nanoseconds.
 }
 }
 

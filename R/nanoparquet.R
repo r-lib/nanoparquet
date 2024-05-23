@@ -19,10 +19,30 @@ read_parquet <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(nanoparquet_read, file)
 	dicts <- res[[2]]
+	types <- res[[3]]
 	res <- res[[1]]
 	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
-		res <- apply_arrow_schema(res, file, dicts)
+		res <- apply_arrow_schema(res, file, dicts, types)
 	}
+
+	# convert hms from milliseconds to seconds, also integer -> double
+	hmss <- which(vapply(res, "inherits", "hms", FUN.VALUE = logical(1)))
+	for (idx in hmss) {
+		res[[idx]] <- structure(
+			unclass(res[[idx]]) / 1000,
+			class = class(res[[idx]])
+		)
+	}
+
+	# convert POSIXct from milliseconds to seconds
+	posixcts <- which(vapply(res, "inherits", "POSIXct", FUN.VALUE = logical(1)))
+	for (idx in posixcts) {
+		res[[idx]][] <- structure(
+			unclass(res[[idx]]) / 1000,
+			class = class(res[[idx]])
+		)
+	}
+
 	# some data.frame dress up
 	attr(res, "row.names") <- c(NA_integer_, as.integer(-1 * length(res[[1]])))
 	class(res) <- c(getOption("nanoparquet.class", "tbl"), "data.frame")
@@ -327,13 +347,6 @@ parquet_columns <- function(file) {
 
 	kv <- mtd$file_meta_data$key_value_metadata[[1]]
 
-  fct <- if ("ARROW:schema" %in% kv$key) {
-		kv <- mtd$file_meta_data$key_value_metadata[[1]]
-		arrow_find_factors(
-			kv$value[match("ARROW:schema", kv$key)],
-			file
-		)
-	}
 	type_map <- c(
 		BOOLEAN = "logical",
 		INT32 = "integer",
@@ -348,7 +361,43 @@ parquet_columns <- function(file) {
 	# keep leaf columns only, arrow schema is for leaf columns
 	sch <- sch[is.na(sch$num_children) | sch$num_children == 0L, ]
 	sch$r_type <- unname(type_map[sch$type])
-	if (length(fct)) sch$r_type[fct] <- "factor"
+
+	# detected from Arrow schema
+	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
+		spec <- if ("ARROW:schema" %in% kv$key) {
+			kv <- mtd$file_meta_data$key_value_metadata[[1]]
+			arrow_find_special(
+				kv$value[match("ARROW:schema", kv$key)],
+				file
+			)
+		}
+		if (length(spec$factor)) sch$r_type[spec$factor] <- "factor"
+		if (length(spec$difftime)) sch$r_type[spec$difftime] <- "difftime"
+	}
+
+	# TODO: this is duplicated in the C++ code
+	# our own conversions
+	dates <- vapply(
+		sch$logical_type,
+		function(lt) !is.null(lt$type) && lt$type == "DATE",
+		logical(1)
+	) | sch$converted_type == "DATE"
+	sch$r_type[dates] <- "Date"
+
+	hmss <- vapply(
+		sch$logical_type,
+		function(lt) !is.null(lt$type) && lt$type == "TIME",
+		logical(1)
+	) | sch$converted_type == "TIME_MILLIS"
+	sch$r_type[hmss] <- "hms"
+
+	poscts <- vapply(
+		sch$logical_type,
+		function(lt) !is.null(lt) && lt$type == "TIMESTAMP",
+		logical(1)
+	) | sch$converted_type == "TIMESTAMP_MICROS"
+	sch$r_type[poscts] <- "POSIXct"
+
 	sch$r_type[
 		sch$type == "FIXED_LEN_BYTE_ARRAY" &
 		sch$converted_type == "DECIMAL"] <- "double"
@@ -423,9 +472,41 @@ write_parquet <- function(
 		x[[idx]] <- enc2utf8(x[[idx]])
 	}
 	# factor levels as well
-	fctrs <- which(vapply(x, function(c) inherits(c, "factor"), logical(1)))
+	fctrs <- which(vapply(x, "inherits", "factor", FUN.VALUE = logical(1)))
 	for (idx in fctrs) {
 		levels(x[[idx]]) <- enc2utf8(levels(x[[idx]]))
+	}
+
+	# Date must be integer
+	dates <- which(vapply(x, "inherits", "Date", FUN.VALUE = logical(1)))
+	for (idx in dates) {
+		# this keeps the class
+		mode(x[[idx]]) <- "integer"
+	}
+
+	# Convert hms to milliseconds in integer
+	hmss <- which(vapply(x, "inherits", "hms", FUN.VALUE = logical(1)))
+	for (idx in hmss) {
+		# convert seconds and milliseconds
+		x[[idx]][] <- x[[idx]] * 1000
+		# this keeps the class
+		mode(x[[idx]]) <- "integer"
+	}
+
+	# Make sure POSIXct is double
+	posixcts <- which(vapply(x, "inherits", "POSIXct", FUN.VALUE = logical(1)))
+	for (idx in posixcts) {
+    # keeps the class
+    mode(x[[idx]]) <- "double"
+	}
+
+	# difftime must be saved in seconds
+	difftimes <- which(vapply(x, "inherits", "difftime", FUN.VALUE = logical(1)))
+	for (idx in setdiff(difftimes, hmss)) {
+		x[[idx]] <- as.difftime(
+			as.double(x[[idx]], units = "secs"),
+		  units = "secs"
+		)
 	}
 
 	# easier here than calling back to R
