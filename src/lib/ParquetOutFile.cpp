@@ -197,13 +197,17 @@ ParquetOutFile::get_converted_type_from_logical_type(
     return ConvertedType::DATE;
 
   } else if (logical_type.__isset.TIME &&
-             logical_type.TIME.isAdjustedToUTC &&
              logical_type.TIME.unit.__isset.MILLIS) {
+    // we do this even if not adjusted to UTC, according to the spec
+    // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-time-convertedtype
+    // (Although we only create UTC TIME right now)
     return ConvertedType::TIME_MILLIS;
 
   } else if (logical_type.__isset.TIMESTAMP &&
-             logical_type.TIMESTAMP.isAdjustedToUTC &&
              logical_type.TIMESTAMP.unit.__isset.MICROS) {
+    // we do this even if not adjusted to UTC, according to the spec
+    // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-timestamp-convertedtype
+    // (Although we only create UTC TIMESTAMP right now)
     return ConvertedType::TIMESTAMP_MICROS;
 
   } else {
