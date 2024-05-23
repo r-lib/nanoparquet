@@ -54,6 +54,7 @@ nanoparquet::write_parquet(mtcars, "mtcars.parquet")
 Call `parquet_info()`, `parquet_columns()`, `parquet_schema()` or
 `parquet_metadata()` to see various kinds of metadata from a Parquet
 file:
+
 * `parquet_info()` shows a basic summary of the file.
 * `parquet_columns()` shows the leaf columns, these are are the ones
   that `read_parquet()` reads into R.
