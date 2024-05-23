@@ -117,7 +117,8 @@ private:
       parquet::format::LogicalType logical_type);
   parquet::format::Type::type
   get_type_from_logical_type(parquet::format::LogicalType logical_type);
-  uint32_t calculate_column_data_size(uint32_t idx, uint32_t num_present);
+  uint64_t calculate_column_data_size(uint32_t idx, uint32_t num_present,
+                                      uint64_t from, uint64_t until);
 };
 
 } // namespace nanoparquet
