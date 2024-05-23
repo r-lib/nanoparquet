@@ -15,6 +15,9 @@ Description: Self-sufficient reader and writer for flat Parquet files.
 Depends:
     R (>= 4.0.0)
 License: MIT + file LICENSE
+URL: https://github.com/r-lib/nanoparquet,
+    https://r-lib.github.io/nanoparquet/
+BugReports: https://github.com/r-lib/nanoparquet/issues
 Encoding: UTF-8
 Suggests:
     arrow,

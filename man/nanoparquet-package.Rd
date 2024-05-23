@@ -113,6 +113,15 @@ back as factors, both by nanoparquet and Arrow.
 MIT
 }
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/r-lib/nanoparquet}
+  \item \url{https://r-lib.github.io/nanoparquet/}
+  \item Report bugs at \url{https://github.com/r-lib/nanoparquet/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Gábor Csárdi \email{csardi.gabor@gmail.com}
 
