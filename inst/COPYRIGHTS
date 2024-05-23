@@ -1,0 +1,36 @@
+# nanoparquet
+
+(c) 2019-2024 Hannes Mühleisen as miniparquet
+(c) 2024 Posit Software, PBC (formerly RStudio)
+
+# Except for the following parts
+
+## Snappy
+
+In `/src/snappy`.
+
+(c) Google Inc.
+
+## Thrift
+
+In `src/thrift`.
+
+(c) Apache Software Foundation
+
+## Flatbuffers
+
+In `src/flatbuffers`.
+
+(c) Google Inc.
+
+## Arrow flatbuffer schemas
+
+`/src/flatbuffers/*.fbs`.
+
+(c) Apache Software Foundation
+
+## Parquet Thrift schema
+
+`tools/parquet.thrift`.
+
+(c) Apache Software Foundation

@@ -129,15 +129,13 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Hannes Mühleisen (\href{https://orcid.org/0000-0001-8552-0029}{ORCID})
+  \item Hannes Mühleisen (\href{https://orcid.org/0000-0001-8552-0029}{ORCID}) [copyright holder]
 }
 
 Other contributors:
 \itemize{
   \item Google Inc. [copyright holder]
   \item Apache Software Foundation [copyright holder]
-  \item Daniel Lemire [copyright holder]
-  \item Chad Walters [copyright holder]
   \item Posit Software, PBC [copyright holder]
 }
 

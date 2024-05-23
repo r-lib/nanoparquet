@@ -3,11 +3,9 @@ Title: Read Parquet Files
 Version: 0.1.2.9000
 Authors@R: c(
 	person("Gábor", "Csárdi", role = c("aut", "cre"), email = "csardi.gabor@gmail.com"),
-	person("Hannes", "Mühleisen", role = "aut", comment = c(ORCID = "0000-0001-8552-0029")),
+	person("Hannes", "Mühleisen", role = c("aut", "cph"), comment = c(ORCID = "0000-0001-8552-0029")),
 	person("Google Inc.", role = "cph"),
 	person("Apache Software Foundation", role = "cph"),
-	person("Daniel", "Lemire", role = "cph"),
-	person("Chad", "Walters", role = "cph"),
 	person("Posit Software, PBC", role = "cph"))
 Description: Self-sufficient reader and writer for flat Parquet files.
     Can read most Parquet data types. Can write many R data types,
