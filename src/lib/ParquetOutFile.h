@@ -88,6 +88,7 @@ private:
   void write_column(uint32_t idx);
   void write_dictionary_page(uint32_t idx);
   void write_data_pages(uint32_t idx);
+  void write_data_page(uint32_t idx, uint64_t from, uint64_t until);
   void write_page_header(uint32_t idx, parquet::format::PageHeader &ph);
   void write_footer();
 

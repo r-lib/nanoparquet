@@ -488,8 +488,43 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
   }
 }
 
-// Single data page for now
 void ParquetOutFile::write_data_pages(uint32_t idx) {
+  SchemaElement se = schemas[idx + 1];
+
+  // guess total size and decide on number of pages
+  uint64_t total_size = encodings[idx] == Encoding::PLAIN ?
+    calculate_column_data_size(idx, num_rows) :
+    num_rows * sizeof(int);
+
+  const uint32_t default_page_size = 1024 * 1024; // 1 MiB
+  uint32_t page_size;
+  const char *ev = std::getenv("NANOPARQUEST_PAGE_SIZE");
+  if (ev && strlen(ev) > 0) {
+    try {
+      page_size = std::stoi(ev);
+    } catch (...) {
+      page_size = default_page_size;
+    }
+  } else {
+    page_size = default_page_size;
+  }
+  uint32_t num_pages = total_size / page_size;
+  if (num_pages == 0) {
+    num_pages = 1;
+  }
+
+  for (auto i = 0; i < num_pages; i++) {
+    uint64_t from = i * page_size;
+    uint64_t until = (i + 1) * page_size;
+    if (until > num_rows) {
+      until = num_rows;
+    }
+    write_data_page(idx, from, until);
+  }
+}
+
+void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
+                                     uint64_t until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1];
   PageHeader ph;
