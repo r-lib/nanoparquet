@@ -197,6 +197,19 @@ test_that("read POSIXct", {
   expect_equal(d$h, d2$h)
 })
 
+test_that("read POSIXct in MILLIS", {
+  skip_on_cran() # arrow
+  # This file has UTC = FALSE, so the exact result depends on the current
+  # time zone. But it should match Arrow.
+  pf <- test_path("data/timestamp-ms.parquet")
+  d1 <- read_parquet(pf)
+  d2 <- arrow::read_parquet(pf)
+  expect_equal(
+    as.data.frame(d1),
+    as.data.frame(d2)
+  )
+})
+
 test_that("read difftime", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

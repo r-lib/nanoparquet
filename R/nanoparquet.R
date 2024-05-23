@@ -34,11 +34,11 @@ read_parquet <- function(file) {
 		)
 	}
 
-	# convert POSIXct from microseconds to seconds
+	# convert POSIXct from milliseconds to seconds
 	posixcts <- which(vapply(res, "inherits", "POSIXct", FUN.VALUE = logical(1)))
 	for (idx in posixcts) {
 		res[[idx]][] <- structure(
-			unclass(res[[idx]]) / 1000 / 1000,
+			unclass(res[[idx]]) / 1000,
 			class = class(res[[idx]])
 		)
 	}
