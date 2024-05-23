@@ -1,6 +1,13 @@
 #' @useDynLib nanoparquet, .registration=TRUE
 #' @details
-#' ```{r child = "README.md"}
+#' ```{r include = FALSE}
+#' lines <- readLines("README.md")
+#' end <- which(lines == "<!-- badges: end -->")
+#' lines <- lines[-(1:end)]
+#' readme <- tempfile()
+#' writeLines(lines, readme)
+#' ```
+#' ```{r child = readme}
 #' ```
 "_PACKAGE"
 

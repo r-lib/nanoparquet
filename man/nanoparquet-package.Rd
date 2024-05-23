@@ -8,18 +8,7 @@
 \description{
 Self-sufficient reader and writer for a flat Parquet files. Nested tables, compression besides Snappy and encryption are not supported.
 }
-\section{nanoparquet}{
-\if{html}{\out{
-<div>
-<!-- badges: start -->
-[![R-CMD-check](https://github.com/gaborcsardi/nanoparquet/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gaborcsardi/nanoparquet/actions/workflows/R-CMD-check.yaml)
-[![CRAN status](https://www.r-pkg.org/badges/version/nanoparquet)](https://cran.r-project.org/package=nanoparquet)
-[![](http://cranlogs.r-pkg.org/badges/nanoparquet)](https://dgrtwo.shinyapps.io/cranview/)
-<!-- badges: end -->
-</div>
-}}
-
-
+\details{
 \code{nanoparquet} is a reader and writer for a common subset of Parquet files.
 nanoparquet only supports rectangular-shaped data structures
 (no nested tables) and only the Snappy compression scheme.
@@ -108,7 +97,6 @@ back as factors, both by nanoparquet and Arrow.
 MIT
 }
 }
-
 \author{
 \strong{Maintainer}: Gábor Csárdi \email{csardi.gabor@gmail.com}
 
