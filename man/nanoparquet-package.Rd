@@ -6,15 +6,31 @@
 \alias{nanoparquet-package}
 \title{nanoparquet: Read Parquet Files}
 \description{
-Self-sufficient reader and writer for a flat Parquet files. Nested tables, compression besides Snappy and encryption are not supported.
+Self-sufficient reader and writer for flat Parquet files. Can read most Parquet data types. Can write many R data types, including factors and temporal types. Supports Snappy compression.
 }
 \details{
 \code{nanoparquet} is a reader and writer for a common subset of Parquet files.
-nanoparquet only supports rectangular-shaped data structures
-(no nested tables) and only the Snappy compression scheme.
-nanoparquet has no (zero, none, 0)
-\href{https://research.swtch.com/deps}{external dependencies} and is very
-lightweight. It compiles in seconds to a binary size of about 2 MB.
+
+Features:
+\itemize{
+\item Read and write flat (i.e. non-nested) Parquet files.
+\item Can read most \href{https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html}{Parquet data types}.
+\item Can write many R data types, including factors and temporal types
+to Parquet.
+\item Completely dependency free.
+\item Supports Snappy compression.
+}
+
+Limitations:
+\itemize{
+\item Nested Parquet types are not supported.
+\item Some Parquet logical types are not supported: \code{FLOAT16}, \code{INTERVAL},
+\code{UNKNOWN}.
+\item The \code{FIXED_LEN_BYTE_ARRAY} Parquet type is not supported, unless it
+represents a supported logical type.
+\item Only Snappy compression is supported.
+\item Encryption is not supported.
+}
 \subsection{Installation}{
 
 Install the R package from CRAN:

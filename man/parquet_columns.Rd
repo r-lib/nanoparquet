@@ -32,7 +32,7 @@ would read.
 }
 \seealso{
 \code{\link[=parquet_metadata]{parquet_metadata()}} to read more metadata,
-\code{\link[=parquet_info]{parquet_info()}} for a very short sumamry.
+\code{\link[=parquet_info]{parquet_info()}} for a very short summary.
 \code{\link[=parquet_schema]{parquet_schema()}} for the complete Parquet schema.
 \code{\link[=read_parquet]{read_parquet()}}, \code{\link[=write_parquet]{write_parquet()}}, \link{nanoparquet-types}.
 }

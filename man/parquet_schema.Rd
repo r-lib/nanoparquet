@@ -30,7 +30,7 @@ search order. Most important columns are:
 }
 \description{
 This function should work on all files, even if \code{\link[=read_parquet]{read_parquet()}} is
-unabled to read them, because of an unsupported schema, encoding,
+unable to read them, because of an unsupported schema, encoding,
 compression or other reason.
 }
 \seealso{

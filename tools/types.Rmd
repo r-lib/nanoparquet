@@ -19,7 +19,7 @@ These rules will likely change until nanoparquet reaches version 1.0.0.
    which is internally the `INT64` Parquet type.
    Sub-microsecond precision is lost.
 1. `difftime` objects (that are not `hms` objects, see above), are
-   written as an `INT64` ParQuet type, and noting in the Arrow metadata
+   written as an `INT64` Parquet type, and noting in the Arrow metadata
    (see below) that this column has type `Duration` with `NANOSECONDS`
    unit.
 1. Integer vectors (`INTSXP`) are written as `INT(32, true)` logical type,
@@ -108,6 +108,6 @@ key `ARROW:schema`.
 Currently nanoparquet uses the Arrow metadata for two things:
 - It uses it to detect factors. Without the Arrow metadata factors are
   read as string vectors.
-- It uses it to detect `difftime` ofjects. Without the arrow metadata
+- It uses it to detect `difftime` objects. Without the arrow metadata
   these are read as `INT64` columns, containing the time difference in
   nanoseconds.

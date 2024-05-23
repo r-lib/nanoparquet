@@ -7,11 +7,25 @@
 <!-- badges: end -->
 
 `nanoparquet` is a reader and writer for a common subset of Parquet files.
-nanoparquet only supports rectangular-shaped data structures
-(no nested tables) and only the Snappy compression scheme.
-nanoparquet has no (zero, none, 0)
-[external dependencies](https://research.swtch.com/deps) and is very
-lightweight. It compiles in seconds to a binary size of about 2 MB.
+
+Features:
+
+* Read and write flat (i.e. non-nested) Parquet files.
+* Can read most [Parquet data types](https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html).
+* Can write many R data types, including factors and temporal types
+  to Parquet.
+* Completely dependency free.
+* Supports Snappy compression.
+
+Limitations:
+
+* Nested Parquet types are not supported.
+* Some Parquet logical types are not supported: `FLOAT16`, `INTERVAL`,
+  `UNKNOWN`.
+* The `FIXED_LEN_BYTE_ARRAY` Parquet type is not supported, unless it
+  represents a supported logical type.
+* Only Snappy compression is supported.
+* Encryption is not supported.
 
 ## Installation
 

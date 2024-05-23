@@ -135,7 +135,7 @@ format_schema_result <- function(sch) {
 #' Read the metadata of a Parquet file
 #'
 #' This function should work on all files, even if [read_parquet()] is
-#' unabled to read them, because of an unsupported schema, encoding,
+#' unable to read them, because of an unsupported schema, encoding,
 #' compression or other reason.
 #'
 #' @param file Path to a Parquet file.
@@ -243,7 +243,7 @@ parquet_metadata <- function(file) {
 #' Read the schema of a Parquet file
 #'
 #' This function should work on all files, even if [read_parquet()] is
-#' unabled to read them, because of an unsupported schema, encoding,
+#' unable to read them, because of an unsupported schema, encoding,
 #' compression or other reason.
 #'
 #' @param file Path to a Parquet file.
@@ -336,7 +336,7 @@ parquet_info <- function(file) {
 #'      additional entries, e.g. `bit_width`, `is_signed`, etc.
 #'
 #' @seealso [parquet_metadata()] to read more metadata,
-#'   [parquet_info()] for a very short sumamry.
+#'   [parquet_info()] for a very short summary.
 #'   [parquet_schema()] for the complete Parquet schema.
 #'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @export

@@ -26,7 +26,7 @@ Sub-milliseconds precision is lost.
 which is internally the \code{INT64} Parquet type.
 Sub-microsecond precision is lost.
 \item \code{difftime} objects (that are not \code{hms} objects, see above), are
-written as an \code{INT64} ParQuet type, and noting in the Arrow metadata
+written as an \code{INT64} Parquet type, and noting in the Arrow metadata
 (see below) that this column has type \code{Duration} with \code{NANOSECONDS}
 unit.
 \item Integer vectors (\code{INTSXP}) are written as \code{INT(32, true)} logical type,
@@ -119,7 +119,7 @@ Currently nanoparquet uses the Arrow metadata for two things:
 \itemize{
 \item It uses it to detect factors. Without the Arrow metadata factors are
 read as string vectors.
-\item It uses it to detect \code{difftime} ofjects. Without the arrow metadata
+\item It uses it to detect \code{difftime} objects. Without the arrow metadata
 these are read as \code{INT64} columns, containing the time difference in
 nanoseconds.
 }
