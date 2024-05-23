@@ -35,6 +35,16 @@
     Output
       list()
 
+# read hms in MICROS
+
+    Code
+      as.data.frame(read_parquet(pf))
+    Output
+              tt
+      1 14:30:00
+      2 11:35:00
+      3 01:59:00
+
 # read difftime
 
     Code

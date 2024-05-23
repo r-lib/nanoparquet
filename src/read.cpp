@@ -55,6 +55,13 @@ SEXP nanoparquet_read(SEXP filesxp) {
     SEXP dicts = PROTECT(Rf_allocVector(VECSXP, ncols));
     SEXP types = PROTECT(Rf_allocVector(INTSXP, ncols));
 
+    // we sometimes need to multiply TIME and TIMESTAMP data to convert
+    // to seconds from NANOS or MILLIS
+    unique_ptr<int[]> time_factors(new int[ncols]);
+    for (auto i = 0; i < ncols; i++) {
+      time_factors[i] = 1;
+    }
+
     for (size_t col_idx = 0; col_idx < ncols; col_idx++) {
       SEXP varname =
           PROTECT(Rf_mkCharCE(f.columns[col_idx]->name.c_str(), CE_UTF8));
@@ -79,9 +86,11 @@ SEXP nanoparquet_read(SEXP filesxp) {
           SET_CLASS(varvalue, cl);
           UNPROTECT(1);
         } else if ((s_ele->__isset.logicalType &&
-                    s_ele->logicalType.__isset.TIME) ||
+                    s_ele->logicalType.__isset.TIME &&
+                    s_ele->logicalType.TIME.unit.__isset.MILLIS) ||
                    (s_ele->__isset.converted_type &&
                     s_ele->converted_type == parquet::format::ConvertedType::TIME_MILLIS)) {
+          // note: if not MILLIS and INT32, we'll read it as plain INT32
           SEXP cl = PROTECT(Rf_allocVector(STRSXP, 2));
           SET_STRING_ELT(cl, 0, Rf_mkChar("hms"));
           SET_STRING_ELT(cl, 1, Rf_mkChar("difftime"));
@@ -105,6 +114,29 @@ SEXP nanoparquet_read(SEXP filesxp) {
           SET_STRING_ELT(cl, 1, Rf_mkChar("POSIXt"));
           SET_CLASS(varvalue, cl);
           Rf_setAttrib(varvalue, Rf_install("tzone"), Rf_mkString("UTC"));
+          UNPROTECT(1);
+        } else if ((s_ele->__isset.logicalType &&
+                    s_ele->logicalType.__isset.TIME &&
+                    (s_ele->logicalType.TIME.unit.__isset.MICROS ||
+                     s_ele->logicalType.TIME.unit.__isset.NANOS)) ||
+                   (s_ele->__isset.converted_type &&
+                    s_ele->converted_type == parquet::format::ConvertedType::TIME_MICROS)) {
+          // can be MICROS or NANOS currently, other values read as INT64
+          if (s_ele->__isset.logicalType &&
+              s_ele->logicalType.__isset.TIME) {
+            if (s_ele->logicalType.TIME.unit.__isset.MICROS) {
+              time_factors[col_idx] = 1000;
+            } else if (s_ele->logicalType.TIME.unit.__isset.NANOS) {
+              time_factors[col_idx] = 1000 * 1000;
+            }
+          } else if (s_ele->converted_type == parquet::format::ConvertedType::TIME_MICROS) {
+            time_factors[col_idx] = 1000;
+          }
+          SEXP cl = PROTECT(Rf_allocVector(STRSXP, 2));
+          SET_STRING_ELT(cl, 0, Rf_mkChar("hms"));
+          SET_STRING_ELT(cl, 1, Rf_mkChar("difftime"));
+          SET_CLASS(varvalue, cl);
+          Rf_setAttrib(varvalue, Rf_install("units"), Rf_mkString("secs"));
           UNPROTECT(1);
         }
         break;
@@ -161,6 +193,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
 
     while (f.scan(s, rc)) {
       for (size_t col_idx = 0; col_idx < ncols; col_idx++) {
+        int time_factor = time_factors[col_idx];
         auto &col = rc.cols[col_idx];
         if (col.dict) {
           auto strings = col.dict->dict;
@@ -237,7 +270,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
           case parquet::format::Type::INT64:
             NUMERIC_POINTER(dest)
             [row_idx + dest_offset] =
-                (double)((int64_t *)col.data.ptr)[row_idx];
+                (double)((int64_t *)col.data.ptr)[row_idx] / time_factor;
             break;
           case parquet::format::Type::DOUBLE:
             NUMERIC_POINTER(dest)

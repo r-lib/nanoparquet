@@ -176,6 +176,13 @@ test_that("read hms", {
   expect_equal(d$h, d2$h)
 })
 
+test_that("read hms in MICROS", {
+  pf <- test_path("data/timetz.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet(pf))
+  })
+})
+
 test_that("read POSIXct", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
