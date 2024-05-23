@@ -24,27 +24,47 @@ public:
 
   // write out various parquet types, these must be implemented in
   // the subclass
-  virtual void write_int32(std::ostream &file, uint32_t idx) = 0;
-  virtual void write_int64(std::ostream &file, uint32_t idx) = 0;
-  virtual void write_double(std::ostream &file, uint32_t idx) = 0;
-  virtual void write_byte_array(std::ostream &file, uint32_t idx) = 0;
-  virtual void write_boolean(std::ostream &file, uint32_t idx) = 0;
+  virtual void write_int32(std::ostream &file, uint32_t idx, uint64_t from,
+                           uint64_t until) = 0;
+  virtual void write_int64(std::ostream &file, uint32_t idx, uint64_t from,
+                           uint64_t until) = 0;
+  virtual void write_double(std::ostream &file, uint32_t idx, uint64_t from,
+                            uint64_t until) = 0;
+  virtual void write_byte_array(std::ostream &file, uint32_t idx,
+                                uint64_t from, uint64_t until) = 0;
+  virtual void write_boolean(std::ostream &file, uint32_t idx,
+                             uint64_t from, uint64_t until) = 0;
 
   // callbacks for missing values
-  virtual uint32_t write_present(std::ostream &file, uint32_t idx) = 0;
-  virtual void write_present_int32(std::ostream &file, uint32_t idx, uint32_t num_present) = 0;
-  virtual void write_present_int64(std::ostream &file, uint32_t idx, uint32_t num_present) = 0;
-  virtual void write_present_double(std::ostream &file, uint32_t idx, uint32_t num_present) = 0;
-  virtual void write_present_byte_array(std::ostream &file, uint32_t idx, uint32_t num_present) = 0;
-  virtual void write_present_boolean(std::ostream &file, uint32_t idx, uint32_t num_present) = 0;
+  virtual uint32_t write_present(std::ostream &file, uint32_t idx,
+                                 uint64_t from, uint64_t until) = 0;
+  virtual void write_present_int32(std::ostream &file, uint32_t idx,
+                                   uint32_t num_present, uint64_t from,
+                                   uint64_t until) = 0;
+  virtual void write_present_int64(std::ostream &file, uint32_t idx,
+                                   uint32_t num_present, uint64_t from,
+                                   uint64_t until) = 0;
+  virtual void write_present_double(std::ostream &file, uint32_t idx,
+                                    uint32_t num_present, uint64_t from,
+                                    uint64_t until) = 0;
+  virtual void write_present_byte_array(std::ostream &file, uint32_t idx,
+                                        uint32_t num_present,
+                                        uint64_t from, uint64_t until) = 0;
+  virtual void write_present_boolean(std::ostream &file, uint32_t idx,
+                                     uint32_t num_present, uint64_t from,
+                                     uint64_t until) = 0;
 
   // callbacks to write a byte array dictionary
-  virtual uint32_t get_size_byte_array(uint32_t idx, uint32_t num_present) = 0;
+  virtual uint32_t get_size_byte_array(uint32_t idx,
+                                       uint32_t num_present,
+                                       uint64_t from, uint64_t until) = 0;
   virtual uint32_t get_num_values_byte_array_dictionary(uint32_t idx) = 0;
   virtual uint32_t get_size_byte_array_dictionary(uint32_t idx) = 0;
   // Needs to write indices as int32_t
-  virtual void write_byte_array_dictionary(std::ostream &file, uint32_t idx) = 0;
-  virtual void write_dictionary_indices(std::ostream &file, uint32_t idx) = 0;
+  virtual void write_byte_array_dictionary(std::ostream &file,
+                                           uint32_t idx) = 0;
+  virtual void write_dictionary_indices(std::ostream &file, uint32_t idx,
+                                        uint64_t from, uint64_t until) = 0;
 
 private:
   std::ofstream pfile;
@@ -68,15 +88,20 @@ private:
   void write_column(uint32_t idx);
   void write_dictionary_page(uint32_t idx);
   void write_data_pages(uint32_t idx);
+  void write_data_page(uint32_t idx, uint64_t from, uint64_t until);
   void write_page_header(uint32_t idx, parquet::format::PageHeader &ph);
   void write_footer();
 
-  void write_data_(std::ostream &file, uint32_t idx, uint32_t size);
-  void write_present_data_(std::ostream &file, uint32_t idx, uint32_t size, uint32_t num_present);
+  void write_data_(std::ostream &file, uint32_t idx, uint32_t size,
+                   uint64_t from, uint64_t until);
+  void write_present_data_(std::ostream &file, uint32_t idx,
+                           uint32_t size, uint32_t num_present,
+                           uint64_t from, uint64_t until);
   void write_byte_array_dictionary_(std::ostream &file, uint32_t idx,
                                     uint32_t size);
   void write_dictionary_indices_(std::ostream &file, uint32_t idx,
-                                uint32_t size);
+                                uint32_t size, uint64_t from,
+                                uint64_t until);
 
   size_t compress(parquet::format::CompressionCodec::type codec,
                   ByteBuffer &src, uint32_t src_size, ByteBuffer &tgt);
@@ -92,7 +117,8 @@ private:
       parquet::format::LogicalType logical_type);
   parquet::format::Type::type
   get_type_from_logical_type(parquet::format::LogicalType logical_type);
-  uint32_t calculate_column_data_size(uint32_t idx, uint32_t num_present);
+  uint64_t calculate_column_data_size(uint32_t idx, uint32_t num_present,
+                                      uint64_t from, uint64_t until);
 };
 
 } // namespace nanoparquet
