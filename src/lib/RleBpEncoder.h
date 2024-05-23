@@ -2,14 +2,18 @@
 
 #include "bitpacker.h"
 
-template<typename T>
-uint32_t MaxRleBpSize(const T *input, uint32_t input_len,
-                      uint8_t bit_width) {
+static uint32_t MaxRleBpSizeSimple(uint32_t input_len, uint8_t bit_width) {
   // If we bit-pack everything in chunks of eight, then
   // we'll get this length
   uint32_t efflen = input_len - input_len % 8 + 8;
   uint32_t bplen = (bit_width + 1) * efflen / 8; // +1 is length marker
   return bplen;
+}
+
+template<typename T>
+uint32_t MaxRleBpSize(const T *input, uint32_t input_len,
+                      uint8_t bit_width) {
+  return MaxRleBpSizeSimple(input_len, bit_width);
 }
 
 template<typename T>

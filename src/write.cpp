@@ -194,7 +194,7 @@ uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
   int *presptr = (int*) present.ptr;
   switch(TYPEOF(col)) {
   case INTSXP: {
-    int *intptr = INTEGER(col);
+    int *intptr = INTEGER(col) + from;
     int *end = intptr + len;
     for (; intptr < end; intptr++, presptr++) {
       *presptr = (*intptr != NA_INTEGER);
@@ -203,7 +203,7 @@ uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
     break;
   }
   case REALSXP: {
-    double *dblptr = REAL(col);
+    double *dblptr = REAL(col) + from;
     double *end = dblptr + len;
     for (; dblptr < end; dblptr++, presptr++) {
       *presptr = ! R_IsNA(*dblptr);
@@ -212,14 +212,14 @@ uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
     break;
   }
   case STRSXP: {
-    for (auto i = 0; i < len; i++, presptr++) {
+    for (auto i = from; i < until; i++, presptr++) {
       *presptr = (STRING_ELT(col, i) != R_NaString);
       num_pres += *presptr;
     }
     break;
   }
   case LGLSXP: {
-    int *lglptr = LOGICAL(col);
+    int *lglptr = LOGICAL(col) + from;
     int *end = lglptr + len;
     for (; lglptr < end; lglptr++, presptr++) {
       *presptr = (*lglptr != NA_LOGICAL);
@@ -300,8 +300,10 @@ void RParquetOutFile::write_present_double(
   uint64_t until) {
 
   SEXP col = VECTOR_ELT(df, idx);
-  R_xlen_t len = XLENGTH(col);
-  for (auto i = 0; i < len; i++) {
+  if (until > Rf_xlength(col)) {
+    Rf_error("Internal nanoparquet error, row index too large");
+  }
+  for (uint64_t i = from; i < until; i++) {
     double el = REAL(col)[i];
     if (!R_IsNA(el)) {
       file.write((const char*) &el, sizeof(double));

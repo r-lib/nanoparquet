@@ -247,7 +247,7 @@ void ParquetOutFile::write_data_(
 
   if (cb_end - cb_start != size) {
     throw runtime_error(
-      "Wrong number of bytes written for parquet column"
+      "Wrong number of bytes written for parquet column @"
     );
   }
 
@@ -490,30 +490,43 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
   SchemaElement se = schemas[idx + 1];
 
   // guess total size and decide on number of pages
-  uint64_t total_size = encodings[idx] == Encoding::PLAIN ?
-    calculate_column_data_size(idx, num_rows, 0, num_rows) :
-    num_rows * sizeof(int);
+  uint64_t total_size;
+  if (encodings[idx] == Encoding::PLAIN) {
+    total_size = calculate_column_data_size(idx, num_rows, 0, num_rows);
+  } else {
+    // estimate the max RLE length
+    uint32_t num_values = get_num_values_byte_array_dictionary(idx);
+    uint8_t bit_width = ceil(log2((double) num_values));
+    total_size = MaxRleBpSizeSimple(num_rows, bit_width);
+  }
 
-  const uint32_t default_page_size = 1024 * 1024; // 1 MiB
-  uint32_t page_size;
+  uint32_t page_size = 1024 * 1024;
   const char *ev = std::getenv("NANOPARQUEST_PAGE_SIZE");
   if (ev && strlen(ev) > 0) {
     try {
       page_size = std::stoi(ev);
     } catch (...) {
-      page_size = default_page_size;
+      // fall back to default
     }
-  } else {
-    page_size = default_page_size;
   }
-  uint32_t num_pages = total_size / page_size;
+  // at least 1k
+  if (page_size < 1024) {
+    page_size = 1024;
+  }
+
+  uint32_t num_pages = total_size / page_size + (total_size % page_size ? 1 : 0);
   if (num_pages == 0) {
     num_pages = 1;
   }
 
+  uint32_t rows_per_page = num_rows / num_pages + (num_rows % num_pages ? 1 : 0);
+  if (rows_per_page == 0)  {
+    rows_per_page = 1;
+  }
+
   for (auto i = 0; i < num_pages; i++) {
-    uint64_t from = i * page_size;
-    uint64_t until = (i + 1) * page_size;
+    uint64_t from = i * rows_per_page;
+    uint64_t until = (i + 1) * rows_per_page;
     if (until > num_rows) {
       until = num_rows;
     }
@@ -528,7 +541,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
   PageHeader ph;
   ph.__set_type(PageType::DATA_PAGE);
   DataPageHeader dph;
-  dph.__set_num_values(num_rows);
+  dph.__set_num_values(until - from);
   dph.__set_encoding(encodings[idx]);
   if (se.repetition_type == FieldRepetitionType::OPTIONAL) {
     dph.__set_definition_level_encoding(Encoding::RLE);
