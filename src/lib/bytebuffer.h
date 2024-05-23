@@ -8,6 +8,10 @@ public:
   char *ptr = nullptr;
   uint64_t len = 0;
 
+  ByteBuffer() {
+    setp(0, 0);
+  }
+
   void resize(uint64_t new_size, bool copy = true) {
     if (new_size > len) {
       auto new_holder = std::unique_ptr<char[]>(new char[new_size]);
@@ -18,7 +22,7 @@ public:
       ptr = holder.get();
       sptr = ptr;
       len = new_size;
-      setp(sptr, sptr + new_size);
+      setp(ptr, ptr + new_size);
     }
   }
 
@@ -49,7 +53,7 @@ public:
       resize(new_size, copy);
     }
     sptr = ptr;
-    setp(sptr, sptr + new_size);
+    setp(ptr, ptr + new_size);
   }
 
   void skip(uint64_t bytes) {
@@ -58,6 +62,18 @@ public:
       throw std::runtime_error("Cannot write past the end of the buffer");
     }
     sptr += bytes;
+  }
+
+  pos_type seekoff(off_type off, std::ios_base::seekdir dir,
+                   std::ios_base::openmode which) override {
+    if (dir == std::ios_base::cur) {
+      pbump(off);
+    } else if (dir == std::ios_base::end) {
+      setp(pbase(), epptr() + off);
+    } else if (dir == std::ios_base::beg) {
+      setp(pbase(), pbase() + off);
+    }
+    return pptr() - pbase();
   }
 
 private:

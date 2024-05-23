@@ -245,8 +245,7 @@ void ParquetOutFile::write_data_(
   }
   streampos cb_end = file.tellp();
 
-  // TODO: why does tellp() not work for ByteBuffer?
-  if (cb_start != -1 && cb_end - cb_start != size) {
+  if (cb_end - cb_start != size) {
     throw runtime_error(
       "Wrong number of bytes written for parquet column"
     );
@@ -286,8 +285,7 @@ void ParquetOutFile::write_present_data_(
   }
   streampos cb_end = file.tellp();
 
-  // TODO: why does tellp() not work for ByteBuffer?
-  if (cb_start != -1 && cb_end - cb_start != size) {
+  if (cb_end - cb_start != size) {
     throw runtime_error(
       "Wrong number of bytes written for parquet column"
     );
@@ -308,7 +306,7 @@ void ParquetOutFile::write_byte_array_dictionary_(
   uint32_t start = file.tellp();
   write_byte_array_dictionary(file, idx);
   uint32_t end = file.tellp();
-  if (end != -1 && end - start != size) {
+  if (end - start != size) {
     throw runtime_error(
       "Wrong number of bytes written for parquet dictionary"
     );
@@ -328,7 +326,7 @@ void ParquetOutFile::write_dictionary_indices_(
   streampos start = file.tellp();
   write_dictionary_indices(file, idx, from, until);
   streampos end = file.tellp();
-  if (start != -1 && end - start != size) {
+  if (end - start != size) {
     throw runtime_error(
       "Wrong number of bytes written for parquet dictionary"
     );
