@@ -49,21 +49,30 @@
 
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>nanoparquet</code> is a reader and writer for a common subset of Parquet files.</p>
-<p>Features:</p><ul><li><p>Read and write flat (i.e. non-nested) Parquet files.</p></li>
+    <p><code>nanoparquet</code> is a reader and writer for a common subset of Parquet files.</p><div class="section">
+<h3 id="features-">Features:<a class="anchor" aria-label="anchor" href="#features-"></a></h3>
+
+<ul><li><p>Read and write flat (i.e. non-nested) Parquet files.</p></li>
 <li><p>Can read most <a href="https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html">Parquet data types</a>.</p></li>
 <li><p>Can write many R data types, including factors and temporal types
 to Parquet.</p></li>
 <li><p>Completely dependency free.</p></li>
 <li><p>Supports Snappy compression.</p></li>
-</ul><p>Limitations:</p><ul><li><p>Nested Parquet types are not supported.</p></li>
+</ul></div>
+
+<div class="section">
+<h3 id="limitations-">Limitations:<a class="anchor" aria-label="anchor" href="#limitations-"></a></h3>
+
+<ul><li><p>Nested Parquet types are not supported.</p></li>
 <li><p>Some Parquet logical types are not supported: <code>FLOAT16</code>, <code>INTERVAL</code>,
 <code>UNKNOWN</code>.</p></li>
 <li><p>The <code>FIXED_LEN_BYTE_ARRAY</code> Parquet type is not supported, unless it
 represents a supported logical type.</p></li>
 <li><p>Only Snappy compression is supported.</p></li>
 <li><p>Encryption is not supported.</p></li>
-</ul><div class="section">
+</ul></div>
+
+<div class="section">
 <h3 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a></h3>
 
 
@@ -154,11 +163,9 @@ back as factors, both by nanoparquet and Arrow.</p></li>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p><strong>Maintainer</strong>: Gábor Csárdi <a href="mailto:csardi.gabor@gmail.com">csardi.gabor@gmail.com</a></p>
-<p>Authors:</p><ul><li><p>Hannes Mühleisen (<a href="https://orcid.org/0000-0001-8552-0029" class="external-link">ORCID</a>)</p></li>
+<p>Authors:</p><ul><li><p>Hannes Mühleisen (<a href="https://orcid.org/0000-0001-8552-0029" class="external-link">ORCID</a>) [copyright holder]</p></li>
 </ul><p>Other contributors:</p><ul><li><p>Google Inc. [copyright holder]</p></li>
 <li><p>Apache Software Foundation [copyright holder]</p></li>
-<li><p>Daniel Lemire [copyright holder]</p></li>
-<li><p>Chad Walters [copyright holder]</p></li>
 <li><p>Posit Software, PBC [copyright holder]</p></li>
 </ul></div>
 
