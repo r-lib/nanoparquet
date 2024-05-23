@@ -8,7 +8,7 @@
 
 `nanoparquet` is a reader and writer for a common subset of Parquet files.
 
-Features:
+## Features:
 
 * Read and write flat (i.e. non-nested) Parquet files.
 * Can read most [Parquet data types](https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html).
@@ -17,7 +17,7 @@ Features:
 * Completely dependency free.
 * Supports Snappy compression.
 
-Limitations:
+## Limitations:
 
 * Nested Parquet types are not supported.
 * Some Parquet logical types are not supported: `FLOAT16`, `INTERVAL`,

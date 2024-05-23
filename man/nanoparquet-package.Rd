@@ -10,8 +10,7 @@ Self-sufficient reader and writer for flat Parquet files. Can read most Parquet 
 }
 \details{
 \code{nanoparquet} is a reader and writer for a common subset of Parquet files.
-
-Features:
+\subsection{Features:}{
 \itemize{
 \item Read and write flat (i.e. non-nested) Parquet files.
 \item Can read most \href{https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html}{Parquet data types}.
@@ -20,8 +19,9 @@ to Parquet.
 \item Completely dependency free.
 \item Supports Snappy compression.
 }
+}
 
-Limitations:
+\subsection{Limitations:}{
 \itemize{
 \item Nested Parquet types are not supported.
 \item Some Parquet logical types are not supported: \code{FLOAT16}, \code{INTERVAL},
@@ -31,6 +31,8 @@ represents a supported logical type.
 \item Only Snappy compression is supported.
 \item Encryption is not supported.
 }
+}
+
 \subsection{Installation}{
 
 Install the R package from CRAN:
