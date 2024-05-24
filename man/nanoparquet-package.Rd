@@ -30,6 +30,10 @@ to Parquet.
 represents a supported logical type.
 \item Only Snappy compression is supported.
 \item Encryption is not supported.
+\item Being single-threaded and not fully optimized, nanoparquet is probably
+not suited well for large data sets. It should be fine for a couple of
+gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro.
+For larger files, use Apache Arrow or DuckDB.
 }
 }
 
