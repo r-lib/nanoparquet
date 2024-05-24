@@ -1,39 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/LICENSE-text.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/404.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/authors.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/index.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/authors.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/reference/index.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/index.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/reference/nanoparquet-package.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/reference/nanoparquet-types.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/reference/nanoparquet-package.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/reference/parquet_columns.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/reference/parquet_info.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_columns.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/reference/parquet_metadata.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_info.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/reference/parquet_schema.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_metadata.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/reference/read_parquet.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_schema.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/dev/reference/write_parquet.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/reference/read_parquet.html</loc>
+  </url>
+  <url>
+    <loc>https://r-lib.github.io/nanoparquet/reference/write_parquet.html</loc>
   </url>
 </urlset>
