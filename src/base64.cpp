@@ -3,7 +3,7 @@
 
 #include "base64.h"
 #include "base64_tables.h"
-#include "endianness.h"
+#include "lib/endianness.h"
 
 namespace base64 {
 
