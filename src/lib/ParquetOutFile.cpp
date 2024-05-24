@@ -20,6 +20,8 @@ using namespace apache::thrift::transport;
 
 using namespace nanoparquet;
 
+#define STRING(x) #x
+
 // # nocov start
 static string type_to_string(Type::type t) {
   std::ostringstream ss;
@@ -247,7 +249,8 @@ void ParquetOutFile::write_data_(
 
   if (cb_end - cb_start != size) {
     throw runtime_error(
-      "Wrong number of bytes written for parquet column @"
+      string("Wrong number of bytes written for parquet column @ ") +
+      __FILE__ + ":" + STRING(__LINE__)
     );
   }
 
@@ -287,7 +290,8 @@ void ParquetOutFile::write_present_data_(
 
   if (cb_end - cb_start != size) {
     throw runtime_error(
-      "Wrong number of bytes written for parquet column"
+      string("Wrong number of bytes written for parquet column @") +
+      __FILE__ + ":" + STRING(__LINE__)
     );
   }
 
@@ -308,7 +312,8 @@ void ParquetOutFile::write_byte_array_dictionary_(
   uint32_t end = file.tellp();
   if (end - start != size) {
     throw runtime_error(
-      "Wrong number of bytes written for parquet dictionary"
+      string("Wrong number of bytes written for parquet dictionary @") +
+      __FILE__ + ":" + STRING(__LINE__)
     );
   }
   cmd->__set_total_uncompressed_size(
@@ -328,7 +333,8 @@ void ParquetOutFile::write_dictionary_indices_(
   streampos end = file.tellp();
   if (end - start != size) {
     throw runtime_error(
-      "Wrong number of bytes written for parquet dictionary"
+      string("Wrong number of bytes written for parquet dictionary") +
+      __FILE__ + ":" + STRING(__LINE__)
     );
   }
   // these are still RLE encoded, so they do not increase the
@@ -348,9 +354,9 @@ size_t ParquetOutFile::compress(
     snappy::RawCompress(src.ptr, src_size, tgt.ptr, &tgt_size);
     return tgt_size;
   } else {
-    throw runtime_error(
-      "Only SNAPPY compression is supported at this time"
-    );
+    std::stringstream ss;
+    ss << "Unsupported Parquet compression codec: " << codec;
+    throw runtime_error(ss.str());
   }
 }
 

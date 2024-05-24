@@ -25,7 +25,7 @@ static TCompactProtocolFactoryT<TMemoryBuffer> tproto_factory;
 
 template <class T>
 static void thrift_unpack(const uint8_t *buf, uint32_t *len,
-                          T *deserialized_msg) {
+                          T *deserialized_msg, string &filename) {
   shared_ptr<TMemoryBuffer> tmem_transport(
       new TMemoryBuffer(const_cast<uint8_t *>(buf), *len));
   shared_ptr<TProtocol> tproto = tproto_factory.getProtocol(tmem_transport);
@@ -33,27 +33,37 @@ static void thrift_unpack(const uint8_t *buf, uint32_t *len,
     deserialized_msg->read(tproto.get());
   } catch (std::exception &e) {
     std::stringstream ss;
-    ss << "Couldn't deserialize thrift: " << e.what() << "\n";
+    ss << "Invalid Parquet file '" << filename
+       << "'. Couldn't deserialize thrift: " << e.what() << "\n";
     throw std::runtime_error(ss.str());
   }
   uint32_t bytes_left = tmem_transport->available_read();
   *len = *len - bytes_left;
 }
 
-ParquetFile::ParquetFile(std::string filename) {
+ParquetFile::ParquetFile(std::string filename): filename(filename) {
   initialize(filename);
 }
 
 void ParquetFile::initialize(string filename) {
   ByteBuffer buf;
   pfile.open(filename, std::ios::binary);
+  if (pfile.fail()) {
+    std::stringstream ss;
+    ss << "Can't open Parquet file at '" << filename << "' @ "
+       << __FILE__ << ":" << __LINE__ + 1;
+    throw std::runtime_error(ss.str());
+  }
 
   buf.resize(4);
   memset(buf.ptr, '\0', 4);
   // check for magic bytes at start of file
   pfile.read(buf.ptr, 4);
   if (strncmp(buf.ptr, "PAR1", 4) != 0) {
-    throw runtime_error("File not found or missing magic bytes");
+    std::stringstream ss;
+    ss << "No leading magic bytes, invalid Parquet file at '" << filename
+       << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+    throw runtime_error(ss.str());
   }
 
   // check for magic bytes at end of file
@@ -62,7 +72,10 @@ void ParquetFile::initialize(string filename) {
   pfile.seekg(-4, ios_base::end);
   pfile.read(buf.ptr, 4);
   if (strncmp(buf.ptr, "PAR1", 4) != 0) {
-    throw runtime_error("No magic bytes found at end of file");
+    std::stringstream ss;
+    ss << "No trailing magic bytes, invalid Parquet file at '" << filename
+       << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+    throw runtime_error(ss.str());
   }
 
   // read four-byte footer length from just before the end magic bytes
@@ -70,7 +83,10 @@ void ParquetFile::initialize(string filename) {
   pfile.read(buf.ptr, 4);
   int32_t footer_len = *(uint32_t *)buf.ptr;
   if (footer_len == 0) {
-    throw runtime_error("Footer length can't be 0");
+    std::stringstream ss;
+    ss << "Footer length is zero, invalid Parquet file at '" << filename
+       << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+    throw runtime_error(ss.str());
   }
 
   // read footer into buffer and de-thrift
@@ -78,15 +94,14 @@ void ParquetFile::initialize(string filename) {
   pfile.seekg(-(footer_len + 8), ios_base::end);
   pfile.read(buf.ptr, footer_len);
   if (!pfile) {
-    throw runtime_error("Could not read footer");
+    std::stringstream ss;
+    ss << "Could not read footer, invalid Parquet file at '" << filename
+       << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+    throw runtime_error(ss.str());
   }
 
   thrift_unpack((const uint8_t *)buf.ptr, (uint32_t *)&footer_len,
-                &file_meta_data);
-
-  //	file_meta_data.printTo(cerr);
-  //	cerr << "\n";
-
+                &file_meta_data, filename);
   // skip the first column its the root and otherwise useless
   for (uint64_t col_idx = 1; col_idx < file_meta_data.schema.size();
        col_idx++) {
@@ -105,16 +120,25 @@ void ParquetFile::initialize(string filename) {
 
 void ParquetFile::read_checks() {
   if (file_meta_data.__isset.encryption_algorithm) {
-    throw runtime_error("Encrypted Parquet files are not supported");
+    std::stringstream ss;
+    ss << "Encrypted Parquet file are not supported, could not read file at '"
+       << filename << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+    throw runtime_error(ss.str());
   }
 
   // check if we like this schema
   if (file_meta_data.schema.size() < 2) {
-    throw runtime_error("Need at least one column in the file");
+    std::stringstream ss;
+    ss << "Need at least one column, could not read Parquet file at '"
+       << filename << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+    throw runtime_error(ss.str());
   }
   if (file_meta_data.schema[0].num_children !=
       file_meta_data.schema.size() - 1) {
-    throw runtime_error("Only flat tables are supported (no nesting)");
+    std::stringstream ss;
+    ss << "Only flat tables (no nesting) are supported, could not read Parquet file at '"
+       << filename << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+    throw runtime_error(ss.str());
   }
 
   // TODO assert that the first col is root
@@ -124,7 +148,10 @@ void ParquetFile::read_checks() {
     auto &s_ele = file_meta_data.schema[col_idx];
 
     if (!s_ele.__isset.type || s_ele.num_children > 0) {
-      throw runtime_error("Only flat tables are supported (no nesting)");
+      std::stringstream ss;
+      ss << "Only flat tables (no nesting) are supported, could not read Parquet file at '"
+         << filename << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+      throw runtime_error(ss.str());
     }
   }
 }
@@ -137,6 +164,7 @@ static string type_to_string(Type::type t) {
 
 class ColumnScan {
 public:
+  ColumnScan(string filename): filename_(filename) { };
   PageHeader page_header;
   bool seen_dict = false;
   const char *page_buf_ptr = nullptr;
@@ -151,6 +179,9 @@ public:
 
   // for FIXED_LEN_BYTE_ARRAY
   int32_t type_len;
+
+  // for error reporting
+  string filename_;
 
   template <class T> void fill_dict() {
     auto dict_size = page_header.dictionary_page_header.num_values;
@@ -167,7 +198,10 @@ public:
   void scan_dict_page(ResultColumn &result_col) {
     if (page_header.__isset.data_page_header ||
         !page_header.__isset.dictionary_page_header) {
-      throw runtime_error("Dictionary page header mismatch");
+      std::stringstream ss;
+      ss << "Dictionary page header mismatch, invalid Parquet file '"
+         << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+      throw runtime_error(ss.str());
     }
 
     // make sure we like the encoding
@@ -176,12 +210,19 @@ public:
     case Encoding::PLAIN_DICTIONARY: // deprecated
       break;
 
-    default:
-      throw runtime_error("Dictionary page has unsupported/invalid encoding");
+    default: {
+      std::stringstream ss;
+      ss << "Dictionary page has unsupported encoding in Parquet file '"
+         << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+      throw runtime_error(ss.str());
+    }
     }
 
     if (seen_dict) {
-      throw runtime_error("Multiple dictionary pages for column chunk");
+      std::stringstream ss;
+      ss << "Multiple dictionary pages for column chunk in Parquet file '"
+         << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+      throw runtime_error(ss.str());
     }
     seen_dict = true;
     dict_size = page_header.dictionary_page_header.num_values;
@@ -226,7 +267,10 @@ public:
           page_buf_ptr += sizeof(str_len);
 
           if (page_buf_ptr + str_len > page_buf_end_ptr) {
-            throw runtime_error("Declared string length exceeds payload size");
+            std::stringstream ss;
+            ss << "Declared string length exceeds payload size, invalid Parquet file '"
+               << filename_ << "' @ " << __FILE__ ":" << __LINE__;
+            throw runtime_error(ss.str());
           }
 
           ((Dictionary<char *> *)dict)->dict[dict_index] = str_ptr;
@@ -239,20 +283,30 @@ public:
 
         break;
       }
-    default:
-      throw runtime_error("Unsupported type for dictionary: " +
-                          type_to_string(result_col.col->type));
+    default: {
+      std::stringstream ss;
+      ss << "Unsupported type for dictionary: "
+         << type_to_string(result_col.col->type) << " in Parquet file '"
+         << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
+    }
     }
   }
 
   void scan_data_page(ResultColumn &result_col, bool has_def_levels) {
     if (!page_header.__isset.data_page_header ||
         page_header.__isset.dictionary_page_header) {
-      throw runtime_error("Data page header mismatch");
+      std::stringstream ss;
+      ss << "Data page header mismatch, invalid Parquet file '" << filename_
+         << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
     }
 
     if (page_header.__isset.data_page_header_v2) {
-      throw runtime_error("Data page v2 unsupported");
+      std::stringstream ss;
+      ss << "Data page v2 unsupported, cannot read Parquet file '"
+         << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
     }
 
     auto num_values = page_header.data_page_header.num_values;
@@ -271,9 +325,14 @@ public:
 
         page_buf_ptr += def_length;
       } break;
-      default:
-        throw runtime_error(
-            "Definition levels have unsupported/invalid encoding");
+      default: {
+        std::stringstream ss;
+        ss << "Definition levels have unsupported encoding: "
+           << page_header.data_page_header.definition_level_encoding
+           << " in Parquet file '" << filename_ << "' @ "
+           << __FILE__ << ":" << __LINE__;
+        throw runtime_error(ss.str());
+      }
       }
     } else {
       std::fill(defined_ptr, defined_ptr + num_values, static_cast<uint8_t>(1));
@@ -289,8 +348,13 @@ public:
       scan_data_page_plain(result_col);
       break;
 
-    default:
-      throw runtime_error("Data page has unsupported/invalid encoding");
+    default: {
+      std::stringstream ss;
+      ss << "Data page has unsupported encoding "
+         << page_header.data_page_header.encoding << " in Parquet file '"
+         << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
+    }
     }
 
     defined_ptr += num_values;
@@ -391,7 +455,10 @@ public:
         }
 
         if (page_buf_ptr + str_len > page_buf_end_ptr) {
-          throw runtime_error("Declared string length exceeds payload size");
+          std::stringstream ss;
+          ss << "Declared string length exceeds payload size, invalid Parquet file "
+             << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
+          throw runtime_error(ss.str());
         }
 
         ((char **)result_col.data.ptr)[row_idx] = str_ptr;
@@ -404,9 +471,13 @@ public:
       }
     } break;
 
-    default:
-      throw runtime_error("Unsupported type page_plain " +
-                          type_to_string(result_col.col->type));
+    default: {
+      std::stringstream ss;
+      ss << "Unsupported Parquet type "
+         << type_to_string(result_col.col->type) << " in Parquet file '"
+         << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
+    }
     }
   }
 
@@ -429,7 +500,10 @@ public:
   // is defined, otherwise NULL
   void scan_data_page_dict(ResultColumn &result_col) {
     if (!seen_dict) {
-      throw runtime_error("Missing dictionary page");
+      std::stringstream ss;
+      ss << "Missing dictionary page, invalid Parquet file '" << filename_
+         << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
     }
 
     auto num_values = page_header.data_page_header.num_values;
@@ -501,9 +575,13 @@ public:
       }
       break;
     }
-    default:
-      throw runtime_error("Unsupported type page_dict " +
-                          type_to_string(result_col.col->type));
+    default: {
+      std::stringstream ss;
+      ss << "Unsupported Parquet type "
+         << type_to_string(result_col.col->type) << " in file '"
+         << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
+    }
     }
   }
 
@@ -532,9 +610,13 @@ public:
     case Type::FIXED_LEN_BYTE_ARRAY:
       result_col.dict.reset((Dictionary<char *> *)dict);
       break;
-    default:
-      throw runtime_error("Unsupported type for dictionary: " +
-                          type_to_string(result_col.col->type));
+    default: {
+      std::stringstream ss;
+      ss << "Unsupported Parquet type for dictionary: "
+         << type_to_string(result_col.col->type) << " in file '"
+         << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
+    }
     }
   }
 };
@@ -549,12 +631,19 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
   //	cerr << "\n";
 
   if (chunk.__isset.file_path) {
-    throw runtime_error(
-        "Only inlined data files are supported (no references)");
+    std::stringstream ss;
+    ss << "Only inlined Parquet files are supported (no references). "
+       << "Could not read Parquet file '" << filename << "' @ "
+       << __FILE__ << ":" << __LINE__;
+    throw runtime_error(ss.str());
   }
 
   if (chunk.meta_data.path_in_schema.size() != 1) {
-    throw runtime_error("Only flat tables are supported (no nesting)");
+    std::stringstream ss;
+    ss << "Only flat Parquet files are supported (no nesting). "
+       << "Could not read Parwuet file '" << filename << "' @ "
+      << __FILE__ << ":" << __LINE__;
+    throw runtime_error(ss.str());
   }
 
   // ugh. sometimes there is an extra offset for the dict. sometimes it's wrong.
@@ -573,11 +662,14 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
 
   pfile.read(chunk_buf.ptr, chunk_len);
   if (!pfile) {
-    throw runtime_error("Could not read chunk. File corrupt?");
+    std::stringstream ss;
+    ss << "Could not read Parquet column chunk. Possibly currupt file '"
+       << filename << "' @ " << __FILE__ << ":" << __LINE__;
+    throw runtime_error(ss.str());
   }
 
   // now we have whole chunk in buffer, proceed to read pages
-  ColumnScan cs;
+  ColumnScan cs(filename);
   auto bytes_to_read = chunk_len;
 
   // handle fixed len byte arrays, their length lives in schema
@@ -597,7 +689,7 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
     // this is the only other place where we actually unpack a thrift object
     cs.page_header = PageHeader();
     thrift_unpack((const uint8_t *)chunk_buf.ptr, (uint32_t *)&page_header_len,
-                  &cs.page_header);
+                  &cs.page_header, filename);
     //
     //		cs.page_header.printTo(cerr);
     //		cerr << "\n";
@@ -627,7 +719,10 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
                                        cs.page_header.compressed_page_size,
                                        decompressed_buf.ptr);
       if (!res) {
-        throw runtime_error("Decompression failure");
+        std::stringstream ss;
+        ss << "Decompression failure, possibly corrupt Parquet file '"
+           << filename << "' @ " << __FILE__ << ":" << __LINE__;
+        throw runtime_error(ss.str());
       }
 
       cs.page_buf_ptr = (char *)decompressed_buf.ptr;
@@ -635,9 +730,13 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
 
       break;
     }
-    default:
-      throw runtime_error(
-          "Unsupported compression codec. Try uncompressed or snappy");
+    default: {
+      std::stringstream ss;
+      ss << "Unsupported Parquet compression codec:"
+         << chunk.meta_data.codec << " in Parwuet file '" << filename
+         << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
+    }
     }
 
     cs.page_buf_end_ptr = cs.page_buf_ptr + cs.page_buf_len;
@@ -651,8 +750,12 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
       cs.scan_data_page(result_col, has_def_levels);
       break;
     }
-    case PageType::DATA_PAGE_V2:
-      throw runtime_error("v2 data page format is not supported");
+    case PageType::DATA_PAGE_V2: {
+      std::stringstream ss;
+      ss << "v2 data page format is not supported in Parquet file '"
+         << filename << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
+    }
 
     default:
       break; // ignore INDEX page type and any other custom extensions
@@ -699,14 +802,21 @@ void ParquetFile::initialize_column(ResultColumn &col, uint64_t num_rows) {
     auto s_ele = columns[col.id]->schema_element;
 
     if (!s_ele->__isset.type_length) {
-      throw runtime_error("need a type length for fixed byte array");
+      std::stringstream ss;
+      ss << "No type length for FIXED_LEN_BYTE_ARRAY, invalid Parquet file '"
+         << filename << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
     }
     col.data.resize(num_rows * sizeof(char *), false);
     break;
   }
 
-  default:
-    throw runtime_error("Unsupported type " + type_to_string(col.col->type));
+  default: {
+    std::stringstream ss;
+    ss << "Unsupported Parquet type " << type_to_string(col.col->type)
+       << " in file '" << filename << "' @ " << __FILE__ << ":" << __LINE__;
+    throw runtime_error(ss.str());
+  }
   }
 }
 
@@ -750,20 +860,23 @@ ParquetFile::read_page_header(int64_t pos) {
   pfile.seekg(pos, ios_base::beg);
   pfile.read(tmp_buf.ptr, len);
   if (pfile.eof()) {
-    throw runtime_error(
-      "End of file while reading Parquet file. This "
-      "should not happen, please report it"
-    );
+    std::stringstream ss;
+    ss << "End of file while reading, possibly corrupt Parquet file '"
+       << filename << "; @ " << __FILE__ << ":" << __LINE__;
+    throw runtime_error(ss.str());
   }
   PageHeader ph;
   uint32_t ph_size = len;
-  thrift_unpack((const uint8_t *) tmp_buf.ptr, &ph_size, &ph);
+  thrift_unpack((const uint8_t *) tmp_buf.ptr, &ph_size, &ph, filename);
   return std::make_pair(ph, ph_size);
 }
 
 void ParquetFile::read_chunk(int64_t offset, int64_t size, int8_t *buffer) {
   if (size > file_size - offset) {
-    throw runtime_error("Cannot read past the end of a Parquet file");
+    std::stringstream ss;
+    ss << "Unexpected end of Parquet file, possibly corrupt file '"
+       << filename << "' @ " << __FILE__ << ":" << __LINE__;
+    throw runtime_error(ss.str());
   }
   pfile.seekg(offset, ios_base::beg);
   pfile.read((char*) buffer, size);
