@@ -516,7 +516,7 @@ SEXP nanoparquet_encode_arrow_schema(SEXP rschema) {
   int size = builder.GetSize();
 
   SEXP result = PROTECT(Rf_allocVector(RAWSXP, size + 8));
-  char * presult = (char*) RAW(result);
+  unsigned char * presult = (unsigned char*) RAW(result);
   presult[0] = presult[1] = presult[2] = presult[3] = 0xff;
   int32_t isize = size;
   memcpy(presult + 4, &isize, 4);
