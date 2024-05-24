@@ -6,3 +6,4 @@
 ^[.]covrignore$
 ^vignettes$
 ^docs$
+^_pkgdown.yml$
