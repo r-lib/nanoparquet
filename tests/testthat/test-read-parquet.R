@@ -75,6 +75,8 @@ data_comparable <- function(df1, df2, dlt = .0001) {
 }
 
 test_that("various error cases", {
+  # https://github.com/llvm/llvm-project/issues/59432
+  if (is_asan()) skip("ASAN bug")
   expect_error(res <- read_parquet(""))
   expect_error(res <- read_parquet("DONTEXIST"))
   tf <- tempfile()
@@ -124,6 +126,8 @@ test_that("round trip with arrow", {
 
 test_that("round trip with duckdb", {
   skip_on_cran()
+  # https://github.com/llvm/llvm-project/issues/59432
+  if (is_asan()) skip("ASAN bug")
   mt <- test_df()
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

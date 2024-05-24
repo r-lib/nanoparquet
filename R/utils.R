@@ -18,3 +18,7 @@ capitalize <- function(x) {
 vcapply <- function(X, FUN, ...) {
   vapply(X, FUN, FUN.VALUE = character(1), ...)
 }
+
+is_asan <- function() {
+  .Call(is_asan_)
+}

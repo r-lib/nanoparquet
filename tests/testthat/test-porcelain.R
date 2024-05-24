@@ -5,11 +5,17 @@ test_that("parquet_pages", {
 
 test_that("read_parquet_page", {
   pf <- test_path("data/mtcars-arrow.parquet")
-  expect_error(read_parquet_page(pf, 5))
   page <- read_parquet_page(pf, 4)
   expect_snapshot(page)
   page2 <- read_parquet_page(pf, 444)
   expect_snapshot(page2)
+})
+
+test_that("read_parquet_page error", {
+  # https://github.com/llvm/llvm-project/issues/59432
+  if (is_asan()) skip("ASAN bug")
+  pf <- test_path("data/mtcars-arrow.parquet")
+  expect_error(read_parquet_page(pf, 5))
 })
 
 test_that("snappy", {

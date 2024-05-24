@@ -28,6 +28,20 @@ SEXP nanoparquet_base64_encode(SEXP x);
 SEXP snappy_compress_raw(SEXP x);
 SEXP snappy_uncompress_raw(SEXP x);
 
+SEXP is_asan_() {
+#if defined(__has_feature)
+#   if __has_feature(address_sanitizer) // for clang
+#       define __SANITIZE_ADDRESS__ // GCC already sets this
+#   endif
+#endif
+
+#ifdef __SANITIZE_ADDRESS__
+  return Rf_ScalarLogical(1);
+#else
+  return Rf_ScalarLogical(0);
+#endif
+}
+
 // R native routine registration
 #define CALLDEF(name, n) \
   { #name, (DL_FUNC)&name, n }
@@ -47,6 +61,8 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_base64_encode, 1),
   CALLDEF(snappy_compress_raw, 1),
   CALLDEF(snappy_uncompress_raw, 1),
+
+  CALLDEF(is_asan_, 0),
   {NULL, NULL, 0}
 };
 

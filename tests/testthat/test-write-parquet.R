@@ -88,6 +88,9 @@ df.to_parquet("%s", engine = "pyarrow")
 
   write_parquet(mt, tmp1, compression = "uncompressed")
   pyout <- py_read(tmp1, tmp2)
+  if (pyout$status != 0) {
+    stop("Failed to run Python, are all packages installed?")
+  }
   expect_snapshot(writeLines(pyout$stdout))
 
   mt2 <- read_parquet(tmp2)
@@ -95,6 +98,9 @@ df.to_parquet("%s", engine = "pyarrow")
 })
 
 test_that("errors", {
+  # https://github.com/llvm/llvm-project/issues/59432
+  if (is_asan()) skip("ASAN bug")
+
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
