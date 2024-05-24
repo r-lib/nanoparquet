@@ -317,15 +317,14 @@ SEXP nanoparquet_parse_arrow_schema(SEXP rbuf) {
     input,
     slen
   );
-  ByteBuffer bbuf;
-  bbuf.resize(olen);
+  SEXP tmpbuf = PROTECT(Rf_allocVector(RAWSXP, olen));
   base64::result bres = base64::base64_to_binary(
     input,
     slen,
-    (char*) bbuf.ptr
+    (char*) RAW(tmpbuf)
   );
   size_t rawlen = bres.count;
-  uint8_t *buf = (uint8_t*) bbuf.ptr;
+  uint8_t *buf = (uint8_t*) RAW(tmpbuf);
 
   if (rawlen < 4) {
     Rf_error("Invalid serialized Arrow schema");
@@ -353,6 +352,7 @@ SEXP nanoparquet_parse_arrow_schema(SEXP rbuf) {
     Rf_error("Failed to parse serialized Arrow schema");
   }
 
+  UNPROTECT(1);
   return res;
 }
 
