@@ -86,6 +86,7 @@
 <li>The <code>FIXED_LEN_BYTE_ARRAY</code> Parquet type is not supported, unless it represents a supported logical type.</li>
 <li>Only Snappy compression is supported.</li>
 <li>Encryption is not supported.</li>
+<li>Being single-threaded and not fully optimized, nanoparquet is probably not suited well for large data sets. It should be fine for a couple of gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro. For larger files, use Apache Arrow or DuckDB.</li>
 </ul>
 </div>
 <div class="section level2">
