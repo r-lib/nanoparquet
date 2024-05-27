@@ -31,7 +31,7 @@ SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width,
 
     decoder.GetBatch((uint32_t*) INTEGER(res), num_values);
 
-    UNPROTECT(prot);
+    UNPROTECT(prot); prot = 0;
     return res;
 
   } catch (std::exception &ex) {
@@ -67,7 +67,7 @@ SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
       res = Rf_lengthgets(res, rs);
     }
 
-    UNPROTECT(prot);
+    UNPROTECT(prot); prot = 0;
     return res;
 
   } catch (std::exception &ex) {
