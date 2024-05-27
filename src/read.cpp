@@ -25,6 +25,8 @@ extern "C" {
 
 SEXP nanoparquet_read(SEXP filesxp) {
 
+  int prot = 0;
+
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_read: Need single filename parameter");
   }
@@ -47,13 +49,13 @@ SEXP nanoparquet_read(SEXP filesxp) {
     auto ncols = f.columns.size();
     auto nrows = f.nrow;
 
-    SEXP retlist = PROTECT(NEW_LIST(ncols));
-    SEXP names = PROTECT(NEW_STRING(ncols));
+    SEXP retlist = PROTECT(NEW_LIST(ncols)); prot++;
+    SEXP names = PROTECT(NEW_STRING(ncols)); prot++;
     SET_NAMES(retlist, names);
-    UNPROTECT(1); // names
+    UNPROTECT(1); prot--; // names
 
-    SEXP dicts = PROTECT(Rf_allocVector(VECSXP, ncols));
-    SEXP types = PROTECT(Rf_allocVector(INTSXP, ncols));
+    SEXP dicts = PROTECT(Rf_allocVector(VECSXP, ncols)); prot++;
+    SEXP types = PROTECT(Rf_allocVector(INTSXP, ncols)); prot++;
 
     // we sometimes need to multiply TIME and TIMESTAMP data to convert
     // to seconds from NANOS or MILLIS
@@ -65,8 +67,9 @@ SEXP nanoparquet_read(SEXP filesxp) {
     for (size_t col_idx = 0; col_idx < ncols; col_idx++) {
       SEXP varname =
           PROTECT(Rf_mkCharCE(f.columns[col_idx]->name.c_str(), CE_UTF8));
+      prot++;
       SET_STRING_ELT(names, col_idx, varname);
-      UNPROTECT(1); // varname
+      UNPROTECT(1); prot--; // varname
 
       INTEGER(types)[col_idx] = f.columns[col_idx]->type;
 
@@ -74,36 +77,37 @@ SEXP nanoparquet_read(SEXP filesxp) {
       switch (f.columns[col_idx]->type) {
       case parquet::format::Type::BOOLEAN:
         varvalue = PROTECT(NEW_LOGICAL(nrows));
+        prot++;
         break;
       case parquet::format::Type::INT32: {
-        varvalue = PROTECT(NEW_INTEGER(nrows));
+        varvalue = PROTECT(NEW_INTEGER(nrows)); prot++;
         auto &s_ele = f.columns[col_idx]->schema_element;
         if ((s_ele->__isset.logicalType &&
              s_ele->logicalType.__isset.DATE) ||
             (s_ele->__isset.converted_type &&
              s_ele->converted_type == parquet::format::ConvertedType::DATE)) {
-          SEXP cl = PROTECT(Rf_mkString("Date"));
+          SEXP cl = PROTECT(Rf_mkString("Date")); prot++;
           SET_CLASS(varvalue, cl);
-          UNPROTECT(1);
+          UNPROTECT(1); prot--;
         } else if ((s_ele->__isset.logicalType &&
                     s_ele->logicalType.__isset.TIME &&
                     s_ele->logicalType.TIME.unit.__isset.MILLIS) ||
                    (s_ele->__isset.converted_type &&
                     s_ele->converted_type == parquet::format::ConvertedType::TIME_MILLIS)) {
           // note: if not MILLIS and INT32, we'll read it as plain INT32
-          SEXP cl = PROTECT(Rf_allocVector(STRSXP, 2));
+          SEXP cl = PROTECT(Rf_allocVector(STRSXP, 2)); prot++;
           SET_STRING_ELT(cl, 0, Rf_mkChar("hms"));
           SET_STRING_ELT(cl, 1, Rf_mkChar("difftime"));
           SET_CLASS(varvalue, cl);
           Rf_setAttrib(varvalue, Rf_install("units"), Rf_mkString("secs"));
-          UNPROTECT(1);
+          UNPROTECT(1); prot--;
         }
         break;
       }
       case parquet::format::Type::INT64:
       case parquet::format::Type::DOUBLE:
       case parquet::format::Type::FLOAT: {
-        varvalue = PROTECT(NEW_NUMERIC(nrows));
+        varvalue = PROTECT(NEW_NUMERIC(nrows)); prot++;
         auto &s_ele = f.columns[col_idx]->schema_element;
         if ((s_ele->__isset.logicalType &&
              s_ele->logicalType.__isset.TIMESTAMP &&
@@ -129,7 +133,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
               time_factors[col_idx] = 1000;
             }
           }
-          SEXP cl = PROTECT(Rf_allocVector(STRSXP, 2));
+          SEXP cl = PROTECT(Rf_allocVector(STRSXP, 2)); prot++;
           SET_STRING_ELT(cl, 0, Rf_mkChar("POSIXct"));
           SET_STRING_ELT(cl, 1, Rf_mkChar("POSIXt"));
           SET_CLASS(varvalue, cl);
@@ -139,7 +143,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
                s_ele->logicalType.TIMESTAMP.isAdjustedToUTC)) {
             Rf_setAttrib(varvalue, Rf_install("tzone"), Rf_mkString("UTC"));
           }
-          UNPROTECT(1);
+          UNPROTECT(1); prot--;
         } else if ((s_ele->__isset.logicalType &&
                     s_ele->logicalType.__isset.TIME &&
                     (s_ele->logicalType.TIME.unit.__isset.MICROS ||
@@ -157,24 +161,24 @@ SEXP nanoparquet_read(SEXP filesxp) {
           } else if (s_ele->converted_type == parquet::format::ConvertedType::TIME_MICROS) {
             time_factors[col_idx] = 1000;
           }
-          SEXP cl = PROTECT(Rf_allocVector(STRSXP, 2));
+          SEXP cl = PROTECT(Rf_allocVector(STRSXP, 2)); prot++;
           SET_STRING_ELT(cl, 0, Rf_mkChar("hms"));
           SET_STRING_ELT(cl, 1, Rf_mkChar("difftime"));
           SET_CLASS(varvalue, cl);
           Rf_setAttrib(varvalue, Rf_install("units"), Rf_mkString("secs"));
-          UNPROTECT(1);
+          UNPROTECT(1); prot--;
         }
         break;
       }
       case parquet::format::Type::INT96: {
-        varvalue = PROTECT(NEW_NUMERIC(nrows));
-        SEXP cl = PROTECT(NEW_STRING(2));
-        SET_STRING_ELT(cl, 0, PROTECT(Rf_mkChar("POSIXct")));
-        SET_STRING_ELT(cl, 1, PROTECT(Rf_mkChar("POSIXt")));
+        varvalue = PROTECT(NEW_NUMERIC(nrows)); prot++;
+        SEXP cl = PROTECT(NEW_STRING(2)); prot++;
+        SET_STRING_ELT(cl, 0, PROTECT(Rf_mkChar("POSIXct"))); prot++;
+        SET_STRING_ELT(cl, 1, PROTECT(Rf_mkChar("POSIXt"))); prot ++;
         SET_CLASS(varvalue, cl);
         Rf_setAttrib(varvalue, Rf_install("tzone"),
-                     PROTECT(Rf_mkString("UTC")));
-        UNPROTECT(4);
+                     PROTECT(Rf_mkString("UTC"))); prot++;
+        UNPROTECT(4); prot-=4;
         break;
       }
       case parquet::format::Type::FIXED_LEN_BYTE_ARRAY: { // oof
@@ -184,10 +188,9 @@ SEXP nanoparquet_read(SEXP filesxp) {
         }
         switch (s_ele->converted_type) {
         case parquet::format::ConvertedType::DECIMAL:
-          varvalue = PROTECT(NEW_NUMERIC(nrows));
+          varvalue = PROTECT(NEW_NUMERIC(nrows)); prot++;
           break;
         default:
-          UNPROTECT(1); // retlist
           auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
               s_ele->converted_type);
           Rf_error("nanoparquet_read: Unknown FLBA type %s", it->second);
@@ -195,17 +198,16 @@ SEXP nanoparquet_read(SEXP filesxp) {
         break;
       }
       case parquet::format::Type::BYTE_ARRAY:
-        varvalue = PROTECT(NEW_STRING(nrows));
+        varvalue = PROTECT(NEW_STRING(nrows)); prot++;
         break;
       default:
-        UNPROTECT(1); // retlist
         auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
             f.columns[col_idx]->type);
         Rf_error("nanoparquet_read: Unknown column type %s",
                  it->second); // unlikely
       }
       SET_VECTOR_ELT(retlist, col_idx, varvalue);
-      UNPROTECT(1); /* varvalue */
+      UNPROTECT(1); prot--; /* varvalue */
     }
 
     // at this point retlist, dicts are the only protected SEXPs
@@ -222,12 +224,12 @@ SEXP nanoparquet_read(SEXP filesxp) {
         auto &col = rc.cols[col_idx];
         if (col.dict) {
           auto strings = col.dict->dict;
-          SEXP rd = PROTECT(Rf_allocVector(STRSXP, strings.size()));
+          SEXP rd = PROTECT(Rf_allocVector(STRSXP, strings.size())); prot++;
           for (auto i = 0; i < strings.size(); i++) {
             SET_STRING_ELT(rd, i, Rf_mkCharCE(strings[i], CE_UTF8));
           }
           SET_VECTOR_ELT(dicts, col_idx, rd);
-          UNPROTECT(1);
+          UNPROTECT(1); prot--;
           col.dict.reset();
         }
         SEXP dest = VECTOR_ELT(retlist, col_idx);
@@ -260,7 +262,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
                 NUMERIC_POINTER(dest)[row_idx + dest_offset] = NA_REAL;
                 break;
               default:
-                UNPROTECT(1); // retlist
+                UNPROTECT(1); prot--; // retlist
                 auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
                     s_ele->converted_type);
                 Rf_error("nanoparquet_read: Unknown FLBA type %s", it->second);
@@ -273,7 +275,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
               break;
 
             default: {
-              UNPROTECT(1); // retlist
+              UNPROTECT(1); prot--; // retlist
               auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
                   f.columns[col_idx]->type);
               Rf_error("nanoparquet_read: Unknown column type %s",
@@ -340,7 +342,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
 
             break;
             default:
-              UNPROTECT(1); // retlist
+              UNPROTECT(1); prot--; // retlist
               auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
                   s_ele->converted_type);
               Rf_error("nanoparquet_read: Unknown FLBA type %s", it->second);
@@ -357,7 +359,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
           default: {
             auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
                 f.columns[col_idx]->type);
-            UNPROTECT(1); // retlist
+            UNPROTECT(1); prot--; // retlist
             Rf_error("nanoparquet_read: Unknown column type %s",
                      it->second); // unlikely
           }
@@ -368,12 +370,12 @@ SEXP nanoparquet_read(SEXP filesxp) {
     }
     assert(dest_offset == nrows);
 
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3)); prot++;
     SET_VECTOR_ELT(res, 0, retlist);
     SET_VECTOR_ELT(res, 1, dicts);
     SET_VECTOR_ELT(res, 2, types);
 
-    UNPROTECT(4); // + retlist, dicts, types
+    UNPROTECT(prot); // + retlist, dicts, types
     return res;
 
   } catch (std::exception &ex) {
@@ -385,7 +387,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
   }
 
   // never reached
-  UNPROTECT(4);
+  UNPROTECT(prot);
   return R_NilValue;
 }
 
