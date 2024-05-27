@@ -8,6 +8,7 @@ using namespace std;
 extern "C" {
 
 SEXP nanoparquet_read_pages(SEXP filesxp) {
+  int prot = 0;
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_read: Need single filename parameter");
   }
@@ -65,7 +66,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
       "page_header_length",
       ""
     };
-    SEXP res = PROTECT(Rf_mkNamed(VECSXP, resnms));
+    SEXP res = PROTECT(Rf_mkNamed(VECSXP, resnms)); prot++;
     SEXP file_name = Rf_allocVector(STRSXP, num_pages);
     SET_VECTOR_ELT(res, 0, file_name);
     SEXP row_group = Rf_allocVector(INTSXP, num_pages);
@@ -95,7 +96,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
     SEXP page_header_length = Rf_allocVector(INTSXP, num_pages);
     SET_VECTOR_ELT(res, 13, page_header_length);
 
-    SEXP chr_file_name = PROTECT(Rf_mkChar(fname));
+    SEXP chr_file_name = PROTECT(Rf_mkChar(fname)); prot++;
 
     size_t page = 0;
     for (auto i = 0; i < rgs.size(); i++) {
@@ -168,7 +169,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
       }
     }
 
-    UNPROTECT(2);
+    UNPROTECT(prot);
     return res;
 
   } catch (std::exception &ex) {
@@ -180,7 +181,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
   }
 
   // never reached
-  UNPROTECT(2);
+  UNPROTECT(prot);
   return R_NilValue;
 }
 
@@ -275,6 +276,7 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
 }
 
 SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
+  int prot = 0;
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_read: Need single filename parameter");
   }
@@ -337,7 +339,7 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
       ""
     };
 
-    SEXP res = PROTECT(Rf_mkNamed(VECSXP, resnms));
+    SEXP res = PROTECT(Rf_mkNamed(VECSXP, resnms)); prot++;
     SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(pd.page_type));
     SET_VECTOR_ELT(res, 1, Rf_ScalarInteger(pd.row_group_no));
     SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(pd.column_no));
@@ -378,7 +380,7 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
       (int8_t*) RAW(VECTOR_ELT(res, 19))
     );
 
-    UNPROTECT(1);
+    UNPROTECT(prot);
     return res;
 
   } catch (std::exception &ex) {
@@ -390,7 +392,7 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
   }
 
   // never reached
-  UNPROTECT(1);
+  UNPROTECT(prot);
   return R_NilValue;
 }
 

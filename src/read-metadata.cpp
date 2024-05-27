@@ -344,6 +344,7 @@ SEXP convert_column_chunks(const char *file_name,
 }
 
 SEXP nanoparquet_read_metadata(SEXP filesxp) {
+  int prot = 0;
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_read: Need single filename parameter");
@@ -364,7 +365,7 @@ SEXP nanoparquet_read_metadata(SEXP filesxp) {
       "column_chunks",
       ""
       };
-    SEXP res = PROTECT(Rf_mkNamed(VECSXP, res_nms));
+    SEXP res = PROTECT(Rf_mkNamed(VECSXP, res_nms)); prot++;
 
     parquet::format::FileMetaData fmd = f.file_meta_data;
     const char *fmd_nms[] = {
@@ -375,7 +376,7 @@ SEXP nanoparquet_read_metadata(SEXP filesxp) {
       "created_by",
       ""
     };
-    SEXP rfmd = PROTECT(Rf_mkNamed(VECSXP, fmd_nms));
+    SEXP rfmd = PROTECT(Rf_mkNamed(VECSXP, fmd_nms)); prot++;
     SET_VECTOR_ELT(rfmd, 0, Rf_mkString(fname));
     SET_VECTOR_ELT(rfmd, 1, Rf_ScalarInteger(fmd.version));
     SET_VECTOR_ELT(rfmd, 2, Rf_ScalarReal(fmd.num_rows));
@@ -386,13 +387,13 @@ SEXP nanoparquet_read_metadata(SEXP filesxp) {
     // TODO: encryption algorithm
     // TODO: footer_signing_key_metadata
     SET_VECTOR_ELT(res, 0, rfmd);
-    UNPROTECT(1); // rfmd
+    UNPROTECT(1); prot--; // rfmd
 
     SET_VECTOR_ELT(res, 1, convert_schema(fname, fmd.schema));
     SET_VECTOR_ELT(res, 2, convert_row_groups(fname, fmd.row_groups));
     SET_VECTOR_ELT(res, 3, convert_column_chunks(fname, fmd.row_groups));
 
-    UNPROTECT(1); //res
+    UNPROTECT(prot); //res
     return res;
 
   } catch (std::exception &ex) {
@@ -404,10 +405,12 @@ SEXP nanoparquet_read_metadata(SEXP filesxp) {
   }
 
   // never reached
+  UNPROTECT(prot);
   return R_NilValue;
 }
 
 SEXP nanoparquet_read_schema(SEXP filesxp) {
+  int prot = 0;
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_read: Need single filename parameter");
   }
@@ -417,9 +420,11 @@ SEXP nanoparquet_read_schema(SEXP filesxp) {
 
   try {
 
-    const char *fname = CHAR(STRING_ELT(filesxp, 0));
+    SEXP cfname = PROTECT(STRING_ELT(filesxp, 0)); prot++;
+    const char *fname = CHAR(cfname);
     ParquetFile f(fname);
     parquet::format::FileMetaData fmd = f.file_meta_data;
+    UNPROTECT(prot);
     return convert_schema(fname, fmd.schema);
 
   } catch (std::exception &ex) {
@@ -431,6 +436,7 @@ SEXP nanoparquet_read_schema(SEXP filesxp) {
   }
 
   // never reached
+  UNPROTECT(prot);
   return R_NilValue;
 }
 

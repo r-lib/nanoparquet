@@ -7,6 +7,7 @@ extern "C" {
 
 SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width,
                                 SEXP includes_length, SEXP length) {
+  int prot = 0;
   uint8_t *buf = (uint8_t *) RAW(x);
   R_xlen_t len = Rf_xlength(x);
   uint32_t num_values;
@@ -26,11 +27,11 @@ SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width,
   try {
 
     RleBpDecoder decoder(buf, len, INTEGER(bit_width)[0]);
-    SEXP res = PROTECT(Rf_allocVector(INTSXP, num_values));
+    SEXP res = PROTECT(Rf_allocVector(INTSXP, num_values)); prot++;
 
     decoder.GetBatch((uint32_t*) INTEGER(res), num_values);
 
-    UNPROTECT(1);
+    UNPROTECT(prot);
     return res;
 
   } catch (std::exception &ex) {
@@ -42,11 +43,12 @@ SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width,
   }                                      // # nocov
 
   // never reached
-  UNPROTECT(1);
+  UNPROTECT(prot);
   return R_NilValue; // # nocov
 }
 
 SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
+  int prot = 0;
   int *input = INTEGER(x);
   R_xlen_t input_len = Rf_xlength(x);
   uint8_t bw = INTEGER(bit_width)[0];
@@ -57,7 +59,7 @@ SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
   try {
 
     size_t os = MaxRleBpSize(input, input_len, bw);
-    SEXP res = PROTECT(Rf_allocVector(RAWSXP, os));
+    SEXP res = PROTECT(Rf_allocVector(RAWSXP, os)); prot++;
     uint8_t *output = (uint8_t *) RAW(res);
     size_t rs = RleBpEncode(input, input_len, bw, output, os);
 
@@ -65,7 +67,7 @@ SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
       res = Rf_lengthgets(res, rs);
     }
 
-    UNPROTECT(1);
+    UNPROTECT(prot);
     return res;
 
   } catch (std::exception &ex) {
@@ -77,7 +79,7 @@ SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
   }                                      // # nocov
 
   // never reached
-  UNPROTECT(1);
+  UNPROTECT(prot);
   return R_NilValue; // # nocov
 }
 
