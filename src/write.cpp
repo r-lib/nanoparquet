@@ -416,7 +416,7 @@ void RParquetOutFile::write(
     SEXP rrequired) {
   df = dfsxp;
   required = rrequired;
-  SEXP nms = Rf_getAttrib(dfsxp, R_NamesSymbol);
+  SEXP nms = PROTECT(Rf_getAttrib(dfsxp, R_NamesSymbol));
   R_xlen_t nr = INTEGER(dim)[0];
   set_num_rows(nr);
   R_xlen_t nc = INTEGER(dim)[1];
@@ -505,6 +505,8 @@ void RParquetOutFile::write(
   }
 
   ParquetOutFile::write();
+
+  UNPROTECT(1);
 }
 
 extern "C" {

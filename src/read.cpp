@@ -385,6 +385,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
   }
 
   // never reached
+  UNPROTECT(4);
   return R_NilValue;
 }
 

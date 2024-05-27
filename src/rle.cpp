@@ -42,6 +42,7 @@ SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width,
   }                                      // # nocov
 
   // never reached
+  UNPROTECT(1);
   return R_NilValue; // # nocov
 }
 
@@ -76,6 +77,7 @@ SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
   }                                      // # nocov
 
   // never reached
+  UNPROTECT(1);
   return R_NilValue; // # nocov
 }
 

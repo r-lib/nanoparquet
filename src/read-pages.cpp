@@ -180,6 +180,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
   }
 
   // never reached
+  UNPROTECT(2);
   return R_NilValue;
 }
 
@@ -389,6 +390,7 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
   }
 
   // never reached
+  UNPROTECT(1);
   return R_NilValue;
 }
 
