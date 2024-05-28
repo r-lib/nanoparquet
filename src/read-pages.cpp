@@ -261,124 +261,110 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
 }
 
 SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
-  int prot = 0;
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_read: Need single filename parameter");
   }
   int64_t page_header_offset = REAL(page)[0];
 
-  char error_buffer[8192];
-  error_buffer[0] = '\0';
-
-  try {
-    const char *fname = CHAR(STRING_ELT(filesxp, 0));
-    ParquetFile f(fname);
-    // Find where it is in the file
-    PageData pd = find_page(f, page_header_offset);
-    // Need to find some metadata about this column
-    auto schema = f.file_meta_data.schema;
-    int leafs = 0;
-    for (int i = 0; i < schema.size(); i++) {
-      parquet::format::SchemaElement se = schema[i];
-      if (se.__isset.num_children) { continue; }
-      if (leafs == pd.column_no) {
-        pd.schema_column_no = i;
-        pd.data_type = se.type;
-        // all columns but the root have one, so this must have one
-        pd.repetition_type = se.repetition_type;
-        pd.has_definition_levels = pd.page_type ==
-          parquet::format::PageType::DATA_PAGE &&
-          se.repetition_type !=
-          parquet::format::FieldRepetitionType::REQUIRED;
-        break;
-      }
-      leafs++;
+  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
+  R_API_START();
+  const char *fname = CHAR(STRING_ELT(filesxp, 0));
+  ParquetFile f(fname);
+  // Find where it is in the file
+  PageData pd = find_page(f, page_header_offset);
+  // Need to find some metadata about this column
+  auto schema = f.file_meta_data.schema;
+  int leafs = 0;
+  for (int i = 0; i < schema.size(); i++) {
+    parquet::format::SchemaElement se = schema[i];
+    if (se.__isset.num_children) { continue; }
+    if (leafs == pd.column_no) {
+      pd.schema_column_no = i;
+      pd.data_type = se.type;
+      // all columns but the root have one, so this must have one
+      pd.repetition_type = se.repetition_type;
+      pd.has_definition_levels = pd.page_type ==
+        parquet::format::PageType::DATA_PAGE &&
+        se.repetition_type !=
+        parquet::format::FieldRepetitionType::REQUIRED;
+      break;
     }
-    if (leafs != pd.column_no) {
-      throw runtime_error(
-        "Could not find column in schema, broken Parquet file?"
-      );
-    }
+    leafs++;
+  }
+  if (leafs != pd.column_no) {
+    throw runtime_error(
+      "Could not find column in schema, broken Parquet file?"
+    );
+  }
 
-    const char *resnms[] = {
-      "page_type",
-      "row_group",
-      "column",
-      "page_header_offset",
-      "data_page_offset",
-      "page_header_length",
-      "compressed_page_size",
-      "uncompressed_page_size",
-      "codec",
-      "num_values",
-      "encoding",
-      "definition_level_encoding",
-      "repetition_level_encoding",
-      "has_repetition_levels",
-      "has_definition_levels",
-      "schema_column",
-      "data_type",
-      "repetition_type",
-      "page_header",
-      "data",
-      ""
-    };
+  const char *resnms[] = {
+    "page_type",
+    "row_group",
+    "column",
+    "page_header_offset",
+    "data_page_offset",
+    "page_header_length",
+    "compressed_page_size",
+    "uncompressed_page_size",
+    "codec",
+    "num_values",
+    "encoding",
+    "definition_level_encoding",
+    "repetition_level_encoding",
+    "has_repetition_levels",
+    "has_definition_levels",
+    "schema_column",
+    "data_type",
+    "repetition_type",
+    "page_header",
+    "data",
+    ""
+  };
 
-    SEXP res = PROTECT(Rf_mkNamed(VECSXP, resnms)); prot++;
-    SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(pd.page_type));
-    SET_VECTOR_ELT(res, 1, Rf_ScalarInteger(pd.row_group_no));
-    SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(pd.column_no));
-    SET_VECTOR_ELT(res, 3, Rf_ScalarReal(pd.page_header_offset));
-    SET_VECTOR_ELT(res, 4, Rf_ScalarReal(pd.data_offset));
-    SET_VECTOR_ELT(res, 5, Rf_ScalarInteger(pd.page_header_length));
-    SET_VECTOR_ELT(res, 6, Rf_ScalarInteger(pd.compressed_page_size));
-    SET_VECTOR_ELT(res, 7, Rf_ScalarInteger(pd.uncompressed_page_size));
-    SET_VECTOR_ELT(res, 8, Rf_ScalarInteger(pd.codec));
-    SET_VECTOR_ELT(res, 9, Rf_ScalarInteger(NA_INTEGER));
-    SET_VECTOR_ELT(res, 10, Rf_ScalarInteger(NA_INTEGER));
-    SET_VECTOR_ELT(res, 11, Rf_ScalarInteger(NA_INTEGER));
-    SET_VECTOR_ELT(res, 12, Rf_ScalarInteger(NA_INTEGER));
-    if (pd.page_type == parquet::format::PageType::DATA_PAGE ||
-       pd.page_type == parquet::format::PageType::DICTIONARY_PAGE) {
-      SET_VECTOR_ELT(res, 9, Rf_ScalarInteger(pd.num_values));
-      SET_VECTOR_ELT(res, 10, Rf_ScalarInteger(pd.encoding));
-    }
+  SEXP res = PROTECT(safe_mknamed_vec(resnms, &uwtoken));
+  SET_VECTOR_ELT(res, 0, safe_scalarinteger(pd.page_type, &uwtoken));
+  SET_VECTOR_ELT(res, 1, safe_scalarinteger(pd.row_group_no, &uwtoken));
+  SET_VECTOR_ELT(res, 2, safe_scalarinteger(pd.column_no, &uwtoken));
+  SET_VECTOR_ELT(res, 3, safe_scalarreal(pd.page_header_offset, &uwtoken));
+  SET_VECTOR_ELT(res, 4, safe_scalarreal(pd.data_offset, &uwtoken));
+  SET_VECTOR_ELT(res, 5, safe_scalarinteger(pd.page_header_length, &uwtoken));
+  SET_VECTOR_ELT(res, 6, safe_scalarinteger(pd.compressed_page_size, &uwtoken));
+  SET_VECTOR_ELT(res, 7, safe_scalarinteger(pd.uncompressed_page_size, &uwtoken));
+  SET_VECTOR_ELT(res, 8, safe_scalarinteger(pd.codec, &uwtoken));
+  SET_VECTOR_ELT(res, 9, safe_scalarinteger(NA_INTEGER, &uwtoken));
+  SET_VECTOR_ELT(res, 10, safe_scalarinteger(NA_INTEGER, &uwtoken));
+  SET_VECTOR_ELT(res, 11, safe_scalarinteger(NA_INTEGER, &uwtoken));
+  SET_VECTOR_ELT(res, 12, safe_scalarinteger(NA_INTEGER, &uwtoken));
+  if (pd.page_type == parquet::format::PageType::DATA_PAGE ||
+     pd.page_type == parquet::format::PageType::DICTIONARY_PAGE) {
+    SET_VECTOR_ELT(res, 9, safe_scalarinteger(pd.num_values, &uwtoken));
+    SET_VECTOR_ELT(res, 10, safe_scalarinteger(pd.encoding, &uwtoken));
+  }
     if (pd.page_type == parquet::format::PageType::DATA_PAGE) {
-      SET_VECTOR_ELT(res, 11, Rf_ScalarInteger(pd.definition_level_encoding));
-      SET_VECTOR_ELT(res, 12, Rf_ScalarInteger(pd.repetition_level_encoding));
+      SET_VECTOR_ELT(res, 11, safe_scalarinteger(pd.definition_level_encoding, &uwtoken));
+      SET_VECTOR_ELT(res, 12, safe_scalarinteger(pd.repetition_level_encoding, &uwtoken));
     }
-    SET_VECTOR_ELT(res, 13, Rf_ScalarLogical(pd.has_repetition_levels));
-    SET_VECTOR_ELT(res, 14, Rf_ScalarLogical(pd.has_definition_levels));
-    SET_VECTOR_ELT(res, 15, Rf_ScalarInteger(pd.schema_column_no));
-    SET_VECTOR_ELT(res, 16, Rf_ScalarInteger(pd.data_type));
-    SET_VECTOR_ELT(res, 17, Rf_ScalarInteger(pd.repetition_type));
-    SET_VECTOR_ELT(res, 18, Rf_allocVector(RAWSXP, pd.page_header_length));
+    SET_VECTOR_ELT(res, 13, safe_scalarlogical(pd.has_repetition_levels, &uwtoken));
+    SET_VECTOR_ELT(res, 14, safe_scalarlogical(pd.has_definition_levels, &uwtoken));
+    SET_VECTOR_ELT(res, 15, safe_scalarinteger(pd.schema_column_no, &uwtoken));
+    SET_VECTOR_ELT(res, 16, safe_scalarinteger(pd.data_type, &uwtoken));
+    SET_VECTOR_ELT(res, 17, safe_scalarinteger(pd.repetition_type, &uwtoken));
+    SET_VECTOR_ELT(res, 18, safe_allocvector_raw(pd.page_header_length, &uwtoken));
     f.read_chunk(
       pd.page_header_offset,
       pd.page_header_length,
       (int8_t*) RAW(VECTOR_ELT(res, 18))
     );
-    SET_VECTOR_ELT(res, 19, Rf_allocVector(RAWSXP, pd.compressed_page_size));
+    SET_VECTOR_ELT(res, 19, safe_allocvector_raw(pd.compressed_page_size, &uwtoken));
     f.read_chunk(
       pd.data_offset,
       pd.compressed_page_size,
       (int8_t*) RAW(VECTOR_ELT(res, 19))
     );
 
-    UNPROTECT(prot);
+    UNPROTECT(2);
     return res;
-
-  } catch (std::exception &ex) {
-    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1);
-  }
-
-  if (error_buffer[0] != '\0') {
-    Rf_error("%s", error_buffer);
-  }
-
-  // never reached
-  UNPROTECT(prot);
-  return R_NilValue;
+  R_API_END();
 }
 
 } // extern "C"

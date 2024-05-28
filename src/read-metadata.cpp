@@ -1,13 +1,15 @@
 #include "lib/nanoparquet.h"
 
 #include <Rdefines.h>
+#include "protect.h"
 
 using namespace nanoparquet;
 using namespace std;
 
 extern "C" {
 
-SEXP convert_logical_type(parquet::format::LogicalType ltype) {
+// Does not throw C++ exceptions, so we can wrap it
+SEXP convert_logical_type_(parquet::format::LogicalType ltype) {
   SEXP rtype = R_NilValue;
   int prot = 0;
   if (ltype.__isset.STRING) {
@@ -108,31 +110,48 @@ SEXP convert_logical_type(parquet::format::LogicalType ltype) {
   return rtype;
 }
 
+SEXP convert_logical_type_wrapper(void *data) {
+  parquet::format::LogicalType *ltype = (parquet::format::LogicalType*) data;
+  return convert_logical_type_(*ltype);
+}
+
+SEXP convert_logical_type(parquet::format::LogicalType ltype, SEXP *uwt) {
+  return R_UnwindProtect(
+    convert_logical_type_wrapper,
+    &ltype,
+    throw_error,
+    uwt,
+    *uwt
+  );
+}
+
 SEXP convert_key_value_metadata(const parquet::format::FileMetaData &fmd) {
+  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
+  R_API_START();
   auto kvsize =
     fmd.__isset.key_value_metadata ? fmd.key_value_metadata.size() : 0;
   const char *kv_nms[] = { "key", "value", "" };
-  SEXP kv = PROTECT(Rf_mkNamed(VECSXP, kv_nms));
-  SEXP key = Rf_allocVector(STRSXP, kvsize);
+  SEXP kv = PROTECT(safe_mknamed_vec(kv_nms, &uwtoken));
+  SEXP key = safe_allocvector_str(kvsize, &uwtoken);
   SET_VECTOR_ELT(kv, 0, key);
-  SEXP val = Rf_allocVector(STRSXP, kvsize);
+  SEXP val = safe_allocvector_str(kvsize, &uwtoken);
   SET_VECTOR_ELT(kv, 1, val);
   if (kvsize > 0) {
     for (R_xlen_t i = 0; i < kvsize; i++) {
       const parquet::format::KeyValue &el = fmd.key_value_metadata[i];
-      SET_STRING_ELT(key, i, Rf_mkChar(el.key.c_str()));
+      SET_STRING_ELT(key, i, safe_mkchar(el.key.c_str(), &uwtoken));
       SET_STRING_ELT(val, i,
-        el.__isset.value ? Rf_mkChar(el.value.c_str()) : NA_STRING);
+        el.__isset.value ? safe_mkchar(el.value.c_str(), &uwtoken) : NA_STRING);
     }
   }
 
-  UNPROTECT(1);
+  UNPROTECT(2);
   return kv;
+  R_API_END()
 }
 
 SEXP convert_schema(const char *cfile_name,
                     vector<parquet::format::SchemaElement>& schema) {
-  uint64_t nc = schema.size();
   const char *col_nms[] = {
     "file_name",
     "name",
@@ -147,36 +166,40 @@ SEXP convert_schema(const char *cfile_name,
     "field_id",
     ""
   };
-  SEXP columns = PROTECT(Rf_mkNamed(VECSXP, col_nms));
 
-  SEXP rfile_name = PROTECT(Rf_mkChar(cfile_name));
-  SEXP file_name = Rf_allocVector(STRSXP, nc);
+  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
+  R_API_START();
+
+  uint64_t nc = schema.size();
+  SEXP columns = PROTECT(safe_mknamed_vec(col_nms, &uwtoken));
+  SEXP rfile_name = PROTECT(safe_mkchar(cfile_name, &uwtoken));
+  SEXP file_name = safe_allocvector_str(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 0, file_name);
-  SEXP name = Rf_allocVector(STRSXP, nc);
+  SEXP name = safe_allocvector_str(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 1, name);
-  SEXP type = Rf_allocVector(INTSXP, nc);
+  SEXP type = safe_allocvector_int(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 2, type);
-  SEXP type_length = Rf_allocVector(INTSXP, nc);
+  SEXP type_length = safe_allocvector_int(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 3, type_length);
-  SEXP repetition_type = Rf_allocVector(INTSXP, nc);
+  SEXP repetition_type = safe_allocvector_int(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 4, repetition_type);
-  SEXP converted_type = Rf_allocVector(INTSXP, nc);
+  SEXP converted_type = safe_allocvector_int(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 5, converted_type);
-  SEXP logical_type = Rf_allocVector(VECSXP, nc);
+  SEXP logical_type = safe_allocvector_vec(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 6, logical_type);
-  SEXP num_children = Rf_allocVector(INTSXP, nc);
+  SEXP num_children = safe_allocvector_int(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 7, num_children);
-  SEXP scale = Rf_allocVector(INTSXP, nc);
+  SEXP scale = safe_allocvector_int(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 8, scale);
-  SEXP precision = Rf_allocVector(INTSXP, nc);
+  SEXP precision = safe_allocvector_int(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 9, precision);
-  SEXP field_id = Rf_allocVector(INTSXP, nc);
+  SEXP field_id = safe_allocvector_int(nc, &uwtoken);
   SET_VECTOR_ELT(columns, 10, field_id);
 
   for (uint64_t idx = 0; idx < nc; idx++) {
     parquet::format::SchemaElement sch = schema[idx];
     SET_STRING_ELT(file_name, idx, rfile_name);
-    SET_STRING_ELT(name, idx, Rf_mkChar(sch.name.c_str()));
+    SET_STRING_ELT(name, idx, safe_mkchar(sch.name.c_str(), &uwtoken));
     INTEGER(type)[idx] = sch.__isset.type ? sch.type : NA_INTEGER;
     INTEGER(type_length)[idx] =
       sch.__isset.type_length ? sch.type_length : NA_INTEGER;
@@ -185,7 +208,7 @@ SEXP convert_schema(const char *cfile_name,
     INTEGER(converted_type)[idx] =
     sch.__isset.converted_type ? sch.converted_type : NA_INTEGER;
     if (sch.__isset.logicalType) {
-      SET_VECTOR_ELT(logical_type, idx, convert_logical_type(sch.logicalType));
+      SET_VECTOR_ELT(logical_type, idx, convert_logical_type(sch.logicalType, &uwtoken));
     }
     INTEGER(num_children)[idx] =
       sch.__isset.num_children ? sch.num_children : NA_INTEGER;
@@ -195,8 +218,9 @@ SEXP convert_schema(const char *cfile_name,
     INTEGER(field_id)[idx] = sch.__isset.field_id ? sch.field_id : NA_INTEGER;
   }
 
-  UNPROTECT(2);
+  UNPROTECT(3);
   return columns;
+  R_API_END();
 }
 
 SEXP convert_row_groups(const char *cfile_name,
@@ -211,17 +235,21 @@ SEXP convert_row_groups(const char *cfile_name,
     "ordinal",
     ""
   };
-  auto nrgs = rgs.size();
-  SEXP rrgs = PROTECT(Rf_mkNamed(VECSXP, nms));
-  SEXP rfile_name = PROTECT(Rf_mkChar(cfile_name));
 
-  SET_VECTOR_ELT(rrgs, 0, Rf_allocVector(STRSXP, nrgs));
-  SET_VECTOR_ELT(rrgs, 1, Rf_allocVector(INTSXP, nrgs));
-  SET_VECTOR_ELT(rrgs, 2, Rf_allocVector(REALSXP, nrgs));
-  SET_VECTOR_ELT(rrgs, 3, Rf_allocVector(REALSXP, nrgs));
-  SET_VECTOR_ELT(rrgs, 4, Rf_allocVector(REALSXP, nrgs));
-  SET_VECTOR_ELT(rrgs, 5, Rf_allocVector(REALSXP, nrgs));
-  SET_VECTOR_ELT(rrgs, 6, Rf_allocVector(INTSXP, nrgs));
+  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
+  R_API_START();
+
+  auto nrgs = rgs.size();
+  SEXP rrgs = PROTECT(safe_mknamed_vec(nms, &uwtoken));
+  SEXP rfile_name = PROTECT(safe_mkchar(cfile_name, &uwtoken));
+
+  SET_VECTOR_ELT(rrgs, 0, safe_allocvector_str(nrgs, &uwtoken));
+  SET_VECTOR_ELT(rrgs, 1, safe_allocvector_int(nrgs, &uwtoken));
+  SET_VECTOR_ELT(rrgs, 2, safe_allocvector_real(nrgs, &uwtoken));
+  SET_VECTOR_ELT(rrgs, 3, safe_allocvector_real(nrgs, &uwtoken));
+  SET_VECTOR_ELT(rrgs, 4, safe_allocvector_real(nrgs, &uwtoken));
+  SET_VECTOR_ELT(rrgs, 5, safe_allocvector_real(nrgs, &uwtoken));
+  SET_VECTOR_ELT(rrgs, 6, safe_allocvector_int(nrgs, &uwtoken));
 
   for (auto i = 0; i < nrgs; i++) {
     SET_STRING_ELT(VECTOR_ELT(rrgs, 0), i, rfile_name);
@@ -236,8 +264,9 @@ SEXP convert_row_groups(const char *cfile_name,
       rgs[i].__isset.ordinal ? rgs[i].ordinal : NA_INTEGER;
   }
 
-  UNPROTECT(2);
+  UNPROTECT(3);
   return rrgs;
+  R_API_END();
 }
 
 SEXP convert_column_chunks(const char *file_name,
@@ -268,33 +297,36 @@ SEXP convert_column_chunks(const char *file_name,
     ""
   };
 
+  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
+  R_API_START();
+
   int nccs = 0;
   for (auto i = 0; i < rgs.size(); i++) {
     nccs += rgs[i].columns.size();
   }
 
-  SEXP rccs = PROTECT(Rf_mkNamed(VECSXP, nms));
-  SET_VECTOR_ELT(rccs,  0, Rf_allocVector(STRSXP, nccs));   // file_name
-  SET_VECTOR_ELT(rccs,  1, Rf_allocVector(INTSXP, nccs));   // row_group
-  SET_VECTOR_ELT(rccs,  2, Rf_allocVector(INTSXP, nccs));   // column
-  SET_VECTOR_ELT(rccs,  3, Rf_allocVector(STRSXP, nccs));   // file_path
-  SET_VECTOR_ELT(rccs,  4, Rf_allocVector(REALSXP, nccs));  // file_offset
-  SET_VECTOR_ELT(rccs,  5, Rf_allocVector(REALSXP, nccs));  // offset_index_offset
-  SET_VECTOR_ELT(rccs,  6, Rf_allocVector(INTSXP, nccs));   // offset_index_length
-  SET_VECTOR_ELT(rccs,  7, Rf_allocVector(REALSXP, nccs));  // column_index_offset
-  SET_VECTOR_ELT(rccs,  8, Rf_allocVector(INTSXP, nccs));   // column_index_length
-  SET_VECTOR_ELT(rccs,  9, Rf_allocVector(INTSXP, nccs));   // type
-  SET_VECTOR_ELT(rccs, 10, Rf_allocVector(VECSXP, nccs));   // encodings
-  SET_VECTOR_ELT(rccs, 11, Rf_allocVector(VECSXP, nccs));   // path_in_schema
-  SET_VECTOR_ELT(rccs, 12, Rf_allocVector(INTSXP, nccs));   // codec
-  SET_VECTOR_ELT(rccs, 13, Rf_allocVector(REALSXP, nccs));  // num_values
-  SET_VECTOR_ELT(rccs, 14, Rf_allocVector(REALSXP, nccs));  // total_uncompressed_size
-  SET_VECTOR_ELT(rccs, 15, Rf_allocVector(REALSXP, nccs));  // total_compressed_size
-  SET_VECTOR_ELT(rccs, 16, Rf_allocVector(REALSXP, nccs));  // data_page_offset
-  SET_VECTOR_ELT(rccs, 17, Rf_allocVector(REALSXP, nccs));  // index_page_offset
-  SET_VECTOR_ELT(rccs, 18, Rf_allocVector(REALSXP, nccs));  // dictionary_page_offset
+  SEXP rccs = PROTECT(safe_mknamed_vec(nms, &uwtoken));
+  SET_VECTOR_ELT(rccs,  0, safe_allocvector_str(nccs, &uwtoken));   // file_name
+  SET_VECTOR_ELT(rccs,  1, safe_allocvector_int(nccs, &uwtoken));   // row_group
+  SET_VECTOR_ELT(rccs,  2, safe_allocvector_int(nccs, &uwtoken));   // column
+  SET_VECTOR_ELT(rccs,  3, safe_allocvector_str(nccs, &uwtoken));   // file_path
+  SET_VECTOR_ELT(rccs,  4, safe_allocvector_real(nccs, &uwtoken));  // file_offset
+  SET_VECTOR_ELT(rccs,  5, safe_allocvector_real(nccs, &uwtoken));  // offset_index_offset
+  SET_VECTOR_ELT(rccs,  6, safe_allocvector_int(nccs, &uwtoken));   // offset_index_length
+  SET_VECTOR_ELT(rccs,  7, safe_allocvector_real(nccs, &uwtoken));  // column_index_offset
+  SET_VECTOR_ELT(rccs,  8, safe_allocvector_int(nccs, &uwtoken));   // column_index_length
+  SET_VECTOR_ELT(rccs,  9, safe_allocvector_int(nccs, &uwtoken));   // type
+  SET_VECTOR_ELT(rccs, 10, safe_allocvector_vec(nccs, &uwtoken));   // encodings
+  SET_VECTOR_ELT(rccs, 11, safe_allocvector_vec(nccs, &uwtoken));   // path_in_schema
+  SET_VECTOR_ELT(rccs, 12, safe_allocvector_int(nccs, &uwtoken));   // codec
+  SET_VECTOR_ELT(rccs, 13, safe_allocvector_real(nccs, &uwtoken));  // num_values
+  SET_VECTOR_ELT(rccs, 14, safe_allocvector_real(nccs, &uwtoken));  // total_uncompressed_size
+  SET_VECTOR_ELT(rccs, 15, safe_allocvector_real(nccs, &uwtoken));  // total_compressed_size
+  SET_VECTOR_ELT(rccs, 16, safe_allocvector_real(nccs, &uwtoken));  // data_page_offset
+  SET_VECTOR_ELT(rccs, 17, safe_allocvector_real(nccs, &uwtoken));  // index_page_offset
+  SET_VECTOR_ELT(rccs, 18, safe_allocvector_real(nccs, &uwtoken));  // dictionary_page_offset
 
-  SEXP rfile_name = PROTECT(Rf_mkChar(file_name));
+  SEXP rfile_name = PROTECT(safe_mkchar(file_name, &uwtoken));
 
   int idx = 0;
   for (int i = 0; i < rgs.size(); i++) {
@@ -305,7 +337,7 @@ SEXP convert_column_chunks(const char *file_name,
       INTEGER(VECTOR_ELT(rccs, 1))[idx] = i;
       INTEGER(VECTOR_ELT(rccs, 2))[idx] = j;
       SET_STRING_ELT(VECTOR_ELT(rccs, 3), idx,
-        cc.__isset.file_path ? Rf_mkChar(cc.file_path.c_str()) : NA_STRING);
+        cc.__isset.file_path ? safe_mkchar(cc.file_path.c_str(), &uwtoken) : NA_STRING);
       REAL(VECTOR_ELT(rccs, 4))[idx] = cc.file_offset;
       REAL(VECTOR_ELT(rccs, 5))[idx] =
         cc.__isset.offset_index_offset ? cc.offset_index_offset : NA_REAL;
@@ -316,14 +348,14 @@ SEXP convert_column_chunks(const char *file_name,
       INTEGER(VECTOR_ELT(rccs, 8))[idx] =
         cc.__isset.column_index_length ? cc.column_index_length : NA_INTEGER;
       INTEGER(VECTOR_ELT(rccs, 9))[idx] = cmd.type;
-      SET_VECTOR_ELT(VECTOR_ELT(rccs, 10), idx, Rf_allocVector(INTSXP, cmd.encodings.size()));
+      SET_VECTOR_ELT(VECTOR_ELT(rccs, 10), idx, safe_allocvector_int(cmd.encodings.size(), &uwtoken));
       for (auto k = 0; k < cmd.encodings.size(); k++) {
         INTEGER(VECTOR_ELT(VECTOR_ELT(rccs, 10), idx))[k] = cmd.encodings[k];
       }
-      SET_VECTOR_ELT(VECTOR_ELT(rccs, 11), idx, Rf_allocVector(STRSXP, cmd.path_in_schema.size()));
+      SET_VECTOR_ELT(VECTOR_ELT(rccs, 11), idx, safe_allocvector_str(cmd.path_in_schema.size(), &uwtoken));
       for (auto k = 0; k < cmd.path_in_schema.size(); k++) {
         SET_STRING_ELT(VECTOR_ELT(VECTOR_ELT(rccs, 11), idx), k,
-          Rf_mkChar(cmd.path_in_schema[k].c_str()));
+          safe_mkchar(cmd.path_in_schema[k].c_str(), &uwtoken));
       }
       INTEGER(VECTOR_ELT(rccs, 12))[idx] = cmd.codec;
       REAL(VECTOR_ELT(rccs, 13))[idx] = cmd.num_values;
@@ -339,105 +371,75 @@ SEXP convert_column_chunks(const char *file_name,
     }
   }
 
-  UNPROTECT(2); // rfile_name, rccs
+  UNPROTECT(3); // rfile_name, rccs, uwtoken
   return rccs;
+  R_API_END();
 }
 
 SEXP nanoparquet_read_metadata(SEXP filesxp) {
-  int prot = 0;
-
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_read: Need single filename parameter");
   }
 
-  char error_buffer[8192];
-  error_buffer[0] = '\0';
+  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
+  R_API_START();
 
-  try {
+  const char *fname = CHAR(STRING_ELT(filesxp, 0));
+  ParquetFile f(fname);
 
-    const char *fname = CHAR(STRING_ELT(filesxp, 0));
-    ParquetFile f(fname);
-
-    const char *res_nms[] = {
-      "file_meta_data",
-      "schema",
-      "row_groups",
-      "column_chunks",
-      ""
-      };
-    SEXP res = PROTECT(Rf_mkNamed(VECSXP, res_nms)); prot++;
-
-    parquet::format::FileMetaData fmd = f.file_meta_data;
-    const char *fmd_nms[] = {
-      "file_name",
-      "version",
-      "num_rows",
-      "key_value_metadata",
-      "created_by",
-      ""
+  const char *res_nms[] = {
+    "file_meta_data",
+    "schema",
+    "row_groups",
+    "column_chunks",
+    ""
     };
-    SEXP rfmd = PROTECT(Rf_mkNamed(VECSXP, fmd_nms)); prot++;
-    SET_VECTOR_ELT(rfmd, 0, Rf_mkString(fname));
-    SET_VECTOR_ELT(rfmd, 1, Rf_ScalarInteger(fmd.version));
-    SET_VECTOR_ELT(rfmd, 2, Rf_ScalarReal(fmd.num_rows));
-    SET_VECTOR_ELT(rfmd, 3, convert_key_value_metadata(fmd));
-    if (fmd.__isset.created_by) {
-      SET_VECTOR_ELT(rfmd, 4, Rf_mkString(fmd.created_by.c_str()));
-    }
-    // TODO: encryption algorithm
-    // TODO: footer_signing_key_metadata
-    SET_VECTOR_ELT(res, 0, rfmd);
-    UNPROTECT(1); prot--; // rfmd
+  SEXP res = PROTECT(safe_mknamed_vec(res_nms, &uwtoken));
 
-    SET_VECTOR_ELT(res, 1, convert_schema(fname, fmd.schema));
-    SET_VECTOR_ELT(res, 2, convert_row_groups(fname, fmd.row_groups));
-    SET_VECTOR_ELT(res, 3, convert_column_chunks(fname, fmd.row_groups));
-
-    UNPROTECT(prot); //res
-    return res;
-
-  } catch (std::exception &ex) {
-    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1);
+  parquet::format::FileMetaData fmd = f.file_meta_data;
+  const char *fmd_nms[] = {
+    "file_name",
+    "version",
+    "num_rows",
+    "key_value_metadata",
+    "created_by",
+    ""
+  };
+  SEXP rfmd = PROTECT(safe_mknamed_vec(fmd_nms, &uwtoken));
+  SET_VECTOR_ELT(rfmd, 0, safe_mkstring(fname, &uwtoken));
+  SET_VECTOR_ELT(rfmd, 1, safe_scalarinteger(fmd.version, &uwtoken));
+  SET_VECTOR_ELT(rfmd, 2, safe_scalarreal(fmd.num_rows, &uwtoken));
+  SET_VECTOR_ELT(rfmd, 3, convert_key_value_metadata(fmd));
+  if (fmd.__isset.created_by) {
+    SET_VECTOR_ELT(rfmd, 4, safe_mkstring(fmd.created_by.c_str(), &uwtoken));
   }
+  // TODO: encryption algorithm
+  // TODO: footer_signing_key_metadata
+  SET_VECTOR_ELT(res, 0, rfmd);
+  UNPROTECT(1); // rfmd
 
-  if (error_buffer[0] != '\0') {
-    Rf_error("%s", error_buffer);
-  }
+  SET_VECTOR_ELT(res, 1, convert_schema(fname, fmd.schema));
+  SET_VECTOR_ELT(res, 2, convert_row_groups(fname, fmd.row_groups));
+  SET_VECTOR_ELT(res, 3, convert_column_chunks(fname, fmd.row_groups));
 
-  // never reached
-  UNPROTECT(prot);
-  return R_NilValue;
+  UNPROTECT(2); //res
+  return res;
+  R_API_END();
 }
 
 SEXP nanoparquet_read_schema(SEXP filesxp) {
-  int prot = 0;
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_read: Need single filename parameter");
   }
 
-  char error_buffer[8192];
-  error_buffer[0] = '\0';
-
-  try {
-
-    SEXP cfname = PROTECT(STRING_ELT(filesxp, 0)); prot++;
-    const char *fname = CHAR(cfname);
-    ParquetFile f(fname);
-    parquet::format::FileMetaData fmd = f.file_meta_data;
-    UNPROTECT(prot);
-    return convert_schema(fname, fmd.schema);
-
-  } catch (std::exception &ex) {
-    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1);
-  }
-
-  if (error_buffer[0] != '\0') {
-    Rf_error("%s", error_buffer);
-  }
-
-  // never reached
-  UNPROTECT(prot);
-  return R_NilValue;
+  R_API_START();
+  SEXP cfname = PROTECT(STRING_ELT(filesxp, 0));
+  const char *fname = CHAR(cfname);
+  ParquetFile f(fname);
+  parquet::format::FileMetaData fmd = f.file_meta_data;
+  UNPROTECT(1);
+  return convert_schema(fname, fmd.schema);
+  R_API_END();
 }
 
 } // extern "C"
