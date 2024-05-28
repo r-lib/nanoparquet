@@ -187,8 +187,9 @@ SEXP nanoparquet_read(SEXP filesxp) {
       default:
         auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
             s_ele->converted_type);
-        // TODO: better error message
-        throw np_error({ uwtoken });
+        string msg = string("nanoparquet_read: Unknown FLBA type ") +
+          it->second + " @ " __FILE__ ":" STR(__LINE__) " (" + __func__ + ")";
+        throw msg;
       }
       break;
     }
@@ -198,7 +199,9 @@ SEXP nanoparquet_read(SEXP filesxp) {
     default:
       auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
           f.columns[col_idx]->type);
-      throw np_error({ uwtoken });
+      string msg = string("nanoparquet_read: Unknown column type ") +
+        it->second + " @ " __FILE__ ":" STR(__LINE__) " (" + __func__ + ")";
+      throw msg;
     }
     SET_VECTOR_ELT(retlist, col_idx, varvalue);
     UNPROTECT(1); /* varvalue */
@@ -258,7 +261,10 @@ SEXP nanoparquet_read(SEXP filesxp) {
             default:
               auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
                   s_ele->converted_type);
-              throw np_error({ uwtoken });
+              string msg = string("nanoparquet_read: Unknown column type ") +
+                it->second + " @ " __FILE__ ":" STR(__LINE__) " (" +
+                __func__ + ")";
+              throw msg;
             }
             break;
           }
@@ -270,7 +276,10 @@ SEXP nanoparquet_read(SEXP filesxp) {
           default: {
             auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
                 f.columns[col_idx]->type);
-            throw np_error({ uwtoken });
+            string msg = string("nanoparquet_read: Unknown column type ") +
+              it->second + " @ " __FILE__ ":" STR(__LINE__) " (" +
+              __func__ + ")";
+            throw msg;
             }
           }
           continue;
@@ -334,7 +343,10 @@ SEXP nanoparquet_read(SEXP filesxp) {
           default:
             auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
                 s_ele->converted_type);
-            throw np_error({ uwtoken });
+            string msg = string("nanoparquet_read: Unknown FLBA type ") +
+              it->second + " @ " __FILE__ ":" STR(__LINE__) " (" +
+              __func__ + ")";
+            throw msg;
             break;
           }
         }
@@ -347,7 +359,9 @@ SEXP nanoparquet_read(SEXP filesxp) {
         default: {
           auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
               f.columns[col_idx]->type);
-          throw np_error({ uwtoken });
+          string msg = string("nanoparquet_read: Unknown column type ") +
+            it->second + " @ " __FILE__ ":" STR(__LINE__) " (" + __func__ + ")";
+          throw msg;
         }
         }
       }

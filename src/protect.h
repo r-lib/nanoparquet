@@ -1,8 +1,10 @@
 #pragma once
 
+#include <string>
 #include <Rdefines.h>
 
-#define STR(x) #x
+#define STR(x) STR2(x)
+#define STR2(x) #x
 
 #define R_API_START()                                                    \
   SEXP err_ = R_NilValue;                                                \
@@ -18,7 +20,7 @@
   } catch(std::string& ex) {                                             \
     strncpy(error_buffer_, ex.c_str(), sizeof(error_buffer_) - 1);       \
   } catch(...) {                                                         \
-    Rf_error("error in " STR(__FILE__) " @ " STR(__PRETTY_FUNCTION__));  \
+    Rf_error("nanoparquet error @ " __FILE__ ":" STR(__LINE__));         \
   }                                                                      \
   if (!Rf_isNull(err_)) {                                                \
     R_ContinueUnwind(err_);                                              \
