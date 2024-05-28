@@ -1,6 +1,6 @@
 #include "lib/nanoparquet.h"
 
-#include <Rdefines.h>
+#include "protect.h"
 
 using namespace nanoparquet;
 using namespace std;
@@ -8,181 +8,166 @@ using namespace std;
 extern "C" {
 
 SEXP nanoparquet_read_pages(SEXP filesxp) {
-  int prot = 0;
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_read: Need single filename parameter");
   }
 
-  char error_buffer[8192];
-  error_buffer[0] = '\0';
+  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
+  R_API_START();
+  const char *fname = CHAR(STRING_ELT(filesxp, 0));
+  ParquetFile f(fname);
 
-  try {
+  // first go over the pages to see how many we have
+  size_t num_pages = 0;
+  parquet::format::FileMetaData fmd = f.file_meta_data;
+  vector<parquet::format::RowGroup> rgs = fmd.row_groups;
+  for (auto i = 0; i < rgs.size(); i++) {
+    for (auto j = 0; j < rgs[i].columns.size(); j++) {
+      parquet::format::ColumnChunk cc = rgs[i].columns[j];
+      parquet::format::ColumnMetaData cmd = cc.meta_data;
+      int64_t chunk_start = cmd.data_page_offset;
+      // dict?
+      if (cmd.__isset.dictionary_page_offset &&
+          cmd.dictionary_page_offset >= 4) {
+        chunk_start = cmd.dictionary_page_offset;
+      }
+      int64_t chunk_len = cmd.total_compressed_size;
 
-    const char *fname = CHAR(STRING_ELT(filesxp, 0));
-    ParquetFile f(fname);
-
-    // first go over the pages to see how many we have
-    size_t num_pages = 0;
-    parquet::format::FileMetaData fmd = f.file_meta_data;
-    vector<parquet::format::RowGroup> rgs = fmd.row_groups;
-    for (auto i = 0; i < rgs.size(); i++) {
-      for (auto j = 0; j < rgs[i].columns.size(); j++) {
-        parquet::format::ColumnChunk cc = rgs[i].columns[j];
-        parquet::format::ColumnMetaData cmd = cc.meta_data;
-        int64_t chunk_start = cmd.data_page_offset;
-        // dict?
-        if (cmd.__isset.dictionary_page_offset &&
-            cmd.dictionary_page_offset >= 4) {
-          chunk_start = cmd.dictionary_page_offset;
-        }
-        int64_t chunk_len = cmd.total_compressed_size;
-
-        int64_t end = chunk_start + chunk_len;
-        int64_t ofs = chunk_start;
-        while (ofs < end) {
-          pair<parquet::format::PageHeader, int64_t> ph =
-            f.read_page_header(ofs);
-          ofs += ph.second;
-          ofs += ph.first.compressed_page_size;
-          num_pages++;
-        }
+      int64_t end = chunk_start + chunk_len;
+      int64_t ofs = chunk_start;
+      while (ofs < end) {
+        pair<parquet::format::PageHeader, int64_t> ph =
+          f.read_page_header(ofs);
+        ofs += ph.second;
+        ofs += ph.first.compressed_page_size;
+        num_pages++;
       }
     }
+  }
 
-    const char *resnms[] = {
-      "file_name",
-      "row_group",
-      "column",
-      "page_type",
-      "page_header_offset",
-      "uncompressed_page_size",
-      "compressed_page_size",
-      "crc",
-      "num_values",
-      "encoding",
-      "definition_level_encoding",
-      "repetition_level_encoding",
-      "data_offset",
-      "page_header_length",
-      ""
-    };
-    SEXP res = PROTECT(Rf_mkNamed(VECSXP, resnms)); prot++;
-    SEXP file_name = Rf_allocVector(STRSXP, num_pages);
-    SET_VECTOR_ELT(res, 0, file_name);
-    SEXP row_group = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 1, row_group);
-    SEXP column = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 2, column);
-    SEXP page_type = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 3, page_type);
-    SEXP page_header_offset = Rf_allocVector(REALSXP, num_pages);
-    SET_VECTOR_ELT(res, 4, page_header_offset);
-    SEXP uncompressed_page_size = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 5, uncompressed_page_size);
-    SEXP compressed_page_size = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 6, compressed_page_size);
-    SEXP crc = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 7, crc);
-    SEXP num_values = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 8, num_values);
-    SEXP encoding = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 9, encoding);
-    SEXP definition_level_encoding = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 10, definition_level_encoding);
-    SEXP repetition_level_encoding = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 11, repetition_level_encoding);
-    SEXP data_offset = Rf_allocVector(REALSXP, num_pages);
-    SET_VECTOR_ELT(res, 12, data_offset);
-    SEXP page_header_length = Rf_allocVector(INTSXP, num_pages);
-    SET_VECTOR_ELT(res, 13, page_header_length);
+  const char *resnms[] = {
+    "file_name",
+    "row_group",
+    "column",
+    "page_type",
+    "page_header_offset",
+    "uncompressed_page_size",
+    "compressed_page_size",
+    "crc",
+    "num_values",
+    "encoding",
+    "definition_level_encoding",
+    "repetition_level_encoding",
+    "data_offset",
+    "page_header_length",
+    ""
+  };
+  SEXP res = PROTECT(safe_mknamed_vec(resnms, &uwtoken));
+  SEXP file_name = safe_allocvector_str(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 0, file_name);
+  SEXP row_group = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 1, row_group);
+  SEXP column = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 2, column);
+  SEXP page_type = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 3, page_type);
+  SEXP page_header_offset = safe_allocvector_real(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 4, page_header_offset);
+  SEXP uncompressed_page_size = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 5, uncompressed_page_size);
+  SEXP compressed_page_size = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 6, compressed_page_size);
+  SEXP crc = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 7, crc);
+  SEXP num_values = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 8, num_values);
+  SEXP encoding = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 9, encoding);
+  SEXP definition_level_encoding = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 10, definition_level_encoding);
+  SEXP repetition_level_encoding = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 11, repetition_level_encoding);
+  SEXP data_offset = safe_allocvector_real(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 12, data_offset);
+  SEXP page_header_length = safe_allocvector_int(num_pages, &uwtoken);
+  SET_VECTOR_ELT(res, 13, page_header_length);
 
-    SEXP chr_file_name = PROTECT(Rf_mkChar(fname)); prot++;
+  SEXP chr_file_name = PROTECT(safe_mkchar(fname, &uwtoken));
 
-    size_t page = 0;
-    for (auto i = 0; i < rgs.size(); i++) {
-      for (auto j = 0; j < rgs[i].columns.size(); j++) {
-        parquet::format::ColumnChunk cc = rgs[i].columns[j];
-        parquet::format::ColumnMetaData cmd = cc.meta_data;
-        int64_t chunk_start = cmd.data_page_offset;
-        // dict?
-        if (cmd.__isset.dictionary_page_offset &&
-            cmd.dictionary_page_offset >= 4) {
-          chunk_start = cmd.dictionary_page_offset;
+  size_t page = 0;
+  for (auto i = 0; i < rgs.size(); i++) {
+    for (auto j = 0; j < rgs[i].columns.size(); j++) {
+      parquet::format::ColumnChunk cc = rgs[i].columns[j];
+      parquet::format::ColumnMetaData cmd = cc.meta_data;
+      int64_t chunk_start = cmd.data_page_offset;
+      // dict?
+      if (cmd.__isset.dictionary_page_offset &&
+          cmd.dictionary_page_offset >= 4) {
+        chunk_start = cmd.dictionary_page_offset;
+      }
+      int64_t chunk_len = cmd.total_compressed_size;
+
+      int64_t end = chunk_start + chunk_len;
+      int64_t ofs = chunk_start;
+      while (ofs < end) {
+        pair<parquet::format::PageHeader, int64_t> ph =
+        f.read_page_header(ofs);
+
+        SET_STRING_ELT(file_name, page, chr_file_name);
+        INTEGER(row_group)[page] = i;
+        INTEGER(column)[page] = j;
+        INTEGER(page_type)[page] = ph.first.type;
+        INTEGER(uncompressed_page_size)[page] =
+          ph.first.uncompressed_page_size;
+        INTEGER(compressed_page_size)[page] =
+          ph.first.compressed_page_size;
+        INTEGER(crc)[page] =
+          ph.first.__isset.crc ? ph.first.crc : NA_INTEGER;
+        if (ph.first.type == parquet::format::PageType::DATA_PAGE) {
+          INTEGER(num_values)[page] =
+            ph.first.data_page_header.num_values;
+          INTEGER(encoding)[page] = ph.first.data_page_header.encoding;
+          INTEGER(definition_level_encoding)[page] =
+            ph.first.data_page_header.definition_level_encoding;
+          INTEGER(repetition_level_encoding)[page] =
+            ph.first.data_page_header.repetition_level_encoding;
+        } else if (ph.first.type ==
+                   parquet::format::PageType::DICTIONARY_PAGE) {
+          INTEGER(num_values)[page] =
+            ph.first.dictionary_page_header.num_values;
+          INTEGER(encoding)[page] =
+            ph.first.dictionary_page_header.encoding;
+          INTEGER(definition_level_encoding)[page] = NA_INTEGER;
+          INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
+        } else if (ph.first.type ==
+                   parquet::format::PageType::INDEX_PAGE) {
+          INTEGER(num_values)[page] = NA_INTEGER;
+          INTEGER(encoding)[page] = NA_INTEGER;
+          INTEGER(definition_level_encoding)[page] = NA_INTEGER;
+          INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
+        } else if (ph.first.type ==
+                   parquet::format::PageType::DATA_PAGE_V2) {
+          throw runtime_error("Data page v2 is not supported yet");
+        } else {
+          INTEGER(num_values)[page] = NA_INTEGER;
+          INTEGER(encoding)[page] = NA_INTEGER;
+          INTEGER(definition_level_encoding)[page] = NA_INTEGER;
+          INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
         }
-        int64_t chunk_len = cmd.total_compressed_size;
+        REAL(page_header_offset)[page] = ofs;
+        REAL(data_offset)[page] = ofs + ph.second;
+        INTEGER(page_header_length)[page] = ph.second;
 
-        int64_t end = chunk_start + chunk_len;
-        int64_t ofs = chunk_start;
-        while (ofs < end) {
-          pair<parquet::format::PageHeader, int64_t> ph =
-            f.read_page_header(ofs);
-
-          SET_STRING_ELT(file_name, page, chr_file_name);
-          INTEGER(row_group)[page] = i;
-          INTEGER(column)[page] = j;
-          INTEGER(page_type)[page] = ph.first.type;
-          INTEGER(uncompressed_page_size)[page] =
-            ph.first.uncompressed_page_size;
-          INTEGER(compressed_page_size)[page] =
-            ph.first.compressed_page_size;
-          INTEGER(crc)[page] =
-            ph.first.__isset.crc ? ph.first.crc : NA_INTEGER;
-          if (ph.first.type == parquet::format::PageType::DATA_PAGE) {
-            INTEGER(num_values)[page] =
-              ph.first.data_page_header.num_values;
-            INTEGER(encoding)[page] = ph.first.data_page_header.encoding;
-            INTEGER(definition_level_encoding)[page] =
-              ph.first.data_page_header.definition_level_encoding;
-            INTEGER(repetition_level_encoding)[page] =
-              ph.first.data_page_header.repetition_level_encoding;
-          } else if (ph.first.type ==
-                     parquet::format::PageType::DICTIONARY_PAGE) {
-            INTEGER(num_values)[page] =
-              ph.first.dictionary_page_header.num_values;
-            INTEGER(encoding)[page] =
-              ph.first.dictionary_page_header.encoding;
-            INTEGER(definition_level_encoding)[page] = NA_INTEGER;
-            INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
-          } else if (ph.first.type ==
-                     parquet::format::PageType::INDEX_PAGE) {
-            INTEGER(num_values)[page] = NA_INTEGER;
-            INTEGER(encoding)[page] = NA_INTEGER;
-            INTEGER(definition_level_encoding)[page] = NA_INTEGER;
-            INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
-          } else if (ph.first.type ==
-                     parquet::format::PageType::DATA_PAGE_V2) {
-            throw runtime_error("Data page v2 is not supported yet");
-          } else {
-            INTEGER(num_values)[page] = NA_INTEGER;
-            INTEGER(encoding)[page] = NA_INTEGER;
-            INTEGER(definition_level_encoding)[page] = NA_INTEGER;
-            INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
-          }
-          REAL(page_header_offset)[page] = ofs;
-          REAL(data_offset)[page] = ofs + ph.second;
-          INTEGER(page_header_length)[page] = ph.second;
-
-          ofs += ph.second;
-          ofs += ph.first.compressed_page_size;
-          page++;
-        }
+        ofs += ph.second;
+        ofs += ph.first.compressed_page_size;
+        page++;
       }
     }
-
-    UNPROTECT(prot);
-    return res;
-
-  } catch (std::exception &ex) {
-    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1);
   }
 
-  if (error_buffer[0] != '\0') {
-    Rf_error("%s", error_buffer);
-  }
-
-  // never reached
-  UNPROTECT(prot);
-  return R_NilValue;
+  UNPROTECT(3);
+  return res;
+  R_API_END();
 }
 
 struct PageData {
