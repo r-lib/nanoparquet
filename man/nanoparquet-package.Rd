@@ -4,9 +4,9 @@
 \name{nanoparquet-package}
 \alias{nanoparquet}
 \alias{nanoparquet-package}
-\title{nanoparquet: Read Parquet Files}
+\title{nanoparquet: Read and Write 'Parquet' Files}
 \description{
-Self-sufficient reader and writer for flat Parquet files. Can read most Parquet data types. Can write many R data types, including factors and temporal types. Supports Snappy compression.
+Self-sufficient reader and writer for flat 'Parquet' files. Can read most 'Parquet' data types. Can write many 'R' data types, including factors and temporal types. Supports 'Snappy' compression.
 }
 \details{
 \code{nanoparquet} is a reader and writer for a common subset of Parquet files.
