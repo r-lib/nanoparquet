@@ -430,11 +430,10 @@ parquet_columns <- function(file) {
 #'
 #' @export
 #' @seealso [parquet_metadata()], [read_parquet()].
-#' @examplesIf !nanoparquet:::is_rcmd_check()
+#' @examplesIf FALSE
 #' # add row names as a column, because `write_parquet()` ignores them.
 #' mtcars2 <- cbind(name = rownames(mtcars), mtcars)
 #' write_parquet(mtcars2, "mtcars.parquet")
-#' \dontshow{if (!nanoparquet:::is_rcmd_check()) unlink("mtcars.parquet")}
 
 write_parquet <- function(
 	x,
