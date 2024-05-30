@@ -1,4 +1,5 @@
-OBJECTS=parquet/parquet_constants.o parquet/parquet_types.o \
+OBJECTS=autodict.o \
+  parquet/parquet_constants.o parquet/parquet_types.o \
   thrift/protocol/TProtocol.o thrift/transport/TTransportException.o \
   thrift/transport/TBufferTransports.o \
   snappy/snappy.o snappy/snappy-sinksource.o \
