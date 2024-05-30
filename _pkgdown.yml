@@ -8,9 +8,8 @@ template:
 
 destination: docs
 
-# after release
-#development:
-#  mode: auto
+development:
+  mode: auto
 
 reference:
 - title: Type mappings
