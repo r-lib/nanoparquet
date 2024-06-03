@@ -279,3 +279,10 @@ test_that("RLE BOOLEAN", {
 
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
+
+test_that("read GZIP compressed files", {
+  pf <- test_path("data/gzip.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet(pf))
+  })
+})

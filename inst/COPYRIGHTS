@@ -34,3 +34,15 @@ In `src/flatbuffers`.
 `tools/parquet.thrift`.
 
 (c) Apache Software Foundation
+
+## `src/miniz/miniz_wrapper.hpp` from DuckDB
+
+(c) Hannes Mühleisen
+(c) Mark Mytherin
+
+## Miniz
+
+`/src/miniz`.
+
+(c) 2013-2014 RAD Game Tools and Valve Software
+(c) 2010-2014 Rich Geldreich and Tenacious Software LLC

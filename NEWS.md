@@ -6,6 +6,8 @@
   written in RLE encoding if they contain runs of repeated values.
   `NA` values are ignored when selecting the encoding.
 
+* `read_parquet()` can now read GZIP compressed Parquet files.
+
 * `read_parquet()` can now read `BOOLEAN` columns in `RLE` encoding.
 
 * `parquet_info()`, `parquet_metadata()` and `parquet_columns()` now work
