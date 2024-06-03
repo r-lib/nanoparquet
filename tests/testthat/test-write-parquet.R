@@ -12,6 +12,7 @@ test_that("factors are written as strings", {
 })
 
 test_that("round trip", {
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df()
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -28,6 +29,7 @@ test_that("round trip with arrow", {
   # Don't want to skip on the parquet capability missing, because then
   # this might not be tested on the CI. So rather we skip on CRAN.
   skip_on_cran()
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df(tibble = TRUE, factor = TRUE)
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -43,6 +45,7 @@ test_that("round trip with arrow", {
 })
 
 test_that("round trip with duckdb", {
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- as.data.frame(test_df())
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -59,6 +62,7 @@ test_that("round trip with duckdb", {
 
 test_that("round trip with pandas/pyarrow", {
   skip_on_cran()
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df()
   tmp1 <- tempfile(fileext = ".parquet")
   tmp2 <- tempfile(fileext = ".parquet")
@@ -190,6 +194,7 @@ test_that("REQ PLAIN", {
 })
 
 test_that("OPT PLAIN", {
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
@@ -224,7 +229,7 @@ test_that("OPT PLAIN", {
   })
 })
 
-test_that("REQ RLE", {
+test_that("REQ RLE_DICT", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
@@ -249,7 +254,7 @@ test_that("REQ RLE", {
   })
 })
 
-test_that("OPT RLE", {
+test_that("OPT RLE_DICT", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
@@ -275,6 +280,70 @@ test_that("OPT RLE", {
   expect_snapshot({
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
     read_parquet_page(tmp, pgs$page_header_offset[2])$data
+  })
+})
+
+test_that("REQ RLE", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    l = c(logical(30), !logical(5), logical(20), !logical(30))
+  )
+
+  write_parquet(d, tmp, compression = "uncompressed")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    parquet_metadata(tmp)$column_chunks$encodings
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
+  })
+  expect_equal(
+    rle_decode_int(data[-(1:4)], bit_width = 1L, nrow(d)),
+    d$l + 0L
+  )
+
+  write_parquet(d, tmp, compression = "snappy")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
+  })
+})
+
+test_that("OPT RLE", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    l = c(NA, logical(30), !logical(5), logical(20), NA, !logical(30))
+  )
+
+  write_parquet(d, tmp, compression = "uncompressed")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    parquet_metadata(tmp)$column_chunks$encodings
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
+  })
+  expect_equal(
+    rle_decode_int(data[-(1:4)], bit_width = 1L, nrow(d)),
+    0L + !is.na(d$l)
+  )
+  on.exit(close(con), add = TRUE)
+  def_len <- readBin(con <- rawConnection(data), "integer", 1)
+  expect_equal(
+    rle_decode_int(
+      data[-(1:(8+def_len))],
+      bit_width = 1L,
+      length(na.omit(d$l))
+    ),
+    0L + c(na.omit(d$l))
+  )
+
+  write_parquet(d, tmp, compression = "snappy")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
   })
 })
 

@@ -76,3 +76,9 @@ SEXP wrapped_setattrib(void *data) {
   struct safe_setattrib_data *rdata = (struct safe_setattrib_data *) data;
   return Rf_setAttrib(rdata->x, rdata->sym, rdata->val);
 }
+
+SEXP wrapped_xlengthgets(void *data) {
+  struct safe_xlengthgets_data *rdata =
+    (struct safe_xlengthgets_data *) data;
+  return Rf_xlengthgets(rdata->x, rdata->len);
+}

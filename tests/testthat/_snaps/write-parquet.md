@@ -253,7 +253,7 @@
        [1] 02 00 00 00 03 5c 01 00 00 00 41 01 00 00 00 42 01 00 00 00 43 01 00 00 00
       [26] 44
 
-# REQ RLE
+# REQ RLE_DICT
 
     Code
       read_parquet_page(tmp, pgs$page_header_offset[1])$data
@@ -279,7 +279,7 @@
     Output
       [1] 03 03 40 22 8d
 
-# OPT RLE
+# OPT RLE_DICT
 
     Code
       read_parquet_page(tmp, pgs$page_header_offset[1])$data
@@ -304,6 +304,58 @@
       read_parquet_page(tmp, pgs$page_header_offset[2])$data
     Output
        [1] 02 00 00 00 03 e6 03 03 88 46 00
+
+# REQ RLE
+
+    Code
+      parquet_metadata(tmp)$column_chunks$encodings
+    Output
+      [[1]]
+      [1] "RLE"
+      
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
+    Output
+       [1] 08 00 00 00 3c 00 03 1f 22 00 3c 01
+
+---
+
+    Code
+      parquet_metadata(tmp)$column_chunks$encodings
+    Output
+      [[1]]
+      [1] "RLE"
+      
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    Output
+       [1] 08 00 00 00 3c 00 03 1f 22 00 3c 01
+
+# OPT RLE
+
+    Code
+      parquet_metadata(tmp)$column_chunks$encodings
+    Output
+      [[1]]
+      [1] "RLE"
+      
+    Code
+      data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
+    Output
+       [1] 08 00 00 00 03 fe 60 01 03 fe 2e 01 08 00 00 00 3c 00 03 1f 22 00 3c 01
+
+---
+
+    Code
+      parquet_metadata(tmp)$column_chunks$encodings
+    Output
+      [[1]]
+      [1] "RLE"
+      
+    Code
+      read_parquet_page(tmp, pgs$page_header_offset[1])$data
+    Output
+       [1] 08 00 00 00 03 fe 60 01 03 fe 2e 01 08 00 00 00 3c 00 03 1f 22 00 3c 01
 
 # Factor levels not in the data
 

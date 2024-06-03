@@ -49,6 +49,7 @@ SEXP wrapped_scalarinteger(void *data);
 SEXP wrapped_scalarreal(void *data);
 SEXP wrapped_scalarlogical(void *data);
 SEXP wrapped_setattrib(void *data);
+SEXP wrapped_xlengthgets(void *data);
 
 inline SEXP safe_allocvector_raw(R_xlen_t len, SEXP *uwt) {
   return R_UnwindProtect(wrapped_rawsxp, &len, throw_error, uwt, *uwt);
@@ -111,4 +112,14 @@ struct safe_setattrib_data {
 inline SEXP safe_setattrib(SEXP x, SEXP sym, SEXP val, SEXP *uwt) {
   struct safe_setattrib_data d = { x, sym, val };
   return R_UnwindProtect(wrapped_setattrib, &d, throw_error, uwt, *uwt);
+}
+
+struct safe_xlengthgets_data {
+  SEXP x;
+  R_xlen_t len;
+};
+
+inline SEXP safe_xlengthgets(SEXP x, R_xlen_t len, SEXP *uwt) {
+  struct safe_xlengthgets_data d = { x, len };
+  return R_UnwindProtect(wrapped_xlengthgets, &d, throw_error, uwt, *uwt);
 }
