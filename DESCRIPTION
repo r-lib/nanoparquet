@@ -1,15 +1,15 @@
 Package: nanoparquet
-Title: Read Parquet Files
-Version: 0.2.0
+Title: Read and Write 'Parquet' Files
+Version: 0.2.0.9000
 Authors@R: c(
 	person("Gábor", "Csárdi", role = c("aut", "cre"), email = "csardi.gabor@gmail.com"),
 	person("Hannes", "Mühleisen", role = c("aut", "cph"), comment = c(ORCID = "0000-0001-8552-0029")),
 	person("Google Inc.", role = "cph"),
 	person("Apache Software Foundation", role = "cph"),
 	person("Posit Software, PBC", role = "cph"))
-Description: Self-sufficient reader and writer for flat Parquet files.
-    Can read most Parquet data types. Can write many R data types,
-    including factors and temporal types. Supports Snappy compression.
+Description: Self-sufficient reader and writer for flat 'Parquet' files.
+    Can read most 'Parquet' data types. Can write many 'R' data types,
+    including factors and temporal types. Supports 'Snappy' compression.
 Depends:
     R (>= 4.0.0)
 License: MIT + file LICENSE
