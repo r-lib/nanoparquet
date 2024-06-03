@@ -132,6 +132,13 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
           INTEGER(repetition_level_encoding)[page] =
             ph.first.data_page_header.repetition_level_encoding;
         } else if (ph.first.type ==
+                   parquet::format::PageType::DATA_PAGE_V2) {
+          INTEGER(num_values)[page] =
+            ph.first.data_page_header_v2.num_values;
+          INTEGER(encoding)[page] = ph.first.data_page_header_v2.encoding;
+          INTEGER(definition_level_encoding)[page] = NA_INTEGER;
+          INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
+        } else if (ph.first.type ==
                    parquet::format::PageType::DICTIONARY_PAGE) {
           INTEGER(num_values)[page] =
             ph.first.dictionary_page_header.num_values;
@@ -145,9 +152,6 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
           INTEGER(encoding)[page] = NA_INTEGER;
           INTEGER(definition_level_encoding)[page] = NA_INTEGER;
           INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
-        } else if (ph.first.type ==
-                   parquet::format::PageType::DATA_PAGE_V2) {
-          throw runtime_error("Data page v2 is not supported yet");
         } else {
           INTEGER(num_values)[page] = NA_INTEGER;
           INTEGER(encoding)[page] = NA_INTEGER;
@@ -239,13 +243,21 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
               ph.first.data_page_header.definition_level_encoding;
             pd.repetition_level_encoding =
               ph.first.data_page_header.repetition_level_encoding;
+          } else if (ph.first.type == parquet::format::PageType::DATA_PAGE_V2) {
+            pd.num_values = ph.first.data_page_header_v2.num_values;
+            pd.encoding = ph.first.data_page_header_v2.encoding;
+            pd.definition_level_encoding =
+              (parquet::format::Encoding::type) NA_INTEGER;
+            pd.repetition_level_encoding =
+              (parquet::format::Encoding::type) NA_INTEGER;
           } else if (ph.first.type ==
                      parquet::format::PageType::DICTIONARY_PAGE) {
             pd.num_values = ph.first.dictionary_page_header.num_values;
             pd.encoding = ph.first.dictionary_page_header.encoding;
           }
           pd.has_repetition_levels =
-            pd.page_type == parquet::format::PageType::DATA_PAGE &&
+            (pd.page_type == parquet::format::PageType::DATA_PAGE ||
+             pd.page_type == parquet::format::PageType::DATA_PAGE_V2) &&
             cmd.path_in_schema.size() >= 2;
           return pd;
         }
@@ -283,8 +295,9 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
       pd.data_type = se.type;
       // all columns but the root have one, so this must have one
       pd.repetition_type = se.repetition_type;
-      pd.has_definition_levels = pd.page_type ==
-        parquet::format::PageType::DATA_PAGE &&
+      pd.has_definition_levels =
+        (pd.page_type == parquet::format::PageType::DATA_PAGE ||
+         pd.page_type == parquet::format::PageType::DATA_PAGE_V2) &&
         se.repetition_type !=
         parquet::format::FieldRepetitionType::REQUIRED;
       break;
@@ -336,34 +349,35 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
   SET_VECTOR_ELT(res, 11, safe_scalarinteger(NA_INTEGER, &uwtoken));
   SET_VECTOR_ELT(res, 12, safe_scalarinteger(NA_INTEGER, &uwtoken));
   if (pd.page_type == parquet::format::PageType::DATA_PAGE ||
-     pd.page_type == parquet::format::PageType::DICTIONARY_PAGE) {
+      pd.page_type == parquet::format::PageType::DATA_PAGE_V2 ||
+      pd.page_type == parquet::format::PageType::DICTIONARY_PAGE) {
     SET_VECTOR_ELT(res, 9, safe_scalarinteger(pd.num_values, &uwtoken));
     SET_VECTOR_ELT(res, 10, safe_scalarinteger(pd.encoding, &uwtoken));
   }
-    if (pd.page_type == parquet::format::PageType::DATA_PAGE) {
-      SET_VECTOR_ELT(res, 11, safe_scalarinteger(pd.definition_level_encoding, &uwtoken));
-      SET_VECTOR_ELT(res, 12, safe_scalarinteger(pd.repetition_level_encoding, &uwtoken));
-    }
-    SET_VECTOR_ELT(res, 13, safe_scalarlogical(pd.has_repetition_levels, &uwtoken));
-    SET_VECTOR_ELT(res, 14, safe_scalarlogical(pd.has_definition_levels, &uwtoken));
-    SET_VECTOR_ELT(res, 15, safe_scalarinteger(pd.schema_column_no, &uwtoken));
-    SET_VECTOR_ELT(res, 16, safe_scalarinteger(pd.data_type, &uwtoken));
-    SET_VECTOR_ELT(res, 17, safe_scalarinteger(pd.repetition_type, &uwtoken));
-    SET_VECTOR_ELT(res, 18, safe_allocvector_raw(pd.page_header_length, &uwtoken));
-    f.read_chunk(
-      pd.page_header_offset,
-      pd.page_header_length,
-      (int8_t*) RAW(VECTOR_ELT(res, 18))
-    );
-    SET_VECTOR_ELT(res, 19, safe_allocvector_raw(pd.compressed_page_size, &uwtoken));
-    f.read_chunk(
-      pd.data_offset,
-      pd.compressed_page_size,
-      (int8_t*) RAW(VECTOR_ELT(res, 19))
-    );
+  if (pd.page_type == parquet::format::PageType::DATA_PAGE) {
+    SET_VECTOR_ELT(res, 11, safe_scalarinteger(pd.definition_level_encoding, &uwtoken));
+    SET_VECTOR_ELT(res, 12, safe_scalarinteger(pd.repetition_level_encoding, &uwtoken));
+  }
+  SET_VECTOR_ELT(res, 13, safe_scalarlogical(pd.has_repetition_levels, &uwtoken));
+  SET_VECTOR_ELT(res, 14, safe_scalarlogical(pd.has_definition_levels, &uwtoken));
+  SET_VECTOR_ELT(res, 15, safe_scalarinteger(pd.schema_column_no, &uwtoken));
+  SET_VECTOR_ELT(res, 16, safe_scalarinteger(pd.data_type, &uwtoken));
+  SET_VECTOR_ELT(res, 17, safe_scalarinteger(pd.repetition_type, &uwtoken));
+  SET_VECTOR_ELT(res, 18, safe_allocvector_raw(pd.page_header_length, &uwtoken));
+  f.read_chunk(
+    pd.page_header_offset,
+    pd.page_header_length,
+    (int8_t*) RAW(VECTOR_ELT(res, 18))
+  );
+  SET_VECTOR_ELT(res, 19, safe_allocvector_raw(pd.compressed_page_size, &uwtoken));
+  f.read_chunk(
+    pd.data_offset,
+    pd.compressed_page_size,
+    (int8_t*) RAW(VECTOR_ELT(res, 19))
+  );
 
-    UNPROTECT(2);
-    return res;
+  UNPROTECT(2);
+  return res;
   R_API_END();
 }
 
