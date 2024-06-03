@@ -253,7 +253,7 @@
        [1] 02 00 00 00 03 5c 01 00 00 00 41 01 00 00 00 42 01 00 00 00 43 01 00 00 00
       [26] 44
 
-# REQ RLE
+# REQ RLE_DICT
 
     Code
       read_parquet_page(tmp, pgs$page_header_offset[1])$data
@@ -279,7 +279,7 @@
     Output
       [1] 03 03 40 22 8d
 
-# OPT RLE
+# OPT RLE_DICT
 
     Code
       read_parquet_page(tmp, pgs$page_header_offset[1])$data

@@ -229,7 +229,7 @@ test_that("OPT PLAIN", {
   })
 })
 
-test_that("REQ RLE", {
+test_that("REQ RLE_DICT", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
@@ -254,7 +254,7 @@ test_that("REQ RLE", {
   })
 })
 
-test_that("OPT RLE", {
+test_that("OPT RLE_DICT", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
