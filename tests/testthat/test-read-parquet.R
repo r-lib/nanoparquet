@@ -279,3 +279,10 @@ test_that("RLE BOOLEAN", {
 
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
+
+test_that("V2 data pages", {
+  pf <- test_path("data/parquet_go.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet(pf))
+  })
+})

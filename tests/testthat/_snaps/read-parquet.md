@@ -53,3 +53,15 @@
                h
       1 600 secs
 
+# V2 data pages
+
+    Code
+      as.data.frame(read_parquet(pf))
+    Output
+        FirstName        Data
+      1      John Hello World
+      2      John Hello World
+      3      John Hello World
+      4      John Hello World
+      5      John Hello World
+
