@@ -412,6 +412,8 @@ SEXP nanoparquet_read_metadata(SEXP filesxp) {
   SET_VECTOR_ELT(rfmd, 3, convert_key_value_metadata(fmd));
   if (fmd.__isset.created_by) {
     SET_VECTOR_ELT(rfmd, 4, safe_mkstring(fmd.created_by.c_str(), &uwtoken));
+  } else {
+    SET_VECTOR_ELT(rfmd, 4, safe_scalarstring(NA_STRING, &uwtoken));
   }
   // TODO: encryption algorithm
   // TODO: footer_signing_key_metadata

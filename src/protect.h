@@ -48,6 +48,7 @@ SEXP wrapped_mkstring(void *data);
 SEXP wrapped_scalarinteger(void *data);
 SEXP wrapped_scalarreal(void *data);
 SEXP wrapped_scalarlogical(void *data);
+SEXP wrapped_scalarstring(void *data);
 SEXP wrapped_setattrib(void *data);
 SEXP wrapped_xlengthgets(void *data);
 
@@ -97,6 +98,10 @@ inline SEXP safe_scalarreal(double n, SEXP *uwt) {
 
 inline SEXP safe_scalarlogical(int n, SEXP *uwt) {
   return R_UnwindProtect(wrapped_scalarlogical, &n, throw_error, uwt, *uwt);
+}
+
+inline SEXP safe_scalarstring(SEXP x, SEXP *uwt) {
+  return R_UnwindProtect(wrapped_scalarstring, &x, throw_error, uwt, *uwt);
 }
 
 inline SEXP safe_mknamed_vec(const char **names, SEXP *uwt) {

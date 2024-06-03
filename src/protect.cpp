@@ -67,6 +67,11 @@ SEXP wrapped_scalarlogical(void *data) {
   return Rf_ScalarLogical(*n);
 }
 
+SEXP wrapped_scalarstring(void *data) {
+  SEXP *x = (SEXP*) data;
+  return Rf_ScalarString(*x);
+}
+
 SEXP wrapped_mknamed_vec(void *data) {
   const char ***rdata = (const char ***) data;
   return Rf_mkNamed(VECSXP, *rdata);
