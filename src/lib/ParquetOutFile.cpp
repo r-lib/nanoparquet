@@ -73,10 +73,15 @@ void ParquetOutFile::schema_add_column(std::string name,
   cmd.__set_type(type);
   vector<Encoding::type> encs;
   if (dict) {
-    encs.push_back(Encoding::PLAIN);            // the dict itself
-    encs.push_back(Encoding::RLE);              // definition levels
-    encs.push_back(Encoding::RLE_DICTIONARY);   // dictionary page
-    encodings.push_back(Encoding::RLE_DICTIONARY);
+    if (type == Type::BOOLEAN) {
+      encs.push_back(Encoding::RLE);              // def levels + BOOLEAN
+      encodings.push_back(Encoding::RLE);
+    } else {
+      encs.push_back(Encoding::PLAIN);            // the dict itself
+      encs.push_back(Encoding::RLE);              // definition levels
+      encs.push_back(Encoding::RLE_DICTIONARY);   // dictionary page
+      encodings.push_back(Encoding::RLE_DICTIONARY);
+    }
   } else {
     encs.push_back(Encoding::PLAIN);
     encodings.push_back(Encoding::PLAIN);
@@ -122,10 +127,15 @@ void ParquetOutFile::schema_add_column(
   cmd.__set_type(type);
   vector<Encoding::type> encs;
   if (dict) {
-    encs.push_back(Encoding::PLAIN);            // the dict itself
-    encs.push_back(Encoding::RLE);              // definition levels
-    encs.push_back(Encoding::RLE_DICTIONARY);   // dictionary page
-    encodings.push_back(Encoding::RLE_DICTIONARY);
+    if (type == Type::BOOLEAN) {
+      encs.push_back(Encoding::RLE);              // def levels + BOOLEAN
+      encodings.push_back(Encoding::RLE);
+    } else {
+      encs.push_back(Encoding::PLAIN);            // the dict itself
+      encs.push_back(Encoding::RLE);              // definition levels
+      encs.push_back(Encoding::RLE_DICTIONARY);   // dictionary page
+      encodings.push_back(Encoding::RLE_DICTIONARY);
+    }
   } else {
     encs.push_back(Encoding::PLAIN);
     encodings.push_back(Encoding::PLAIN);
@@ -602,10 +612,9 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
   } else if (se.repetition_type == FieldRepetitionType::REQUIRED &&
              encodings[idx] == Encoding::RLE_DICTIONARY &&
              cmd->codec == CompressionCodec::UNCOMPRESSED) {
-    // CASE 3: REQ, RLE, UNC
+    // CASE 3: REQ, RLE_DICT, UNC
     // 1. write dictionary indices to buf_unc
     uint32_t data_size = (until - from) * sizeof(int);
-    ph.__set_uncompressed_page_size(data_size);
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
@@ -634,7 +643,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
   } else if (se.repetition_type == FieldRepetitionType::REQUIRED &&
              encodings[idx] == Encoding::RLE_DICTIONARY &&
              cmd->codec != CompressionCodec::UNCOMPRESSED) {
-    // CASE 4: REQ, RLE, COMP
+    // CASE 4: REQ, RLE_DICT, COMP
     // 1. write dictionary indices to buf_unc
     uint32_t data_size = (until - from) * sizeof(int);
     ph.__set_uncompressed_page_size(data_size);
@@ -743,7 +752,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
   } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
              encodings[idx] == Encoding::RLE_DICTIONARY &&
              cmd->codec == CompressionCodec::UNCOMPRESSED) {
-    // CASE 7: OPT RLE UNC
+    // CASE 7: OPT RLE_DICT UNC
     // 1. write definition levels to buf_unc
     uint32_t miss_size = (until - from) * sizeof(int);
     buf_unc.reset(miss_size);
@@ -793,7 +802,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
   } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
              encodings[idx] == Encoding::RLE_DICTIONARY &&
              cmd->codec != CompressionCodec::UNCOMPRESSED) {
-    // CASE 8: OPT RLE COM
+    // CASE 8: OPT RLE_DICT COM
     // 1. write definition levels to buf_unc
     uint32_t miss_size = (until - from) * sizeof(int);
     buf_unc.reset(miss_size);
@@ -828,6 +837,168 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
       bit_width,
       true,        // add_bit_width
       false,       // add_size
+      rle_size     // skip
+    );
+
+    // 5. compress buf_com to buf_unc
+    size_t crle2_size = compress(cmd->codec, buf_com, rle2_size, buf_unc);
+
+    // 6. write buf_unc to file
+    ph.__set_uncompressed_page_size(rle2_size);
+    ph.__set_compressed_page_size(crle2_size);
+    write_page_header(idx, ph);
+    pfile.write((const char*) buf_unc.ptr, crle2_size);
+    cmd->__set_total_uncompressed_size(
+      cmd->total_uncompressed_size + rle2_size
+    );
+
+  } else if (se.repetition_type == FieldRepetitionType::REQUIRED &&
+             encodings[idx] == Encoding::RLE &&
+             cmd->codec == CompressionCodec::UNCOMPRESSED) {
+    // CASE 9: REQ, RLE, UNCOMP
+    // 1. write logicals into buf_unc
+    uint32_t data_size = (until - from) * sizeof(int);
+    buf_unc.reset(data_size);
+    std::unique_ptr<std::ostream> os0 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    write_boolean_as_int(*os0, idx, from, until);
+
+    // 2. RLE encode buf_unc to buf_com
+    uint32_t rle_size = rle_encode(
+      buf_unc,
+      until - from,
+      buf_com,
+      1,             // bit_width
+      false,         // add_bit_width
+      true           // add_size
+    );
+
+    // 3. write buf_com to file
+    ph.__set_uncompressed_page_size(rle_size);
+    ph.__set_compressed_page_size(rle_size);
+    write_page_header(idx, ph);
+    pfile.write((const char*) buf_com.ptr, rle_size);
+    cmd->__set_total_uncompressed_size(
+      cmd->total_uncompressed_size + rle_size
+    );
+
+  } else if (se.repetition_type == FieldRepetitionType::REQUIRED &&
+             encodings[idx] == Encoding::RLE &&
+             cmd->codec != CompressionCodec::UNCOMPRESSED) {
+    // CASE 10: REQ, RLE, COMP
+    // 1. write logicals into buf_unc
+    uint32_t data_size = (until - from) * sizeof(int);
+    buf_unc.reset(data_size);
+    std::unique_ptr<std::ostream> os0 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    write_boolean_as_int(*os0, idx, from, until);
+
+    // 2. RLE encode buf_unc to buf_com
+    uint32_t rle_size = rle_encode(
+      buf_unc,
+      until - from,
+      buf_com,
+      1,             // bit_width
+      false,         // add_bit_width
+      true           // add_size
+    );
+
+    // 3. compress buf_com to buf_unc
+    size_t crle_size = compress(cmd->codec, buf_com, rle_size, buf_unc);
+
+    // 4. write buf_unc to file
+    ph.__set_uncompressed_page_size(rle_size);
+    ph.__set_compressed_page_size(crle_size);
+    write_page_header(idx, ph);
+    pfile.write((const char*) buf_unc.ptr, crle_size);
+    cmd->__set_total_uncompressed_size(
+      cmd->total_uncompressed_size + rle_size
+    );
+
+  } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
+             encodings[idx] == Encoding::RLE &&
+             cmd->codec == CompressionCodec::UNCOMPRESSED) {
+    // CASE 11: OPT RLE UNC
+    // 1. write definition levels to buf_unc
+    uint32_t miss_size = (until - from) * sizeof(int);
+    buf_unc.reset(miss_size);
+    std::unique_ptr<std::ostream> os1 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    uint32_t num_present = write_present(*os1, idx, from, until);
+
+    // 2. RLE buf_unc to buf_com
+    uint32_t rle_size = rle_encode(
+      buf_unc,
+      until - from,
+      buf_com,
+      1,         // bit_width
+      false,     // add_bit_width
+      true       // add_size
+    );
+
+    // 3. write logicals into buf_unc
+    uint32_t data_size = (until - from) * sizeof(int);
+    buf_unc.reset(data_size);
+    std::unique_ptr<std::ostream> os0 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    write_boolean_as_int(*os0, idx, from, until);
+
+    // 4. append RLE buf_unc to buf_com
+    uint32_t rle2_size = rle_encode(
+      buf_unc,
+      num_present,
+      buf_com,
+      1,           // bit_width
+      false,       // add_bit_width
+      true,        // add_size
+      rle_size     // skip
+    );
+
+    // 5. write buf_com to file
+    ph.__set_uncompressed_page_size(rle2_size);
+    ph.__set_compressed_page_size(rle2_size);
+    write_page_header(idx, ph);
+    pfile.write((const char*) buf_com.ptr, rle2_size);
+    cmd->__set_total_uncompressed_size(
+      cmd->total_uncompressed_size + rle2_size
+    );
+
+  } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
+             encodings[idx] == Encoding::RLE &&
+             cmd->codec != CompressionCodec::UNCOMPRESSED) {
+    // CASE 12: OPT RLE COMP
+    // 1. write definition levels to buf_unc
+    uint32_t miss_size = (until - from) * sizeof(int);
+    buf_unc.reset(miss_size);
+    std::unique_ptr<std::ostream> os1 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    uint32_t num_present = write_present(*os1, idx, from, until);
+
+    // 2. RLE buf_unc to buf_com
+    uint32_t rle_size = rle_encode(
+      buf_unc,
+      until - from,
+      buf_com,
+      1,         // bit_width
+      false,     // add_bit_width
+      true       // add_size
+    );
+
+    // 3. write logicals into buf_unc
+    uint32_t data_size = (until - from) * sizeof(int);
+    buf_unc.reset(data_size);
+    std::unique_ptr<std::ostream> os0 =
+      std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
+    write_boolean_as_int(*os0, idx, from, until);
+
+    // 4. append RLE buf_unc to buf_com
+    uint32_t rle2_size = rle_encode(
+      buf_unc,
+      num_present,
+      buf_com,
+      1,           // bit_width
+      false,       // add_bit_width
+      true,        // add_size
       rle_size     // skip
     );
 

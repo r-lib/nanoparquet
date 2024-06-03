@@ -30,6 +30,8 @@ public:
                                uint64_t from, uint64_t until);
   void write_boolean(std::ostream &file, uint32_t idx, uint64_t from,
                      uint64_t until);
+  void write_boolean_as_int(std::ostream &file, uint32_t idx,
+                            uint64_t from, uint64_t until);
 
   uint32_t write_present(std::ostream &file, uint32_t idx, uint64_t from,
                          uint64_t until);
@@ -46,6 +48,9 @@ public:
   void write_present_boolean(std::ostream &file, uint32_t idx,
                              uint32_t num_present, uint64_t from,
                              uint64_t until);
+  void write_present_boolean_as_int(std::ostream &file, uint32_t idx,
+                                    uint32_t num_present, uint64_t from,
+                                    uint64_t until);
 
   // for dictionaries
   uint32_t get_num_values_dictionary(uint32_t idx);
@@ -101,8 +106,6 @@ bool RParquetOutFile::should_use_dict_encoding(uint32_t idx) {
   }
   switch (rtype) {
     case LGLSXP: {
-      // TODO: implement this correctly
-      return false;
       R_xlen_t len = Rf_length(col);
       if (len > 10000) {
         len = 10000;
@@ -253,6 +256,18 @@ void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx,
   write_boolean_impl(file, col, from, until);
 }
 
+void RParquetOutFile::write_boolean_as_int(std::ostream &file,
+                                           uint32_t idx,
+                                           uint64_t from,
+                                           uint64_t until) {
+  SEXP col = VECTOR_ELT(df, idx);
+  if (until > Rf_xlength(col)) {
+    Rf_error("Internal nanoparquet error, row index too large");
+  }
+  uint64_t len = until - from;
+  file.write((const char *) (LOGICAL(col) + from), sizeof(int) * len);
+}
+
 uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
                                          uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -381,6 +396,24 @@ void RParquetOutFile::write_present_double(
     }
   }
 }
+
+void RParquetOutFile::write_present_boolean_as_int(std::ostream &file,
+                                                   uint32_t idx,
+                                                   uint32_t num_present,
+                                                   uint64_t from,
+                                                   uint64_t until) {
+  SEXP col = VECTOR_ELT(df, idx);
+  if (until > Rf_xlength(col)) {
+    Rf_error("Internal nanoparquet error, row index too large");
+  }
+  for (uint64_t i = from; i < until; i++) {
+    int el = LOGICAL(col)[i];
+    if (el != NA_LOGICAL) {
+      file.write((const char*) &el, sizeof(int));
+    }
+  }
+}
+
 
 void RParquetOutFile::write_present_byte_array(
   std::ostream &file,
