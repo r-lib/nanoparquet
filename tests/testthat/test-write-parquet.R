@@ -12,6 +12,7 @@ test_that("factors are written as strings", {
 })
 
 test_that("round trip", {
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df()
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -28,6 +29,7 @@ test_that("round trip with arrow", {
   # Don't want to skip on the parquet capability missing, because then
   # this might not be tested on the CI. So rather we skip on CRAN.
   skip_on_cran()
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df(tibble = TRUE, factor = TRUE)
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -43,6 +45,7 @@ test_that("round trip with arrow", {
 })
 
 test_that("round trip with duckdb", {
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- as.data.frame(test_df())
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -59,6 +62,7 @@ test_that("round trip with duckdb", {
 
 test_that("round trip with pandas/pyarrow", {
   skip_on_cran()
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df()
   tmp1 <- tempfile(fileext = ".parquet")
   tmp2 <- tempfile(fileext = ".parquet")
@@ -190,6 +194,7 @@ test_that("REQ PLAIN", {
 })
 
 test_that("OPT PLAIN", {
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 

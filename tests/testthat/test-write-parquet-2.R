@@ -1,4 +1,5 @@
 test_that("REQ PLAIN", {
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   withr::local_envvar(NANOPARQUEST_PAGE_SIZE = "8192") # 8k pages
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -29,6 +30,7 @@ test_that("REQ PLAIN", {
 })
 
 test_that("OPT PLAIN", {
+  withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   withr::local_envvar(NANOPARQUEST_PAGE_SIZE = "8192") # 8k pages
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

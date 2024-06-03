@@ -54,3 +54,15 @@ rle_encode_int <- function(x) {
 rle_decode_int <- function(x, bit_width, length = NA) {
 	.Call(nanoparquet_rle_decode_int, x, bit_width, is.na(length), length)
 }
+
+dict_encode <- function(x, n = length(x)) {
+	.Call(nanoparquet_create_dict, x, n)
+}
+
+dict_encode_idx <- function(x) {
+	.Call(nanoparquet_create_dict_idx, x)
+}
+
+lgl_avg_run_length <- function(x, n = length(x)) {
+	.Call(nanoparquet_avg_run_length, x, n)
+}
