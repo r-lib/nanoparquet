@@ -8,6 +8,7 @@
 #include <transport/TBufferTransports.h>
 
 #include "snappy/snappy.h"
+#include "miniz/miniz_wrapper.hpp"
 #include "nanoparquet.h"
 #include "RleBpDecoder.h"
 
@@ -795,6 +796,21 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
            << filename << "' @ " << __FILE__ << ":" << __LINE__;
         throw runtime_error(ss.str());
       }
+
+      cs.page_buf_ptr = (char *)decompressed_buf.ptr;
+      cs.page_buf_len = cs.page_header.uncompressed_page_size;
+
+      break;
+    }
+    case CompressionCodec::GZIP: {
+      miniz::MiniZStream gzst;
+      decompressed_buf.resize(cs.page_header.uncompressed_page_size + 1);
+      gzst.Decompress(
+        (const char*) chunk_buf.ptr,
+        cs.page_header.compressed_page_size,
+        (char*) decompressed_buf.ptr,
+        cs.page_header.uncompressed_page_size
+      );
 
       cs.page_buf_ptr = (char *)decompressed_buf.ptr;
       cs.page_buf_len = cs.page_header.uncompressed_page_size;

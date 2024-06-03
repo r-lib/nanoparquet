@@ -6,7 +6,7 @@ OBJECTS= rwrapper.o protect.o read.o write.o  \
   parquet/parquet_constants.o parquet/parquet_types.o \
   thrift/protocol/TProtocol.o thrift/transport/TTransportException.o \
   thrift/transport/TBufferTransports.o \
-  snappy/snappy.o snappy/snappy-sinksource.o
+  snappy/snappy.o snappy/snappy-sinksource.o miniz/miniz.o
 
 PKG_CPPFLAGS = -Ithrift -I. -Iprotobuf
 # PKG_CFLAGS = -DR_NO_REMAP
