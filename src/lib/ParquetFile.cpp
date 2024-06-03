@@ -307,6 +307,12 @@ public:
       page_header.data_page_header.num_values :
       page_header.data_page_header_v2.num_values;
 
+    if (page_header.type == PageType::DATA_PAGE_V2 &&
+        page_header.data_page_header_v2.repetition_levels_byte_length > 0) {
+	    page_buf_ptr +=
+        page_header.data_page_header_v2.repetition_levels_byte_length;
+    }
+
     // we have to first decode the define levels, if we have them
     if (has_def_levels) {
       // V2 is always RLE
@@ -332,6 +338,11 @@ public:
 
       page_buf_ptr += def_length;
     } else {
+      if (page_header.type == PageType::DATA_PAGE_V2 &&
+          page_header.data_page_header_v2.definition_levels_byte_length > 0) {
+		    page_buf_ptr +=
+          page_header.data_page_header_v2.definition_levels_byte_length;
+      }
       std::fill(defined_ptr, defined_ptr + num_values, static_cast<uint8_t>(1));
     }
 
