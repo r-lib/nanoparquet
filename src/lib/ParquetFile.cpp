@@ -348,6 +348,10 @@ public:
       scan_data_page_plain(result_col);
       break;
 
+    case Encoding::RLE:
+      scan_data_page_rle(result_col);
+      break;
+
     default: {
       std::stringstream ss;
       ss << "Data page has unsupported encoding "
@@ -582,6 +586,36 @@ public:
          << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
       throw runtime_error(ss.str());
     }
+    }
+  }
+
+  void scan_data_page_rle(ResultColumn &result_col) {
+    auto num_values = page_header.data_page_header.num_values;
+    page_buf_ptr += sizeof(uint32_t);
+    auto enc_length = 1;
+    RleBpDecoder dec((const uint8_t *) page_buf_ptr, page_buf_len, enc_length);
+    auto offsets = unique_ptr<bool[]>(new bool[num_values]);
+    uint32_t null_count = 0;
+    for (uint32_t i = 0; i < num_values; i++) {
+      if (!defined_ptr[i]) {
+        null_count++;
+      }
+    }
+    if (null_count > 0) {
+      dec.GetBatchSpaced<bool>(num_values, null_count, defined_ptr,
+                                   offsets.get());
+    } else {
+      dec.GetBatch<bool>(offsets.get(), num_values);
+    }
+
+    bool *result_arr = (bool*) result_col.data.ptr;
+    for (uint32_t val_offset = 0;
+        val_offset < page_header.data_page_header.num_values;
+        val_offset++) {
+      auto row_idx = page_start_row + val_offset;
+      if (defined_ptr[val_offset]) {
+        result_arr[row_idx] = offsets[val_offset];
+      }
     }
   }
 

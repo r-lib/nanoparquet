@@ -238,3 +238,44 @@ test_that("read difftime", {
     as.data.frame(d2)
   })
 })
+
+test_that("RLE BOOLEAN", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    l = c(
+      logical(30),
+      !logical(5),
+      logical(20),
+      !logical(30)
+    )
+  )
+
+  write_parquet(d, tmp)
+  expect_equal(
+    unclass(parquet_metadata(tmp)$column_chunks$encodings),
+    list("RLE")
+  )
+
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+
+  # larger DF
+
+  d <- data.frame(
+    l = c(
+      logical(runif(1) * 3000),
+      !logical(runif(1) * 50),
+      logical(runif(1) * 2000),
+      !logical(runif(1) * 3000)
+    )
+  )
+
+  write_parquet(d, tmp)
+  expect_equal(
+    unclass(parquet_metadata(tmp)$column_chunks$encodings),
+    list("RLE")
+  )
+
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+})
