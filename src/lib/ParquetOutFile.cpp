@@ -351,7 +351,6 @@ void ParquetOutFile::write_dictionary_indices_(
   write_dictionary_indices(file, idx, from, until);
   streampos end = file.tellp();
   if (end - start != size) {
-    cerr << idx << " " << start << "-" << end << " !+ " << size << endl;
     throw runtime_error(
       string("Wrong number of bytes written for parquet dictionary @ ") +
       __FILE__ + ":" + STR(__LINE__)
