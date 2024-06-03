@@ -283,6 +283,70 @@ test_that("OPT RLE_DICT", {
   })
 })
 
+test_that("REQ RLE", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    l = c(logical(30), !logical(5), logical(20), !logical(30))
+  )
+
+  write_parquet(d, tmp, compression = "uncompressed")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    parquet_metadata(tmp)$column_chunks$encodings
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
+  })
+  expect_equal(
+    rle_decode_int(data[-(1:4)], bit_width = 1L, nrow(d)),
+    d$l + 0L
+  )
+
+  write_parquet(d, tmp, compression = "snappy")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
+  })
+})
+
+test_that("OPT RLE", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    l = c(NA, logical(30), !logical(5), logical(20), NA, !logical(30))
+  )
+
+  write_parquet(d, tmp, compression = "uncompressed")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    parquet_metadata(tmp)$column_chunks$encodings
+    data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
+  })
+  expect_equal(
+    rle_decode_int(data[-(1:4)], bit_width = 1L, nrow(d)),
+    0L + !is.na(d$l)
+  )
+  on.exit(close(con), add = TRUE)
+  def_len <- readBin(con <- rawConnection(data), "integer", 1)
+  expect_equal(
+    rle_decode_int(
+      data[-(1:(8+def_len))],
+      bit_width = 1L,
+      length(na.omit(d$l))
+    ),
+    0L + c(na.omit(d$l))
+  )
+
+  write_parquet(d, tmp, compression = "snappy")
+  pgs <- parquet_pages(tmp)
+  expect_snapshot({
+    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_page(tmp, pgs$page_header_offset[1])$data
+  })
+})
+
 test_that("Factor levels not in the data", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

@@ -228,7 +228,9 @@ SEXP nanoparquet_avg_run_length(SEXP x, SEXP rlen) {
   uint32_t crl = 1; // current run length
   const int *xx = LOGICAL(x);
   for (auto i = 0; i < len; i++, xx++) {
-    if (*xx == *(xx+1)) {
+    if (*xx == NA_LOGICAL) {
+      // do nothing
+    } else if (*xx == *(xx+1)) {
       crl++;
     } else {
       num_runs++;

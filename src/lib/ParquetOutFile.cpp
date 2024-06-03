@@ -937,11 +937,11 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     );
 
     // 3. write logicals into buf_unc
-    uint32_t data_size = (until - from) * sizeof(int);
+    uint32_t data_size = num_present * sizeof(int);
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_boolean_as_int(*os0, idx, from, until);
+    write_present_boolean_as_int(*os0, idx, num_present, from, until);
 
     // 4. append RLE buf_unc to buf_com
     uint32_t rle2_size = rle_encode(
@@ -985,11 +985,11 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     );
 
     // 3. write logicals into buf_unc
-    uint32_t data_size = (until - from) * sizeof(int);
+    uint32_t data_size = num_present * sizeof(int);
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_boolean_as_int(*os0, idx, from, until);
+    write_present_boolean_as_int(*os0, idx, num_present, from, until);
 
     // 4. append RLE buf_unc to buf_com
     uint32_t rle2_size = rle_encode(
