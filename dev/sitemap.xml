@@ -31,10 +31,16 @@
     <loc>https://r-lib.github.io/nanoparquet/dev/reference/parquet_metadata.html</loc>
   </url>
   <url>
+    <loc>https://r-lib.github.io/nanoparquet/dev/reference/parquet_pages.html</loc>
+  </url>
+  <url>
     <loc>https://r-lib.github.io/nanoparquet/dev/reference/parquet_schema.html</loc>
   </url>
   <url>
     <loc>https://r-lib.github.io/nanoparquet/dev/reference/read_parquet.html</loc>
+  </url>
+  <url>
+    <loc>https://r-lib.github.io/nanoparquet/dev/reference/read_parquet_page.html</loc>
   </url>
   <url>
     <loc>https://r-lib.github.io/nanoparquet/dev/reference/write_parquet.html</loc>
