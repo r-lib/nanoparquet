@@ -125,3 +125,90 @@
       31  TRUE
       32 FALSE
 
+# V2 data pages
+
+    Code
+      as.data.frame(read_parquet(pf))
+    Output
+        FirstName        Data
+      1      John Hello World
+      2      John Hello World
+      3      John Hello World
+      4      John Hello World
+      5      John Hello World
+
+# Tricky V2 data page
+
+    Code
+      as.data.frame(read_parquet(pf))
+    Output
+         datatype_boolean
+      1              TRUE
+      2             FALSE
+      3                NA
+      4              TRUE
+      5              TRUE
+      6             FALSE
+      7             FALSE
+      8              TRUE
+      9              TRUE
+      10             TRUE
+      11            FALSE
+      12            FALSE
+      13             TRUE
+      14             TRUE
+      15            FALSE
+      16               NA
+      17             TRUE
+      18             TRUE
+      19            FALSE
+      20            FALSE
+      21             TRUE
+      22             TRUE
+      23            FALSE
+      24               NA
+      25             TRUE
+      26             TRUE
+      27            FALSE
+      28            FALSE
+      29             TRUE
+      30             TRUE
+      31             TRUE
+      32            FALSE
+      33            FALSE
+      34            FALSE
+      35            FALSE
+      36             TRUE
+      37             TRUE
+      38            FALSE
+      39               NA
+      40             TRUE
+      41             TRUE
+      42            FALSE
+      43            FALSE
+      44             TRUE
+      45             TRUE
+      46             TRUE
+      47            FALSE
+      48            FALSE
+      49               NA
+      50             TRUE
+      51             TRUE
+      52            FALSE
+      53            FALSE
+      54             TRUE
+      55             TRUE
+      56             TRUE
+      57            FALSE
+      58             TRUE
+      59             TRUE
+      60            FALSE
+      61               NA
+      62             TRUE
+      63             TRUE
+      64            FALSE
+      65            FALSE
+      66             TRUE
+      67             TRUE
+      68             TRUE
+

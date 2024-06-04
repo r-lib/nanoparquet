@@ -286,3 +286,28 @@ test_that("read GZIP compressed files", {
     as.data.frame(read_parquet(pf))
   })
 })
+
+test_that("V2 data pages", {
+  pf <- test_path("data/parquet_go.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet(pf))
+  })
+})
+
+test_that("V2 data page with missing values", {
+  skip_on_cran()
+  pf <- test_path("data/duckdb-bug1589.parquet")
+  expect_equal(
+    as.data.frame(read_parquet(pf)),
+    as.data.frame(arrow::read_parquet(pf))
+  )
+})
+
+test_that("Tricky V2 data page", {
+  # has repetition levels to be ignored and uncompressed
+  # definition levels
+  pf <- test_path("data/rle_boolean_encoding.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet(pf))
+  })
+})
