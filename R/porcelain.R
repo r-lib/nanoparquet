@@ -40,7 +40,7 @@ snappy_uncompress <- function(buffer) {
 }
 
 gzip_compress <- function(buffer) {
-	.Call(gzip_comress_raw, buffer)
+	.Call(gzip_compress_raw, buffer)
 }
 
 gzip_uncompress <- function(buffer, uncompressed_length) {
