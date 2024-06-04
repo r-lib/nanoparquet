@@ -313,3 +313,85 @@
       [26] 38 eb cd bb ff
       
 
+# read_parquet_page for trick v2 data page
+
+    Code
+      read_parquet_page(pf, 4L)
+    Output
+      $page_type
+      [1] "DATA_PAGE_V2"
+      
+      $row_group
+      [1] 0
+      
+      $column
+      [1] 0
+      
+      $page_header_offset
+      [1] 4
+      
+      $data_page_offset
+      [1] 27
+      
+      $page_header_length
+      [1] 23
+      
+      $compressed_page_size
+      [1] 46
+      
+      $uncompressed_page_size
+      [1] 26
+      
+      $codec
+      [1] "GZIP"
+      
+      $num_values
+      [1] 68
+      
+      $encoding
+      [1] "RLE"
+      
+      $definition_level_encoding
+      [1] NA
+      
+      $repetition_level_encoding
+      [1] NA
+      
+      $has_repetition_levels
+      [1] FALSE
+      
+      $has_definition_levels
+      [1] TRUE
+      
+      $schema_column
+      [1] 1
+      
+      $data_type
+      [1] "BOOLEAN"
+      
+      $repetition_type
+      [1] "OPTIONAL"
+      
+      $page_header
+       [1] 15 06 15 34 15 5c 5c 15 88 01 15 0c 15 88 01 15 06 15 16 15 04 00 00
+      
+      $data
+       [1] 88 01 07 fb 7f 7f 1c 01 09 fe fb 09 00 00 00 11 cd d9 6c 0e 9b 33 b7 39
+      
+      $definition_levels_byte_length
+      [1] 11
+      
+      $repetition_levels_byte_length
+      [1] 2
+      
+      $num_nulls
+      [1] 6
+      
+      $num_rows
+      [1] 68
+      
+      $compressed_data
+       [1] 88 01 07 fb 7f 7f 1c 01 09 fe fb bf 3f 1f 8b 08 00 00 00 00 00 00 00 e3 64
+      [26] 60 60 10 3c 7b 33 87 6f b6 f1 76 4b 00 73 f2 49 94 0d 00 00 00
+      
+

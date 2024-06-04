@@ -11,6 +11,13 @@ test_that("read_parquet_page", {
   expect_snapshot(page2)
 })
 
+test_that("read_parquet_page for trick v2 data page", {
+  pf <- test_path("data/rle_boolean_encoding.parquet")
+  expect_snapshot({
+    read_parquet_page(pf, 4L)
+  })
+})
+
 test_that("read_parquet_page error", {
   # https://github.com/llvm/llvm-project/issues/59432
   if (is_asan()) skip("ASAN bug")
