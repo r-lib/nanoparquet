@@ -4,11 +4,14 @@
   that have many repeated values. Only the first 10k rows are use to
   decide if dictionary will be used or not. Similarly, logical columns are
   written in RLE encoding if they contain runs of repeated values.
-  `NA` values are ignored when selecting the encoding.
+  `NA` values are ignored when selecting the encoding (#18).
+
+* `read_parquet()` can now read Parquet files with V2 data pages (#37).
 
 * `read_parquet()` can now read GZIP compressed Parquet files.
 
-* `read_parquet()` can now read `BOOLEAN` columns in `RLE` encoding.
+* `read_parquet()` can now read Parquet files with `BOOLEAN` columns in
+  `RLE` encoding.
 
 * `parquet_info()`, `parquet_metadata()` and `parquet_columns()` now work
   if the `created_by` metadata field is unset.
