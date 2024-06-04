@@ -1,3 +1,46 @@
+#' Metadata of all pages of a Parquet file
+#'
+#' @details
+#' Reading all the page headers might be slow for large files, especially
+#' if the file has many small pages.
+#'
+#' @param file Path to a Parquet file.
+#' @return Data frame with columns:
+#'   * `file_name`: file name.
+#'   * `row_group`: id of the row group the page belongs to,
+#'     an integer between 0 and the number of row groups
+#'     minus one.
+#'   * `column`: id of the column. An integer between the
+#'     number of leaf columns minus one. Note that only leaf
+#'     columns are considered, as non-leaf columns do not
+#'     have any pages.
+#'   * `page_type`: `DATA_PAGE`, `INDEX_PAGE`, `DICTIONARY_PAGE` or
+#'     `DATA_PAGE_V2`.
+#'   * `page_header_offset`: offset of the data page (its header) in the
+#'     file.
+#'   * `uncompressed_page_size`: does not include the page header, as per
+#'     Parquet spec.
+#'   * `compressed_page_size`: without the page header.
+#'   * `crc`: integer, checksum, if present in the file, can be `NA`.
+#'   * `num_values`: number of data values in this page, include
+#'     `NULL` (`NA` in R) values.
+#'   * `encoding`: encoding of the page, current possible encodings:
+#'     `r paste0('"', names(encodings), '"', collapse = ", ")`.
+#'   * `definition_level_encoding`: encoding of the definition levels,
+#'     see `encoding` for possible values. This can be missing in V2 data
+#'     pages, where they are always RLE encoded.
+#'   * `repetition_level_encoding`: encoding of the repetition levels,
+#'     see `encoding` for possible values. This can be missing in V2 data
+#'     pages, where they are always RLE encoded.
+#'   * `data_offset`: offset of the actual data in the file.
+#'   * `page_header_length`: size of the page header, in bytes.
+#'
+#' @keywords internal
+#' @seealso [read_parquet_page()] to read a page.
+#' @examples
+#' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
+#' nanoparquet:::parquet_pages(file_name)
+
 parquet_pages <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(nanoparquet_read_pages, file)
@@ -12,6 +55,41 @@ parquet_pages <- function(file) {
 	res
 }
 
+#' Read a page from a Parquet file
+#'
+#' @param file Path to a Parquet file.
+#' @param offset Integer offset of the start of the page in the file.
+#'   See [parquet_pages()] for a list of all pages and their offsets.
+#' @return Named list. Many entries correspond to the columns of
+#'   the result of [parquet_pages()]. Additional entries are:
+#'   * `codec`: compression codec. Possible values:
+#'   * `has_repetition_levels`: whether the page has repetition levels.
+#'   * `has_definition_levels`: whether the page has definition levels.
+#'   * `schema_column`: which schema column the page corresponds to. Note
+#'     that only leaf columns have pages.
+#'   * `data_type`: low level Parquet data type. Possible values:
+#'   * `repetition_type`: whether the column the page belongs to is
+#'     `REQUIRED`, `OPTIONAL` or `REPEATED`.
+#'   * `page_header`: the bytes of the page header in a raw vector.
+#'   * `num_null`: number of missing (`NA`) values. Only set in V2 data
+#'     pages.
+#'   * `num_rows`: this is the same as `num_values` for flat tables, i.e.
+#'     files without repetition levels.
+#'   * `compressed_data`: the data of the page in a raw vector. It includes
+#'     repetition and definition levels, if any.
+#'   * `data`: the uncompressed data, if nanoparquet supports the
+#'     compression codec of the file (GZIP and SNAPPY at the time of
+#'     writing), or if the file is not compressed. In the latter case it
+#'     is the same as `compressed_data`.
+#'
+#' @keywords internal
+#' @seealso [parquet_pages()] for a summary of all pages.
+#' @examplesIf Sys.getenv("IN_PKGDOWN") == "true"
+#' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
+#' nanoparquet:::parquet_pages(file_name)
+#' options(max.print = 100)  # otherwise long raw vector
+#' nanoparquet:::read_parquet_page(file_name, 4L)
+
 read_parquet_page <- function(file, offset) {
 	file <- path.expand(file)
 	res <- .Call(nanoparquet_read_page, file, as.double(offset))
@@ -24,6 +102,7 @@ read_parquet_page <- function(file, offset) {
 		names(encodings)[res$repetition_level_encoding + 1L]
 	res$data_type <- names(type_names)[res$data_type + 1L]
 	res$repetition_type <- names(repetition_types)[res$repetition_type + 1L]
+	res$compressed_data <- res$data
 	skip <- 0L
 	copy <- 0L
 	if (res$page_type == "DATA_PAGE_V2") {
@@ -35,7 +114,6 @@ read_parquet_page <- function(file, offset) {
 		}
 	}
 	if (res$codec == "SNAPPY") {
-		res$compressed_data <- res$data
 		res$data <- c(
 			if (copy > 0) res$data[1:copy],
 			snappy_uncompress(res$data[(skip+copy+1L):length(res$data)])
@@ -49,7 +127,12 @@ read_parquet_page <- function(file, offset) {
 				res$uncompressed_page_size - skip - copy
 			)
 		)
+	} else if (res$codec == "UNCOMPRESSED") {
+		# keep data
+	} else {
+		res$data <- NULL
 	}
+
 	res
 }
 
