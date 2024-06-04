@@ -6,6 +6,9 @@
   written in RLE encoding if they contain runs of repeated values.
   `NA` values are ignored when selecting the encoding (#18).
 
+* `write_parquet()` can now write a data frame to a memory buffer, returned
+  as a raw vector, if the special `":raw:"` filename is used (#31).
+
 * `read_parquet()` can now read Parquet files with V2 data pages (#37).
 
 * `read_parquet()` can now read GZIP compressed Parquet files.

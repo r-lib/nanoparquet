@@ -141,6 +141,10 @@ Other contributors:
   \item Google Inc. [copyright holder]
   \item Apache Software Foundation [copyright holder]
   \item Posit Software, PBC [copyright holder]
+  \item RAD Game Tools [copyright holder]
+  \item Valve Software [copyright holder]
+  \item Valve Software [copyright holder]
+  \item Tenacious Software LLC [copyright holder]
 }
 
 }

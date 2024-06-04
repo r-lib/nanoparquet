@@ -3,6 +3,8 @@
 
 #include <Rdefines.h>
 
+#include "lib/memstream.h"
+
 using namespace nanoparquet;
 using namespace std;
 
@@ -16,6 +18,10 @@ class RParquetOutFile : public ParquetOutFile {
 public:
   RParquetOutFile(
     std::string filename,
+    parquet::format::CompressionCodec::type codec
+  );
+  RParquetOutFile(
+    std::ostream &stream,
     parquet::format::CompressionCodec::type codec
   );
   void write_int32(std::ostream &file, uint32_t idx, uint64_t from,
@@ -74,9 +80,14 @@ private:
 
 RParquetOutFile::RParquetOutFile(
   std::string filename,
+  parquet::format::CompressionCodec::type codec) :
+    ParquetOutFile(filename, codec) {
+}
+
+RParquetOutFile::RParquetOutFile(
+  std::ostream &stream,
   parquet::format::CompressionCodec::type codec
-) : ParquetOutFile(filename, codec) {
-  // nothing to do here
+) : ParquetOutFile(stream, codec) {
 }
 
 void RParquetOutFile::create_dictionary(uint32_t idx) {
@@ -776,11 +787,21 @@ SEXP nanoparquet_write(
   error_buffer[0] = '\0';
 
   try {
-    char *fname = (char *)CHAR(STRING_ELT(filesxp, 0));
-    RParquetOutFile of(fname, codec);
-    of.write(dfsxp, dim, metadata, required);
-    return R_NilValue;
-
+    std::string fname = (char *) CHAR(STRING_ELT(filesxp, 0));
+    if (fname == ":raw:") {
+      MemStream ms;
+      std::ostream &os = ms.stream();
+      RParquetOutFile of(os, codec);
+      of.write(dfsxp, dim, metadata, required);
+      R_xlen_t bufsize = ms.size();
+      SEXP res = Rf_allocVector(RAWSXP, bufsize);
+      ms.copy(RAW(res), bufsize);
+      return res;
+    } else {
+      RParquetOutFile of(fname, codec);
+      of.write(dfsxp, dim, metadata, required);
+      return R_NilValue;
+    }
   } catch (std::exception &ex) {
     strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1); // # nocov
   }

@@ -395,3 +395,20 @@
       [26] 60 60 10 3c 7b 33 87 6f b6 f1 76 4b 00 73 f2 49 94 0d 00 00 00
       
 
+# MemStream
+
+    Code
+      .Call(test_memstream)
+    Output
+       [1] 54 68 69 73 20 69 73 20 61 20 74 65 73 74 0a 54 68 69 73 20 69 73 20 61 20
+      [26] 74 65 73 74 0a 54 68 69 73 20 69 73 20 61 20 74 65 73 74 0a 54 68 69 73 20
+      [51] 69 73 20 61 20 74 65 73 74 0a 54 68 69 73 20 69 73 20 61 20 74 65 73 74 0a
+    Code
+      cat(rawToChar(.Call(test_memstream)))
+    Output
+      This is a test
+      This is a test
+      This is a test
+      This is a test
+      This is a test
+

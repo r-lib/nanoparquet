@@ -38,3 +38,10 @@ test_that("snappy", {
 test_that("snappy error", {
   expect_error(snappy_uncompress(charToRaw("foobar")))
 })
+
+test_that("MemStream", {
+  expect_snapshot({
+    .Call(test_memstream)
+    cat(rawToChar(.Call(test_memstream)))
+  })
+})

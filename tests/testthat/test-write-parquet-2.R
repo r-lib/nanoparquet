@@ -105,3 +105,15 @@ test_that("OPT RLE_DICT", {
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
+
+test_that("write_parquet() to memory", {
+  d <- test_df(missing = TRUE)
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  pm <- write_parquet(d, ":raw:")
+  write_parquet(d, tmp)
+  pm2 <- readBin(tmp, "raw", file.size(tmp))
+
+  expect_equal(pm, pm2)
+})

@@ -34,6 +34,8 @@ SEXP snappy_uncompress_raw(SEXP x);
 SEXP gzip_compress_raw(SEXP x);
 SEXP gzip_uncompress_raw(SEXP x, SEXP ucl);
 
+SEXP test_memstream();
+
 SEXP is_asan_() {
 #if defined(__has_feature)
 #   if __has_feature(address_sanitizer) // for clang
@@ -72,6 +74,8 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(snappy_uncompress_raw, 1),
   CALLDEF(gzip_compress_raw, 1),
   CALLDEF(gzip_uncompress_raw, 2),
+
+  CALLDEF(test_memstream, 0),
 
   CALLDEF(is_asan_, 0),
   {NULL, NULL, 0}
