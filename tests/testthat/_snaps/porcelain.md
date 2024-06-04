@@ -197,6 +197,18 @@
       [476] 69 6e 6f 0d 00 00 00 4d 61 73 65 72 61 74 69 20 42 6f 72 61 0a 00 00 00 56
       [501] 6f 6c 76 6f 20 31 34 32 45
       
+      $definition_levels_byte_length
+      [1] NA
+      
+      $repetition_levels_byte_length
+      [1] NA
+      
+      $num_nulls
+      [1] NA
+      
+      $num_rows
+      [1] NA
+      
       $compressed_data
         [1] fd 03 34 09 00 00 00 4d 61 7a 64 61 20 52 58 34 0d 2e 0d 00 90 20 57 61 67
        [26] 0a 00 00 00 44 61 74 73 75 6e 20 37 31 30 0e 00 00 00 48 6f 72 6e 65 74 20
@@ -283,6 +295,18 @@
       $data
        [1] 02 00 00 00 40 01 05 09 20 88 41 8a 39 28 a9 c5 9a 7b 30 ca 49 ab bd 38 eb
       [26] cd bb ff
+      
+      $definition_levels_byte_length
+      [1] NA
+      
+      $repetition_levels_byte_length
+      [1] NA
+      
+      $num_nulls
+      [1] NA
+      
+      $num_rows
+      [1] NA
       
       $compressed_data
        [1] 1c 6c 02 00 00 00 40 01 05 09 20 88 41 8a 39 28 a9 c5 9a 7b 30 ca 49 ab bd

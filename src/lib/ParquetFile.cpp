@@ -308,12 +308,6 @@ public:
       page_header.data_page_header.num_values :
       page_header.data_page_header_v2.num_values;
 
-    if (page_header.type == PageType::DATA_PAGE_V2 &&
-        page_header.data_page_header_v2.repetition_levels_byte_length > 0) {
-	    page_buf_ptr +=
-        page_header.data_page_header_v2.repetition_levels_byte_length;
-    }
-
     // we have to first decode the define levels, if we have them
     if (has_def_levels) {
       // V2 is always RLE
@@ -339,11 +333,6 @@ public:
 
       page_buf_ptr += def_length;
     } else {
-      if (page_header.type == PageType::DATA_PAGE_V2 &&
-          page_header.data_page_header_v2.definition_levels_byte_length > 0) {
-		    page_buf_ptr +=
-          page_header.data_page_header_v2.definition_levels_byte_length;
-      }
       std::fill(defined_ptr, defined_ptr + num_values, static_cast<uint8_t>(1));
     }
 
@@ -764,6 +753,13 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
     chunk_buf.ptr += page_header_len;
     bytes_to_read -= page_header_len;
 
+    // skip data page v2 repetition levels if we don't need them
+    uint32_t xrep = 0;
+    if (cs.page_header.type == PageType::DATA_PAGE_V2 &&
+        cs.page_header.data_page_header_v2.repetition_levels_byte_length > 0) {
+      xrep = cs.page_header.data_page_header_v2.repetition_levels_byte_length;
+    }
+
     auto payload_end_ptr = chunk_buf.ptr + cs.page_header.compressed_page_size;
 
     ByteBuffer decompressed_buf;
@@ -774,6 +770,16 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
       codec = CompressionCodec::UNCOMPRESSED;
     }
 
+    // In data page v2 the definition levels are not
+    // compressed. We need to copy these bytes over verbatim.
+    // (The extra repetition levels we skipped already, potentially.)
+    uint32_t xdef = 0;
+    if (has_def_levels &&
+        cs.page_header.type == PageType::DATA_PAGE_V2 &&
+        codec != CompressionCodec::UNCOMPRESSED) {
+      xdef = cs.page_header.data_page_header_v2.definition_levels_byte_length;
+    }
+
     switch (codec) {
     case CompressionCodec::UNCOMPRESSED:
       cs.page_buf_ptr = chunk_buf.ptr;
@@ -782,14 +788,15 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
       break;
     case CompressionCodec::SNAPPY: {
       size_t decompressed_size;
-      snappy::GetUncompressedLength(chunk_buf.ptr,
-                                    cs.page_header.compressed_page_size,
+      snappy::GetUncompressedLength(chunk_buf.ptr + xrep + xdef,
+                                    cs.page_header.compressed_page_size - xrep - xdef,
                                     &decompressed_size);
-      decompressed_buf.resize(decompressed_size + 1);
+      decompressed_buf.resize(decompressed_size + 1 + xdef);
+      memcpy(decompressed_buf.ptr, chunk_buf.ptr + xrep, xdef);
 
-      auto res = snappy::RawUncompress(chunk_buf.ptr,
-                                       cs.page_header.compressed_page_size,
-                                       decompressed_buf.ptr);
+      auto res = snappy::RawUncompress(chunk_buf.ptr + xrep + xdef,
+                                       cs.page_header.compressed_page_size - xrep - xdef,
+                                       decompressed_buf.ptr + xdef);
       if (!res) {
         std::stringstream ss;
         ss << "Decompression failure, possibly corrupt Parquet file '"
@@ -798,22 +805,25 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
       }
 
       cs.page_buf_ptr = (char *)decompressed_buf.ptr;
-      cs.page_buf_len = cs.page_header.uncompressed_page_size;
+      cs.page_buf_len = cs.page_header.uncompressed_page_size - xrep;
 
       break;
     }
     case CompressionCodec::GZIP: {
       miniz::MiniZStream gzst;
-      decompressed_buf.resize(cs.page_header.uncompressed_page_size + 1);
+      decompressed_buf.resize(cs.page_header.uncompressed_page_size + 1 + xdef);
+      memcpy(decompressed_buf.ptr, chunk_buf.ptr + xrep, xdef);
+
+      // throws on error
       gzst.Decompress(
-        (const char*) chunk_buf.ptr,
-        cs.page_header.compressed_page_size,
-        (char*) decompressed_buf.ptr,
-        cs.page_header.uncompressed_page_size
+        (const char*) chunk_buf.ptr + xrep + xdef,
+        cs.page_header.compressed_page_size - xrep - xdef,
+        (char*) decompressed_buf.ptr + xdef,
+        cs.page_header.uncompressed_page_size - xrep - xdef
       );
 
       cs.page_buf_ptr = (char *)decompressed_buf.ptr;
-      cs.page_buf_len = cs.page_header.uncompressed_page_size;
+      cs.page_buf_len = cs.page_header.uncompressed_page_size - xrep;
 
       break;
     }

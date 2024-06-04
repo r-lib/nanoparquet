@@ -31,6 +31,8 @@ SEXP nanoparquet_base64_encode(SEXP x);
 
 SEXP snappy_compress_raw(SEXP x);
 SEXP snappy_uncompress_raw(SEXP x);
+SEXP gzip_compress_raw(SEXP x);
+SEXP gzip_uncompress_raw(SEXP x, SEXP ucl);
 
 SEXP is_asan_() {
 #if defined(__has_feature)
@@ -68,6 +70,8 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_base64_encode, 1),
   CALLDEF(snappy_compress_raw, 1),
   CALLDEF(snappy_uncompress_raw, 1),
+  CALLDEF(gzip_compress_raw, 1),
+  CALLDEF(gzip_uncompress_raw, 2),
 
   CALLDEF(is_asan_, 0),
   {NULL, NULL, 0}

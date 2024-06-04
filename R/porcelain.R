@@ -39,6 +39,14 @@ snappy_uncompress <- function(buffer) {
   .Call(snappy_uncompress_raw, buffer)
 }
 
+gzip_compress <- function(buffer) {
+	.Call(gzip_comress_raw, buffer)
+}
+
+gzip_uncompress <- function(buffer, uncompressed_length) {
+	.Call(gzip_uncompress_raw, buffer, uncompressed_length)
+}
+
 rle_encode_int <- function(x) {
 	bw <- if (length(x)) {
 		max(as.integer(ceiling(log2(max(x) + 1L))), 1L)

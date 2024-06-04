@@ -186,10 +186,14 @@ struct PageData {
   int32_t uncompressed_page_size;
   parquet::format::CompressionCodec::type codec;
   int32_t num_values;
+  int32_t num_nulls;
+  int32_t num_rows;
   parquet::format::Encoding::type encoding;
   parquet::format::Encoding::type definition_level_encoding;
   parquet::format::Encoding::type repetition_level_encoding;
   bool has_repetition_levels;
+  int32_t definition_levels_byte_length;
+  int32_t repetition_levels_byte_length;
 
   // not set in find_page, need info from the schema
   int schema_column_no;     // all columns, including internal nodes
@@ -236,6 +240,13 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
           pd.compressed_page_size = ph.first.compressed_page_size;
           pd.uncompressed_page_size = ph.first.uncompressed_page_size;
           pd.codec = cmd.codec;
+          pd.definition_level_encoding =
+            (parquet::format::Encoding::type) NA_INTEGER;
+          pd.repetition_level_encoding =
+            (parquet::format::Encoding::type) NA_INTEGER;
+          pd.definition_levels_byte_length = NA_INTEGER;
+          pd.repetition_levels_byte_length = NA_INTEGER;
+          pd.num_nulls = pd.num_rows = NA_INTEGER;
           if (ph.first.type == parquet::format::PageType::DATA_PAGE) {
             pd.num_values = ph.first.data_page_header.num_values;
             pd.encoding = ph.first.data_page_header.encoding;
@@ -246,10 +257,12 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
           } else if (ph.first.type == parquet::format::PageType::DATA_PAGE_V2) {
             pd.num_values = ph.first.data_page_header_v2.num_values;
             pd.encoding = ph.first.data_page_header_v2.encoding;
-            pd.definition_level_encoding =
-              (parquet::format::Encoding::type) NA_INTEGER;
-            pd.repetition_level_encoding =
-              (parquet::format::Encoding::type) NA_INTEGER;
+            pd.definition_levels_byte_length =
+              ph.first.data_page_header_v2.definition_levels_byte_length;
+            pd.repetition_levels_byte_length =
+              ph.first.data_page_header_v2.repetition_levels_byte_length;
+            pd.num_nulls = ph.first.data_page_header_v2.num_nulls;
+            pd.num_rows = ph.first.data_page_header_v2.num_rows;
           } else if (ph.first.type ==
                      parquet::format::PageType::DICTIONARY_PAGE) {
             pd.num_values = ph.first.dictionary_page_header.num_values;
@@ -331,6 +344,10 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
     "repetition_type",
     "page_header",
     "data",
+    "definition_levels_byte_length",
+    "repetition_levels_byte_length",
+    "num_nulls",
+    "num_rows",
     ""
   };
 
@@ -375,6 +392,10 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
     pd.compressed_page_size,
     (int8_t*) RAW(VECTOR_ELT(res, 19))
   );
+  SET_VECTOR_ELT(res, 20, safe_scalarinteger(pd.definition_levels_byte_length, &uwtoken));
+  SET_VECTOR_ELT(res, 21, safe_scalarinteger(pd.repetition_levels_byte_length, &uwtoken));
+  SET_VECTOR_ELT(res, 22, safe_scalarinteger(pd.num_nulls, &uwtoken));
+  SET_VECTOR_ELT(res, 23, safe_scalarinteger(pd.num_rows, &uwtoken));
 
   UNPROTECT(2);
   return res;
