@@ -9,6 +9,7 @@
 #include "snappy/snappy.h"
 #include "nanoparquet.h"
 #include "RleBpEncoder.h"
+#include "memstream.h"
 
 using namespace std;
 
