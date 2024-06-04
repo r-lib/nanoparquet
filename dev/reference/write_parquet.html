@@ -66,7 +66,9 @@
 
 
 <dt>file</dt>
-<dd><p>Path to the output file.</p></dd>
+<dd><p>Path to the output file. If this is the string <code>":raw:"</code>,
+then the data frame is written to a memory buffer, and the memory
+buffer is returned as a raw vector.</p></dd>
 
 
 <dt>compression</dt>
@@ -84,9 +86,8 @@ character columns called <code>key</code> and <code>value</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p><code>NULL</code></p>
-
-
+<p><code>NULL</code>, unless <code>file</code> is <code>":raw:"</code>, in which case the Parquet
+file is returned as a raw vector.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
