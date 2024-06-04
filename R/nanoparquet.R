@@ -420,13 +420,16 @@ parquet_columns <- function(file) {
 #' [base::enc2utf8()]. It does the same for factor levels.
 #'
 #' @param x Data frame to write.
-#' @param file Path to the output file.
+#' @param file Path to the output file. If this is the string `":raw:"`,
+#'   then the data frame is written to a memory buffer, and the memory
+#'   buffer is returned as a raw vector.
 #' @param compression Compression algorithm to use. Currently only
 #'   `"snappy"` (the default) and `"uncompressed"` are supported.
 #' @param metadata Additional key-value metadata to add to the file.
 #'   This must be a named character vector, or a data frame with columns
 #'   character columns called `key` and `value`.
-#' @return `NULL`
+#' @return `NULL`, unless `file` is `":raw:"`, in which case the Parquet
+#'   file is returned as a raw vector.
 #'
 #' @export
 #' @seealso [parquet_metadata()], [read_parquet()].
@@ -511,7 +514,7 @@ write_parquet <- function(
 	# easier here than calling back to R
 	required <- !vapply(x, anyNA, logical(1))
 
-	invisible(.Call(
+	res <- .Call(
 		nanoparquet_write,
 		x,
 		file,
@@ -519,5 +522,11 @@ write_parquet <- function(
 		compression,
 		metadata,
 		required
-	))
+	)
+
+	if (is.null(res)) {
+		invisible()
+	} else {
+		res
+	}
 }

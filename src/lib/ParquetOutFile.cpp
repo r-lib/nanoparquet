@@ -9,7 +9,6 @@
 #include "snappy/snappy.h"
 #include "nanoparquet.h"
 #include "RleBpEncoder.h"
-#include "memstream.h"
 
 using namespace std;
 
@@ -35,13 +34,26 @@ static string type_to_string(Type::type t) {
 ParquetOutFile::ParquetOutFile(
   std::string filename,
   parquet::format::CompressionCodec::type codec) :
-  num_rows(0), num_cols(0), num_rows_set(false),
-  codec(codec),
-  mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
-  tproto(tproto_factory.getProtocol(mem_buffer)) {
+    pfile(pfile_), num_rows(0), num_cols(0), num_rows_set(false),
+    codec(codec), mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
+    tproto(tproto_factory.getProtocol(mem_buffer)) {
 
   // open file
-  pfile.open(filename, std::ios::binary);
+  pfile_.open(filename, std::ios::binary);
+
+  // root schema element
+  SchemaElement sch;
+  sch.__set_name("schema");
+  sch.__set_num_children(0);
+  schemas.push_back(sch);
+}
+
+ParquetOutFile::ParquetOutFile(
+  std::ostream &stream,
+  parquet::format::CompressionCodec::type codec) :
+    pfile(stream), num_rows(0), num_cols(0), num_rows_set(false),
+    codec(codec), mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
+    tproto(tproto_factory.getProtocol(mem_buffer)) {
 
   // root schema element
   SchemaElement sch;
@@ -423,7 +435,7 @@ void ParquetOutFile::write() {
   write_columns();
   write_footer();
   pfile.write("PAR1", 4);
-  pfile.close();
+  pfile_.close();
 }
 
 void ParquetOutFile::write_columns() {
@@ -1076,8 +1088,4 @@ void ParquetOutFile::write_footer() {
 
   // size of the footer (without the magic bytes)
   pfile.write((const char *)&out_length, 4);
-
-  // Magic bytes
-  pfile.write("PAR1", 4);
-  pfile.close();
 }

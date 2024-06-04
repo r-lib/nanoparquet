@@ -31,7 +31,6 @@ class MemStream : public std::streambuf {
         bufs[bufptr] = std::unique_ptr<char[]>(new char[sizes[bufptr]]);
         sbuf = bufs[bufptr].get();
         sptr = 0;
-        setp(sbuf, sbuf + sizes[bufptr]);
       }
       uint64_t space = sizes[bufptr] - sptr;
       if (n > space) {
@@ -47,7 +46,6 @@ class MemStream : public std::streambuf {
         sbuf = bufs[bufptr].get();
         memcpy(sbuf, s + space, of);
         sptr = of;
-        setp(sbuf, sbuf + sizes[bufptr]);
         pbump(of);
        } else {
         memcpy(sbuf + sptr, s, n);
@@ -107,7 +105,17 @@ class MemStream : public std::streambuf {
       return done;
     }
 
-    // TODO: need seekoff() override for tellp() to work
+  // This does not really work properly, but we don't seek anyway,
+  // and it makes tellp() work, which we need.
+  pos_type seekoff(off_type off, std::ios_base::seekdir dir,
+                   std::ios_base::openmode which) override {
+    if ((dir == std::ios_base::cur && off != 0) ||
+        dir == std::ios_base::end ||
+        dir == std::ios_base::beg) {
+      throw std::runtime_error("Cannot seek in output buffer");
+    }
+    return pptr() - pbase();
+  }
 
   private:
     const int num_bufs = 50;

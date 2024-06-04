@@ -14,7 +14,9 @@ write_parquet(
 \arguments{
 \item{x}{Data frame to write.}
 
-\item{file}{Path to the output file.}
+\item{file}{Path to the output file. If this is the string \code{":raw:"},
+then the data frame is written to a memory buffer, and the memory
+buffer is returned as a raw vector.}
 
 \item{compression}{Compression algorithm to use. Currently only
 \code{"snappy"} (the default) and \code{"uncompressed"} are supported.}
@@ -24,7 +26,8 @@ This must be a named character vector, or a data frame with columns
 character columns called \code{key} and \code{value}.}
 }
 \value{
-\code{NULL}
+\code{NULL}, unless \code{file} is \code{":raw:"}, in which case the Parquet
+file is returned as a raw vector.
 }
 \description{
 Writes the contents of an R data frame into a Parquet file.
