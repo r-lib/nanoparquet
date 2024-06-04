@@ -2,6 +2,7 @@ BROTLI
 CMD
 DuckDB
 GZIP
+LLC
 LZ
 LZO
 MacBook
