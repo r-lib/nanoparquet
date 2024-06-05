@@ -7,7 +7,7 @@
 write_parquet(
   x,
   file,
-  compression = c("snappy", "uncompressed"),
+  compression = c("snappy", "gzip", "uncompressed"),
   metadata = NULL
 )
 }
@@ -19,7 +19,7 @@ then the data frame is written to a memory buffer, and the memory
 buffer is returned as a raw vector.}
 
 \item{compression}{Compression algorithm to use. Currently only
-\code{"snappy"} (the default) and \code{"uncompressed"} are supported.}
+\code{"snappy"} (the default), \code{"gzip"} and \code{"uncompressed"} are supported.}
 
 \item{metadata}{Additional key-value metadata to add to the file.
 This must be a named character vector, or a data frame with columns

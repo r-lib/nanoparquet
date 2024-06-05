@@ -7,6 +7,7 @@
 #include <transport/TBufferTransports.h>
 
 #include "snappy/snappy.h"
+#include "miniz/miniz_wrapper.hpp"
 #include "nanoparquet.h"
 #include "RleBpEncoder.h"
 
@@ -384,6 +385,14 @@ size_t ParquetOutFile::compress(
     tgt.reset(tgt_size_est);
     size_t tgt_size;
     snappy::RawCompress(src.ptr, src_size, tgt.ptr, &tgt_size);
+    return tgt_size;
+  } else if (codec == CompressionCodec::GZIP) {
+    miniz::MiniZStream mzs;
+    size_t tgt_size_est = mzs.MaxCompressedLength(src_size);
+    tgt.reset(tgt_size_est);
+    size_t tgt_size = tgt_size_est;
+    // throws on error
+    mzs.Compress(src.ptr, src_size, tgt.ptr, &tgt_size);
     return tgt_size;
   } else {
     std::stringstream ss;
