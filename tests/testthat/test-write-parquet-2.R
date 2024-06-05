@@ -117,3 +117,13 @@ test_that("write_parquet() to memory", {
 
   expect_equal(pm, pm2)
 })
+
+test_that("gzip compression", {
+  d <- test_df(missing = TRUE)
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  write_parquet(d, tmp, compression = "gzip")
+  expect_equal(read_parquet_page(tmp, 4L)$codec, "GZIP")
+  expect_equal(read_parquet(tmp), d);
+})
