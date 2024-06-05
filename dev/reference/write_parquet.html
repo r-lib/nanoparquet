@@ -54,7 +54,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">write_parquet</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">file</span>,</span>
-<span>  compression <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"snappy"</span>, <span class="st">"uncompressed"</span><span class="op">)</span>,</span>
+<span>  compression <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"snappy"</span>, <span class="st">"gzip"</span>, <span class="st">"uncompressed"</span><span class="op">)</span>,</span>
 <span>  metadata <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -73,7 +73,7 @@ buffer is returned as a raw vector.</p></dd>
 
 <dt>compression</dt>
 <dd><p>Compression algorithm to use. Currently only
-<code>"snappy"</code> (the default) and <code>"uncompressed"</code> are supported.</p></dd>
+<code>"snappy"</code> (the default), <code>"gzip"</code> and <code>"uncompressed"</code> are supported.</p></dd>
 
 
 <dt>metadata</dt>
