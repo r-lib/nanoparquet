@@ -6,7 +6,7 @@
 \alias{nanoparquet-package}
 \title{nanoparquet: Read and Write 'Parquet' Files}
 \description{
-Self-sufficient reader and writer for flat 'Parquet' files. Can read most 'Parquet' data types. Can write many 'R' data types, including factors and temporal types. Supports 'Snappy' compression.
+Self-sufficient reader and writer for flat 'Parquet' files. Can read most 'Parquet' data types. Can write many 'R' data types, including factors and temporal types. See docs for limitations.
 }
 \details{
 \code{nanoparquet} is a reader and writer for a common subset of Parquet files.
@@ -17,7 +17,7 @@ Self-sufficient reader and writer for flat 'Parquet' files. Can read most 'Parqu
 \item Can write many R data types, including factors and temporal types
 to Parquet.
 \item Completely dependency free.
-\item Supports Snappy compression.
+\item Supports Snappy, Gzip and Zstd compression.
 }
 }
 
@@ -28,7 +28,9 @@ to Parquet.
 \code{UNKNOWN}.
 \item The \code{FIXED_LEN_BYTE_ARRAY} Parquet type is not supported, unless it
 represents a supported logical type.
-\item Only Snappy compression is supported.
+\item Only Snappy, Gzip and Zstd compression is supported.
+\item Some encodings are not supported: \code{BIT_PACKED}, \code{DELTA_BINARY_PACKED},
+\code{DELTA_LENGTH_BYTE_ARRAY}, \code{DELTA_BYTE_ARRAY} and \code{BYTE_STREAM_SPLIT}.
 \item Encryption is not supported.
 \item Being single-threaded and not fully optimized, nanoparquet is probably
 not suited well for large data sets. It should be fine for a couple of

@@ -15,7 +15,7 @@
 * Can write many R data types, including factors and temporal types
   to Parquet.
 * Completely dependency free.
-* Supports Snappy compression.
+* Supports Snappy, Gzip and Zstd compression.
 
 ## Limitations:
 
@@ -24,7 +24,9 @@
   `UNKNOWN`.
 * The `FIXED_LEN_BYTE_ARRAY` Parquet type is not supported, unless it
   represents a supported logical type.
-* Only Snappy compression is supported.
+* Only Snappy, Gzip and Zstd compression is supported.
+* Some encodings are not supported: `BIT_PACKED`, `DELTA_BINARY_PACKED`,
+  `DELTA_LENGTH_BYTE_ARRAY`, `DELTA_BYTE_ARRAY` and `BYTE_STREAM_SPLIT`.
 * Encryption is not supported.
 * Being single-threaded and not fully optimized, nanoparquet is probably
   not suited well for large data sets. It should be fine for a couple of
