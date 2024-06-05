@@ -424,8 +424,8 @@ parquet_columns <- function(file) {
 #' @param file Path to the output file. If this is the string `":raw:"`,
 #'   then the data frame is written to a memory buffer, and the memory
 #'   buffer is returned as a raw vector.
-#' @param compression Compression algorithm to use. Currently only
-#'   `"snappy"` (the default), `"gzip"` and `"uncompressed"` are supported.
+#' @param compression Compression algorithm to use. Currently `"snappy"`
+#'   (the default), `"gzip"`, `"zstd"`, and `"uncompressed"` are supported.
 #' @param metadata Additional key-value metadata to add to the file.
 #'   This must be a named character vector, or a data frame with columns
 #'   character columns called `key` and `value`.
@@ -442,11 +442,11 @@ parquet_columns <- function(file) {
 write_parquet <- function(
 	x,
 	file,
-	compression = c("snappy", "gzip", "uncompressed"),
+	compression = c("snappy", "gzip", "zstd", "uncompressed"),
 	metadata = NULL) {
 
   file <- path.expand(file)
-	codecs <- c("uncompressed" = 0L, "snappy" = 1L, "gzip" = 2L)
+	codecs <- c("uncompressed" = 0L, "snappy" = 1L, "gzip" = 2L, "zstd" = 6L)
 	compression <- codecs[match.arg(compression)]
 	dim <- as.integer(dim(x))
 

@@ -46,3 +46,9 @@ In `src/flatbuffers`.
 
 (c) 2013-2014 RAD Game Tools and Valve Software
 (c) 2010-2014 Rich Geldreich and Tenacious Software LLC
+
+## Zstd
+
+`src/zstd`
+
+(c) 2016-present Facebook, Inc.
