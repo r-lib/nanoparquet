@@ -10,7 +10,8 @@ Authors@R: c(
     person("RAD Game Tools", role = "cph"),
     person("Valve Software", role = "cph"),
     person("Valve Software", role = "cph"),
-    person("Tenacious Software LLC", role = "cph"))
+    person("Tenacious Software LLC", role = "cph"),
+    person("Facebook, Inc.", role = "cph"))
 Description: Self-sufficient reader and writer for flat 'Parquet' files.
     Can read most 'Parquet' data types. Can write many 'R' data types,
     including factors and temporal types. See docs for limitations.
