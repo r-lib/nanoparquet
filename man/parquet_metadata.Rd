@@ -57,7 +57,7 @@ same file.
 \item \code{type}: low level parquet data type.
 \item \code{encodings}: encodings used to store this chunk. It is a list
 column of character vectors of encoding names. Current possible
-encodings: "PLAIN", "GROUP_VAR_INT", "PLAIN_DICTIONARY", "RLE", "BIT_PACKED", "DELTA_BINARY_PACKED", "DELTA_LENGTH_BYTE_ARRAY", "DELTA_BYTE_ARRAY", "RLE_DICTIONARY".
+encodings: "PLAIN", "GROUP_VAR_INT", "PLAIN_DICTIONARY", "RLE", "BIT_PACKED", "DELTA_BINARY_PACKED", "DELTA_LENGTH_BYTE_ARRAY", "DELTA_BYTE_ARRAY", "RLE_DICTIONARY", "BYTE_STREAM_SPLIT".
 \item \code{path_in_scema}: list column of character vectors. It is simply
 the path from the root node. It is simply the column name for
 flat schemas.

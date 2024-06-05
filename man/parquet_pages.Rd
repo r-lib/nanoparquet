@@ -31,7 +31,7 @@ Parquet spec.
 \item \code{num_values}: number of data values in this page, include
 \code{NULL} (\code{NA} in R) values.
 \item \code{encoding}: encoding of the page, current possible encodings:
-"PLAIN", "GROUP_VAR_INT", "PLAIN_DICTIONARY", "RLE", "BIT_PACKED", "DELTA_BINARY_PACKED", "DELTA_LENGTH_BYTE_ARRAY", "DELTA_BYTE_ARRAY", "RLE_DICTIONARY".
+"PLAIN", "GROUP_VAR_INT", "PLAIN_DICTIONARY", "RLE", "BIT_PACKED", "DELTA_BINARY_PACKED", "DELTA_LENGTH_BYTE_ARRAY", "DELTA_BYTE_ARRAY", "RLE_DICTIONARY", "BYTE_STREAM_SPLIT".
 \item \code{definition_level_encoding}: encoding of the definition levels,
 see \code{encoding} for possible values. This can be missing in V2 data
 pages, where they are always RLE encoded.
