@@ -52,7 +52,7 @@ XXH32        6.8 GB/s            6.0 GB/s
 *  Definitions
 ******************************/
 #include <stddef.h>   /* size_t */
-namespace duckdb_zstd {
+namespace zstd {
 typedef enum { XXH_OK=0, XXH_ERROR } XXH_errorcode;
 
 
@@ -232,4 +232,3 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src
 }
 
 #endif /* XXHASH_H_5627135585666179 */
-

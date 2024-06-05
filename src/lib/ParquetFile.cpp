@@ -9,6 +9,7 @@
 
 #include "snappy/snappy.h"
 #include "miniz/miniz_wrapper.hpp"
+#include "zstd.h"
 #include "nanoparquet.h"
 #include "RleBpDecoder.h"
 
@@ -821,6 +822,30 @@ void ParquetFile::scan_column(ScanState &state, ResultColumn &result_col) {
         (char*) decompressed_buf.ptr + xdef,
         cs.page_header.uncompressed_page_size - xrep - xdef
       );
+
+      cs.page_buf_ptr = (char *)decompressed_buf.ptr;
+      cs.page_buf_len = cs.page_header.uncompressed_page_size - xrep;
+
+      break;
+    }
+    case CompressionCodec::ZSTD: {
+      decompressed_buf.resize(cs.page_header.uncompressed_page_size + 1 + xdef);
+      memcpy(decompressed_buf.ptr, chunk_buf.ptr + xrep, xdef);
+
+      size_t res = zstd::ZSTD_decompress(
+        decompressed_buf.ptr + xdef,
+        cs.page_header.uncompressed_page_size - xrep - xdef,
+        chunk_buf.ptr + xrep + xdef,
+        cs.page_header.compressed_page_size - xrep - xdef
+      );
+
+  		if (zstd::ZSTD_isError(res) ||
+          res != (size_t) cs.page_header.uncompressed_page_size - xrep -xdef) {
+        std::stringstream ss;
+        ss << "Zstd decompression failure, possibly corrupt Parquet file '"
+           << filename << "' @ " << __FILE__ << ":" << __LINE__;
+        throw runtime_error(ss.str());
+  		}
 
       cs.page_buf_ptr = (char *)decompressed_buf.ptr;
       cs.page_buf_len = cs.page_header.uncompressed_page_size - xrep;

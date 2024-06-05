@@ -30,7 +30,7 @@
 #else
 #  define ZSTDERRORLIB_API ZSTDERRORLIB_VISIBILITY
 #endif
-namespace duckdb_zstd {
+namespace zstd {
 /*-*********************************************
  *  Error codes list
  *-*********************************************

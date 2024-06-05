@@ -27,7 +27,7 @@
 // #  include "../legacy/zstd_legacy.h"
 // #endif
 
-namespace duckdb_zstd {
+namespace zstd {
 
 /*-*******************************************************
 *  Types

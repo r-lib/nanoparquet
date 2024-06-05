@@ -12,7 +12,7 @@
 
 #include "zstd/common/error_private.h"
 
-namespace duckdb_zstd {
+namespace zstd {
 
 const char* ERR_getErrorString(ERR_enum code)
 {

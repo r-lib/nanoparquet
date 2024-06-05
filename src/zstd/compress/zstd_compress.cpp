@@ -33,7 +33,7 @@
 #include <sanitizer/msan_interface.h>
 #endif
 
-namespace duckdb_zstd {
+namespace zstd {
 /*-*************************************
 *  Helper functions
 ***************************************/

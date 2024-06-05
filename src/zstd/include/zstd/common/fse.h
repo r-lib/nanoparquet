@@ -22,7 +22,7 @@
 #include <stddef.h>    /* size_t, ptrdiff_t */
 
 
-namespace duckdb_zstd {
+namespace zstd {
 /*-*****************************************
 *  FSE_PUBLIC_API : control library symbols visibility
 ******************************************/
@@ -274,4 +274,3 @@ If there is an error, the function will return an error code, which can be teste
 }
 
 #endif  /* FSE_H */
-

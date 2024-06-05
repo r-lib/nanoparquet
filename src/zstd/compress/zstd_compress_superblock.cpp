@@ -19,7 +19,7 @@
 #include "zstd/compress/zstd_compress_sequences.h"
 #include "zstd/compress/zstd_compress_literals.h"
 
-namespace duckdb_zstd {
+namespace zstd {
 /*-*************************************
 *  Superblock entropy buffer structs
 ***************************************/

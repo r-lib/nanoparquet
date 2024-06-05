@@ -20,7 +20,7 @@
 #include "zstd/compress/hist.h"
 
 
-namespace duckdb_zstd {
+namespace zstd {
 
 /* --- Error management --- */
 unsigned HIST_isError(size_t code) { return ERR_isError(code); }

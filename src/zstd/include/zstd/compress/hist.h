@@ -17,7 +17,7 @@
 #include <stddef.h>   /* size_t */
 
 
-namespace duckdb_zstd {
+namespace zstd {
 /* --- simple histogram functions --- */
 
 /*! HIST_count():
