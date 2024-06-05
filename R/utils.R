@@ -1,3 +1,5 @@
+`%||%` <- function(l, r) if (is.null(l)) r else l
+
 is_rcmd_check <- function() {
   if (identical(Sys.getenv("NOT_CRAN"), "true")) {
     FALSE

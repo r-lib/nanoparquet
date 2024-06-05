@@ -152,6 +152,17 @@ gzip_uncompress <- function(buffer, uncompressed_length) {
 	.Call(gzip_uncompress_raw, buffer, uncompressed_length)
 }
 
+#' RLE encode integers
+#'
+#' @param x Integer vector.
+#' @return Raw vector, the encoded integers. It has two attributes:
+#'   * `bit_length`: the number of bits needed to encode the input, and
+#'   * `length`: length of the original integer input.
+#'
+#' @keywords internal
+#' @seealso [rle_decode_int()]
+#' @family encodings
+
 rle_encode_int <- function(x) {
 	bw <- if (length(x)) {
 		max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
@@ -164,7 +175,20 @@ rle_encode_int <- function(x) {
 	res
 }
 
-rle_decode_int <- function(x, bit_width, length = NA) {
+#' RLE decode integers
+#'
+#' @param x Raw vector of the encoded integers.
+#' @param bit_width Bit width used for the encoding.
+#' @param length Length of the output. If `NA` then we assume that `x`
+#'   starts with length of the output, encoded as a 4 byte integer.
+#' @return The decoded integer vector.
+#'
+#' @keywords internal
+#' @seealso [rle_encode_int()]
+#' @family encodings
+
+rle_decode_int <- function(x, bit_width = attr(x, "bit_width"),
+													 length = attr(x, "length") %||% NA) {
 	.Call(nanoparquet_rle_decode_int, x, bit_width, is.na(length), length)
 }
 
