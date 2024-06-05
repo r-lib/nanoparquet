@@ -8,6 +8,7 @@
 
 #include "snappy/snappy.h"
 #include "miniz/miniz_wrapper.hpp"
+#include "zstd.h"
 #include "nanoparquet.h"
 #include "RleBpEncoder.h"
 
@@ -393,6 +394,23 @@ size_t ParquetOutFile::compress(
     size_t tgt_size = tgt_size_est;
     // throws on error
     mzs.Compress(src.ptr, src_size, tgt.ptr, &tgt_size);
+    return tgt_size;
+  } else if (codec == CompressionCodec::ZSTD) {
+    size_t tgt_size_est = zstd::ZSTD_compressBound(src_size);
+    tgt.reset(tgt_size_est);
+    size_t tgt_size = zstd::ZSTD_compress(
+      tgt.ptr,
+      tgt_size_est,
+      src.ptr,
+      src_size,
+      ZSTD_CLEVEL_DEFAULT
+    );
+    if (zstd::ZSTD_isError(tgt_size)) {
+        std::stringstream ss;
+        ss << "Zstd compression failure" << "' @ " << __FILE__ << ":"
+           << __LINE__;
+        throw runtime_error(ss.str());
+    }
     return tgt_size;
   } else {
     std::stringstream ss;

@@ -781,6 +781,9 @@ SEXP nanoparquet_write(
     case 2:
       codec = parquet::format::CompressionCodec::GZIP;
       break;
+    case 6:
+      codec = parquet::format::CompressionCodec::ZSTD;
+      break;
     default:
       Rf_error("Invalid compression type code: %d", c_compression); // # nocov
       break;

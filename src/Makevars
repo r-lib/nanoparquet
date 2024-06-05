@@ -13,7 +13,15 @@ OBJECTS= \
   zstd/common/fse_decompress.o zstd/common/xxhash.o \
   zstd/common/zstd_common.o zstd/decompress/huf_decompress.o \
   zstd/decompress/zstd_ddict.o zstd/decompress/zstd_decompress.o \
-  zstd/decompress/zstd_decompress_block.o
+  zstd/decompress/zstd_decompress_block.o \
+  zstd/compress/fse_compress.o zstd/compress/hist.o \
+  zstd/compress/huf_compress.o zstd/compress/zstd_compress.o \
+  zstd/compress/zstd_compress_literals.o \
+  zstd/compress/zstd_compress_sequences.o \
+  zstd/compress/zstd_compress_superblock.o \
+  zstd/compress/zstd_double_fast.o zstd/compress/zstd_fast.o \
+  zstd/compress/zstd_lazy.o zstd/compress/zstd_ldm.o \
+  zstd/compress/zstd_opt.o
 
 PKG_CPPFLAGS = -Ithrift -I. -Iprotobuf -Izstd/include
 # PKG_CFLAGS = -DR_NO_REMAP

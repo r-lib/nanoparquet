@@ -127,3 +127,13 @@ test_that("gzip compression", {
   expect_equal(read_parquet_page(tmp, 4L)$codec, "GZIP")
   expect_equal(read_parquet(tmp), d);
 })
+
+test_that("zstd compression", {
+  d <- test_df(missing = TRUE)
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  write_parquet(d, tmp, compression = "zstd")
+  expect_equal(read_parquet_page(tmp, 4L)$codec, "ZSTD")
+  expect_equal(read_parquet(tmp), d);
+})

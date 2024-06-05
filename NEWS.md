@@ -11,8 +11,8 @@
 
 * `read_parquet()` can now read Parquet files with V2 data pages (#37).
 
-* Both `read_parquet()` and `write_parquet()` now support GZIP compressed
-  Parquet files.
+* Both `read_parquet()` and `write_parquet()` now support GZIP and ZSTD
+  compressed Parquet files.
 
 * `read_parquet()` can now read Parquet files with `BOOLEAN` columns in
   `RLE` encoding.
