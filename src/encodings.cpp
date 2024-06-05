@@ -53,4 +53,15 @@ SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
   R_API_END()
 }
 
+SEXP nanoparquet_dbp_decode_int(SEXP x) {
+
+  return R_NilValue;
+}
+
+SEXP nanoparquet_dbp_encode_int(SEXP x) {
+
+  return R_NilValue;
+}
+
+
 }

@@ -192,6 +192,14 @@ rle_decode_int <- function(x, bit_width = attr(x, "bit_width"),
 	.Call(nanoparquet_rle_decode_int, x, bit_width, is.na(length), length)
 }
 
+dbp_encode_int <- function(x) {
+	.Call(nanoparquet_dbp_encode_int, x)
+}
+
+dbp_decode_int <- function(x) {
+	.Call(nanoparquet_dbp_decode_int, x)
+}
+
 dict_encode <- function(x, n = length(x)) {
 	.Call(nanoparquet_create_dict, x, n)
 }
