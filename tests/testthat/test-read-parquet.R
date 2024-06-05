@@ -313,24 +313,18 @@ test_that("Tricky V2 data page", {
 })
 
 test_that("zstd", {
-  skip_on_cran()
   pf <- test_path("data/zstd.parquet")
   expect_true(all(parquet_metadata(pf)$column_chunks$codec == "ZSTD"))
-  expect_equal(
-    as.data.frame(read_parquet(pf)),
-    as.data.frame(arrow::read_parquet(pf))
-  )
+  pf2 <- test_path("data/gzip.parquet")
+  expect_equal(read_parquet(pf), read_parquet(pf2))
 })
 
 test_that("zstd with data page v2", {
-  skip_on_cran()
   pf <- test_path("data/zstd-v2.parquet")
   expect_true(all(parquet_metadata(pf)$column_chunks$codec == "ZSTD"))
   expect_true(
     all(parquet_pages(pf)$page_type %in% c("DICTIONARY_PAGE", "DATA_PAGE_V2"))
   )
-  expect_equal(
-    as.data.frame(read_parquet(pf)),
-    as.data.frame(arrow::read_parquet(pf))
-  )
+  pf2 <- test_path("data/gzip.parquet")
+  expect_equal(read_parquet(pf), read_parquet(pf2))
 })
