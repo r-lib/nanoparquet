@@ -1,12 +1,13 @@
-OBJECTS= \
+OBJECTS= encodings.o \
   rwrapper.o protect.o read.o write.o \
   read-metadata.o read-pages.o \
-  arrow-schema.o base64.o r-base64.o snappy.o encodings.o \
+  arrow-schema.o base64.o r-base64.o snappy.o \
   dictionary-encoding.o test.o \
   lib/ParquetFile.o lib/ParquetOutFile.o lib/RleBpDecoder.o \
   parquet/parquet_constants.o parquet/parquet_types.o \
   thrift/protocol/TProtocol.o thrift/transport/TTransportException.o \
   thrift/transport/TBufferTransports.o \
+  fastpforlib/bitpacking.o \
   snappy/snappy.o snappy/snappy-sinksource.o \
   miniz/miniz.o \
   zstd/common/entropy_common.o zstd/common/error_private.o \

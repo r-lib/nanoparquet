@@ -52,3 +52,21 @@ In `src/flatbuffers`.
 `src/zstd`
 
 (c) 2016-present Facebook, Inc.
+
+## FastPFor
+
+`src/fastpforlib`
+
+Daniel Lemire
+Leonid Boytsov
+Owen Kaser
+Maxime Caron
+Louis Dionne
+Michel Lemay
+Erik Kruus
+Andrea Bedini
+Matthias Petri
+Robson Braga Araujo
+Patrick Damme
+Xiening Dai
+Pavel Pavlov

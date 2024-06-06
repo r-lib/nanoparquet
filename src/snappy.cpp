@@ -2,6 +2,7 @@
 
 #include "snappy/snappy.h"
 #include "miniz/miniz_wrapper.hpp"
+#include "zstd.h"
 
 extern "C" {
 
@@ -61,6 +62,32 @@ SEXP gzip_uncompress_raw(SEXP x, SEXP ucl) {
   miniz::MiniZStream mzs;
   SEXP res = PROTECT(Rf_allocVector(RAWSXP, cusl));
   mzs.Decompress((const char*) RAW(x), data_size, (char*) RAW(res), cusl);
+  UNPROTECT(1);
+  return res;
+}
+
+SEXP zstd_compress_raw(SEXP x) {
+  R_xlen_t data_size = Rf_xlength(x);
+  miniz::MiniZStream mzs;
+  size_t maxcsize = zstd::ZSTD_compressBound(data_size);
+  SEXP res = PROTECT(Rf_allocVector(RAWSXP, maxcsize));
+  size_t tgt_size = zstd::ZSTD_compress(
+    (char*) RAW(res),
+    maxcsize,
+    (const char*) RAW(x),
+    data_size,
+    ZSTD_CLEVEL_DEFAULT
+  );
+  res = Rf_lengthgets(res, tgt_size);
+  UNPROTECT(1);
+  return res;
+}
+
+SEXP zstd_uncompress_raw(SEXP x, SEXP ucl) {
+  R_xlen_t data_size = Rf_xlength(x);
+  size_t cusl = INTEGER(ucl)[0];
+  SEXP res = PROTECT(Rf_allocVector(RAWSXP, cusl));
+  zstd::ZSTD_decompress(RAW(res), cusl, RAW(x), data_size);
   UNPROTECT(1);
   return res;
 }

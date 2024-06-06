@@ -12,6 +12,7 @@
 #include "zstd.h"
 #include "nanoparquet.h"
 #include "RleBpDecoder.h"
+#include "DbpDecoder.h"
 
 using namespace std;
 

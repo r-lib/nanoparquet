@@ -127,6 +127,15 @@ read_parquet_page <- function(file, offset) {
 				res$uncompressed_page_size - skip - copy
 			)
 		)
+	} else if (res$codec == "ZSTD") {
+		res$compressed_data <- res$data
+		res$data <- c(
+			if (copy > 0) res$data[1:copy],
+			zstd_uncompress(
+				res$data[(skip+copy+1L):length(res$data)],
+				res$uncompressed_page_size - skip - copy
+			)
+		)
 	} else if (res$codec == "UNCOMPRESSED") {
 		# keep data
 	} else {
@@ -150,6 +159,14 @@ gzip_compress <- function(buffer) {
 
 gzip_uncompress <- function(buffer, uncompressed_length) {
 	.Call(gzip_uncompress_raw, buffer, uncompressed_length)
+}
+
+zstd_compress <- function(buffer) {
+	.Call(zstd_compress_raw, buffer)
+}
+
+zstd_uncompress <- function(buffer, uncompressed_length) {
+	.Call(zstd_uncompress_raw, buffer, uncompressed_length)
 }
 
 #' RLE encode integers
@@ -198,6 +215,19 @@ dbp_encode_int <- function(x) {
 
 dbp_decode_int <- function(x) {
 	.Call(nanoparquet_dbp_decode_int, x)
+}
+
+unpack_bits <- function(x, bit_width, n) {
+	.Call(nanoparquet_unpack_bits_int32, x, bit_width, n)
+}
+
+pack_bits <- function(x, bit_width = NULL) {
+	bit_width <- bit_width %||% if (length(x)) {
+		max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
+	} else {
+		0L
+	}
+	.Call(nanoparquet_pack_bits_int32, x, bit_width)
 }
 
 dict_encode <- function(x, n = length(x)) {

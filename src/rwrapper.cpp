@@ -23,6 +23,8 @@ SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width, SEXP
 SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width);
 SEXP nanoparquet_dbp_decode_int(SEXP x);
 SEXP nanoparquet_dbp_encode_int(SEXP x);
+SEXP nanoparquet_unpack_bits_int32(SEXP x, SEXP bit_width, SEXP n);
+SEXP nanoparquet_pack_bits_int32(SEXP x, SEXP bit_width);
 
 SEXP nanoparquet_create_dict(SEXP x, SEXP l);
 SEXP nanoparquet_create_dict_idx(SEXP x);
@@ -35,6 +37,8 @@ SEXP snappy_compress_raw(SEXP x);
 SEXP snappy_uncompress_raw(SEXP x);
 SEXP gzip_compress_raw(SEXP x);
 SEXP gzip_uncompress_raw(SEXP x, SEXP ucl);
+SEXP zstd_compress_raw(SEXP x);
+SEXP zstd_uncompress_raw(SEXP x, SEXP ucl);
 
 SEXP test_memstream();
 
@@ -69,6 +73,8 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_rle_encode_int, 2),
   CALLDEF(nanoparquet_dbp_decode_int, 1),
   CALLDEF(nanoparquet_dbp_encode_int, 1),
+  CALLDEF(nanoparquet_unpack_bits_int32, 3),
+  CALLDEF(nanoparquet_pack_bits_int32, 2),
   CALLDEF(nanoparquet_create_dict, 2),
   CALLDEF(nanoparquet_create_dict_idx, 1),
   CALLDEF(nanoparquet_avg_run_length, 2),
@@ -78,6 +84,8 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(snappy_uncompress_raw, 1),
   CALLDEF(gzip_compress_raw, 1),
   CALLDEF(gzip_uncompress_raw, 2),
+  CALLDEF(zstd_compress_raw, 1),
+  CALLDEF(zstd_uncompress_raw, 2),
 
   CALLDEF(test_memstream, 0),
 

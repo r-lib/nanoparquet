@@ -212,3 +212,93 @@
       67             TRUE
       68             TRUE
 
+# DELTA_BIT_PACKED encoding
+
+    Code
+      stat
+    Output
+      $status
+      [1] 0
+      
+      $stdout
+      [1] ""
+      
+      $stderr
+      NULL
+      
+      $timeout
+      [1] FALSE
+      
+
+---
+
+    Code
+      stat
+    Output
+      $status
+      [1] 0
+      
+      $stdout
+      [1] ""
+      
+      $stderr
+      NULL
+      
+      $timeout
+      [1] FALSE
+      
+
+---
+
+    Code
+      stat
+    Output
+      $status
+      [1] 0
+      
+      $stdout
+      [1] ""
+      
+      $stderr
+      NULL
+      
+      $timeout
+      [1] FALSE
+      
+
+---
+
+    Code
+      stat
+    Output
+      $status
+      [1] 0
+      
+      $stdout
+      [1] ""
+      
+      $stderr
+      NULL
+      
+      $timeout
+      [1] FALSE
+      
+
+---
+
+    Code
+      stat
+    Output
+      $status
+      [1] 0
+      
+      $stdout
+      [1] ""
+      
+      $stderr
+      NULL
+      
+      $timeout
+      [1] FALSE
+      
+
