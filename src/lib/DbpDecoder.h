@@ -17,11 +17,6 @@ public:
     num_values = uleb_decode<uint32_t>(buf);
     first_value = zigzag_decode<T, Tunsigned>(uleb_decode<Tunsigned>(buf));
     mb_size = block_size / num_mb_pb;
-    cerr << "block size: " << block_size
-         << " num mini per block: " << num_mb_pb
-         << " num values: " << num_values
-         << " first: " << first_value
-         << endl;
     // TODO: sanity check for values;
   }
 
@@ -35,29 +30,19 @@ public:
     values++;
     uint64_t todo = num_values - 1;
     while (todo > 0) {
-      cerr << "block start at " << buf->start - start << endl;
       // start of a block
       T min_delta = zigzag_decode<T, Tunsigned>(uleb_decode<Tunsigned>(buf));
-      cerr << "  min delta: " << min_delta << " ";
       if (buf->len < num_mb_pb) {
         throw runtime_error("End of buffer while DBP decoding");
       }
       vector<uint8_t> bit_widths(num_mb_pb);
-      cerr << "bit widths: ";
       memcpy(bit_widths.data(), buf->start, num_mb_pb);
-      for (int i = 0; i < num_mb_pb; i++) {
-        cerr << (int) bit_widths[i] << " ";
-      }
-      cerr << endl;
       buf->start += num_mb_pb; buf->len -= num_mb_pb;
       for (auto i = 0; todo > 0 && i < num_mb_pb; i++) {
         // start of a miniblock
-        cerr << "mini block start at " << buf->start - start << endl;
         int8_t bw = bit_widths[i];
         uint64_t mb_vals = mb_size > todo ? todo : mb_size;
-        cerr << "mb_vals: " << mb_vals << endl;
         uint64_t mb_len = bw * mb_vals / 8 + ((bw * mb_vals) % 8 > 0);
-        cerr << "mb len: " << mb_len << endl;
         if (buf->len < mb_len) {
           throw runtime_error("End of buffer while DBP decoding");
         }

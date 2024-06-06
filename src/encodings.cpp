@@ -60,7 +60,6 @@ SEXP nanoparquet_dbp_decode_int(SEXP x) {
   R_API_START();
   DbpDecoder<int32_t, uint32_t> dbp(&buf);
   R_xlen_t size = dbp.size();
-  cerr << "size:" << size << endl;
   SEXP res = PROTECT(safe_allocvector_int(size, &uwtoken));
   dbp.decode(INTEGER(res));
   UNPROTECT(2);

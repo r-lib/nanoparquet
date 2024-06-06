@@ -412,3 +412,121 @@
       This is a test
       This is a test
 
+# DELTA_BIT_PACKED decoding
+
+    Code
+      stat
+    Output
+      $status
+      [1] 0
+      
+      $stdout
+      [1] ""
+      
+      $stderr
+      NULL
+      
+      $timeout
+      [1] FALSE
+      
+
+---
+
+    Code
+      stat
+    Output
+      $status
+      [1] 0
+      
+      $stdout
+      [1] ""
+      
+      $stderr
+      NULL
+      
+      $timeout
+      [1] FALSE
+      
+
+---
+
+    Code
+      stat
+    Output
+      $status
+      [1] 0
+      
+      $stdout
+      [1] ""
+      
+      $stderr
+      NULL
+      
+      $timeout
+      [1] FALSE
+      
+
+---
+
+    Code
+      stat
+    Output
+      $status
+      [1] 0
+      
+      $stdout
+      [1] ""
+      
+      $stderr
+      NULL
+      
+      $timeout
+      [1] FALSE
+      
+
+---
+
+    Code
+      stat
+    Output
+      $status
+      [1] 0
+      
+      $stdout
+      [1] ""
+      
+      $stderr
+      NULL
+      
+      $timeout
+      [1] FALSE
+      
+
+# DELTA_BINARY_PACKED edge cases
+
+    Code
+      p1 <- read_parquet_page(pf, pgs$page_header_offset[1])
+      dbp1 <- p1$data[(p1$definition_levels_byte_length + p1$
+        repetition_levels_byte_length + 1):length(p1$data)]
+      dbp_decode_int(dbp1)
+    Output
+      [1] 0 1
+    Code
+      p3 <- read_parquet_page(pf, pgs$page_header_offset[3])
+      dbp3 <- p3$data
+      dbp_decode_int(dbp3)
+    Output
+      [1] -128  127
+    Code
+      p4 <- read_parquet_page(pf, pgs$page_header_offset[4])
+      dbp4 <- p4$data
+      dbp_decode_int(dbp4)
+    Output
+      [1] -32768  32767
+    Code
+      p5 <- read_parquet_page(pf, pgs$page_header_offset[5])
+      dbp5 <- p5$data
+      dbp_decode_int(dbp5)
+    Output
+      [1]         NA 2147483647
+
