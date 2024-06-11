@@ -209,12 +209,20 @@ rle_decode_int <- function(x, bit_width = attr(x, "bit_width"),
 	.Call(nanoparquet_rle_decode_int, x, bit_width, is.na(length), length)
 }
 
-dbp_encode_int <- function(x) {
-	.Call(nanoparquet_dbp_encode_int, x)
-}
+# dbp_encode_int <- function(x) {
+# 	.Call(nanoparquet_dbp_encode_int32, x)
+# }
 
 dbp_decode_int <- function(x) {
-	.Call(nanoparquet_dbp_decode_int, x)
+	.Call(nanoparquet_dbp_decode_int32, x)
+}
+
+# dbp_encode_int64 <- function(x) {
+# 	.Call(nanoparquet_dbp_encode_int64, x)
+# }
+
+dbp_decode_int64 <- function(x) {
+	.Call(nanoparquet_dbp_decode_int64, x)
 }
 
 unpack_bits <- function(x, bit_width, n) {

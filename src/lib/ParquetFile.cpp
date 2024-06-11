@@ -355,6 +355,10 @@ public:
       scan_data_page_rle(result_col);
       break;
 
+    case Encoding::DELTA_BINARY_PACKED:
+      scan_data_page_delta_binary_packed(result_col);
+      break;
+
     default: {
       std::stringstream ss;
       ss << "Data page has unsupported encoding " << encoding
@@ -558,8 +562,6 @@ public:
     }
 
     switch (result_col.col->type) {
-      // TODO no bools here? I guess makes no sense to use dict...
-
     case Type::INT32:
       fill_values_dict<int32_t>(result_col, offsets.get());
 
@@ -639,6 +641,53 @@ public:
       if (defined_ptr[val_offset]) {
         result_arr[row_idx] = offsets[val_offset];
       }
+    }
+  }
+
+  void scan_data_page_delta_binary_packed(ResultColumn &result_col) {
+    auto num_values = page_header.type == PageType::DATA_PAGE ?
+      page_header.data_page_header.num_values :
+      page_header.data_page_header_v2.num_values;
+    struct buffer buf = {
+      (uint8_t*) page_buf_ptr,
+      (uint32_t) page_header.compressed_page_size
+    };
+    page_buf_ptr += page_header.compressed_page_size;
+    switch (result_col.col->type) {
+    case Type::INT32: {
+      int32_t *result_arr = (int32_t *)result_col.data.ptr;
+      DbpDecoder<int32_t, uint32_t> dec(&buf);
+      uint32_t num_non_null_values = dec.size();
+      unique_ptr<int32_t[]> vals(new int32_t[num_non_null_values]);
+      dec.decode(vals.get());
+      for (uint32_t i = 0, j = 0; i < num_values; i++) {
+        if (!defined_ptr[i]) {
+          continue;
+        }
+        auto row_idx = page_start_row + i;
+        result_arr[row_idx] = vals[j++];
+      }
+      break;
+    }
+    case Type::INT64: {
+      int64_t *result_arr = (int64_t *)result_col.data.ptr;
+      DbpDecoder<int64_t, uint64_t> dec(&buf);
+      uint32_t num_non_null_values = dec.size();
+      unique_ptr<int64_t[]> vals(new int64_t[num_non_null_values]);
+      dec.decode(vals.get());
+      for (uint32_t i = 0, j = 0; i < num_values; i++) {
+        if (!defined_ptr[i]) {
+          continue;
+        }
+        auto row_idx = page_start_row + i;
+        result_arr[row_idx] = vals[j++];
+      }
+      break;
+    }
+    default: {
+      throw runtime_error("DELTA_BINARY_PACKED encoding must be INT32 or INT64");
+      break;
+    }
     }
   }
 

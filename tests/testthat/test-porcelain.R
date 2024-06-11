@@ -131,3 +131,15 @@ test_that("DELTA_BINARY_PACKED edge cases", {
     dbp_decode_int(dbp5)
   })
 })
+
+test_that("DELTA_BIANRY_PACKED INT64", {
+  suppressPackageStartupMessages(library(bit64))
+  pf <- test_path("data/dbp-int64.parquet")
+  dt <- read_parquet_page(pf, 4L)$data
+  on.exit(close(con), add = TRUE)
+  len <- readBin(con <- rawConnection(dt), "integer", 1)
+  dt <- dt[(len + 4 + 1):length(dt)]
+  expect_snapshot({
+    dbp_decode_int(dt)
+  })
+})

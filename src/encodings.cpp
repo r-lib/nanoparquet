@@ -54,7 +54,7 @@ SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
   R_API_END()
 }
 
-SEXP nanoparquet_dbp_decode_int(SEXP x) {
+SEXP nanoparquet_dbp_decode_int32(SEXP x) {
   struct buffer buf = { RAW(x), (uint32_t) Rf_xlength(x) };
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
   R_API_START();
@@ -67,8 +67,28 @@ SEXP nanoparquet_dbp_decode_int(SEXP x) {
   R_API_END()
 }
 
-SEXP nanoparquet_dbp_encode_int(SEXP x) {
+SEXP nanoparquet_dbp_encode_int32(SEXP x) {
+  // TODO
+  return R_NilValue;
+}
 
+SEXP nanoparquet_dbp_decode_int64(SEXP x) {
+  struct buffer buf = { RAW(x), (uint32_t) Rf_xlength(x) };
+  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
+  R_API_START();
+  DbpDecoder<int64_t, uint64_t> dbp(&buf);
+  R_xlen_t size = dbp.size();
+  SEXP res = PROTECT(safe_allocvector_real(size, &uwtoken));
+  dbp.decode((int64_t*) REAL(res));
+  SEXP cls = PROTECT(safe_mkstring("integer64", &uwtoken));
+  Rf_setAttrib(res, R_ClassSymbol, cls);
+  UNPROTECT(3);
+  return res;
+  R_API_END()
+}
+
+SEXP nanoparquet_dbp_encode_int64(SEXP x) {
+  // TODO
   return R_NilValue;
 }
 

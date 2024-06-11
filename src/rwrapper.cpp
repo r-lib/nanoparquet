@@ -21,8 +21,10 @@ SEXP nanoparquet_encode_arrow_schema(SEXP schema);
 SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width, SEXP
                                 includes_length, SEXP length);
 SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width);
-SEXP nanoparquet_dbp_decode_int(SEXP x);
-SEXP nanoparquet_dbp_encode_int(SEXP x);
+SEXP nanoparquet_dbp_decode_int32(SEXP x);
+SEXP nanoparquet_dbp_encode_int32(SEXP x);
+SEXP nanoparquet_dbp_decode_int64(SEXP x);
+SEXP nanoparquet_dbp_encode_int64(SEXP x);
 SEXP nanoparquet_unpack_bits_int32(SEXP x, SEXP bit_width, SEXP n);
 SEXP nanoparquet_pack_bits_int32(SEXP x, SEXP bit_width);
 
@@ -71,8 +73,10 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_encode_arrow_schema, 1),
   CALLDEF(nanoparquet_rle_decode_int, 4),
   CALLDEF(nanoparquet_rle_encode_int, 2),
-  CALLDEF(nanoparquet_dbp_decode_int, 1),
-  CALLDEF(nanoparquet_dbp_encode_int, 1),
+  CALLDEF(nanoparquet_dbp_decode_int32, 1),
+  CALLDEF(nanoparquet_dbp_encode_int32, 1),
+  CALLDEF(nanoparquet_dbp_decode_int64, 1),
+  CALLDEF(nanoparquet_dbp_encode_int64, 1),
   CALLDEF(nanoparquet_unpack_bits_int32, 3),
   CALLDEF(nanoparquet_pack_bits_int32, 2),
   CALLDEF(nanoparquet_create_dict, 2),

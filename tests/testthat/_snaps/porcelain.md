@@ -530,3 +530,10 @@
     Output
       [1]         NA 2147483647
 
+# DELTA_BIANRY_PACKED INT64
+
+    Code
+      dbp_decode_int(dt)
+    Output
+      [1] -100   -1    0    2    4    5  100
+
