@@ -212,3 +212,101 @@
       67             TRUE
       68             TRUE
 
+# DELTA_BIANRY_PACKED encoding
+
+    Code
+      parquet_metadata(pf)$column_chunks$encodings
+    Output
+      [[1]]
+      [1] "RLE"                 "DELTA_BINARY_PACKED"
+      
+      [[2]]
+      [1] "RLE"                 "DELTA_BINARY_PACKED"
+      
+    Code
+      read_parquet(pf)
+    Output
+      # A data frame: 20 x 2
+             x     y
+         <int> <int>
+       1     1   -10
+       2     2    -9
+       3     3    -8
+       4     4    -7
+       5     5    -6
+       6     6    -5
+       7     7    -4
+       8     8    -3
+       9     9    -2
+      10    10    -1
+      11  1001    11
+      12  1002    12
+      13  1003    13
+      14  1004    14
+      15  1005    15
+      16  1006    16
+      17  1007    17
+      18  1008    18
+      19  1009    19
+      20  1010    20
+
+---
+
+    Code
+      parquet_metadata(pf2)$column_chunks$encodings
+    Output
+      [[1]]
+      [1] "RLE"                 "DELTA_BINARY_PACKED"
+      
+      [[2]]
+      [1] "RLE"                 "DELTA_BINARY_PACKED"
+      
+    Code
+      read_parquet(pf2)
+    Output
+      # A data frame: 20 x 2
+             x     y
+         <int> <int>
+       1     1   -10
+       2     2    NA
+       3     3    -8
+       4     4    -7
+       5     5    -6
+       6    NA    -5
+       7    NA    -4
+       8     8    -3
+       9     9    -2
+      10    10    -1
+      11  1001    11
+      12  1002    12
+      13    NA    NA
+      14  1004    14
+      15  1005    15
+      16    NA    16
+      17  1007    17
+      18  1008    NA
+      19    NA    19
+      20  1010    20
+
+---
+
+    Code
+      parquet_metadata(pf3)$column_chunks$encodings
+    Output
+      [[1]]
+      [1] "RLE"                 "DELTA_BINARY_PACKED"
+      
+    Code
+      read_parquet(pf3)
+    Output
+      # A data frame: 7 x 1
+            x
+        <dbl>
+      1  -100
+      2    -1
+      3     0
+      4     2
+      5     4
+      6     5
+      7   100
+

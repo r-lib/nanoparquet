@@ -127,6 +127,15 @@ read_parquet_page <- function(file, offset) {
 				res$uncompressed_page_size - skip - copy
 			)
 		)
+	} else if (res$codec == "ZSTD") {
+		res$compressed_data <- res$data
+		res$data <- c(
+			if (copy > 0) res$data[1:copy],
+			zstd_uncompress(
+				res$data[(skip+copy+1L):length(res$data)],
+				res$uncompressed_page_size - skip - copy
+			)
+		)
 	} else if (res$codec == "UNCOMPRESSED") {
 		# keep data
 	} else {
@@ -152,6 +161,25 @@ gzip_uncompress <- function(buffer, uncompressed_length) {
 	.Call(gzip_uncompress_raw, buffer, uncompressed_length)
 }
 
+zstd_compress <- function(buffer) {
+	.Call(zstd_compress_raw, buffer)
+}
+
+zstd_uncompress <- function(buffer, uncompressed_length) {
+	.Call(zstd_uncompress_raw, buffer, uncompressed_length)
+}
+
+#' RLE encode integers
+#'
+#' @param x Integer vector.
+#' @return Raw vector, the encoded integers. It has two attributes:
+#'   * `bit_length`: the number of bits needed to encode the input, and
+#'   * `length`: length of the original integer input.
+#'
+#' @keywords internal
+#' @seealso [rle_decode_int()]
+#' @family encodings
+
 rle_encode_int <- function(x) {
 	bw <- if (length(x)) {
 		max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
@@ -164,8 +192,50 @@ rle_encode_int <- function(x) {
 	res
 }
 
-rle_decode_int <- function(x, bit_width, length = NA) {
+#' RLE decode integers
+#'
+#' @param x Raw vector of the encoded integers.
+#' @param bit_width Bit width used for the encoding.
+#' @param length Length of the output. If `NA` then we assume that `x`
+#'   starts with length of the output, encoded as a 4 byte integer.
+#' @return The decoded integer vector.
+#'
+#' @keywords internal
+#' @seealso [rle_encode_int()]
+#' @family encodings
+
+rle_decode_int <- function(x, bit_width = attr(x, "bit_width"),
+													 length = attr(x, "length") %||% NA) {
 	.Call(nanoparquet_rle_decode_int, x, bit_width, is.na(length), length)
+}
+
+# dbp_encode_int <- function(x) {
+# 	.Call(nanoparquet_dbp_encode_int32, x)
+# }
+
+dbp_decode_int <- function(x) {
+	.Call(nanoparquet_dbp_decode_int32, x)
+}
+
+# dbp_encode_int64 <- function(x) {
+# 	.Call(nanoparquet_dbp_encode_int64, x)
+# }
+
+dbp_decode_int64 <- function(x) {
+	.Call(nanoparquet_dbp_decode_int64, x)
+}
+
+unpack_bits <- function(x, bit_width, n) {
+	.Call(nanoparquet_unpack_bits_int32, x, bit_width, n)
+}
+
+pack_bits <- function(x, bit_width = NULL) {
+	bit_width <- bit_width %||% if (length(x)) {
+		max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
+	} else {
+		0L
+	}
+	.Call(nanoparquet_pack_bits_int32, x, bit_width)
 }
 
 dict_encode <- function(x, n = length(x)) {
