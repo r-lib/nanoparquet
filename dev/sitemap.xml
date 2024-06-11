@@ -43,6 +43,12 @@
     <loc>https://r-lib.github.io/nanoparquet/dev/reference/read_parquet_page.html</loc>
   </url>
   <url>
+    <loc>https://r-lib.github.io/nanoparquet/dev/reference/rle_decode_int.html</loc>
+  </url>
+  <url>
+    <loc>https://r-lib.github.io/nanoparquet/dev/reference/rle_encode_int.html</loc>
+  </url>
+  <url>
     <loc>https://r-lib.github.io/nanoparquet/dev/reference/write_parquet.html</loc>
   </url>
 </urlset>
