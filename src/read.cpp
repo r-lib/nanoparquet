@@ -318,9 +318,8 @@ SEXP nanoparquet_read(SEXP filesxp) {
           auto &s_ele = f.columns[col_idx]->schema_element;
           switch(TYPEOF(dest)) {
           case REALSXP: {
-            // this is a giant mess
-            auto type_len = s_ele->type_length;
-            auto bytes = ((char **)col.data.ptr)[row_idx];
+            auto type_len = ((pair<uint32_t, char*>*) col.data.ptr)[row_idx].first;
+            auto bytes = ((pair<uint32_t, char*>*) col.data.ptr)[row_idx].second;
             int64_t val = 0;
             for (auto i = 0; i < type_len; i++) {
               val = val << ((type_len - i) * 8) | (uint8_t)bytes[i];
