@@ -349,3 +349,10 @@ test_that("DELTA_BIANRY_PACKED encoding", {
     read_parquet(pf3)
   })
 })
+
+test_that("UUID columns", {
+  pf <- test_path("data/uuid-arrow.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet(pf))
+  })
+})

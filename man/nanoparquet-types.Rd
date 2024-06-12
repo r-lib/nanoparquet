@@ -48,6 +48,8 @@ data types. The exact rules are below.
 These rules will likely change until nanoparquet reaches version 1.0.0.
 \enumerate{
 \item The \code{BOOLEAN} type is read as a logical vector (\code{LGLSXP}).
+\item The \code{STRING} logical type and the \code{UTF8} converted type is read as
+a character vector with UTF-8 encoding.
 \item The \code{DATE} logical type and the \code{DATE} converted type are read as a
 \code{Date} R object.
 \item The \code{TIME} logical type and the \code{TIME_MILLIS} and \code{TIME_MICROS}
@@ -61,20 +63,22 @@ If the logical type has the \code{UTC} flag set, then the time zone of the
 \item \code{INT96} is read as a \code{POSIXct} read vector with the \code{tzone} attribute
 set to \code{"UTC"}. It was an old convention to store time stamps as
 \code{INT96} objects.
-\item The \code{DECIMAL} converted type (\code{FIXED_LEN_BYTE_ARRAY} type) is read
-as a real vector (\code{REALSXP}).
+\item The \code{DECIMAL} converted type (\code{FIXED_LEN_BYTE_ARRAY} or \code{BYTE_ARRAY}
+type) is read as a real vector (\code{REALSXP}), potentially losing
+precision.
+\item The \code{ENUM} logical type is read as a character vector.
+\item The \code{UUID} logical type is read as a character vector that uses the
+\code{00112233-4455-6677-8899-aabbccddeeff} form.
 \item \code{BYTE_ARRAY} is read as a \emph{factor} object if the file was written
 by Arrow and the original data type of the column was a factor.
 (See 'The Arrow metadata below.)
-\item Otherwise \code{BYTE_ARRAY} is read a character vector (\code{STRSXP}).
+\item Otherwise \code{BYTE_ARRAY} is read a list of raw vectors, with missing
+values denoted by \code{NULL}.
 }
 
 Other logical and converted types are read as their annotated low level
 types:
 \enumerate{
-\item \code{ENUM} is read as a character vector (\code{STRSXP}).
-\item \code{UUID} is a fixed length byte array, and nanoparquet cannot read it
-currently.
 \item \code{INT(8, true)}, \code{INT(16, true)} and \code{INT(32, true)} are read as
 integer vectors because they are \code{INT32} internally in Parquet.
 \item \code{INT(64, true)} is read as a real vector (\code{REALSXP}).
@@ -85,13 +89,17 @@ issue that we will fix.
 \item \code{INT(64, false)} is read as a real vector (\code{REALSXP}). Large
 positive values may overflow into negative values, this is a known
 issue that we will fix.
-\item \code{FLOAT16} is a fixed length byte array, and nanoparquet cannot read it
-currently.
-\item \code{INTERVAL} is a fixed length byte array, and nanoparquet cannot read
-it currently.
+\item \code{FLOAT16} is a fixed length byte array, and nanoparquet reads it as
+a list of raw vectors. Missing values are denoted by \code{NULL}.
+\item \code{INTERVAL} is a fixed length byte array, and nanoparquet reads it as
+a list of raw vectors. Missing values are denoted by \code{NULL}.
 \item \code{JSON} and \code{BSON} are read as character vectors (\code{STRSXP}).
-\item Nested types (\code{LIST}, \code{MAP}) and the \code{UNKNOWN} logical types are
-not supported currently.
+}
+
+These types are not yet supported:
+\enumerate{
+\item Nested types (\code{LIST}, \code{MAP}) are not supported.
+\item The \code{UNKNOWN} logical type is not supported.
 }
 
 You can use the \code{parquet_columns()} function to see how R would read

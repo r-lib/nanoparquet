@@ -47,7 +47,7 @@ struct ResultColumn {
   ParquetColumn *col;
   ByteBuffer defined;
   std::vector<std::unique_ptr<char[]>> string_heap_chunks;
-  std::unique_ptr<Dictionary<char *>> dict = nullptr;
+  std::unique_ptr<Dictionary<std::pair<uint32_t, char *>>> dict = nullptr;
 };
 
 struct ResultChunk {

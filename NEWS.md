@@ -1,5 +1,19 @@
 # nanoparquet (development version)
 
+* `read_parquet()` type mapping changes:
+  - The `STRING` logical type and the `UTF8` converted type are still read
+    as a character vector, but `BYTE_ARRAY` types without a converted or
+    logical types are not any more, and are read as a list of raw vectors.
+    Missing values are indicated as `NULL` values.
+  - The `DECIMAL` converted type is read as a `REALSXP` now, even if its
+    type is `FIXED_LEN_BYTE_ARRAY`. (Not just if it is `BYTE_ARRAY`).
+  - The `UUID` logical type is now read as a character vector, formatted as
+    `00112233-4455-6677-8899-aabbccddeeff`.
+  - `BYTE_ARRAY` and `FIXED_LEN_BYTE_ARRAY` types without logical or
+    converted types; or with unsupported ones: `FLOAT16`, `INTERVAL`; are
+    now read into a list of raw vectors. Missing values are denoted by
+    `NULL`.
+
 * `write_parquet()` now automatically uses dictionary encoding for columns
   that have many repeated values. Only the first 10k rows are use to
   decide if dictionary will be used or not. Similarly, logical columns are

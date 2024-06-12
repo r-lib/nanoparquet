@@ -40,6 +40,8 @@ data types. The exact rules are below.
 These rules will likely change until nanoparquet reaches version 1.0.0.
 
 1. The `BOOLEAN` type is read as a logical vector (`LGLSXP`).
+1. The `STRING` logical type and the `UTF8` converted type is read as
+   a character vector with UTF-8 encoding.
 1. The `DATE` logical type and the `DATE` converted type are read as a
    `Date` R object.
 1. The `TIME` logical type and the `TIME_MILLIS` and `TIME_MICROS`
@@ -53,19 +55,21 @@ These rules will likely change until nanoparquet reaches version 1.0.0.
 1. `INT96` is read as a `POSIXct` read vector with the `tzone` attribute
    set to `"UTC"`. It was an old convention to store time stamps as
    `INT96` objects.
-1. The `DECIMAL` converted type (`FIXED_LEN_BYTE_ARRAY` type) is read
-   as a real vector (`REALSXP`).
+1. The `DECIMAL` converted type (`FIXED_LEN_BYTE_ARRAY` or `BYTE_ARRAY`
+   type) is read as a real vector (`REALSXP`), potentially losing
+   precision.
+1. The `ENUM` logical type is read as a character vector.
+1. The `UUID` logical type is read as a character vector that uses the
+   `00112233-4455-6677-8899-aabbccddeeff` form.
 1. `BYTE_ARRAY` is read as a *factor* object if the file was written
    by Arrow and the original data type of the column was a factor.
    (See 'The Arrow metadata below.)
-1. Otherwise `BYTE_ARRAY` is read a character vector (`STRSXP`).
+1. Otherwise `BYTE_ARRAY` is read a list of raw vectors, with missing
+   values denoted by `NULL`.
 
 Other logical and converted types are read as their annotated low level
 types:
 
-1. `ENUM` is read as a character vector (`STRSXP`).
-1. `UUID` is a fixed length byte array, and nanoparquet cannot read it
-   currently.
 1. `INT(8, true)`, `INT(16, true)` and `INT(32, true)` are read as
    integer vectors because they are `INT32` internally in Parquet.
 1. `INT(64, true)` is read as a real vector (`REALSXP`).
@@ -76,13 +80,16 @@ types:
 1. `INT(64, false)` is read as a real vector (`REALSXP`). Large
    positive values may overflow into negative values, this is a known
    issue that we will fix.
-1. `FLOAT16` is a fixed length byte array, and nanoparquet cannot read it
-   currently.
-1. `INTERVAL` is a fixed length byte array, and nanoparquet cannot read
-   it currently.
+1. `FLOAT16` is a fixed length byte array, and nanoparquet reads it as
+   a list of raw vectors. Missing values are denoted by `NULL`.
+1. `INTERVAL` is a fixed length byte array, and nanoparquet reads it as
+   a list of raw vectors. Missing values are denoted by `NULL`.
 1. `JSON` and `BSON` are read as character vectors (`STRSXP`).
-1. Nested types (`LIST`, `MAP`) and the `UNKNOWN` logical types are
-   not supported currently.
+
+These types are not yet supported:
+
+1. Nested types (`LIST`, `MAP`) are not supported.
+1. The `UNKNOWN` logical type is not supported.
 
 You can use the `parquet_columns()` function to see how R would read
 the columns of a Parquet file. Look at the `r_type` column.

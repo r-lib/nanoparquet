@@ -355,13 +355,22 @@ parquet_columns <- function(file) {
 		DOUBLE = "double",
 		FLOAT = "double",
 		INT96 = "POSIXct",
-		FIXED_LENGTH_BYTE_ARRAY = NA,
-		BYTE_ARRAY = "character"
+		FIXED_LEN_BYTE_ARRAY = "raw",
+		BYTE_ARRAY = "raw"
 	)
 
 	# keep leaf columns only, arrow schema is for leaf columns
 	sch <- sch[is.na(sch$num_children) | sch$num_children == 0L, ]
 	sch$r_type <- unname(type_map[sch$type])
+
+	sch$r_type[
+		sch$type == "FIXED_LEN_BYTE_ARRAY" &
+		sch$converted_type == "DECIMAL"] <- "double"
+	sch$r_type[
+		vapply(sch$logical_type, function(x) {
+			!is.null(x$type) && x$type %in% c("STRING", "ENUM", "UUID")
+		}, logical(1)) |
+		sch$converted_type == "UTF8"] <- "character"
 
 	# detected from Arrow schema
 	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
@@ -399,9 +408,6 @@ parquet_columns <- function(file) {
 	) | sch$converted_type == "TIMESTAMP_MICROS"
 	sch$r_type[poscts] <- "POSIXct"
 
-	sch$r_type[
-		sch$type == "FIXED_LEN_BYTE_ARRAY" &
-		sch$converted_type == "DECIMAL"] <- "double"
 	cols <- c(
 		"file_name",
 		"name",

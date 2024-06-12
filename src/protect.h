@@ -43,7 +43,8 @@ SEXP wrapped_strsxp(void *len);
 SEXP wrapped_vecsxp(void *len);
 SEXP wrapped_mknamed_vec(void *data);
 SEXP wrapped_mkchar(void *data);
-SEXP wrapped_mkchar_utf8(void *date);
+SEXP wrapped_mkchar_utf8(void *data);
+SEXP wrapped_mkchar_len_utf8(void *data, int len);
 SEXP wrapped_mkstring(void *data);
 SEXP wrapped_scalarinteger(void *data);
 SEXP wrapped_scalarreal(void *data);
@@ -82,6 +83,16 @@ inline SEXP safe_mkchar(const char *c, SEXP *uwt) {
 
 inline SEXP safe_mkchar_utf8(const char *c, SEXP *uwt) {
   return R_UnwindProtect(wrapped_mkchar_utf8, &c, throw_error, uwt, *uwt);
+}
+
+struct safe_mkchar_len_data {
+  char *c;
+  int len;
+};
+
+inline SEXP safe_mkchar_len_utf8(const char *c, int len, SEXP *uwt) {
+  struct safe_mkchar_len_data d = { (char*) c, len };
+  return R_UnwindProtect(wrapped_mkchar_utf8, &d, throw_error, uwt, *uwt);
 }
 
 inline SEXP safe_mkstring(const char *c, SEXP *uwt) {
