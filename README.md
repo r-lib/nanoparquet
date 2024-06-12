@@ -23,7 +23,6 @@
 * Some Parquet logical types are not supported: `FLOAT16`, `INTERVAL`,
   `UNKNOWN`.
 * Only Snappy, Gzip and Zstd compression is supported.
-* The `BIT_PACKED` and `BYTE_STREAM_SPLIT` encodings are not supported.
 * Encryption is not supported.
 * Being single-threaded and not fully optimized, nanoparquet is probably
   not suited well for large data sets. It should be fine for a couple of
