@@ -22,10 +22,8 @@
 * Nested Parquet types are not supported.
 * Some Parquet logical types are not supported: `FLOAT16`, `INTERVAL`,
   `UNKNOWN`.
-* The `FIXED_LEN_BYTE_ARRAY` Parquet type is not supported, unless it
-  represents a supported logical type.
 * Only Snappy, Gzip and Zstd compression is supported.
-* Some encodings are not supported: `BIT_PACKED`, `DELTA_BINARY_PACKED`,
+* Some encodings are not supported: `BIT_PACKED`,
   `DELTA_LENGTH_BYTE_ARRAY`, `DELTA_BYTE_ARRAY` and `BYTE_STREAM_SPLIT`.
 * Encryption is not supported.
 * Being single-threaded and not fully optimized, nanoparquet is probably
