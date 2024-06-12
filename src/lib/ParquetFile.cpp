@@ -3,6 +3,7 @@
 #include <math.h>
 #include <sstream>
 #include <string>
+#include <numeric>
 
 #include <protocol/TCompactProtocol.h>
 #include <transport/TBufferTransports.h>
@@ -367,6 +368,10 @@ public:
 
     case Encoding::DELTA_LENGTH_BYTE_ARRAY:
       scan_data_page_delta_length_byte_array(result_col);
+      break;
+
+    case Encoding::DELTA_BYTE_ARRAY:
+      scan_data_page_delta_byte_array(result_col);
       break;
 
     default: {
@@ -742,6 +747,73 @@ public:
       str_ptr[str_len] = '\0';
       str_ptr += str_len + 1;
       bts += str_len;
+    }
+    page_buf_ptr += page_header.compressed_page_size;
+  }
+
+  void scan_data_page_delta_byte_array(ResultColumn &result_col) {
+    if (result_col.col->type != Type::BYTE_ARRAY &&
+        result_col.col->type != Type::FIXED_LEN_BYTE_ARRAY) {
+      throw runtime_error(
+        "DELTA_BYTE_ARRAY encoding is only allowed for BYTE_ARRAY and FIXED_LEN_BYTE_ARRAY columns"
+      );
+    }
+    auto num_values = page_header.type == PageType::DATA_PAGE ?
+      page_header.data_page_header.num_values :
+      page_header.data_page_header_v2.num_values;
+    struct buffer buf = {
+      (uint8_t*) page_buf_ptr,
+      (uint32_t) page_header.uncompressed_page_size
+    };
+    DbpDecoder<int32_t, uint32_t> predec(&buf);
+    uint32_t num_non_null_values = predec.size();
+    unique_ptr<int32_t[]> pre_lengths(new int32_t[num_non_null_values]);
+    unique_ptr<int32_t[]> suf_lengths(new int32_t[num_non_null_values]);
+    uint8_t *sufpos = predec.decode(pre_lengths.get());
+    buf = { sufpos, (uint32_t) ((uint8_t*) page_buf_end_ptr - sufpos) };
+    DbpDecoder<int32_t, uint32_t> sufdec(&buf);
+    uint8_t *bts = sufdec.decode(suf_lengths.get());
+
+    uint64_t shc_len = num_non_null_values; // for trailing zeros
+    for (auto i = 0; i < num_non_null_values; i++) shc_len += pre_lengths[i];
+    for (auto i = 0; i < num_non_null_values; i++) shc_len += suf_lengths[i];
+    auto string_heap_chunk = std::unique_ptr<char[]>(new char[shc_len]);
+    result_col.string_heap_chunks.push_back(std::move(string_heap_chunk));
+    auto str_ptr = result_col
+      .string_heap_chunks[result_col.string_heap_chunks.size() - 1]
+      .get();
+
+    char *prev_str_ptr = nullptr;
+    for (uint32_t i = 0, j = 0; i < num_values; i++) {
+      if (!defined_ptr[i]) {
+        continue;
+      }
+      auto row_idx = page_start_row + i;
+      auto pre_len = pre_lengths[j];
+      if (pre_len > 0 && prev_str_ptr == nullptr) {
+        throw runtime_error("Invalid DELTA_BYTE_ARRAY encoding, first prefix must be zero");
+      }
+      auto suf_len = suf_lengths[j];
+      j++;
+      auto str_len = pre_len + suf_len;
+      if ((const char*) bts + suf_len > page_buf_end_ptr) {
+        std::stringstream ss;
+        ss << "Declared string length exceeds payload size, invalid Parquet file "
+           << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
+        throw runtime_error(ss.str());
+      }
+      ((pair<uint32_t, char *>*)result_col.data.ptr)[row_idx] =
+        make_pair(str_len, str_ptr);
+      if (pre_len > 0) {
+        memcpy(str_ptr, prev_str_ptr, pre_len);
+      }
+      if (suf_len > 0) {
+        memcpy(str_ptr + pre_len, bts, suf_len);
+        bts += suf_len;
+      }
+      str_ptr[str_len] = '\0';
+      prev_str_ptr = str_ptr;
+      str_ptr += str_len + 1;
     }
     page_buf_ptr += page_header.compressed_page_size;
   }
