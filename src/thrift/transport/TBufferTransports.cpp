@@ -21,6 +21,8 @@
 #include <cassert>
 #include <cmath>
 
+#include <arpa/inet.h>
+
 #include <thrift/transport/TBufferTransports.h>
 
 using std::string;
