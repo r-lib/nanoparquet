@@ -9,7 +9,7 @@ using namespace std;
 extern "C" {
 
 // Does not throw C++ exceptions, so we can wrap it
-SEXP convert_logical_type_(parquet::format::LogicalType ltype) {
+SEXP convert_logical_type_(parquet::LogicalType ltype) {
   SEXP rtype = R_NilValue;
   int prot = 0;
   if (ltype.__isset.STRING) {
@@ -111,11 +111,11 @@ SEXP convert_logical_type_(parquet::format::LogicalType ltype) {
 }
 
 SEXP convert_logical_type_wrapper(void *data) {
-  parquet::format::LogicalType *ltype = (parquet::format::LogicalType*) data;
+  parquet::LogicalType *ltype = (parquet::LogicalType*) data;
   return convert_logical_type_(*ltype);
 }
 
-SEXP convert_logical_type(parquet::format::LogicalType ltype, SEXP *uwt) {
+SEXP convert_logical_type(parquet::LogicalType ltype, SEXP *uwt) {
   return R_UnwindProtect(
     convert_logical_type_wrapper,
     &ltype,
@@ -125,7 +125,7 @@ SEXP convert_logical_type(parquet::format::LogicalType ltype, SEXP *uwt) {
   );
 }
 
-SEXP convert_key_value_metadata(const parquet::format::FileMetaData &fmd) {
+SEXP convert_key_value_metadata(const parquet::FileMetaData &fmd) {
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
   R_API_START();
   auto kvsize =
@@ -138,7 +138,7 @@ SEXP convert_key_value_metadata(const parquet::format::FileMetaData &fmd) {
   SET_VECTOR_ELT(kv, 1, val);
   if (kvsize > 0) {
     for (R_xlen_t i = 0; i < kvsize; i++) {
-      const parquet::format::KeyValue &el = fmd.key_value_metadata[i];
+      const parquet::KeyValue &el = fmd.key_value_metadata[i];
       SET_STRING_ELT(key, i, safe_mkchar(el.key.c_str(), &uwtoken));
       SET_STRING_ELT(val, i,
         el.__isset.value ? safe_mkchar(el.value.c_str(), &uwtoken) : NA_STRING);
@@ -151,7 +151,7 @@ SEXP convert_key_value_metadata(const parquet::format::FileMetaData &fmd) {
 }
 
 SEXP convert_schema(const char *cfile_name,
-                    vector<parquet::format::SchemaElement>& schema) {
+                    vector<parquet::SchemaElement>& schema) {
   const char *col_nms[] = {
     "file_name",
     "name",
@@ -197,7 +197,7 @@ SEXP convert_schema(const char *cfile_name,
   SET_VECTOR_ELT(columns, 10, field_id);
 
   for (uint64_t idx = 0; idx < nc; idx++) {
-    parquet::format::SchemaElement sch = schema[idx];
+    parquet::SchemaElement sch = schema[idx];
     SET_STRING_ELT(file_name, idx, rfile_name);
     SET_STRING_ELT(name, idx, safe_mkchar(sch.name.c_str(), &uwtoken));
     INTEGER(type)[idx] = sch.__isset.type ? sch.type : NA_INTEGER;
@@ -224,7 +224,7 @@ SEXP convert_schema(const char *cfile_name,
 }
 
 SEXP convert_row_groups(const char *cfile_name,
-                        vector<parquet::format::RowGroup> &rgs) {
+                        vector<parquet::RowGroup> &rgs) {
   const char *nms[] = {
     "file_name",
     "id",
@@ -270,7 +270,7 @@ SEXP convert_row_groups(const char *cfile_name,
 }
 
 SEXP convert_column_chunks(const char *file_name,
-                           vector<parquet::format::RowGroup> &rgs) {
+                           vector<parquet::RowGroup> &rgs) {
   const char *nms[] = {
     "file_name",
     "row_group",
@@ -331,8 +331,8 @@ SEXP convert_column_chunks(const char *file_name,
   int idx = 0;
   for (int i = 0; i < rgs.size(); i++) {
     for (int j = 0; j < rgs[i].columns.size(); j++) {
-      parquet::format::ColumnChunk cc = rgs[i].columns[j];
-      parquet::format::ColumnMetaData cmd = cc.meta_data;
+      parquet::ColumnChunk cc = rgs[i].columns[j];
+      parquet::ColumnMetaData cmd = cc.meta_data;
       SET_STRING_ELT(VECTOR_ELT(rccs, 0), idx, rfile_name);
       INTEGER(VECTOR_ELT(rccs, 1))[idx] = i;
       INTEGER(VECTOR_ELT(rccs, 2))[idx] = j;
@@ -396,7 +396,7 @@ SEXP nanoparquet_read_metadata(SEXP filesxp) {
     };
   SEXP res = PROTECT(safe_mknamed_vec(res_nms, &uwtoken));
 
-  parquet::format::FileMetaData fmd = f.file_meta_data;
+  parquet::FileMetaData fmd = f.file_meta_data;
   const char *fmd_nms[] = {
     "file_name",
     "version",
@@ -438,7 +438,7 @@ SEXP nanoparquet_read_schema(SEXP filesxp) {
   SEXP cfname = PROTECT(STRING_ELT(filesxp, 0));
   const char *fname = CHAR(cfname);
   ParquetFile f(fname);
-  parquet::format::FileMetaData fmd = f.file_meta_data;
+  parquet::FileMetaData fmd = f.file_meta_data;
   UNPROTECT(1);
   return convert_schema(fname, fmd.schema);
   R_API_END();

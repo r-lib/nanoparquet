@@ -19,12 +19,12 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
 
   // first go over the pages to see how many we have
   size_t num_pages = 0;
-  parquet::format::FileMetaData fmd = f.file_meta_data;
-  vector<parquet::format::RowGroup> rgs = fmd.row_groups;
+  parquet::FileMetaData fmd = f.file_meta_data;
+  vector<parquet::RowGroup> rgs = fmd.row_groups;
   for (auto i = 0; i < rgs.size(); i++) {
     for (auto j = 0; j < rgs[i].columns.size(); j++) {
-      parquet::format::ColumnChunk cc = rgs[i].columns[j];
-      parquet::format::ColumnMetaData cmd = cc.meta_data;
+      parquet::ColumnChunk cc = rgs[i].columns[j];
+      parquet::ColumnMetaData cmd = cc.meta_data;
       int64_t chunk_start = cmd.data_page_offset;
       // dict?
       if (cmd.__isset.dictionary_page_offset &&
@@ -36,7 +36,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
       int64_t end = chunk_start + chunk_len;
       int64_t ofs = chunk_start;
       while (ofs < end) {
-        pair<parquet::format::PageHeader, int64_t> ph =
+        pair<parquet::PageHeader, int64_t> ph =
           f.read_page_header(ofs);
         ofs += ph.second;
         ofs += ph.first.compressed_page_size;
@@ -97,8 +97,8 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
   size_t page = 0;
   for (auto i = 0; i < rgs.size(); i++) {
     for (auto j = 0; j < rgs[i].columns.size(); j++) {
-      parquet::format::ColumnChunk cc = rgs[i].columns[j];
-      parquet::format::ColumnMetaData cmd = cc.meta_data;
+      parquet::ColumnChunk cc = rgs[i].columns[j];
+      parquet::ColumnMetaData cmd = cc.meta_data;
       int64_t chunk_start = cmd.data_page_offset;
       // dict?
       if (cmd.__isset.dictionary_page_offset &&
@@ -110,7 +110,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
       int64_t end = chunk_start + chunk_len;
       int64_t ofs = chunk_start;
       while (ofs < end) {
-        pair<parquet::format::PageHeader, int64_t> ph =
+        pair<parquet::PageHeader, int64_t> ph =
         f.read_page_header(ofs);
 
         SET_STRING_ELT(file_name, page, chr_file_name);
@@ -123,7 +123,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
           ph.first.compressed_page_size;
         INTEGER(crc)[page] =
           ph.first.__isset.crc ? ph.first.crc : NA_INTEGER;
-        if (ph.first.type == parquet::format::PageType::DATA_PAGE) {
+        if (ph.first.type == parquet::PageType::DATA_PAGE) {
           INTEGER(num_values)[page] =
             ph.first.data_page_header.num_values;
           INTEGER(encoding)[page] = ph.first.data_page_header.encoding;
@@ -132,14 +132,14 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
           INTEGER(repetition_level_encoding)[page] =
             ph.first.data_page_header.repetition_level_encoding;
         } else if (ph.first.type ==
-                   parquet::format::PageType::DATA_PAGE_V2) {
+                   parquet::PageType::DATA_PAGE_V2) {
           INTEGER(num_values)[page] =
             ph.first.data_page_header_v2.num_values;
           INTEGER(encoding)[page] = ph.first.data_page_header_v2.encoding;
           INTEGER(definition_level_encoding)[page] = NA_INTEGER;
           INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
         } else if (ph.first.type ==
-                   parquet::format::PageType::DICTIONARY_PAGE) {
+                   parquet::PageType::DICTIONARY_PAGE) {
           INTEGER(num_values)[page] =
             ph.first.dictionary_page_header.num_values;
           INTEGER(encoding)[page] =
@@ -147,7 +147,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
           INTEGER(definition_level_encoding)[page] = NA_INTEGER;
           INTEGER(repetition_level_encoding)[page] = NA_INTEGER;
         } else if (ph.first.type ==
-                   parquet::format::PageType::INDEX_PAGE) {
+                   parquet::PageType::INDEX_PAGE) {
           INTEGER(num_values)[page] = NA_INTEGER;
           INTEGER(encoding)[page] = NA_INTEGER;
           INTEGER(definition_level_encoding)[page] = NA_INTEGER;
@@ -176,7 +176,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
 
 struct PageData {
   // set in find_page
-  parquet::format::PageType::type page_type;
+  parquet::PageType::type page_type;
   int row_group_no;
   int column_no;
   int64_t page_header_offset;
@@ -184,33 +184,33 @@ struct PageData {
   int32_t page_header_length;
   int32_t compressed_page_size;
   int32_t uncompressed_page_size;
-  parquet::format::CompressionCodec::type codec;
+  parquet::CompressionCodec::type codec;
   int32_t num_values;
   int32_t num_nulls;
   int32_t num_rows;
-  parquet::format::Encoding::type encoding;
-  parquet::format::Encoding::type definition_level_encoding;
-  parquet::format::Encoding::type repetition_level_encoding;
+  parquet::Encoding::type encoding;
+  parquet::Encoding::type definition_level_encoding;
+  parquet::Encoding::type repetition_level_encoding;
   bool has_repetition_levels;
   int32_t definition_levels_byte_length;
   int32_t repetition_levels_byte_length;
 
   // not set in find_page, need info from the schema
   int schema_column_no;     // all columns, including internal nodes
-  parquet::format::Type::type data_type;
-  parquet::format::FieldRepetitionType::type repetition_type;
+  parquet::Type::type data_type;
+  parquet::FieldRepetitionType::type repetition_type;
   bool has_definition_levels;
 };
 
 static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
   PageData pd;
 
-  parquet::format::FileMetaData fmd = file.file_meta_data;
-  vector<parquet::format::RowGroup> rgs = fmd.row_groups;
+  parquet::FileMetaData fmd = file.file_meta_data;
+  vector<parquet::RowGroup> rgs = fmd.row_groups;
   for (auto i = 0; i < rgs.size(); i++) {
     for (auto j = 0; j < rgs[i].columns.size(); j++) {
-      parquet::format::ColumnChunk cc = rgs[i].columns[j];
-      parquet::format::ColumnMetaData cmd = cc.meta_data;
+      parquet::ColumnChunk cc = rgs[i].columns[j];
+      parquet::ColumnMetaData cmd = cc.meta_data;
       int64_t chunk_start = cmd.data_page_offset;
       // dict?
       if (cmd.__isset.dictionary_page_offset &&
@@ -228,7 +228,7 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
       int64_t end = chunk_start + chunk_len;
       int64_t ofs = chunk_start;
       while (ofs < end) {
-        pair<parquet::format::PageHeader, int64_t> ph =
+        pair<parquet::PageHeader, int64_t> ph =
           file.read_page_header(ofs);
         if (ofs == page_header_offset) {
           pd.page_type = ph.first.type;
@@ -241,20 +241,20 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
           pd.uncompressed_page_size = ph.first.uncompressed_page_size;
           pd.codec = cmd.codec;
           pd.definition_level_encoding =
-            (parquet::format::Encoding::type) NA_INTEGER;
+            (parquet::Encoding::type) NA_INTEGER;
           pd.repetition_level_encoding =
-            (parquet::format::Encoding::type) NA_INTEGER;
+            (parquet::Encoding::type) NA_INTEGER;
           pd.definition_levels_byte_length = NA_INTEGER;
           pd.repetition_levels_byte_length = NA_INTEGER;
           pd.num_nulls = pd.num_rows = NA_INTEGER;
-          if (ph.first.type == parquet::format::PageType::DATA_PAGE) {
+          if (ph.first.type == parquet::PageType::DATA_PAGE) {
             pd.num_values = ph.first.data_page_header.num_values;
             pd.encoding = ph.first.data_page_header.encoding;
             pd.definition_level_encoding =
               ph.first.data_page_header.definition_level_encoding;
             pd.repetition_level_encoding =
               ph.first.data_page_header.repetition_level_encoding;
-          } else if (ph.first.type == parquet::format::PageType::DATA_PAGE_V2) {
+          } else if (ph.first.type == parquet::PageType::DATA_PAGE_V2) {
             pd.num_values = ph.first.data_page_header_v2.num_values;
             pd.encoding = ph.first.data_page_header_v2.encoding;
             pd.definition_levels_byte_length =
@@ -264,13 +264,13 @@ static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
             pd.num_nulls = ph.first.data_page_header_v2.num_nulls;
             pd.num_rows = ph.first.data_page_header_v2.num_rows;
           } else if (ph.first.type ==
-                     parquet::format::PageType::DICTIONARY_PAGE) {
+                     parquet::PageType::DICTIONARY_PAGE) {
             pd.num_values = ph.first.dictionary_page_header.num_values;
             pd.encoding = ph.first.dictionary_page_header.encoding;
           }
           pd.has_repetition_levels =
-            (pd.page_type == parquet::format::PageType::DATA_PAGE ||
-             pd.page_type == parquet::format::PageType::DATA_PAGE_V2) &&
+            (pd.page_type == parquet::PageType::DATA_PAGE ||
+             pd.page_type == parquet::PageType::DATA_PAGE_V2) &&
             cmd.path_in_schema.size() >= 2;
           return pd;
         }
@@ -301,7 +301,7 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
   auto schema = f.file_meta_data.schema;
   int leafs = 0;
   for (int i = 0; i < schema.size(); i++) {
-    parquet::format::SchemaElement se = schema[i];
+    parquet::SchemaElement se = schema[i];
     if (se.__isset.num_children) { continue; }
     if (leafs == pd.column_no) {
       pd.schema_column_no = i;
@@ -309,10 +309,10 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
       // all columns but the root have one, so this must have one
       pd.repetition_type = se.repetition_type;
       pd.has_definition_levels =
-        (pd.page_type == parquet::format::PageType::DATA_PAGE ||
-         pd.page_type == parquet::format::PageType::DATA_PAGE_V2) &&
+        (pd.page_type == parquet::PageType::DATA_PAGE ||
+         pd.page_type == parquet::PageType::DATA_PAGE_V2) &&
         se.repetition_type !=
-        parquet::format::FieldRepetitionType::REQUIRED;
+        parquet::FieldRepetitionType::REQUIRED;
       break;
     }
     leafs++;
@@ -365,13 +365,13 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
   SET_VECTOR_ELT(res, 10, safe_scalarinteger(NA_INTEGER, &uwtoken));
   SET_VECTOR_ELT(res, 11, safe_scalarinteger(NA_INTEGER, &uwtoken));
   SET_VECTOR_ELT(res, 12, safe_scalarinteger(NA_INTEGER, &uwtoken));
-  if (pd.page_type == parquet::format::PageType::DATA_PAGE ||
-      pd.page_type == parquet::format::PageType::DATA_PAGE_V2 ||
-      pd.page_type == parquet::format::PageType::DICTIONARY_PAGE) {
+  if (pd.page_type == parquet::PageType::DATA_PAGE ||
+      pd.page_type == parquet::PageType::DATA_PAGE_V2 ||
+      pd.page_type == parquet::PageType::DICTIONARY_PAGE) {
     SET_VECTOR_ELT(res, 9, safe_scalarinteger(pd.num_values, &uwtoken));
     SET_VECTOR_ELT(res, 10, safe_scalarinteger(pd.encoding, &uwtoken));
   }
-  if (pd.page_type == parquet::format::PageType::DATA_PAGE) {
+  if (pd.page_type == parquet::PageType::DATA_PAGE) {
     SET_VECTOR_ELT(res, 11, safe_scalarinteger(pd.definition_level_encoding, &uwtoken));
     SET_VECTOR_ELT(res, 12, safe_scalarinteger(pd.repetition_level_encoding, &uwtoken));
   }

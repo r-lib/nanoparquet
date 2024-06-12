@@ -43,7 +43,7 @@
 #include <typeinfo>
 
 #include <thrift/TLogging.h>
-//#include <thrift/TOutput.h>
+#include <thrift/TOutput.h>
 
 #define THRIFT_UNUSED_VARIABLE(x) ((void)(x))
 
@@ -52,11 +52,6 @@ namespace thrift {
 
 class TEnumIterator {
 public:
-  using value_type = std::pair<int, const char*>;
-  using difference_type = std::ptrdiff_t;
-  using pointer = value_type*;
-  using reference = value_type&;
-  using iterator_category = std::forward_iterator_tag;
   TEnumIterator(int n, int* enums, const char** names)
     : ii_(0), n_(n), enums_(enums), names_(names) {}
 
@@ -83,7 +78,7 @@ public:
 
   TException(const std::string& message) : message_(message) {}
 
-  ~TException() noexcept override = default;
+  virtual ~TException() noexcept override = default;
 
   const char* what() const noexcept override {
     if (message_.empty()) {

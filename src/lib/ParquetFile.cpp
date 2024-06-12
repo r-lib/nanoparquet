@@ -18,7 +18,6 @@
 using namespace std;
 
 using namespace parquet;
-using namespace parquet::format;
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
@@ -372,6 +371,10 @@ public:
 
     case Encoding::DELTA_BYTE_ARRAY:
       scan_data_page_delta_byte_array(result_col);
+      break;
+
+    case Encoding::BYTE_STREAM_SPLIT:
+      scan_data_page_byte_stream_split(result_col);
       break;
 
     default: {
@@ -818,6 +821,91 @@ public:
     page_buf_ptr += page_header.compressed_page_size;
   }
 
+  template <class T> void fill_values_bss(ResultColumn &result_col) {
+    T *result_arr = (T *) result_col.data.ptr;
+    auto num_values = page_header.type == PageType::DATA_PAGE ?
+      page_header.data_page_header.num_values :
+      page_header.data_page_header_v2.num_values;
+    uint32_t num_non_null = 0;
+    for (uint32_t i = 0; i < num_values; i++) {
+      if (defined_ptr[i]) num_non_null++;
+    }
+
+    for (int32_t i = 0, j = 0; i < num_values; i++) {
+      if (!defined_ptr[i]) {
+        continue;
+      }
+
+      auto row_idx = page_start_row + i;
+      T val;
+      uint8_t *bts = (uint8_t *) &val;
+      for (int b = 0; b < sizeof(T); b++) {
+        bts[b] = page_buf_ptr[b * num_non_null + j];
+      }
+      result_arr[row_idx] = val;
+      j++;
+    }
+    page_buf_ptr += page_header.compressed_page_size;
+  }
+
+  void scan_data_page_byte_stream_split(ResultColumn &result_col) {
+    switch (result_col.col->type) {
+    case Type::FLOAT:
+      fill_values_bss<float>(result_col);
+      break;
+    case Type::DOUBLE:
+      fill_values_bss<double>(result_col);
+      break;
+    case Type::INT32:
+      fill_values_bss<int32_t>(result_col);
+      break;
+    case Type::INT64:
+      fill_values_bss<int64_t>(result_col);
+      break;
+    case Type::FIXED_LEN_BYTE_ARRAY: {
+      auto num_values = page_header.type == PageType::DATA_PAGE ?
+        page_header.data_page_header.num_values :
+        page_header.data_page_header_v2.num_values;
+      uint64_t shc_len = page_header.uncompressed_page_size + num_values;
+      auto string_heap_chunk = std::unique_ptr<char[]>(new char[shc_len]);
+      result_col.string_heap_chunks.push_back(std::move(string_heap_chunk));
+      auto str_ptr = result_col
+        .string_heap_chunks[result_col.string_heap_chunks.size() - 1]
+        .get();
+
+      if (page_buf_ptr + num_values * type_len > page_buf_end_ptr) {
+        throw runtime_error("Not enough bytes in BYTE_STREAM_SPLIT data page");
+      }
+
+      uint32_t num_non_null = 0;
+      for (uint32_t i = 0; i < num_values; i++) {
+        if (defined_ptr[i]) num_non_null++;
+      }
+
+      for (uint32_t i = 0, j = 0; i < num_values; i++) {
+        if (!defined_ptr[i]) {
+          continue;
+        }
+
+        auto row_idx = page_start_row + i;
+
+        ((pair<uint32_t, char *>*)result_col.data.ptr)[row_idx] =
+          make_pair(type_len, str_ptr);
+        for (uint32_t b = 0; b < type_len; b++) {
+          str_ptr[b] = page_buf_ptr[b * num_non_null + j];
+        }
+        str_ptr[type_len] = '\0';
+        str_ptr += type_len + 1;
+        j++;
+      }
+      page_buf_ptr += page_header.compressed_page_size;
+      break;
+    }
+    default:
+      throw runtime_error("Invalid data type for BYTE_STREAM_SPLIT encoding");
+    }
+  }
+
   // ugly but well
   void cleanup(ResultColumn &result_col) {
     switch (result_col.col->type) {
@@ -1143,7 +1231,7 @@ void ParquetFile::initialize_result(ResultChunk &result) {
   }
 }
 
-pair<parquet::format::PageHeader, int64_t>
+pair<parquet::PageHeader, int64_t>
 ParquetFile::read_page_header(int64_t pos) {
   uint32_t len = 2048;  // guessing, but this must be enough
   // Avoid going EOF, file_size is set when we open the file
