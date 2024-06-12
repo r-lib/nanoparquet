@@ -130,12 +130,12 @@
     Code
       as.data.frame(read_parquet(pf))
     Output
-        FirstName        Data
-      1      John Hello World
-      2      John Hello World
-      3      John Hello World
-      4      John Hello World
-      5      John Hello World
+        FirstName                                       Data
+      1      John 48, 65, 6c, 6c, 6f, 20, 57, 6f, 72, 6c, 64
+      2      John 48, 65, 6c, 6c, 6f, 20, 57, 6f, 72, 6c, 64
+      3      John 48, 65, 6c, 6c, 6f, 20, 57, 6f, 72, 6c, 64
+      4      John 48, 65, 6c, 6c, 6f, 20, 57, 6f, 72, 6c, 64
+      5      John 48, 65, 6c, 6c, 6f, 20, 57, 6f, 72, 6c, 64
 
 # Tricky V2 data page
 

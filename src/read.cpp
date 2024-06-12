@@ -175,27 +175,27 @@ SEXP nanoparquet_read(SEXP filesxp) {
       UNPROTECT(4);
       break;
     }
+    case parquet::format::Type::BYTE_ARRAY:
     case parquet::format::Type::FIXED_LEN_BYTE_ARRAY: { // oof
       auto &s_ele = f.columns[col_idx]->schema_element;
-      if (!s_ele->__isset.converted_type) {
-        throw runtime_error("Missing FLBA type");
-      }
-      switch (s_ele->converted_type) {
-      case parquet::format::ConvertedType::DECIMAL:
+      // STRIGN, ENUM, UUID, UTF8 are read as strings
+      if ((s_ele->__isset.logicalType &&
+           (s_ele->logicalType.__isset.STRING ||
+            s_ele->logicalType.__isset.ENUM ||
+            s_ele->logicalType.__isset.UUID)) ||
+          (s_ele->__isset.converted_type &&
+           s_ele->converted_type == parquet::format::ConvertedType::UTF8)) {
+        varvalue = PROTECT(safe_allocvector_str(nrows, &uwtoken));
+      } else if (s_ele->__isset.converted_type &&
+                 s_ele->converted_type == parquet::format::ConvertedType::DECIMAL) {
+        // DECIMAL converted type as REAL, for now
         varvalue = PROTECT(safe_allocvector_real(nrows, &uwtoken));
-        break;
-      default:
-        auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
-            s_ele->converted_type);
-        string msg = string("nanoparquet_read: Unknown FLBA type ") +
-          it->second + " @ " __FILE__ ":" STR(__LINE__) " (" + __func__ + ")";
-        throw msg;
+      } else {
+        // list of RAW vectors
+        varvalue = PROTECT(safe_allocvector_vec(nrows, &uwtoken));
       }
       break;
     }
-    case parquet::format::Type::BYTE_ARRAY:
-      varvalue = PROTECT(safe_allocvector_str(nrows, &uwtoken));
-      break;
     default:
       auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
           f.columns[col_idx]->type);
@@ -219,17 +219,19 @@ SEXP nanoparquet_read(SEXP filesxp) {
     for (size_t col_idx = 0; col_idx < ncols; col_idx++) {
       int time_factor = time_factors[col_idx];
       auto &col = rc.cols[col_idx];
-      if (col.dict) {
+      SEXP dest = VECTOR_ELT(retlist, col_idx);
+      // if it is a string with a dictionary, then store the dictionary
+      // so we can recover missing factor levels.
+      if (col.dict && TYPEOF(dest) == STRSXP) {
         auto strings = col.dict->dict;
         SEXP rd = PROTECT(safe_allocvector_str(strings.size(), &uwtoken));
         for (auto i = 0; i < strings.size(); i++) {
-          SET_STRING_ELT(rd, i, safe_mkchar_utf8(strings[i], &uwtoken));
+          SET_STRING_ELT(rd, i, safe_mkchar_utf8(strings[i].second, &uwtoken));
         }
         SET_VECTOR_ELT(dicts, col_idx, rd);
         UNPROTECT(1);
         col.dict.reset();
       }
-      SEXP dest = VECTOR_ELT(retlist, col_idx);
 
       for (uint64_t row_idx = 0; row_idx < rc.nrows; row_idx++) {
         if (!col.defined.ptr[row_idx]) {
@@ -248,31 +250,26 @@ SEXP nanoparquet_read(SEXP filesxp) {
           case parquet::format::Type::INT96:
             NUMERIC_POINTER(dest)[row_idx + dest_offset] = NA_REAL;
             break;
-          case parquet::format::Type::
-              FIXED_LEN_BYTE_ARRAY: { // oof, TODO duplication above
-            auto &s_ele = f.columns[col_idx]->schema_element;
-            if (!s_ele->__isset.converted_type) {
-              throw runtime_error("Missing FLBA type");
-            }
-            switch (s_ele->converted_type) {
-            case parquet::format::ConvertedType::DECIMAL:
+          case parquet::format::Type::FIXED_LEN_BYTE_ARRAY:
+          case parquet::format::Type::BYTE_ARRAY: {
+            switch(TYPEOF(dest)) {
+            case REALSXP:
               NUMERIC_POINTER(dest)[row_idx + dest_offset] = NA_REAL;
               break;
+            case STRSXP:
+              SET_STRING_ELT(dest, row_idx + dest_offset, NA_STRING);
+              break;
+            case VECSXP:
+              // NULL already, nothing to do?
+              SET_VECTOR_ELT(dest, row_idx + dest_offset, R_NilValue);
+              break;
             default:
-              auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
-                  s_ele->converted_type);
-              string msg = string("nanoparquet_read: Unknown column type ") +
-                it->second + " @ " __FILE__ ":" STR(__LINE__) " (" +
-                __func__ + ")";
+              string msg = string("nanoparquet_read: internal error, unexpected R type") +
+                " @ " __FILE__ ":" STR(__LINE__) " (" + __func__ + ")";
               throw msg;
             }
             break;
           }
-          case parquet::format::Type::BYTE_ARRAY:
-            SET_STRING_ELT(dest, row_idx + dest_offset, NA_STRING);
-
-            break;
-
           default: {
             auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
                 f.columns[col_idx]->type);
@@ -316,16 +313,11 @@ SEXP nanoparquet_read(SEXP filesxp) {
                                     1000000;
           break;
 
-        case parquet::format::Type::FIXED_LEN_BYTE_ARRAY: { // oof, TODO
-                                                            // mess
+        case parquet::format::Type::FIXED_LEN_BYTE_ARRAY:
+        case parquet::format::Type::BYTE_ARRAY: {
           auto &s_ele = f.columns[col_idx]->schema_element;
-          if (!s_ele->__isset.converted_type) {
-            throw runtime_error("Missing FLBA type");
-          }
-          switch (s_ele->converted_type) {
-          case parquet::format::ConvertedType::DECIMAL:
-
-          {
+          switch(TYPEOF(dest)) {
+          case REALSXP: {
             // this is a giant mess
             auto type_len = s_ele->type_length;
             auto bytes = ((char **)col.data.ptr)[row_idx];
@@ -335,27 +327,35 @@ SEXP nanoparquet_read(SEXP filesxp) {
             }
 
             NUMERIC_POINTER(dest)
-            [row_idx + dest_offset] = val / pow(10.0, s_ele->scale);
-
-          }
-
-          break;
-          default:
-            auto it = parquet::format::_ConvertedType_VALUES_TO_NAMES.find(
-                s_ele->converted_type);
-            string msg = string("nanoparquet_read: Unknown FLBA type ") +
-              it->second + " @ " __FILE__ ":" STR(__LINE__) " (" +
-              __func__ + ")";
-            throw msg;
+              [row_idx + dest_offset] = val / pow(10.0, s_ele->scale);
             break;
           }
-        }
-        case parquet::format::Type::BYTE_ARRAY:
-          SET_STRING_ELT(
+          case STRSXP:
+            SET_STRING_ELT(
               dest, row_idx + dest_offset,
-              safe_mkchar_utf8(((char **)col.data.ptr)[row_idx], &uwtoken));
+              safe_mkchar_utf8(((pair<uint32_t, char *>*)col.data.ptr)[row_idx].second, &uwtoken));
+            break;
+          case VECSXP: {
+            uint32_t len;
+            if (f.columns[col_idx]->type == parquet::format::Type::FIXED_LEN_BYTE_ARRAY) {
+              len = f.columns[col_idx]->schema_element->type_length;
+            } else {
+              len = ((pair<uint32_t, char*>*) col.data.ptr)[row_idx].first;
+            }
+            SEXP bts = PROTECT(safe_allocvector_raw(len, &uwtoken));
+            memcpy(RAW(bts), ((pair<uint32_t, char *>*)col.data.ptr)[row_idx].second, len);
+            SET_VECTOR_ELT(dest, row_idx + dest_offset, bts);
+            UNPROTECT(1);
+            break;
+          }
+          default:
+            string msg = string("nanoparquet_read: internal error, unexpected R type") +
+              " @ " __FILE__ ":" STR(__LINE__) " (" + __func__ + ")";
+            throw msg;
           break;
-
+          }
+        break;
+        }
         default: {
           auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
               f.columns[col_idx]->type);

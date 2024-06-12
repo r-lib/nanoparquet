@@ -250,6 +250,7 @@ public:
     case Type::DOUBLE:
       fill_dict<double>();
       break;
+    case Type::FIXED_LEN_BYTE_ARRAY:
     case Type::BYTE_ARRAY:
       // no dict here we use the result set string heap directly
       {
@@ -262,12 +263,16 @@ public:
             result_col
                 .string_heap_chunks[result_col.string_heap_chunks.size() - 1]
                 .get();
-        dict = new Dictionary<char *>(dict_size);
+        dict = new Dictionary<pair<uint32_t, char *>>(dict_size);
 
         for (int32_t dict_index = 0; dict_index < dict_size; dict_index++) {
           uint32_t str_len;
-          memcpy(&str_len, page_buf_ptr, sizeof(str_len));
-          page_buf_ptr += sizeof(str_len);
+          if (result_col.col->type == Type::FIXED_LEN_BYTE_ARRAY) {
+            str_len = result_col.col->schema_element->type_length;
+          } else {
+            memcpy(&str_len, page_buf_ptr, sizeof(str_len));
+            page_buf_ptr += sizeof(str_len);
+          }
 
           if (page_buf_ptr + str_len > page_buf_end_ptr) {
             std::stringstream ss;
@@ -276,10 +281,11 @@ public:
             throw runtime_error(ss.str());
           }
 
-          ((Dictionary<char *> *)dict)->dict[dict_index] = str_ptr;
+          ((Dictionary<pair<uint32_t, char *>> *)dict)->dict[dict_index] =
+            make_pair(str_len, str_ptr);
           // TODO make sure we dont run out of str_ptr
           memcpy(str_ptr, page_buf_ptr, str_len);
-          str_ptr[str_len] = '\0'; // terminate
+          str_ptr[str_len] = '\0'; // terminate, not really needed any more
           str_ptr += str_len + 1;
           page_buf_ptr += str_len;
         }
@@ -482,7 +488,8 @@ public:
           throw runtime_error(ss.str());
         }
 
-        ((char **)result_col.data.ptr)[row_idx] = str_ptr;
+        ((pair<uint32_t, char *>*)result_col.data.ptr)[row_idx] =
+          make_pair(str_len, str_ptr);
         // TODO make sure we dont run out of str_ptr too
         memcpy(str_ptr, page_buf_ptr, str_len);
         str_ptr[str_len] = '\0';
@@ -587,7 +594,7 @@ public:
       break;
 
     case Type::BYTE_ARRAY: {
-      auto result_arr = (char **)result_col.data.ptr;
+      auto result_arr = (pair<uint32_t, char *>*)result_col.data.ptr;
       auto num_values = page_header.type == PageType::DATA_PAGE ?
         page_header.data_page_header.num_values :
         page_header.data_page_header_v2.num_values;
@@ -595,9 +602,9 @@ public:
            val_offset < num_values; val_offset++) {
         if (defined_ptr[val_offset]) {
           result_arr[page_start_row + val_offset] =
-              ((Dictionary<char *> *)dict)->get(offsets[val_offset]);
+              ((Dictionary<pair<uint32_t, char *>> *)dict)->get(offsets[val_offset]);
         } else {
-          result_arr[page_start_row + val_offset] = nullptr;
+          result_arr[page_start_row + val_offset] = make_pair(0, nullptr);
         }
       }
       break;
@@ -714,7 +721,7 @@ public:
       break;
     case Type::BYTE_ARRAY:
     case Type::FIXED_LEN_BYTE_ARRAY:
-      result_col.dict.reset((Dictionary<char *> *)dict);
+      result_col.dict.reset((Dictionary<pair<uint32_t, char *>> *)dict);
       break;
     default: {
       std::stringstream ss;
@@ -962,7 +969,7 @@ void ParquetFile::initialize_column(ResultColumn &col, uint64_t num_rows) {
     col.data.resize(sizeof(double) * num_rows, false);
     break;
   case Type::BYTE_ARRAY:
-    col.data.resize(sizeof(char *) * num_rows, false);
+    col.data.resize(sizeof(pair<uint32_t, char *>) * num_rows, false);
     break;
 
   case Type::FIXED_LEN_BYTE_ARRAY: {
@@ -974,7 +981,7 @@ void ParquetFile::initialize_column(ResultColumn &col, uint64_t num_rows) {
          << filename << "' @ " << __FILE__ << ":" << __LINE__;
       throw runtime_error(ss.str());
     }
-    col.data.resize(num_rows * sizeof(char *), false);
+    col.data.resize(num_rows * sizeof(pair<uint32_t, char *>), false);
     break;
   }
 
