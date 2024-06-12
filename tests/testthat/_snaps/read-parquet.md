@@ -373,3 +373,21 @@
         lengths: int [1:6] 4 6 22 68 217 683
         values : int [1:6] 19 20 21 22 23 24
 
+# DELTA_BYTE_ARRAY encoding
+
+    Code
+      as.data.frame(dba)[1:5, ]
+    Output
+           c_customer_id c_salutation c_first_name c_last_name c_preferred_cust_flag
+      1 AAAAAAAAIODAAAAA          Sir         Mark      Bailey                     N
+      2 AAAAAAAAHODAAAAA         Mrs.         Lisa       Clark                     Y
+      3 AAAAAAAAGODAAAAA          Ms.       Evelyn      Joyner                     N
+      4 AAAAAAAAFODAAAAA          Sir       Harvey        <NA>                     N
+      5 AAAAAAAAEODAAAAA          Dr.        Chris       Davis                     Y
+        c_birth_country c_login                  c_email_address c_last_review_date
+      1         MOROCCO    <NA>   Mark.Bailey@rg9qCNVJ0s7qeY.com            2452443
+      2           ITALY    <NA>        Lisa.Clark@goPYS4tMB0.org            2452646
+      3          TUVALU    <NA>      Evelyn.Joyner@ialYx1zLN.edu            2452439
+      4            <NA>    <NA> Harvey.Stanford@sl59JiHqrp8X.org            2452632
+      5         ALBANIA    <NA>            Chris.Davis@k6S3Q.com            2452570
+

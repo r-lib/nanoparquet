@@ -365,3 +365,16 @@ test_that("DELTA_LENGTH_BYTE_ARRAY encoding", {
     rle(nchar(dlba$FRUIT))
   })
 })
+
+test_that("DELTA_BYTE_ARRAY encoding", {
+  skip_on_cran()
+  pf <- test_path("data/delta_byte_array.parquet")
+  dba <- read_parquet(pf)
+  expect_snapshot({
+    as.data.frame(dba)[1:5,]
+  })
+  expect_equal(
+    as.data.frame(arrow::read_parquet(pf)),
+    as.data.frame(dba)
+  )
+})
