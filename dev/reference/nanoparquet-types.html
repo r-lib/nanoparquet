@@ -86,6 +86,8 @@ before writing.</p></li>
 the Arrow metadata (if present, see below) in addition to the low level
 data types. The exact rules are below.</p>
 <p>These rules will likely change until nanoparquet reaches version 1.0.0.</p><ol><li><p>The <code>BOOLEAN</code> type is read as a logical vector (<code>LGLSXP</code>).</p></li>
+<li><p>The <code>STRING</code> logical type and the <code>UTF8</code> converted type is read as
+a character vector with UTF-8 encoding.</p></li>
 <li><p>The <code>DATE</code> logical type and the <code>DATE</code> converted type are read as a
 <code>Date</code> R object.</p></li>
 <li><p>The <code>TIME</code> logical type and the <code>TIME_MILLIS</code> and <code>TIME_MICROS</code>
@@ -99,17 +101,19 @@ If the logical type has the <code>UTC</code> flag set, then the time zone of the
 <li><p><code>INT96</code> is read as a <code>POSIXct</code> read vector with the <code>tzone</code> attribute
 set to <code>"UTC"</code>. It was an old convention to store time stamps as
 <code>INT96</code> objects.</p></li>
-<li><p>The <code>DECIMAL</code> converted type (<code>FIXED_LEN_BYTE_ARRAY</code> type) is read
-as a real vector (<code>REALSXP</code>).</p></li>
+<li><p>The <code>DECIMAL</code> converted type (<code>FIXED_LEN_BYTE_ARRAY</code> or <code>BYTE_ARRAY</code>
+type) is read as a real vector (<code>REALSXP</code>), potentially losing
+precision.</p></li>
+<li><p>The <code>ENUM</code> logical type is read as a character vector.</p></li>
+<li><p>The <code>UUID</code> logical type is read as a character vector that uses the
+<code>00112233-4455-6677-8899-aabbccddeeff</code> form.</p></li>
 <li><p><code>BYTE_ARRAY</code> is read as a <em>factor</em> object if the file was written
 by Arrow and the original data type of the column was a factor.
 (See 'The Arrow metadata below.)</p></li>
-<li><p>Otherwise <code>BYTE_ARRAY</code> is read a character vector (<code>STRSXP</code>).</p></li>
+<li><p>Otherwise <code>BYTE_ARRAY</code> is read a list of raw vectors, with missing
+values denoted by <code>NULL</code>.</p></li>
 </ol><p>Other logical and converted types are read as their annotated low level
-types:</p><ol><li><p><code>ENUM</code> is read as a character vector (<code>STRSXP</code>).</p></li>
-<li><p><code>UUID</code> is a fixed length byte array, and nanoparquet cannot read it
-currently.</p></li>
-<li><p><code>INT(8, true)</code>, <code>INT(16, true)</code> and <code>INT(32, true)</code> are read as
+types:</p><ol><li><p><code>INT(8, true)</code>, <code>INT(16, true)</code> and <code>INT(32, true)</code> are read as
 integer vectors because they are <code>INT32</code> internally in Parquet.</p></li>
 <li><p><code>INT(64, true)</code> is read as a real vector (<code>REALSXP</code>).</p></li>
 <li><p>Unsigned integer types <code>INT(8, false)</code>, <code>INT(16, false)</code> and
@@ -119,13 +123,13 @@ issue that we will fix.</p></li>
 <li><p><code>INT(64, false)</code> is read as a real vector (<code>REALSXP</code>). Large
 positive values may overflow into negative values, this is a known
 issue that we will fix.</p></li>
-<li><p><code>FLOAT16</code> is a fixed length byte array, and nanoparquet cannot read it
-currently.</p></li>
-<li><p><code>INTERVAL</code> is a fixed length byte array, and nanoparquet cannot read
-it currently.</p></li>
+<li><p><code>FLOAT16</code> is a fixed length byte array, and nanoparquet reads it as
+a list of raw vectors. Missing values are denoted by <code>NULL</code>.</p></li>
+<li><p><code>INTERVAL</code> is a fixed length byte array, and nanoparquet reads it as
+a list of raw vectors. Missing values are denoted by <code>NULL</code>.</p></li>
 <li><p><code>JSON</code> and <code>BSON</code> are read as character vectors (<code>STRSXP</code>).</p></li>
-<li><p>Nested types (<code>LIST</code>, <code>MAP</code>) and the <code>UNKNOWN</code> logical types are
-not supported currently.</p></li>
+</ol><p>These types are not yet supported:</p><ol><li><p>Nested types (<code>LIST</code>, <code>MAP</code>) are not supported.</p></li>
+<li><p>The <code>UNKNOWN</code> logical type is not supported.</p></li>
 </ol><p>You can use the <code><a href="parquet_columns.html">parquet_columns()</a></code> function to see how R would read
 the columns of a Parquet file. Look at the <code>r_type</code> column.</p>
     </div>
