@@ -330,18 +330,36 @@ SEXP nanoparquet_read(SEXP filesxp) {
               [row_idx + dest_offset] = val / pow(10.0, s_ele->scale);
             break;
           }
-          case STRSXP:
-            SET_STRING_ELT(
-              dest, row_idx + dest_offset,
-              safe_mkchar_utf8(((pair<uint32_t, char *>*)col.data.ptr)[row_idx].second, &uwtoken));
-            break;
-          case VECSXP: {
-            uint32_t len;
-            if (f.columns[col_idx]->type == parquet::format::Type::FIXED_LEN_BYTE_ARRAY) {
-              len = f.columns[col_idx]->schema_element->type_length;
+          case STRSXP: {
+            uint32_t len = ((pair<uint32_t, char*>*) col.data.ptr)[row_idx].first;
+            if (s_ele->__isset.logicalType && s_ele->logicalType.__isset.UUID) {
+              if (len != 16) {
+                throw runtime_error("UUID column with length != 16 is not allowed in Parquet file");
+              }
+              char uuid[37];
+              const unsigned char *s = (const unsigned char*) (((pair<uint32_t, char*>*) col.data.ptr)[row_idx].second);
+
+              snprintf(
+                uuid, 37,
+                "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9],
+                s[10], s[11], s[12], s[13], s[14], s[15]
+              );
+              SET_STRING_ELT(dest, row_idx + dest_offset, safe_mkchar_len_utf8(uuid, 36, &uwtoken));
             } else {
-              len = ((pair<uint32_t, char*>*) col.data.ptr)[row_idx].first;
+              SET_STRING_ELT(
+                dest, row_idx + dest_offset,
+                safe_mkchar_len_utf8(
+                  ((pair<uint32_t, char *>*)col.data.ptr)[row_idx].second,
+                  len,
+                  &uwtoken
+                )
+              );
             }
+            break;
+          }
+          case VECSXP: {
+            uint32_t len = ((pair<uint32_t, char*>*) col.data.ptr)[row_idx].first;
             SEXP bts = PROTECT(safe_allocvector_raw(len, &uwtoken));
             memcpy(RAW(bts), ((pair<uint32_t, char *>*)col.data.ptr)[row_idx].second, len);
             SET_VECTOR_ELT(dest, row_idx + dest_offset, bts);

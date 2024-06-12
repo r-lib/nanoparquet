@@ -310,3 +310,50 @@
       6     5
       7   100
 
+# UUID columns
+
+    Code
+      as.data.frame(read_parquet(pf))
+    Output
+                                            u
+      1                                  <NA>
+      2                                  <NA>
+      3                                  <NA>
+      4                                  <NA>
+      5  ffffffff-ffff-ffff-ffff-ffffffffffff
+      6  ffffffff-ffff-ffff-ffff-ffffffffffff
+      7  a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+      8  a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+      9  a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+      10 a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+      11 8fffffff-ffff-ffff-ffff-ffffffffffff
+      12 8fffffff-ffff-ffff-ffff-ffffffffffff
+      13 8fffffff-ffff-ffff-8fff-ffffffffffff
+      14 8fffffff-ffff-ffff-8fff-ffffffffffff
+      15 8fffffff-ffff-ffff-8000-000000000000
+      16 8fffffff-ffff-ffff-8000-000000000000
+      17 8fffffff-ffff-ffff-0000-000000000000
+      18 8fffffff-ffff-ffff-0000-000000000000
+      19 80000000-0000-0000-ffff-ffffffffffff
+      20 80000000-0000-0000-ffff-ffffffffffff
+      21 80000000-0000-0000-8fff-ffffffffffff
+      22 80000000-0000-0000-8fff-ffffffffffff
+      23 80000000-0000-0000-8000-000000000000
+      24 80000000-0000-0000-8000-000000000000
+      25 80000000-0000-0000-0000-000000000000
+      26 80000000-0000-0000-0000-000000000000
+      27 47183823-2574-4bfd-b411-99ed177d3e43
+      28 47183823-2574-4bfd-b411-99ed177d3e43
+      29 47183823-2574-4bfd-b411-99ed177d3e43
+      30 47183823-2574-4bfd-b411-99ed177d3e43
+      31 10203040-5060-7080-0102-030405060708
+      32 10203040-5060-7080-0102-030405060708
+      33 10203040-5060-7080-0102-030405060708
+      34 10203040-5060-7080-0102-030405060708
+      35 00000000-0000-0000-8000-000000000001
+      36 00000000-0000-0000-8000-000000000001
+      37 00000000-0000-0000-0000-000000000001
+      38 00000000-0000-0000-0000-000000000001
+      39 00000000-0000-0000-0000-000000000000
+      40 00000000-0000-0000-0000-000000000000
+
