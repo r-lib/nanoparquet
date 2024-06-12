@@ -593,6 +593,7 @@ public:
 
       break;
 
+    case Type::FIXED_LEN_BYTE_ARRAY:
     case Type::BYTE_ARRAY: {
       auto result_arr = (pair<uint32_t, char *>*)result_col.data.ptr;
       auto num_values = page_header.type == PageType::DATA_PAGE ?
