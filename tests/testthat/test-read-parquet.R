@@ -356,3 +356,12 @@ test_that("UUID columns", {
     as.data.frame(read_parquet(pf))
   })
 })
+
+test_that("DELTA_LENGTH_BYTE_ARRAY encoding", {
+  pf <- test_path("data/delta_length_byte_array.parquet")
+  dlba <- read_parquet(pf)
+  expect_snapshot({
+    as.data.frame(dlba)[1:10,]
+    rle(nchar(dlba$FRUIT))
+  })
+})

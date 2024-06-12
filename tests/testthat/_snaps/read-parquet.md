@@ -357,3 +357,19 @@
       39 00000000-0000-0000-0000-000000000000
       40 00000000-0000-0000-0000-000000000000
 
+# DELTA_LENGTH_BYTE_ARRAY encoding
+
+    Code
+      as.data.frame(dlba)[1:10, ]
+    Output
+       [1] "apple_banana_mango0"  "apple_banana_mango1"  "apple_banana_mango4" 
+       [4] "apple_banana_mango9"  "apple_banana_mango16" "apple_banana_mango25"
+       [7] "apple_banana_mango36" "apple_banana_mango49" "apple_banana_mango64"
+      [10] "apple_banana_mango81"
+    Code
+      rle(nchar(dlba$FRUIT))
+    Output
+      Run Length Encoding
+        lengths: int [1:6] 4 6 22 68 217 683
+        values : int [1:6] 19 20 21 22 23 24
+

@@ -51,8 +51,8 @@ public:
     return total_value_count;
   }
 
-  inline void decode(T *values) {
-    if (total_value_count == 0) return;
+  inline uint8_t *decode(T *values) {
+    if (total_value_count == 0) return buf->start;
     values[0] = first_value;
     values++;
     uint64_t todo = total_value_count - 1;
@@ -69,6 +69,7 @@ public:
         // start of a miniblock
         int8_t bw = bit_widths[i];
         uint64_t mb_vals = values_per_mini_block > todo ? todo : values_per_mini_block;
+        uint64_t mb_full_len = bw * values_per_mini_block / 8;
         uint64_t mb_len = bw * mb_vals / 8 + ((bw * mb_vals) % 8 > 0);
         if (buf->len < mb_len) {
           throw runtime_error("End of buffer while DBP decoding");
@@ -84,10 +85,14 @@ public:
           *values = *(values-1) + *values + min_delta;
           values++;
         }
-        buf->start += mb_len; buf->len -= mb_len;
+        // we always need to add the full length here, because for
+        // DELTA_LENGTH_BYTE_ARRAY encoded pages that's how much padding
+        // we have before the string data.
+        buf->start += mb_full_len; buf->len -= mb_full_len;
         todo -= mb_vals;
       }
     }
+    return buf->start;
   }
 
 private:

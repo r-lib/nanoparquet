@@ -365,6 +365,10 @@ public:
       scan_data_page_delta_binary_packed(result_col);
       break;
 
+    case Encoding::DELTA_LENGTH_BYTE_ARRAY:
+      scan_data_page_delta_length_byte_array(result_col);
+      break;
+
     default: {
       std::stringstream ss;
       ss << "Data page has unsupported encoding " << encoding
@@ -449,12 +453,12 @@ public:
     case Type::FIXED_LEN_BYTE_ARRAY:
     case Type::BYTE_ARRAY: {
       uint32_t str_len = type_len; // in case of FIXED_LEN_BYTE_ARRAY
+      auto num_values = page_header.type == PageType::DATA_PAGE ?
+        page_header.data_page_header.num_values :
+        page_header.data_page_header_v2.num_values;
 
       uint64_t shc_len = page_header.uncompressed_page_size;
       if (result_col.col->type == Type::FIXED_LEN_BYTE_ARRAY) {
-        auto num_values = page_header.type == PageType::DATA_PAGE ?
-          page_header.data_page_header.num_values :
-          page_header.data_page_header_v2.num_values;
         shc_len += num_values; // make space for terminators
       }
       auto string_heap_chunk = std::unique_ptr<char[]>(new char[shc_len]);
@@ -464,9 +468,6 @@ public:
               .string_heap_chunks[result_col.string_heap_chunks.size() - 1]
               .get();
 
-      auto num_values = page_header.type == PageType::DATA_PAGE ?
-        page_header.data_page_header.num_values :
-        page_header.data_page_header_v2.num_values;
       for (int32_t val_offset = 0;
            val_offset < num_values; val_offset++) {
 
@@ -658,7 +659,7 @@ public:
       page_header.data_page_header_v2.num_values;
     struct buffer buf = {
       (uint8_t*) page_buf_ptr,
-      (uint32_t) page_header.compressed_page_size
+      (uint32_t) page_header.uncompressed_page_size
     };
     page_buf_ptr += page_header.compressed_page_size;
     switch (result_col.col->type) {
@@ -697,6 +698,52 @@ public:
       break;
     }
     }
+  }
+
+  void scan_data_page_delta_length_byte_array(ResultColumn &result_col) {
+    if (result_col.col->type != Type::BYTE_ARRAY) {
+      throw runtime_error(
+        "DELTA_LENGTH_BYTE_ARRAY encoding is only allowed for BYTE_ARRAY columns"
+      );
+    }
+    auto num_values = page_header.type == PageType::DATA_PAGE ?
+      page_header.data_page_header.num_values :
+      page_header.data_page_header_v2.num_values;
+    struct buffer buf = {
+      (uint8_t*) page_buf_ptr,
+      (uint32_t) page_header.uncompressed_page_size
+    };
+    DbpDecoder<int32_t, uint32_t> dec(&buf);
+    uint32_t num_non_null_values = dec.size();
+    unique_ptr<int32_t[]> lengths(new int32_t[num_non_null_values]);
+    uint8_t *bts = dec.decode(lengths.get());
+    uint64_t shc_len = page_header.uncompressed_page_size + num_values;
+    auto string_heap_chunk = std::unique_ptr<char[]>(new char[shc_len]);
+    result_col.string_heap_chunks.push_back(std::move(string_heap_chunk));
+    auto str_ptr = result_col
+      .string_heap_chunks[result_col.string_heap_chunks.size() - 1]
+      .get();
+
+    for (uint32_t i = 0, j = 0; i < num_values; i++) {
+      if (!defined_ptr[i]) {
+        continue;
+      }
+      auto row_idx = page_start_row + i;
+      auto str_len = lengths[j++];
+      if ((const char*) bts + str_len > page_buf_end_ptr) {
+        std::stringstream ss;
+        ss << "Declared string length exceeds payload size, invalid Parquet file "
+           << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
+        throw runtime_error(ss.str());
+      }
+      ((pair<uint32_t, char *>*)result_col.data.ptr)[row_idx] =
+        make_pair(str_len, str_ptr);
+      memcpy(str_ptr, bts, str_len);
+      str_ptr[str_len] = '\0';
+      str_ptr += str_len + 1;
+      bts += str_len;
+    }
+    page_buf_ptr += page_header.compressed_page_size;
   }
 
   // ugly but well
