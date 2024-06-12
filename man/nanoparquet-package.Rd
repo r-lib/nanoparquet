@@ -26,11 +26,9 @@ to Parquet.
 \item Nested Parquet types are not supported.
 \item Some Parquet logical types are not supported: \code{FLOAT16}, \code{INTERVAL},
 \code{UNKNOWN}.
-\item The \code{FIXED_LEN_BYTE_ARRAY} Parquet type is not supported, unless it
-represents a supported logical type.
 \item Only Snappy, Gzip and Zstd compression is supported.
-\item Some encodings are not supported: \code{BIT_PACKED}, \code{DELTA_BINARY_PACKED},
-\code{DELTA_LENGTH_BYTE_ARRAY}, \code{DELTA_BYTE_ARRAY} and \code{BYTE_STREAM_SPLIT}.
+\item Some encodings are not supported: \code{BIT_PACKED}, \code{DELTA_BYTE_ARRAY} and
+\code{BYTE_STREAM_SPLIT}.
 \item Encryption is not supported.
 \item Being single-threaded and not fully optimized, nanoparquet is probably
 not suited well for large data sets. It should be fine for a couple of
