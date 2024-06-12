@@ -459,9 +459,9 @@
       # A data frame: 13 x 6
          file_name         name              type  r_type repetition_type logical_type
        * <chr>             <chr>             <chr> <chr>  <chr>           <I<list>>   
-       1 data/enum.parquet id                BYTE~ chara~ OPTIONAL        <NULL>      
-       2 data/enum.parquet parent_id         BYTE~ chara~ OPTIONAL        <NULL>      
-       3 data/enum.parquet trace_id          BYTE~ chara~ OPTIONAL        <NULL>      
+       1 data/enum.parquet id                BYTE~ raw    OPTIONAL        <NULL>      
+       2 data/enum.parquet parent_id         BYTE~ raw    OPTIONAL        <NULL>      
+       3 data/enum.parquet trace_id          BYTE~ raw    OPTIONAL        <NULL>      
        4 data/enum.parquet name              BYTE~ chara~ OPTIONAL        <STRING>    
        5 data/enum.parquet start_timestamp_~ INT64 double OPTIONAL        <NULL>      
        6 data/enum.parquet duration_micros   INT64 double OPTIONAL        <NULL>      
@@ -471,7 +471,7 @@
       10 data/enum.parquet v_bool            BOOL~ logic~ OPTIONAL        <NULL>      
       11 data/enum.parquet v_int64           INT64 double OPTIONAL        <NULL>      
       12 data/enum.parquet v_float64         DOUB~ double OPTIONAL        <NULL>      
-      13 data/enum.parquet v_binary          BYTE~ chara~ OPTIONAL        <NULL>      
+      13 data/enum.parquet v_binary          BYTE~ raw    OPTIONAL        <NULL>      
     Code
       parquet_columns(test_path("data/factor.parquet"))
     Output
