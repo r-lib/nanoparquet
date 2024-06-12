@@ -28,9 +28,9 @@
 * Both `read_parquet()` and `write_parquet()` now support GZIP and ZSTD
   compressed Parquet files.
 
-* `read_parquet()` can now read Parquet files with `BOOLEAN` columns in
-  `RLE` encoding, `INT32` and `INT64` columns in `DELTA_BINARY_PACKED`
-  encoding and `BYTE_ARRAY` columns in `DELTA_LENGTH_BYTE_ARRAY` encoding.
+* `read_parquet()` now supports the `RLE` encoding for `BOOLEAN` columns and
+  also supports the `DELTA_BINARY_PACKED`, `DELTA_LENGTH_BYTE_ARRAY` and
+  `DELTA_BYTE_ARRAY` encodings.
 
 * `parquet_info()`, `parquet_metadata()` and `parquet_columns()` now work
   if the `created_by` metadata field is unset.
