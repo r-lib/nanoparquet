@@ -17,11 +17,18 @@
  * under the License.
  */
 
+extern "C" {
+#ifdef _WIN32
+#include <winsock2.h>
+#include <winsock.h>
+#else
+#include <arpa/inet.h>
+#endif
+} // extern "C"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-
-#include <arpa/inet.h>
 
 #include <thrift/transport/TBufferTransports.h>
 
@@ -199,7 +206,8 @@ bool TFramedTransport::readFrame() {
     size_bytes_read += bytes_read;
   }
 
-  sz = ntohl(sz);
+  // TODO: this won't work on big-endian
+  // sz = ntohl(sz);
 
   if (sz < 0) {
     throw TTransportException("Frame size has negative value");
@@ -258,7 +266,7 @@ void TFramedTransport::flush() {
 
   // Slip the frame size into the start of the buffer.
   sz_hbo = static_cast<uint32_t>(wBase_ - (wBuf_.get() + sizeof(sz_nbo)));
-  sz_nbo = (int32_t)htonl((uint32_t)(sz_hbo));
+  sz_nbo = (int32_t) sz_hbo; // (int32_t)htonl((uint32_t)(sz_hbo));
   memcpy(wBuf_.get(), (uint8_t*)&sz_nbo, sizeof(sz_nbo));
 
   if (sz_hbo > 0) {

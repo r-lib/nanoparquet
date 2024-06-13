@@ -7,6 +7,8 @@
 #ifndef parquet_TYPES_H
 #define parquet_TYPES_H
 
+#include "windows_compatibility.h"
+
 #include <iosfwd>
 
 #include <thrift/Thrift.h>

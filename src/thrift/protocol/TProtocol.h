@@ -23,6 +23,9 @@
 #ifdef _WIN32
 // Need to come before any Windows.h includes
 #include <winsock2.h>
+#include <winsock.h>
+#else
+#include <arpa/inet.h>
 #endif
 
 #include <thrift/transport/TTransport.h>
@@ -34,7 +37,6 @@
 
 #include <memory>
 
-#include <arpa/inet.h>
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
