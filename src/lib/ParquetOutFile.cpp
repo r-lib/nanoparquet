@@ -15,7 +15,6 @@
 using namespace std;
 
 using namespace parquet;
-using namespace parquet::format;
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
@@ -35,7 +34,7 @@ static string type_to_string(Type::type t) {
 
 ParquetOutFile::ParquetOutFile(
   std::string filename,
-  parquet::format::CompressionCodec::type codec) :
+  parquet::CompressionCodec::type codec) :
     pfile(pfile_), num_rows(0), num_cols(0), num_rows_set(false),
     codec(codec), mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
@@ -52,7 +51,7 @@ ParquetOutFile::ParquetOutFile(
 
 ParquetOutFile::ParquetOutFile(
   std::ostream &stream,
-  parquet::format::CompressionCodec::type codec) :
+  parquet::CompressionCodec::type codec) :
     pfile(stream), num_rows(0), num_cols(0), num_rows_set(false),
     codec(codec), mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
@@ -70,7 +69,7 @@ void ParquetOutFile::set_num_rows(uint32_t nr) {
 }
 
 void ParquetOutFile::schema_add_column(std::string name,
-                                       parquet::format::Type::type type,
+                                       parquet::Type::type type,
                                        bool required, bool dict) {
 
   SchemaElement sch;
@@ -118,7 +117,7 @@ void ParquetOutFile::schema_add_column(std::string name,
 
 void ParquetOutFile::schema_add_column(
     std::string name,
-    parquet::format::LogicalType logical_type,
+    parquet::LogicalType logical_type,
     bool required,
     bool dict) {
 
@@ -178,8 +177,8 @@ void ParquetOutFile::add_key_value_metadata(
   kv.push_back(kv0);
 }
 
-parquet::format::Type::type ParquetOutFile::get_type_from_logical_type(
-    parquet::format::LogicalType logical_type) {
+parquet::Type::type ParquetOutFile::get_type_from_logical_type(
+    parquet::LogicalType logical_type) {
 
   if (logical_type.__isset.STRING) {
     return Type::BYTE_ARRAY;
@@ -212,9 +211,9 @@ parquet::format::Type::type ParquetOutFile::get_type_from_logical_type(
   }
 }
 
-parquet::format::ConvertedType::type
+parquet::ConvertedType::type
 ParquetOutFile::get_converted_type_from_logical_type(
-    parquet::format::LogicalType logical_type) {
+    parquet::LogicalType logical_type) {
 
   if (logical_type.__isset.STRING) {
     return ConvertedType::UTF8;
@@ -259,7 +258,7 @@ void ParquetOutFile::write_data_(
   uint64_t until) {
 
   streampos cb_start = file.tellp();
-  parquet::format::Type::type type = schemas[idx + 1].type;
+  parquet::Type::type type = schemas[idx + 1].type;
   switch (type) {
   case Type::INT32:
     write_int32(file, idx, from, until);
@@ -303,7 +302,7 @@ void ParquetOutFile::write_present_data_(
   uint64_t until) {
 
   streampos cb_start = file.tellp();
-  parquet::format::Type::type type = schemas[idx + 1].type;
+  parquet::Type::type type = schemas[idx + 1].type;
   switch (type) {
   case Type::INT32:
     write_present_int32(file, idx, num_present, from, until);
@@ -376,7 +375,7 @@ void ParquetOutFile::write_dictionary_indices_(
 }
 
 size_t ParquetOutFile::compress(
-  parquet::format::CompressionCodec::type codec,
+  parquet::CompressionCodec::type codec,
   ByteBuffer &src,
   uint32_t src_size,
   ByteBuffer &tgt) {
@@ -1060,7 +1059,7 @@ uint64_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
                                                     uint64_t from,
                                                     uint64_t until) {
   // +1 is to skip the root schema
-  parquet::format::Type::type type = schemas[idx + 1].type;
+  parquet::Type::type type = schemas[idx + 1].type;
   switch (type) {
   case Type::BOOLEAN: {
     return num_present / 8 + (num_present % 8 > 0);

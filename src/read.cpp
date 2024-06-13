@@ -70,16 +70,16 @@ SEXP nanoparquet_read(SEXP filesxp) {
 
     SEXP varvalue = NULL;
     switch (f.columns[col_idx]->type) {
-    case parquet::format::Type::BOOLEAN:
+    case parquet::Type::BOOLEAN:
       varvalue = PROTECT(safe_allocvector_lgl(nrows, &uwtoken));
       break;
-    case parquet::format::Type::INT32: {
+    case parquet::Type::INT32: {
       varvalue = PROTECT(safe_allocvector_int(nrows, &uwtoken));
       auto &s_ele = f.columns[col_idx]->schema_element;
       if ((s_ele->__isset.logicalType &&
            s_ele->logicalType.__isset.DATE) ||
           (s_ele->__isset.converted_type &&
-           s_ele->converted_type == parquet::format::ConvertedType::DATE)) {
+           s_ele->converted_type == parquet::ConvertedType::DATE)) {
         SEXP cl = PROTECT(safe_mkstring("Date", &uwtoken));
         SET_CLASS(varvalue, cl);
         UNPROTECT(1);
@@ -87,7 +87,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
                   s_ele->logicalType.__isset.TIME &&
                   s_ele->logicalType.TIME.unit.__isset.MILLIS) ||
                  (s_ele->__isset.converted_type &&
-                  s_ele->converted_type == parquet::format::ConvertedType::TIME_MILLIS)) {
+                  s_ele->converted_type == parquet::ConvertedType::TIME_MILLIS)) {
         // note: if not MILLIS and INT32, we'll read it as plain INT32
         SEXP cl = PROTECT(safe_allocvector_str(2, &uwtoken));
         SET_STRING_ELT(cl, 0, safe_mkchar("hms", &uwtoken));
@@ -98,9 +98,9 @@ SEXP nanoparquet_read(SEXP filesxp) {
       }
       break;
     }
-    case parquet::format::Type::INT64:
-    case parquet::format::Type::DOUBLE:
-    case parquet::format::Type::FLOAT: {
+    case parquet::Type::INT64:
+    case parquet::Type::DOUBLE:
+    case parquet::Type::FLOAT: {
       varvalue = PROTECT(safe_allocvector_real(nrows, &uwtoken));
       auto &s_ele = f.columns[col_idx]->schema_element;
       if ((s_ele->__isset.logicalType &&
@@ -109,8 +109,8 @@ SEXP nanoparquet_read(SEXP filesxp) {
             s_ele->logicalType.TIMESTAMP.unit.__isset.MICROS ||
             s_ele->logicalType.TIMESTAMP.unit.__isset.NANOS)) ||
           (s_ele->__isset.converted_type &&
-           (s_ele->converted_type == parquet::format::ConvertedType::TIMESTAMP_MILLIS ||
-            s_ele->converted_type == parquet::format::ConvertedType::TIMESTAMP_MICROS))) {
+           (s_ele->converted_type == parquet::ConvertedType::TIMESTAMP_MILLIS ||
+            s_ele->converted_type == parquet::ConvertedType::TIMESTAMP_MICROS))) {
         if (s_ele->__isset.logicalType &&
             s_ele->logicalType.__isset.TIMESTAMP) {
           if (s_ele->logicalType.TIMESTAMP.unit.__isset.MILLIS) {
@@ -121,9 +121,9 @@ SEXP nanoparquet_read(SEXP filesxp) {
             time_factors[col_idx] = 1000 * 1000;
           }
         } else if (s_ele->__isset.converted_type) {
-          if (s_ele->converted_type == parquet::format::ConvertedType::TIMESTAMP_MILLIS) {
+          if (s_ele->converted_type == parquet::ConvertedType::TIMESTAMP_MILLIS) {
             time_factors[col_idx] = 1;
-          } else if (s_ele->converted_type == parquet::format::ConvertedType::TIMESTAMP_MICROS) {
+          } else if (s_ele->converted_type == parquet::ConvertedType::TIMESTAMP_MICROS) {
             time_factors[col_idx] = 1000;
           }
         }
@@ -143,7 +143,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
                   (s_ele->logicalType.TIME.unit.__isset.MICROS ||
                      s_ele->logicalType.TIME.unit.__isset.NANOS)) ||
                    (s_ele->__isset.converted_type &&
-                    s_ele->converted_type == parquet::format::ConvertedType::TIME_MICROS)) {
+                    s_ele->converted_type == parquet::ConvertedType::TIME_MICROS)) {
         // can be MICROS or NANOS currently, other values read as INT64
         if (s_ele->__isset.logicalType &&
             s_ele->logicalType.__isset.TIME) {
@@ -152,7 +152,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
           } else if (s_ele->logicalType.TIME.unit.__isset.NANOS) {
             time_factors[col_idx] = 1000 * 1000;
           }
-        } else if (s_ele->converted_type == parquet::format::ConvertedType::TIME_MICROS) {
+        } else if (s_ele->converted_type == parquet::ConvertedType::TIME_MICROS) {
           time_factors[col_idx] = 1000;
         }
         SEXP cl = PROTECT(safe_allocvector_str(2, &uwtoken));
@@ -164,7 +164,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
       }
       break;
     }
-    case parquet::format::Type::INT96: {
+    case parquet::Type::INT96: {
       varvalue = PROTECT(safe_allocvector_real(nrows, &uwtoken));
       SEXP cl = PROTECT(safe_allocvector_str(2, &uwtoken));
       SET_STRING_ELT(cl, 0, PROTECT(safe_mkchar("POSIXct", &uwtoken)));
@@ -175,8 +175,8 @@ SEXP nanoparquet_read(SEXP filesxp) {
       UNPROTECT(4);
       break;
     }
-    case parquet::format::Type::BYTE_ARRAY:
-    case parquet::format::Type::FIXED_LEN_BYTE_ARRAY: { // oof
+    case parquet::Type::BYTE_ARRAY:
+    case parquet::Type::FIXED_LEN_BYTE_ARRAY: { // oof
       auto &s_ele = f.columns[col_idx]->schema_element;
       // STRIGN, ENUM, UUID, UTF8 are read as strings
       if ((s_ele->__isset.logicalType &&
@@ -184,10 +184,10 @@ SEXP nanoparquet_read(SEXP filesxp) {
             s_ele->logicalType.__isset.ENUM ||
             s_ele->logicalType.__isset.UUID)) ||
           (s_ele->__isset.converted_type &&
-           s_ele->converted_type == parquet::format::ConvertedType::UTF8)) {
+           s_ele->converted_type == parquet::ConvertedType::UTF8)) {
         varvalue = PROTECT(safe_allocvector_str(nrows, &uwtoken));
       } else if (s_ele->__isset.converted_type &&
-                 s_ele->converted_type == parquet::format::ConvertedType::DECIMAL) {
+                 s_ele->converted_type == parquet::ConvertedType::DECIMAL) {
         // DECIMAL converted type as REAL, for now
         varvalue = PROTECT(safe_allocvector_real(nrows, &uwtoken));
       } else {
@@ -197,7 +197,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
       break;
     }
     default:
-      auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
+      auto it = parquet::_Type_VALUES_TO_NAMES.find(
           f.columns[col_idx]->type);
       string msg = string("nanoparquet_read: Unknown column type ") +
         it->second + " @ " __FILE__ ":" STR(__LINE__) " (" + __func__ + ")";
@@ -238,20 +238,20 @@ SEXP nanoparquet_read(SEXP filesxp) {
 
           // NULLs
           switch (f.columns[col_idx]->type) {
-          case parquet::format::Type::BOOLEAN:
+          case parquet::Type::BOOLEAN:
             LOGICAL_POINTER(dest)[row_idx + dest_offset] = NA_LOGICAL;
             break;
-          case parquet::format::Type::INT32:
+          case parquet::Type::INT32:
             INTEGER_POINTER(dest)[row_idx + dest_offset] = NA_INTEGER;
             break;
-          case parquet::format::Type::INT64:
-          case parquet::format::Type::DOUBLE:
-          case parquet::format::Type::FLOAT:
-          case parquet::format::Type::INT96:
+          case parquet::Type::INT64:
+          case parquet::Type::DOUBLE:
+          case parquet::Type::FLOAT:
+          case parquet::Type::INT96:
             NUMERIC_POINTER(dest)[row_idx + dest_offset] = NA_REAL;
             break;
-          case parquet::format::Type::FIXED_LEN_BYTE_ARRAY:
-          case parquet::format::Type::BYTE_ARRAY: {
+          case parquet::Type::FIXED_LEN_BYTE_ARRAY:
+          case parquet::Type::BYTE_ARRAY: {
             switch(TYPEOF(dest)) {
             case REALSXP:
               NUMERIC_POINTER(dest)[row_idx + dest_offset] = NA_REAL;
@@ -271,7 +271,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
             break;
           }
           default: {
-            auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
+            auto it = parquet::_Type_VALUES_TO_NAMES.find(
                 f.columns[col_idx]->type);
             string msg = string("nanoparquet_read: Unknown column type ") +
               it->second + " @ " __FILE__ ":" STR(__LINE__) " (" +
@@ -283,28 +283,28 @@ SEXP nanoparquet_read(SEXP filesxp) {
         }
 
         switch (f.columns[col_idx]->type) {
-        case parquet::format::Type::BOOLEAN:
+        case parquet::Type::BOOLEAN:
           LOGICAL_POINTER(dest)
           [row_idx + dest_offset] = ((bool *)col.data.ptr)[row_idx];
           break;
-        case parquet::format::Type::INT32:
+        case parquet::Type::INT32:
           INTEGER_POINTER(dest)
           [row_idx + dest_offset] = ((int32_t *)col.data.ptr)[row_idx];
           break;
-        case parquet::format::Type::INT64:
+        case parquet::Type::INT64:
           NUMERIC_POINTER(dest)
           [row_idx + dest_offset] =
               (double)((int64_t *)col.data.ptr)[row_idx] / time_factor;
         break;
-        case parquet::format::Type::DOUBLE:
+        case parquet::Type::DOUBLE:
           NUMERIC_POINTER(dest)
           [row_idx + dest_offset] = ((double *)col.data.ptr)[row_idx];
         break;
-        case parquet::format::Type::FLOAT:
+        case parquet::Type::FLOAT:
           NUMERIC_POINTER(dest)
           [row_idx + dest_offset] = (double)((float *)col.data.ptr)[row_idx];
           break;
-        case parquet::format::Type::INT96:
+        case parquet::Type::INT96:
           // it is further adjusted in the R code, so that we can have
           // the same adjustments as for TIMESTAMPs
           NUMERIC_POINTER(dest)
@@ -313,8 +313,8 @@ SEXP nanoparquet_read(SEXP filesxp) {
                                     1000000;
           break;
 
-        case parquet::format::Type::FIXED_LEN_BYTE_ARRAY:
-        case parquet::format::Type::BYTE_ARRAY: {
+        case parquet::Type::FIXED_LEN_BYTE_ARRAY:
+        case parquet::Type::BYTE_ARRAY: {
           auto &s_ele = f.columns[col_idx]->schema_element;
           switch(TYPEOF(dest)) {
           case REALSXP: {
@@ -374,7 +374,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
         break;
         }
         default: {
-          auto it = parquet::format::_Type_VALUES_TO_NAMES.find(
+          auto it = parquet::_Type_VALUES_TO_NAMES.find(
               f.columns[col_idx]->type);
           string msg = string("nanoparquet_read: Unknown column type ") +
             it->second + " @ " __FILE__ ":" STR(__LINE__) " (" + __func__ + ")";

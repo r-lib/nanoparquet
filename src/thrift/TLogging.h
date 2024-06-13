@@ -43,7 +43,7 @@
  * T_GLOBAL_LOGGING_LEVEL = 0: all logging turned off, logging macros undefined
  * T_GLOBAL_LOGGING_LEVEL = 1: all logging turned on
  */
-#define T_GLOBAL_LOGGING_LEVEL 0
+#define T_GLOBAL_LOGGING_LEVEL 1
 
 /**
  * Standard wrapper around fprintf what will prefix the file name and line
@@ -87,9 +87,59 @@
 #define T_DEBUG_T(format_string, ...)
 #endif
 
+/**
+ * analogous to T_DEBUG but uses input level to determine whether or not the string
+ * should be logged.
+ *
+ * @param int     level: specified debug level
+ * @param string  format_string input: format string
+ */
+#define T_DEBUG_L(level, format_string, ...)                                                       \
+  if ((level) > 0) {                                                                               \
+    fprintf(stderr, "[%s,%d] " format_string " \n", __FILE__, __LINE__, ##__VA_ARGS__);            \
+  }
 
+/**
+ * Explicit error logging. Prints time, file name and line number
+ *
+ * @param string  format_string input: printf style format string
+ */
+#define T_ERROR(format_string, ...)                                                                \
+  {                                                                                                \
+    time_t now;                                                                                    \
+    char dbgtime[26];                                                                              \
+    time(&now);                                                                                    \
+    THRIFT_CTIME_R(&now, dbgtime);                                                                 \
+    dbgtime[24] = '\0';                                                                            \
+    fprintf(stderr,                                                                                \
+            "[%s,%d] [%s] ERROR: " format_string " \n",                                            \
+            __FILE__,                                                                              \
+            __LINE__,                                                                              \
+            dbgtime,                                                                               \
+            ##__VA_ARGS__);                                                                        \
+  }
 
-
+/**
+ * Analogous to T_ERROR, additionally aborting the process.
+ * WARNING: macro calls abort(), ending program execution
+ *
+ * @param string  format_string input: printf style format string
+ */
+#define T_ERROR_ABORT(format_string, ...)                                                          \
+  {                                                                                                \
+    time_t now;                                                                                    \
+    char dbgtime[26];                                                                              \
+    time(&now);                                                                                    \
+    THRIFT_CTIME_R(&now, dbgtime);                                                                 \
+    dbgtime[24] = '\0';                                                                            \
+    fprintf(stderr,                                                                                \
+            "[%s,%d] [%s] ERROR: Going to abort " format_string " \n",                             \
+            __FILE__,                                                                              \
+            __LINE__,                                                                              \
+            dbgtime,                                                                               \
+            ##__VA_ARGS__);                                                                        \
+    exit(1);                                                                                       \
+  }
 
 /**
  * Log input message

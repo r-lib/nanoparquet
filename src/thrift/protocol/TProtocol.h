@@ -22,11 +22,18 @@
 
 #ifdef _WIN32
 // Need to come before any Windows.h includes
-#include <Winsock2.h>
+#include <winsock2.h>
+#include <winsock.h>
+#else
+#include <arpa/inet.h>
 #endif
 
 #include <thrift/transport/TTransport.h>
 #include <thrift/protocol/TProtocolException.h>
+#include <thrift/protocol/TEnum.h>
+#include <thrift/protocol/TList.h>
+#include <thrift/protocol/TSet.h>
+#include <thrift/protocol/TMap.h>
 
 #include <memory>
 
@@ -80,6 +87,20 @@ static inline To bitwise_cast(From from) {
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+
+#ifdef __ZEPHYR__
+#  include <zephyr/sys/byteorder.h>
+
+#  define __THRIFT_BYTE_ORDER __BYTE_ORDER__
+#  define __THRIFT_LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+#  define __THRIFT_BIG_ENDIAN __ORDER_BIG_ENDIAN__
+
+#  if __THRIFT_BYTE_ORDER == __THRIFT_BIG_ENDIAN
+#    undef bswap_64
+#    undef bswap_32
+#    undef bswap_16
+#  endif
 #endif
 
 #ifndef __THRIFT_BYTE_ORDER
@@ -169,45 +190,6 @@ namespace thrift {
 namespace protocol {
 
 using apache::thrift::transport::TTransport;
-
-/**
- * Enumerated definition of the types that the Thrift protocol supports.
- * Take special note of the T_END type which is used specifically to mark
- * the end of a sequence of fields.
- */
-enum TType {
-  T_STOP       = 0,
-  T_VOID       = 1,
-  T_BOOL       = 2,
-  T_BYTE       = 3,
-  T_I08        = 3,
-  T_I16        = 6,
-  T_I32        = 8,
-  T_U64        = 9,
-  T_I64        = 10,
-  T_DOUBLE     = 4,
-  T_STRING     = 11,
-  T_UTF7       = 11,
-  T_STRUCT     = 12,
-  T_MAP        = 13,
-  T_SET        = 14,
-  T_LIST       = 15,
-  T_UTF8       = 16,
-  T_UTF16      = 17
-};
-
-/**
- * Enumerated definition of the message types that the Thrift protocol
- * supports.
- */
-enum TMessageType {
-  T_CALL       = 1,
-  T_REPLY      = 2,
-  T_EXCEPTION  = 3,
-  T_ONEWAY     = 4
-};
-
-static const uint32_t DEFAULT_RECURSION_LIMIT = 64;
 
 /**
  * Abstract class for a thrift protocol driver. These are all the methods that
@@ -578,10 +560,33 @@ public:
   uint32_t getRecursionLimit() const {return recursion_limit_;}
   void setRecurisionLimit(uint32_t depth) {recursion_limit_ = depth;}
 
+  // Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
+  virtual int getMinSerializedSize(TType type) {
+    THRIFT_UNUSED_VARIABLE(type);
+    return 0;
+  }
+
 protected:
   TProtocol(std::shared_ptr<TTransport> ptrans)
-    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0), recursion_limit_(DEFAULT_RECURSION_LIMIT)
+    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0),
+      recursion_limit_(ptrans->getConfiguration()->getRecursionLimit())
   {}
+
+  virtual void checkReadBytesAvailable(TSet& set)
+  {
+      ptrans_->checkReadBytesAvailable(set.size_ * getMinSerializedSize(set.elemType_));
+  }
+
+  virtual void checkReadBytesAvailable(TList& list)
+  {
+      ptrans_->checkReadBytesAvailable(list.size_ * getMinSerializedSize(list.elemType_));
+  }
+
+  virtual void checkReadBytesAvailable(TMap& map)
+  {
+      int elmSize = getMinSerializedSize(map.keyType_) + getMinSerializedSize(map.valueType_);
+      ptrans_->checkReadBytesAvailable(map.size_ * elmSize);
+  }
 
   std::shared_ptr<TTransport> ptrans_;
 
@@ -617,29 +622,27 @@ public:
  */
 class TDummyProtocol : public TProtocol {};
 
+// This is the default / legacy choice
+struct TNetworkBigEndian
+{
+  static uint16_t toWire16(uint16_t x)   {return htons(x);}
+  static uint32_t toWire32(uint32_t x)   {return htonl(x);}
+  static uint64_t toWire64(uint64_t x)   {return THRIFT_htonll(x);}
+  static uint16_t fromWire16(uint16_t x) {return ntohs(x);}
+  static uint32_t fromWire32(uint32_t x) {return ntohl(x);}
+  static uint64_t fromWire64(uint64_t x) {return THRIFT_ntohll(x);}
+};
 
-// HM: this is sub-optimal since it creates a depencency even for memory-only struct
-//// This is the default / legacy choice
-//struct TNetworkBigEndian
-//{
-//  static uint16_t toWire16(uint16_t x)   {return htons(x);}
-//  static uint32_t toWire32(uint32_t x)   {return htonl(x);}
-//  static uint64_t toWire64(uint64_t x)   {return THRIFT_htonll(x);}
-//  static uint16_t fromWire16(uint16_t x) {return ntohs(x);}
-//  static uint32_t fromWire32(uint32_t x) {return ntohl(x);}
-//  static uint64_t fromWire64(uint64_t x) {return THRIFT_ntohll(x);}
-//};
-//
-//// On most systems, this will be a bit faster than TNetworkBigEndian
-//struct TNetworkLittleEndian
-//{
-//  static uint16_t toWire16(uint16_t x)   {return THRIFT_htoles(x);}
-//  static uint32_t toWire32(uint32_t x)   {return THRIFT_htolel(x);}
-//  static uint64_t toWire64(uint64_t x)   {return THRIFT_htolell(x);}
-//  static uint16_t fromWire16(uint16_t x) {return THRIFT_letohs(x);}
-//  static uint32_t fromWire32(uint32_t x) {return THRIFT_letohl(x);}
-//  static uint64_t fromWire64(uint64_t x) {return THRIFT_letohll(x);}
-//};
+// On most systems, this will be a bit faster than TNetworkBigEndian
+struct TNetworkLittleEndian
+{
+  static uint16_t toWire16(uint16_t x)   {return THRIFT_htoles(x);}
+  static uint32_t toWire32(uint32_t x)   {return THRIFT_htolel(x);}
+  static uint64_t toWire64(uint64_t x)   {return THRIFT_htolell(x);}
+  static uint16_t fromWire16(uint16_t x) {return THRIFT_letohs(x);}
+  static uint32_t fromWire32(uint32_t x) {return THRIFT_letohl(x);}
+  static uint64_t fromWire64(uint64_t x) {return THRIFT_letohll(x);}
+};
 
 struct TOutputRecursionTracker {
   TProtocol &prot_;

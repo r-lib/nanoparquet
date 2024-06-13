@@ -4,7 +4,7 @@ OBJECTS= \
   arrow-schema.o base64.o r-base64.o snappy.o encodings.o \
   dictionary-encoding.o test.o \
   lib/ParquetFile.o lib/ParquetOutFile.o lib/RleBpDecoder.o \
-  parquet/parquet_constants.o parquet/parquet_types.o \
+  parquet/parquet_types.o \
   thrift/protocol/TProtocol.o thrift/transport/TTransportException.o \
   thrift/transport/TBufferTransports.o \
   fastpforlib/bitpacking.o \
@@ -24,7 +24,7 @@ OBJECTS= \
   zstd/compress/zstd_lazy.o zstd/compress/zstd_ldm.o \
   zstd/compress/zstd_opt.o
 
-PKG_CPPFLAGS = -Ithrift -I. -Iprotobuf -Izstd/include
+PKG_CPPFLAGS = -Ithrift -I. -Izstd/include
 # PKG_CFLAGS = -DR_NO_REMAP
 
 PKG_CXXFLAGS = -DR_NO_REMAP
@@ -40,3 +40,5 @@ PKG_CXX27FLAGS = -DR_NO_REMAP
 PKG_CXX28FLAGS = -DR_NO_REMAP
 PKG_CXX29FLAGS = -DR_NO_REMAP
 PKG_CXX30FLAGS = -DR_NO_REMAP
+
+# PKG_LIBS = -lws2_32

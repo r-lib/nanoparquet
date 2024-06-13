@@ -378,3 +378,28 @@ test_that("DELTA_BYTE_ARRAY encoding", {
     as.data.frame(dba)
   )
 })
+
+test_that("BYTE_STREAM_SPLIT encoding", {
+  skip_on_cran()
+  pf <- test_path("data/byte_stream_split.parquet")
+  bss <- read_parquet(pf)
+  expect_snapshot({
+    as.data.frame(bss)[1:5,]
+  })
+  expect_equal(
+    as.data.frame(arrow::read_parquet(pf)),
+    as.data.frame(bss)
+  )
+})
+
+test_that("More BYTE_STREAM_SPLIT", {
+  skip_on_cran()
+  pf <- test_path("data/byte_stream_split_extended.gzip.parquet")
+  bss <- read_parquet(pf)
+  expect_snapshot({
+    as.data.frame(bss)[1:5,]
+  })
+  for (i in 1:7) {
+    expect_equal(bss[[2*i-1]], bss[[2*i]])
+  }
+})

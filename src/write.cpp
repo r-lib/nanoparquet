@@ -18,11 +18,11 @@ class RParquetOutFile : public ParquetOutFile {
 public:
   RParquetOutFile(
     std::string filename,
-    parquet::format::CompressionCodec::type codec
+    parquet::CompressionCodec::type codec
   );
   RParquetOutFile(
     std::ostream &stream,
-    parquet::format::CompressionCodec::type codec
+    parquet::CompressionCodec::type codec
   );
   void write_int32(std::ostream &file, uint32_t idx, uint64_t from,
                    uint64_t until);
@@ -80,13 +80,13 @@ private:
 
 RParquetOutFile::RParquetOutFile(
   std::string filename,
-  parquet::format::CompressionCodec::type codec) :
+  parquet::CompressionCodec::type codec) :
     ParquetOutFile(filename, codec) {
 }
 
 RParquetOutFile::RParquetOutFile(
   std::ostream &stream,
-  parquet::format::CompressionCodec::type codec
+  parquet::CompressionCodec::type codec
 ) : ParquetOutFile(stream, codec) {
 }
 
@@ -673,29 +673,29 @@ void RParquetOutFile::write(
     switch (rtype) {
     case INTSXP: {
       if (Rf_isFactor(col)) {
-        parquet::format::StringType st;
-        parquet::format::LogicalType logical_type;
+        parquet::StringType st;
+        parquet::LogicalType logical_type;
         logical_type.__set_STRING(st);
         schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
       } else if (Rf_inherits(col, "Date")) {
-        parquet::format::DateType dt;
-        parquet::format::LogicalType logical_type;
+        parquet::DateType dt;
+        parquet::LogicalType logical_type;
         logical_type.__set_DATE(dt);
         schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
       } else if (Rf_inherits(col, "hms")) {
-        parquet::format::TimeUnit tu;
-        tu.__set_MILLIS(parquet::format::MilliSeconds());
-        parquet::format::TimeType tt;
+        parquet::TimeUnit tu;
+        tu.__set_MILLIS(parquet::MilliSeconds());
+        parquet::TimeType tt;
         tt.__set_isAdjustedToUTC(true);
         tt.__set_unit(tu);
-        parquet::format::LogicalType logical_type;
+        parquet::LogicalType logical_type;
         logical_type.__set_TIME(tt);
         schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
       } else {
-        parquet::format::IntType it;
+        parquet::IntType it;
         it.__set_isSigned(true);
         it.__set_bitWidth(32);
-        parquet::format::LogicalType logical_type;
+        parquet::LogicalType logical_type;
         logical_type.__set_INTEGER(it);
         schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
       }
@@ -703,33 +703,33 @@ void RParquetOutFile::write(
     }
     case REALSXP: {
       if (Rf_inherits(col, "POSIXct")) {
-        parquet::format::TimeUnit tu;
-        tu.__set_MICROS(parquet::format::MicroSeconds());
-        parquet::format::TimestampType ttt;
+        parquet::TimeUnit tu;
+        tu.__set_MICROS(parquet::MicroSeconds());
+        parquet::TimestampType ttt;
         ttt.__set_isAdjustedToUTC(true);
         ttt.__set_unit(tu);
-        parquet::format::LogicalType logical_type;
+        parquet::LogicalType logical_type;
         logical_type.__set_TIMESTAMP(ttt);
         schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
       } else if (Rf_inherits(col, "difftime")) {
-        parquet::format::Type::type type = parquet::format::Type::INT64;
+        parquet::Type::type type = parquet::Type::INT64;
         schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req, dict);
 
       } else {
-        parquet::format::Type::type type = parquet::format::Type::DOUBLE;
+        parquet::Type::type type = parquet::Type::DOUBLE;
         schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req, dict);
       }
       break;
     }
     case STRSXP: {
-      parquet::format::StringType st;
-      parquet::format::LogicalType logical_type;
+      parquet::StringType st;
+      parquet::LogicalType logical_type;
       logical_type.__set_STRING(st);
       schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
       break;
     }
     case LGLSXP: {
-      parquet::format::Type::type type = parquet::format::Type::BOOLEAN;
+      parquet::Type::type type = parquet::Type::BOOLEAN;
       schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req, dict);
       break;
     }
@@ -770,19 +770,19 @@ SEXP nanoparquet_write(
   }
 
   int c_compression = INTEGER(compression)[0];
-  parquet::format::CompressionCodec::type codec;
+  parquet::CompressionCodec::type codec;
   switch(c_compression) {
     case 0:
-      codec = parquet::format::CompressionCodec::UNCOMPRESSED;
+      codec = parquet::CompressionCodec::UNCOMPRESSED;
       break;
     case 1:
-      codec = parquet::format::CompressionCodec::SNAPPY;
+      codec = parquet::CompressionCodec::SNAPPY;
       break;
     case 2:
-      codec = parquet::format::CompressionCodec::GZIP;
+      codec = parquet::CompressionCodec::GZIP;
       break;
     case 6:
-      codec = parquet::format::CompressionCodec::ZSTD;
+      codec = parquet::CompressionCodec::ZSTD;
       break;
     default:
       Rf_error("Invalid compression type code: %d", c_compression); // # nocov

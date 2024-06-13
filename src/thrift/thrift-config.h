@@ -18,7 +18,6 @@
  */
 
 #ifdef _WIN32
-//#include <thrift/windows/config.h>
-#else
-#include <thrift/config.h>
+#include <thrift/windows/config.h>
 #endif
+#include <thrift/config.h>

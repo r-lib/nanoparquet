@@ -29,8 +29,8 @@
   compressed Parquet files.
 
 * `read_parquet()` now supports the `RLE` encoding for `BOOLEAN` columns and
-  also supports the `DELTA_BINARY_PACKED`, `DELTA_LENGTH_BYTE_ARRAY` and
-  `DELTA_BYTE_ARRAY` encodings.
+  also supports the `DELTA_BINARY_PACKED`, `DELTA_LENGTH_BYTE_ARRAY`,
+  `DELTA_BYTE_ARRAY` and `BYTE_STREAM_SPLIT` encodings.
 
 * `parquet_info()`, `parquet_metadata()` and `parquet_columns()` now work
   if the `created_by` metadata field is unset.

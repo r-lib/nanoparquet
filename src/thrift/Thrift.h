@@ -43,7 +43,7 @@
 #include <typeinfo>
 
 #include <thrift/TLogging.h>
-//#include <thrift/TOutput.h>
+#include <thrift/TOutput.h>
 
 #define THRIFT_UNUSED_VARIABLE(x) ((void)(x))
 
@@ -83,7 +83,7 @@ public:
 
   TException(const std::string& message) : message_(message) {}
 
-  ~TException() noexcept override = default;
+  virtual ~TException() noexcept override = default;
 
   const char* what() const noexcept override {
     if (message_.empty()) {

@@ -14,9 +14,9 @@ namespace nanoparquet {
 class ParquetColumn {
 public:
   uint64_t id;
-  parquet::format::Type::type type;
+  parquet::Type::type type;
   std::string name;
-  parquet::format::SchemaElement *schema_element;
+  parquet::SchemaElement *schema_element;
 };
 
 struct Int96 {
@@ -63,8 +63,8 @@ public:
   bool scan(ScanState &s, ResultChunk &result);
   uint64_t nrow;
   std::vector<std::unique_ptr<ParquetColumn>> columns;
-  parquet::format::FileMetaData file_meta_data;
-  std::pair<parquet::format::PageHeader, int64_t> read_page_header(int64_t pos);
+  parquet::FileMetaData file_meta_data;
+  std::pair<parquet::PageHeader, int64_t> read_page_header(int64_t pos);
   void read_chunk(int64_t offset, int64_t size, int8_t *buffer);
 
 private:
