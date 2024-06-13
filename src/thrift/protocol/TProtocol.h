@@ -109,7 +109,7 @@ static inline To bitwise_cast(From from) {
 #  define __THRIFT_LITTLE_ENDIAN LITTLE_ENDIAN
 #  define __THRIFT_BIG_ENDIAN BIG_ENDIAN
 # else
-#  include <boost/predef/other/endian.h>
+//#  include <boost/predef/other/endian.h>
 #  if BOOST_ENDIAN_BIG_BYTE
 #    define __THRIFT_BYTE_ORDER 4321
 #    define __THRIFT_LITTLE_ENDIAN 0
