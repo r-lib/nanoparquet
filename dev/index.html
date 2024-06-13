@@ -87,7 +87,6 @@
 <li>Nested Parquet types are not supported.</li>
 <li>Some Parquet logical types are not supported: <code>FLOAT16</code>, <code>INTERVAL</code>, <code>UNKNOWN</code>.</li>
 <li>Only Snappy, Gzip and Zstd compression is supported.</li>
-<li>The <code>BIT_PACKED</code> and <code>BYTE_STREAM_SPLIT</code> encodings are not supported.</li>
 <li>Encryption is not supported.</li>
 <li>Being single-threaded and not fully optimized, nanoparquet is probably not suited well for large data sets. It should be fine for a couple of gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro. For larger files, use Apache Arrow or DuckDB.</li>
 </ul>
