@@ -31,6 +31,7 @@ class MemStream : public std::streambuf {
         bufs[bufptr] = std::unique_ptr<char[]>(new char[sizes[bufptr]]);
         sbuf = bufs[bufptr].get();
         sptr = 0;
+	setp(sbuf, sbuf + sizes[bufptr]);
       }
       uint64_t space = sizes[bufptr] - sptr;
       if (n > space) {
@@ -44,6 +45,7 @@ class MemStream : public std::streambuf {
         }
         bufs[bufptr] = std::unique_ptr<char[]>(new char[sizes[bufptr]]);
         sbuf = bufs[bufptr].get();
+	setp(sbuf, sbuf + sizes[bufptr]);
         memcpy(sbuf, s + space, of);
         sptr = of;
         pbump(of);
