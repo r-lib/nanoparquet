@@ -22,9 +22,8 @@
 #' @return List of nanoparquet options.
 #'
 #' @export
-#' @examplesIf Sys.getenv("IN_PKGDOWN") == "true"
+#' @examplesIf FALSE
 #' # the effect of using Arrow metadata
-#' library(nanoparquet)
 #' tmp <- tempfile(fileext = ".parquet")
 #' d <- data.frame(
 #'   fct = as.factor("a"),
