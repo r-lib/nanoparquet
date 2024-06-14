@@ -48,6 +48,7 @@ test_that("MemStream", {
 
 test_that("DELTA_BIT_PACKED decoding", {
   skip_on_cran()
+  if (is_asan()) skip("ASAN false positive")
 
   dodbp <- function(df, path) {
     write_parquet(df, path)
@@ -106,6 +107,7 @@ writer.close()
 })
 
 test_that("DELTA_BINARY_PACKED edge cases", {
+  if (is_asan()) skip("ASAN false positive")
   pf <- test_path("data/issue10279_delta_encoding.parquet")
   pgs <- parquet_pages(pf)
   expect_snapshot({
