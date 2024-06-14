@@ -42,6 +42,7 @@ Create a list of nanoparquet options.
 \examples{
 \dontshow{if (Sys.getenv("IN_PKGDOWN") == "true") (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # the effect of using Arrow metadata
+library(nanoparquet)
 tmp <- tempfile(fileext = ".parquet")
 d <- data.frame(
   fct = as.factor("a"),
