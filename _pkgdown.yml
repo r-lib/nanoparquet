@@ -34,6 +34,10 @@ reference:
   - parquet_metadata
   - parquet_schema
 
+- title: Nanoparquet options
+  contents:
+  - parquet_options
+
 - title: Debugging Parquet files
   desc: |
     These functions are useful for debugging possibly broken
