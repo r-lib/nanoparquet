@@ -4,10 +4,12 @@
 \alias{read_parquet}
 \title{Read a Parquet file into a data frame}
 \usage{
-read_parquet(file)
+read_parquet(file, options = parquet_options())
 }
 \arguments{
 \item{file}{Path to a Parquet file.}
+
+\item{options}{Nanoparquet options, see \code{\link[=parquet_options]{parquet_options()}}.}
 }
 \value{
 A \code{data.frame} with the file's contents.

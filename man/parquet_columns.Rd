@@ -4,10 +4,12 @@
 \alias{parquet_columns}
 \title{Parquet file column information}
 \usage{
-parquet_columns(file)
+parquet_columns(file, options = parquet_options())
 }
 \arguments{
 \item{file}{Path to a Parquet file.}
+
+\item{options}{Nanoparquet options, see \code{\link[=parquet_options]{parquet_options()}}.}
 }
 \value{
 Data frame with columns:

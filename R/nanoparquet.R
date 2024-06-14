@@ -3,6 +3,7 @@
 #' Converts the contents of the named Parquet file to a R data frame.
 #'
 #' @param file Path to a Parquet file.
+#' @param options Nanoparquet options, see [parquet_options()].
 #' @return A `data.frame` with the file's contents.
 #' @export
 #' @seealso See [write_parquet()] to write Parquet files,
@@ -15,13 +16,13 @@
 #' parquet_df <- nanoparquet::read_parquet(file_name)
 #' print(str(parquet_df))
 
-read_parquet <- function(file) {
+read_parquet <- function(file, options = parquet_options()) {
 	file <- path.expand(file)
 	res <- .Call(nanoparquet_read, file)
 	dicts <- res[[2]]
 	types <- res[[3]]
 	res <- res[[1]]
-	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
+	if (options[["use_arrow_metadata"]]) {
 		res <- apply_arrow_schema(res, file, dicts, types)
 	}
 
@@ -45,7 +46,7 @@ read_parquet <- function(file) {
 
 	# some data.frame dress up
 	attr(res, "row.names") <- c(NA_integer_, as.integer(-1 * length(res[[1]])))
-	class(res) <- c(getOption("nanoparquet.class", "tbl"), "data.frame")
+	class(res) <- c(options[["class"]], "data.frame")
 	res
 }
 
@@ -322,6 +323,7 @@ parquet_info <- function(file) {
 #' would read.
 #'
 #' @param file Path to a Parquet file.
+#' @param options Nanoparquet options, see [parquet_options()].
 #' @return Data frame with columns:
 #'   * `file_name`: file name.
 #'   * `name`: column name.
@@ -342,7 +344,7 @@ parquet_info <- function(file) {
 #'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @export
 
-parquet_columns <- function(file) {
+parquet_columns <- function(file, options = parquet_options()) {
   mtd <- parquet_metadata(file)
 	sch <- mtd$schema
 
@@ -373,7 +375,7 @@ parquet_columns <- function(file) {
 		sch$converted_type == "UTF8"] <- "character"
 
 	# detected from Arrow schema
-	if (!identical(getOption("nanoparquet.use_arrow_metadata"), FALSE)) {
+	if (options[["use_arrow_metadata"]]) {
 		spec <- if ("ARROW:schema" %in% kv$key) {
 			kv <- mtd$file_meta_data$key_value_metadata[[1]]
 			arrow_find_special(
@@ -435,6 +437,7 @@ parquet_columns <- function(file) {
 #' @param metadata Additional key-value metadata to add to the file.
 #'   This must be a named character vector, or a data frame with columns
 #'   character columns called `key` and `value`.
+#' @param options Nanoparquet options, see [parquet_options()].
 #' @return `NULL`, unless `file` is `":raw:"`, in which case the Parquet
 #'   file is returned as a raw vector.
 #'
@@ -449,7 +452,8 @@ write_parquet <- function(
 	x,
 	file,
 	compression = c("snappy", "gzip", "zstd", "uncompressed"),
-	metadata = NULL) {
+	metadata = NULL,
+	options = parquet_options()) {
 
   file <- path.expand(file)
 	codecs <- c("uncompressed" = 0L, "snappy" = 1L, "gzip" = 2L, "zstd" = 6L)
@@ -468,7 +472,7 @@ write_parquet <- function(
 		metadata <- list(names(metadata), unname(metadata))
 	}
 
-	if (!identical(getOption("nanoparquet.write_arrow_metadata"), FALSE)) {
+	if (options[["write_arrow_metadata"]]) {
 		if (! "ARROW:schema" %in% metadata[[1]]) {
 			metadata[[1]] <- c(metadata[[1]], "ARROW:schema")
 			metadata[[2]] <- c(metadata[[2]], encode_arrow_schema(x))

@@ -89,6 +89,8 @@ issue here with a link to the file.
 
 ## Options
 
+See also `?parquet_options()`.
+
 * `nanoparquet.class`: extra class to add to data frames returned by
   `read_parquet()`. If it is not defined, the default is `"tbl"`,
   which changes how the data frame is printed if the pillar package is

@@ -35,6 +35,9 @@
 * `parquet_info()`, `parquet_metadata()` and `parquet_columns()` now work
   if the `created_by` metadata field is unset.
 
+* New `parquet_options()` function that you can use to set nanoparquet
+  options for a single `read_parquet()` or `write_parquet()` call.
+
 # nanoparquet 0.2.0
 
 * First release on CRAN. It contains the Parquet reader from

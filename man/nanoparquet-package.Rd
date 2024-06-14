@@ -97,6 +97,8 @@ issue here with a link to the file.
 }
 
 \subsection{Options}{
+
+See also \code{?parquet_options()}.
 \itemize{
 \item \code{nanoparquet.class}: extra class to add to data frames returned by
 \code{read_parquet()}. If it is not defined, the default is \code{"tbl"},

@@ -8,7 +8,8 @@ write_parquet(
   x,
   file,
   compression = c("snappy", "gzip", "zstd", "uncompressed"),
-  metadata = NULL
+  metadata = NULL,
+  options = parquet_options()
 )
 }
 \arguments{
@@ -24,6 +25,8 @@ buffer is returned as a raw vector.}
 \item{metadata}{Additional key-value metadata to add to the file.
 This must be a named character vector, or a data frame with columns
 character columns called \code{key} and \code{value}.}
+
+\item{options}{Nanoparquet options, see \code{\link[=parquet_options]{parquet_options()}}.}
 }
 \value{
 \code{NULL}, unless \code{file} is \code{":raw:"}, in which case the Parquet

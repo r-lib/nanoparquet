@@ -13,6 +13,7 @@ RLE
 ZSTD
 Zstd
 codec
+difftime
 hms
 nanoparquet's
 schemas
