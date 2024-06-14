@@ -16,7 +16,6 @@ public:
     mini_blocks_per_block = uleb_decode<uint32_t>(buf);
     total_value_count = uleb_decode<uint32_t>(buf);
     first_value = zigzag_decode<T, Tunsigned>(uleb_decode<Tunsigned>(buf));
-    values_per_mini_block = values_per_block / mini_blocks_per_block;
 
     // some sanity checks, ideally these should caught and re-thrown
     // upstream with more information, e.g. file name and column name
@@ -38,6 +37,7 @@ public:
         "DELTA_BIANRY_PACKED column"
       );
     }
+    values_per_mini_block = values_per_block / mini_blocks_per_block;
     if (values_per_mini_block % 32 != 0) {
       throw runtime_error(
         "the number of values in a miniblock must be multiple of 32, but it's " +
