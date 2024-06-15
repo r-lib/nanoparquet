@@ -38,6 +38,9 @@ before writing.
 \item Logical vectors (\code{LGLSXP}) are written as the \code{BOOLEAN} type.
 \item Other vectors error currently.
 }
+
+You can use \code{\link[=parquet_column_types]{parquet_column_types()}} on a data frame to map R data types
+to Parquet data types.
 }
 
 \section{Parquet's data types}{
@@ -102,7 +105,7 @@ These types are not yet supported:
 \item The \code{UNKNOWN} logical type is not supported.
 }
 
-You can use the \code{parquet_columns()} function to see how R would read
+You can use the \code{\link[=parquet_column_types]{parquet_column_types()}} function to see how R would read
 the columns of a Parquet file. Look at the \code{r_type} column.
 }
 

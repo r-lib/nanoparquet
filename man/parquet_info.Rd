@@ -27,6 +27,6 @@ Short summary of a Parquet file
 }
 \seealso{
 \code{\link[=parquet_metadata]{parquet_metadata()}} to read more metadata,
-\code{\link[=parquet_columns]{parquet_columns()}} and \code{\link[=parquet_schema]{parquet_schema()}} for column information.
+\code{\link[=parquet_column_types]{parquet_column_types()}} and \code{\link[=parquet_schema]{parquet_schema()}} for column information.
 \code{\link[=read_parquet]{read_parquet()}}, \code{\link[=write_parquet]{write_parquet()}}, \link{nanoparquet-types}.
 }

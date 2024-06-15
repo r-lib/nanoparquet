@@ -6,7 +6,7 @@
 #'   so data frames are printed differently if the pillar package is
 #'   loaded.
 #' @param use_arrow_metadata `TRUE` or `FALSE`. If `TRUE`, then
-#'   [read_parquet()] and [parquet_columns()] will make use of the Apache
+#'   [read_parquet()] and [parquet_column_types()] will make use of the Apache
 #'   Arrow metadata to assign R classes to Parquet columns.
 #'   This is currently used to detect factor columns, and to detect
 #'   "difftime" columns.

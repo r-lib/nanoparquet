@@ -17,7 +17,7 @@ so data frames are printed differently if the pillar package is
 loaded.}
 
 \item{use_arrow_metadata}{\code{TRUE} or \code{FALSE}. If \code{TRUE}, then
-\code{\link[=read_parquet]{read_parquet()}} and \code{\link[=parquet_columns]{parquet_columns()}} will make use of the Apache
+\code{\link[=read_parquet]{read_parquet()}} and \code{\link[=parquet_column_types]{parquet_column_types()}} will make use of the Apache
 Arrow metadata to assign R classes to Parquet columns.
 This is currently used to detect factor columns, and to detect
 "difftime" columns.

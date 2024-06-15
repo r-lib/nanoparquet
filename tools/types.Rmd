@@ -31,6 +31,9 @@ These rules will likely change until nanoparquet reaches version 1.0.0.
 1. Logical vectors (`LGLSXP`) are written as the `BOOLEAN` type.
 1. Other vectors error currently.
 
+You can use [parquet_column_types()] on a data frame to map R data types
+to Parquet data types.
+
 # Parquet's data types
 
 When reading a Parquet file nanoparquet also relies on logical types and
@@ -91,7 +94,7 @@ These types are not yet supported:
 1. Nested types (`LIST`, `MAP`) are not supported.
 1. The `UNKNOWN` logical type is not supported.
 
-You can use the `parquet_columns()` function to see how R would read
+You can use the [parquet_column_types()] function to see how R would read
 the columns of a Parquet file. Look at the `r_type` column.
 
 # The Arrow metadata

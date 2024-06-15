@@ -451,10 +451,10 @@
       1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      A\n3\n263168\n197888\n5\nUTF-8\n531\n1\n531\n13\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n1026\n1\n262153\n5\nnames\n16\n13\n262153\n4\nname\n262153\n3\nmpg\n262153\n3\ncyl\n262153\n4\ndisp\n262153\n2\nhp\n262153\n4\ndrat\n262153\n2\nwt\n262153\n4\nqsec\n262153\n2\nvs\n262153\n2\nam\n262153\n4\ngear\n262153\n4\ncarb\n262153\n3\nfac\n254\n1026\n511\n16\n1\n262153\n7\ncolumns\n254\n
       2 /////1AEAAAQAAAAAAAKAA4ABgAFAAgACgAAAAABBAAQAAAAAAAKAAwAAAAEAAgACgAAAHwBAAAEAAAAAQAAAAwAAAAIAAwABAAIAAgAAABYAQAABAAAAEkBAABBCjMKMjYzMTY4CjE5Nzg4OAo1ClVURi04CjUzMQoxCjUzMQoxMwoyNTQKMjU0CjI1NAoyNTQKMjU0CjI1NAoyNTQKMjU0CjI1NAoyNTQKMjU0CjI1NAoyNTQKMTAyNgoxCjI2MjE1Mwo1Cm5hbWVzCjE2CjEzCjI2MjE1Mwo0Cm5hbWUKMjYyMTUzCjMKbXBnCjI2MjE1MwozCmN5bAoyNjIxNTMKNApkaXNwCjI2MjE1MwoyCmhwCjI2MjE1Mwo0CmRyYXQKMjYyMTUzCjIKd3QKMjYyMTUzCjQKcXNlYwoyNjIxNTMKMgp2cwoyNjIxNTMKMgphbQoyNjIxNTMKNApnZWFyCjI2MjE1Mwo0CmNhcmIKMjYyMTUzCjMKZmFjCjI1NAoxMDI2CjUxMQoxNgoxCjI2MjE1Mwo3CmNvbHVtbnMKMjU0CgAAAAEAAAByAAAADQAAAHQCAAAwAgAABAIAANQBAACoAQAAeAEAAEwBAAAcAQAA8AAAAMQAAACUAAAAZAAAABQAAAAQABgACAAGAAcADAAQABQAEAAAAAAAAQUUAAAAPAAAABwAAAAEAAAAAAAAAAMAAABmYWMACAAIAAAABAAIAAAADAAAAAgADAAIAAcACAAAAAAAAAEIAAAA9P3//yz+//8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABjYXJiAAAAAF7+//8AAAIAWP7//wAAAQMQAAAAGAAAAAQAAAAAAAAABAAAAGdlYXIAAAAAiv7//wAAAgCE/v//AAABAxAAAAAUAAAABAAAAAAAAAACAAAAYW0AALL+//8AAAIArP7//wAAAQMQAAAAFAAAAAQAAAAAAAAAAgAAAHZzAADa/v//AAACANT+//8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABxc2VjAAAAAAb///8AAAIAAP///wAAAQMQAAAAFAAAAAQAAAAAAAAAAgAAAHd0AAAu////AAACACj///8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABkcmF0AAAAAFr///8AAAIAVP///wAAAQMQAAAAFAAAAAQAAAAAAAAAAgAAAGhwAACC////AAACAHz///8AAAEDEAAAABgAAAAEAAAAAAAAAAQAAABkaXNwAAAAAK7///8AAAIAqP///wAAAQMQAAAAFAAAAAQAAAAAAAAAAwAAAGN5bADW////AAACAND///8AAAEDEAAAABwAAAAEAAAAAAAAAAMAAABtcGcAAAAGAAgABgAGAAAAAAACABAAFAAIAAYABwAMAAAAEAAQAAAAAAABBRAAAAAcAAAABAAAAAAAAAAEAAAAbmFtZQAAAAAEAAQABAAAAAAAAAA=
 
-# parquet_columns
+# parquet_column_types
 
     Code
-      parquet_columns(test_path("data/enum.parquet"))
+      parquet_column_types(test_path("data/enum.parquet"))
     Output
       # A data frame: 13 x 6
          file_name         name              type  r_type repetition_type logical_type
@@ -473,7 +473,7 @@
       12 data/enum.parquet v_float64         DOUB~ double OPTIONAL        <NULL>      
       13 data/enum.parquet v_binary          BYTE~ raw    OPTIONAL        <NULL>      
     Code
-      parquet_columns(test_path("data/factor.parquet"))
+      parquet_column_types(test_path("data/factor.parquet"))
     Output
       # A data frame: 14 x 6
          file_name           name  type       r_type    repetition_type logical_type
@@ -493,7 +493,7 @@
       13 data/factor.parquet large BOOLEAN    logical   OPTIONAL        <NULL>      
       14 data/factor.parquet fac   BYTE_ARRAY factor    OPTIONAL        <STRING>    
     Code
-      parquet_columns(test_path("data/decimals.parquet"))
+      parquet_column_types(test_path("data/decimals.parquet"))
     Output
       # A data frame: 4 x 6
         file_name             name  type       r_type repetition_type logical_type    
@@ -506,7 +506,7 @@
 ---
 
     Code
-      parquet_columns(tmp)[-1]
+      parquet_column_types(tmp)[-1]
     Output
       # A data frame: 4 x 5
         name     type  r_type   repetition_type logical_type             
@@ -516,7 +516,7 @@
       3 hms      INT32 hms      REQUIRED        <TIME(TRUE, millis)>     
       4 difftime INT64 difftime REQUIRED        <NULL>                   
     Code
-      parquet_columns(tmp)$r_type
+      parquet_column_types(tmp)$r_type
     Output
       [1] "Date"     "POSIXct"  "hms"      "difftime"
 
