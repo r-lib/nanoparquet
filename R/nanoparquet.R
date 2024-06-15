@@ -9,7 +9,7 @@
 #' @seealso See [write_parquet()] to write Parquet files,
 #'   [nanoparquet-types] for the R <-> Parquet type mapping.
 #'   See [parquet_info()], for general information,
-#'   [parquet_columns()] and [parquet_schema()] for information about the
+#'   [parquet_column_types()] and [parquet_schema()] for information about the
 #'   columns, and [parquet_metadata()] for the complete metadata.
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
@@ -203,7 +203,7 @@ format_schema_result <- function(sch) {
 #'
 #' @export
 #' @seealso [parquet_info()] for a much shorter summary.
-#'   [parquet_columns()] and [parquet_schema()] for column information.
+#'   [parquet_column_types()] and [parquet_schema()] for column information.
 #'   [read_parquet()] to read, [write_parquet()] to write Parquet files,
 #'   [nanoparquet-types] for the R <-> Parquet type mappings.
 #' @examples
@@ -270,7 +270,7 @@ parquet_metadata <- function(file) {
 # -------------------------------------------------------------------------
 #'
 #' @seealso [parquet_metadata()] to read more metadata,
-#'   [parquet_columns()] to show the columns R would read,
+#'   [parquet_column_types()] to show the columns R would read,
 #'   [parquet_info()] to show only basic information.
 #'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @export
@@ -296,7 +296,7 @@ parquet_schema <- function(file) {
 #'       that created the file. `NA` if not available.
 #'
 #' @seealso [parquet_metadata()] to read more metadata,
-#'   [parquet_columns()] and [parquet_schema()] for column information.
+#'   [parquet_column_types()] and [parquet_schema()] for column information.
 #'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @export
 
@@ -317,12 +317,14 @@ parquet_info <- function(file) {
 	info
 }
 
-#' Parquet file column information
+#' Map between R and Parquet data types
 #'
-#' It includes the leaf columns, i.e. the columns that [read_parquet()]
-#' would read.
+#' This function works two ways. It can map the R types of a data frame to
+#' Parquet types, to see how [write_parquet()] would write out the data
+#' frame. It can also map the types of a Parquet file to R types, to see
+#' how [read_parquet()] would read the file into R.
 #'
-#' @param file Path to a Parquet file.
+#' @param x Path to a Parquet file, or a data frame.
 #' @param options Nanoparquet options, see [parquet_options()].
 #' @return Data frame with columns:
 #'   * `file_name`: file name.
@@ -344,7 +346,17 @@ parquet_info <- function(file) {
 #'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @export
 
-parquet_columns <- function(file, options = parquet_options()) {
+parquet_column_types <- function(x, options = parquet_options()) {
+	if (is.character(x)) {
+		parquet_column_types_file(x, options)
+	} else if (is.data.frame(x)) {
+		parquet_column_types_df(x, options)
+	} else {
+		stop("`x` must be a file name or a data frame in `parquet_column_types()`")
+	}
+}
+
+parquet_column_types_file <- function(file, options) {
   mtd <- parquet_metadata(file)
 	sch <- mtd$schema
 
@@ -419,6 +431,88 @@ parquet_columns <- function(file, options = parquet_options()) {
 		"logical_type"
 	)
 	sch[, cols]
+}
+
+# TODO this is duplicated from the C++ code
+
+map_to_parquet_type <- function(x, options) {
+	if (typeof(x) == "integer") {
+		if (inherits(x, "factor")) {
+			list(
+				"BYTE_ARRAY",
+				"factor",
+				structure(list(type = "STRING"), class = "nanoparquet_logical_type")
+			)
+		} else if (inherits(x, "Date")) {
+			list(
+				"INT32",
+				"integer",
+				structure(list(type = "DATE"), class = "nanoparquet_logical_type")
+			)
+		} else if (inherits(x, "hms")) {
+			list(
+				"INT32",
+				"hms",
+				structure(
+					list(type = "TIME", is_adjusted_to_utc = TRUE, unit = "millis"),
+					class = "nanoparquet_logical_type"
+				)
+			)
+		} else {
+			list(
+				"INT32",
+				"integer",
+				structure(
+					list(type = "INT", bit_width = 32, is_signed = TRUE),
+					class = "nanoparquet_logical_type"
+				)
+			)
+		}
+	} else if (typeof(x) == "double") {
+		if (inherits(x, "POSIXct")) {
+			list(
+				"INT64",
+				"POSIXct",
+				structure(
+					list(type = "TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "micros"),
+					class = "nanoparquet_logical_type"
+				)
+			)
+		} else if (inherits(x, "difftime")) {
+			list("INT64", "difftime", NULL)
+		} else {
+			list("DOUBLE", "double", NULL)
+		}
+
+	} else if (typeof(x) == "character") {
+		list(
+			"BYTE_ARRAY",
+			"character",
+			structure(list(type = "STRING"), class = "nanoparquet_logical_type")
+		)
+
+	} else if (typeof(x) == "logical") {
+		list("BOOLEAN", "logical", NULL)
+
+	} else {
+		list(NA_character_, class(x)[[1]], NULL)
+	}
+}
+
+parquet_column_types_df <- function(df, options) {
+	types <- lapply(df, map_to_parquet_type, options)
+	type_tab <- data.frame(
+		file_name = rep(NA_character_, length(df)),
+		name = names(df),
+		type = vapply(types, function(x) x[[1]], ""),
+		r_type = vapply(types, function(x) x[[2]], ""),
+		repetition_type = ifelse(vapply(df, anyNA, TRUE), "OPTIONAL", "REQUIRED"),
+		logical_type = I(unname(lapply(types, function(x) x[[3]])))
+	)
+
+	rownames(type_tab) <- NULL
+	class(type_tab) <- c("tbl", class(type_tab))
+	type_tab
 }
 
 #' Write a data frame to a Parquet file

@@ -35,7 +35,7 @@ compression or other reason.
 }
 \seealso{
 \code{\link[=parquet_metadata]{parquet_metadata()}} to read more metadata,
-\code{\link[=parquet_columns]{parquet_columns()}} to show the columns R would read,
+\code{\link[=parquet_column_types]{parquet_column_types()}} to show the columns R would read,
 \code{\link[=parquet_info]{parquet_info()}} to show only basic information.
 \code{\link[=read_parquet]{read_parquet()}}, \code{\link[=write_parquet]{write_parquet()}}, \link{nanoparquet-types}.
 }

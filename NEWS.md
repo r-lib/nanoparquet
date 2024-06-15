@@ -32,7 +32,10 @@
   also supports the `DELTA_BINARY_PACKED`, `DELTA_LENGTH_BYTE_ARRAY`,
   `DELTA_BYTE_ARRAY` and `BYTE_STREAM_SPLIT` encodings.
 
-* `parquet_info()`, `parquet_metadata()` and `parquet_columns()` now work
+* The `parquet_columns()` function is now called `parquet_column_types()`
+  and it can now map the column types of a data frame to Parquet types.
+
+* `parquet_info()`, `parquet_metadata()` and `parquet_column_types()` now work
   if the `created_by` metadata field is unset.
 
 * New `parquet_options()` function that you can use to set nanoparquet

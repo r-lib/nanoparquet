@@ -46,6 +46,12 @@ Call `read_parquet()` to read a Parquet file:
 df <- nanoparquet::read_parquet("example.parquet")
 ```
 
+To see the columns of a Parquet file and how their types are mapped to
+R types by `read_parquet()`, call `parquet_column_types()` first:
+```r
+nanoparquet::parquet_column_types("example.parquet")
+```
+
 Folders of similar-structured Parquet files (e.g. produced by Spark)
 can be read like this:
 
@@ -63,14 +69,20 @@ Call `write_parquet()` to write a data frame to a Parquet file:
 nanoparquet::write_parquet(mtcars, "mtcars.parquet")
 ```
 
+To see how the columns of the data frame will be mapped to Parquet types
+by `write_parquet()`, call `parquet_column_types()` first:
+```r
+nanoparquet::parquet_column_types(mtcars)
+```
+
 ### Inspect
 
-Call `parquet_info()`, `parquet_columns()`, `parquet_schema()` or
+Call `parquet_info()`, `parquet_column_types()`, `parquet_schema()` or
 `parquet_metadata()` to see various kinds of metadata from a Parquet
 file:
 
 * `parquet_info()` shows a basic summary of the file.
-* `parquet_columns()` shows the leaf columns, these are are the ones
+* `parquet_column_types()` shows the leaf columns, these are are the ones
   that `read_parquet()` reads into R.
 * `parquet_schema()` shows all columns, including non-leaf columns.
 * `parquet_metadata()` shows the most complete metadata information:
@@ -79,7 +91,7 @@ file:
 
 ```r
 nanoparquet::parquet_info("mtcars.parquet")
-nanoparquet::parquet_columns("mtcars.parquet")
+nanoparquet::parquet_column_types("mtcars.parquet")
 nanoparquet::parquet_schema("mtcars.parquet")
 nanoparquet::parquet_metadata("mtcars.parquet")
 ```
