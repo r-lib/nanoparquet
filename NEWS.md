@@ -1,3 +1,5 @@
+# nanoparquet (development version)
+
 # nanoparquet 0.3.0
 
 * `read_parquet()` type mapping changes:
