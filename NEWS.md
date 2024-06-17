@@ -15,7 +15,7 @@
     `NULL`.
 
 * `write_parquet()` now automatically uses dictionary encoding for columns
-  that have many repeated values. Only the first 10k rows are use to
+  that have many repeated values. Only the first 10k rows are used to
   decide if dictionary will be used or not. Similarly, logical columns are
   written in RLE encoding if they contain runs of repeated values.
   `NA` values are ignored when selecting the encoding (#18).
@@ -28,15 +28,15 @@
 * Both `read_parquet()` and `write_parquet()` now support GZIP and ZSTD
   compressed Parquet files.
 
-* `read_parquet()` now supports the `RLE` encoding for `BOOLEAN` columns and
-  also supports the `DELTA_BINARY_PACKED`, `DELTA_LENGTH_BYTE_ARRAY`,
+* `read_parquet()` now supports the `RLE` encoding for `BOOLEAN` columns
+  and also supports the `DELTA_BINARY_PACKED`, `DELTA_LENGTH_BYTE_ARRAY`,
   `DELTA_BYTE_ARRAY` and `BYTE_STREAM_SPLIT` encodings.
 
 * The `parquet_columns()` function is now called `parquet_column_types()`
   and it can now map the column types of a data frame to Parquet types.
 
-* `parquet_info()`, `parquet_metadata()` and `parquet_column_types()` now work
-  if the `created_by` metadata field is unset.
+* `parquet_info()`, `parquet_metadata()` and `parquet_column_types()` now
+  work if the `created_by` metadata field is unset.
 
 * New `parquet_options()` function that you can use to set nanoparquet
   options for a single `read_parquet()` or `write_parquet()` call.
