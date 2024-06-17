@@ -85,19 +85,19 @@ columns, and <code><a href="parquet_metadata.html">parquet_metadata()</a></code>
 <span class="r-in"><span><span class="va">parquet_df</span> <span class="op">&lt;-</span> <span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu">read_parquet</span><span class="op">(</span><span class="va">file_name</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">parquet_df</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Classes ‘tbl’ and 'data.frame':	1000 obs. of  13 variables:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ registration_dttm: POSIXct, format: "2016-02-03 07:55:29" "2016-02-03 17:04:03" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ id               : int  1 2 3 4 5 6 7 8 9 10 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ first_name       : chr  "Amanda" "Albert" "Evelyn" "Denise" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ last_name        : chr  "Jordan" "Freeman" "Morgan" "Riley" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ email            : chr  "ajordan0@com.com" "afreeman1@is.gd" "emorgan2@altervista.org" "driley3@gmpg.org" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ gender           : chr  "Female" "Male" "Female" "Female" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ ip_address       : chr  "1.197.201.2" "218.111.175.34" "7.161.136.94" "140.35.109.83" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ cc               : chr  "6759521864920116" "" "6767119071901597" "3576031598965625" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ country          : chr  "Indonesia" "Canada" "Russia" "China" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ birthdate        : chr  "3/8/1971" "1/16/1968" "2/1/1960" "4/8/1997" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ salary           : num  49757 150280 144973 90263 NA ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ title            : chr  "Internal Auditor" "Accountant IV" "Structural Engineer" "Senior Cost Accountant" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ comments         : chr  "1E+02" "" "" "" ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ registration: POSIXct, format: "2016-02-03 07:55:29" "2016-02-03 17:04:03" ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ id          : int  1 2 3 4 5 6 7 8 9 10 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ first_name  : chr  "Amanda" "Albert" "Evelyn" "Denise" ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ last_name   : chr  "Jordan" "Freeman" "Morgan" "Riley" ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ email       : chr  "ajordan0@com.com" "afreeman1@is.gd" "emorgan2@altervista.org" "driley3@gmpg.org" ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ gender      : Factor w/ 2 levels "Female","Male": 1 2 1 1 NA 1 2 2 2 1 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ ip_address  : chr  "1.197.201.2" "218.111.175.34" "7.161.136.94" "140.35.109.83" ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ cc          : chr  "6759521864920116" NA "6767119071901597" "3576031598965625" ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ country     : chr  "Indonesia" "Canada" "Russia" "China" ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ birthdate   : Date, format: "1971-03-08" "1968-01-16" ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ salary      : num  49757 150280 144973 90263 NA ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ title       : chr  "Internal Auditor" "Accountant IV" "Structural Engineer" "Senior Cost Accountant" ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ comments    : chr  "1E+02" NA NA NA ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 </code></pre></div>
     </div>
