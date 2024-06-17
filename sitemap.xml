@@ -25,7 +25,7 @@
     <loc>https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html</loc>
   </url>
   <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_columns.html</loc>
+    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_column_types.html</loc>
   </url>
   <url>
     <loc>https://r-lib.github.io/nanoparquet/reference/parquet_info.html</loc>
@@ -34,10 +34,25 @@
     <loc>https://r-lib.github.io/nanoparquet/reference/parquet_metadata.html</loc>
   </url>
   <url>
+    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_options.html</loc>
+  </url>
+  <url>
+    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_pages.html</loc>
+  </url>
+  <url>
     <loc>https://r-lib.github.io/nanoparquet/reference/parquet_schema.html</loc>
   </url>
   <url>
     <loc>https://r-lib.github.io/nanoparquet/reference/read_parquet.html</loc>
+  </url>
+  <url>
+    <loc>https://r-lib.github.io/nanoparquet/reference/read_parquet_page.html</loc>
+  </url>
+  <url>
+    <loc>https://r-lib.github.io/nanoparquet/reference/rle_decode_int.html</loc>
+  </url>
+  <url>
+    <loc>https://r-lib.github.io/nanoparquet/reference/rle_encode_int.html</loc>
   </url>
   <url>
     <loc>https://r-lib.github.io/nanoparquet/reference/write_parquet.html</loc>

@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,8 +54,9 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">write_parquet</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">file</span>,</span>
-<span>  compression <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"snappy"</span>, <span class="st">"uncompressed"</span><span class="op">)</span>,</span>
-<span>  metadata <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  compression <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"snappy"</span>, <span class="st">"gzip"</span>, <span class="st">"zstd"</span>, <span class="st">"uncompressed"</span><span class="op">)</span>,</span>
+<span>  metadata <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  options <span class="op">=</span> <span class="fu"><a href="parquet_options.html">parquet_options</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -66,12 +67,14 @@
 
 
 <dt>file</dt>
-<dd><p>Path to the output file.</p></dd>
+<dd><p>Path to the output file. If this is the string <code>":raw:"</code>,
+then the data frame is written to a memory buffer, and the memory
+buffer is returned as a raw vector.</p></dd>
 
 
 <dt>compression</dt>
-<dd><p>Compression algorithm to use. Currently only
-<code>"snappy"</code> (the default) and <code>"uncompressed"</code> are supported.</p></dd>
+<dd><p>Compression algorithm to use. Currently <code>"snappy"</code>
+(the default), <code>"gzip"</code>, <code>"zstd"</code>, and <code>"uncompressed"</code> are supported.</p></dd>
 
 
 <dt>metadata</dt>
@@ -79,14 +82,17 @@
 This must be a named character vector, or a data frame with columns
 character columns called <code>key</code> and <code>value</code>.</p></dd>
 
+
+<dt>options</dt>
+<dd><p>Nanoparquet options, see <code><a href="parquet_options.html">parquet_options()</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p><code>NULL</code></p>
-
-
+<p><code>NULL</code>, unless <code>file</code> is <code>":raw:"</code>, in which case the Parquet
+file is returned as a raw vector.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

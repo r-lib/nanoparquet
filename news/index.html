@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,10 +45,30 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.0" id="nanoparquet-020">nanoparquet 0.2.0<a class="anchor" aria-label="anchor" href="#nanoparquet-020"></a></h2>
-<ul><li>First release on CRAN. It container the Parquet reader from <a href="https://github.com/hannes/miniparquet" class="external-link uri">https://github.com/hannes/miniparquet</a>, a Parquet writer, functions to read Parquet metadata, and many improvements.</li>
+<h2 class="pkg-version" data-toc-text="0.3.0" id="nanoparquet-030">nanoparquet 0.3.0<a class="anchor" aria-label="anchor" href="#nanoparquet-030"></a></h2><p class="text-muted">CRAN release: 2024-06-17</p>
+<ul><li>
+<p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> type mapping changes:</p>
+<ul><li>The <code>STRING</code> logical type and the <code>UTF8</code> converted type are still read as a character vector, but <code>BYTE_ARRAY</code> types without a converted or logical types are not any more, and are read as a list of raw vectors. Missing values are indicated as <code>NULL</code> values.</li>
+<li>The <code>DECIMAL</code> converted type is read as a <code>REALSXP</code> now, even if its type is <code>FIXED_LEN_BYTE_ARRAY</code>. (Not just if it is <code>BYTE_ARRAY</code>).</li>
+<li>The <code>UUID</code> logical type is now read as a character vector, formatted as <code>00112233-4455-6677-8899-aabbccddeeff</code>.</li>
+<li>
+<code>BYTE_ARRAY</code> and <code>FIXED_LEN_BYTE_ARRAY</code> types without logical or converted types; or with unsupported ones: <code>FLOAT16</code>, <code>INTERVAL</code>; are now read into a list of raw vectors. Missing values are denoted by <code>NULL</code>.</li>
+</ul></li>
+<li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now automatically uses dictionary encoding for columns that have many repeated values. Only the first 10k rows are used to decide if dictionary will be used or not. Similarly, logical columns are written in RLE encoding if they contain runs of repeated values. <code>NA</code> values are ignored when selecting the encoding (<a href="https://github.com/r-lib/nanoparquet/issues/18" class="external-link">#18</a>).</p></li>
+<li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> can now write a data frame to a memory buffer, returned as a raw vector, if the special <code>":raw:"</code> filename is used (<a href="https://github.com/r-lib/nanoparquet/issues/31" class="external-link">#31</a>).</p></li>
+<li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> can now read Parquet files with V2 data pages (<a href="https://github.com/r-lib/nanoparquet/issues/37" class="external-link">#37</a>).</p></li>
+<li><p>Both <code><a href="../reference/read_parquet.html">read_parquet()</a></code> and <code><a href="../reference/write_parquet.html">write_parquet()</a></code> now support GZIP and ZSTD compressed Parquet files.</p></li>
+<li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> now supports the <code>RLE</code> encoding for <code>BOOLEAN</code> columns and also supports the <code>DELTA_BINARY_PACKED</code>, <code>DELTA_LENGTH_BYTE_ARRAY</code>, <code>DELTA_BYTE_ARRAY</code> and <code>BYTE_STREAM_SPLIT</code> encodings.</p></li>
+<li><p>The <code>parquet_columns()</code> function is now called <code><a href="../reference/parquet_column_types.html">parquet_column_types()</a></code> and it can now map the column types of a data frame to Parquet types.</p></li>
+<li><p><code><a href="../reference/parquet_info.html">parquet_info()</a></code>, <code><a href="../reference/parquet_metadata.html">parquet_metadata()</a></code> and <code><a href="../reference/parquet_column_types.html">parquet_column_types()</a></code> now work if the <code>created_by</code> metadata field is unset.</p></li>
+<li><p>New <code><a href="../reference/parquet_options.html">parquet_options()</a></code> function that you can use to set nanoparquet options for a single <code><a href="../reference/read_parquet.html">read_parquet()</a></code> or <code><a href="../reference/write_parquet.html">write_parquet()</a></code> call.</p></li>
 </ul></div>
-  </main></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0" id="nanoparquet-020">nanoparquet 0.2.0<a class="anchor" aria-label="anchor" href="#nanoparquet-020"></a></h2><p class="text-muted">CRAN release: 2024-05-30</p>
+<ul><li>First release on CRAN. It contains the Parquet reader from <a href="https://github.com/hannes/miniparquet" class="external-link uri">https://github.com/hannes/miniparquet</a>, a Parquet writer, functions to read Parquet metadata, and many improvements.</li>
+</ul></div>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside></div>
 
 
    </div>
