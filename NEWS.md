@@ -1,4 +1,4 @@
-# nanoparquet (development version)
+# nanoparquet 0.3.0
 
 * `read_parquet()` type mapping changes:
   - The `STRING` logical type and the `UTF8` converted type are still read
