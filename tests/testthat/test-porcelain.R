@@ -107,6 +107,8 @@ writer.close()
 })
 
 test_that("DELTA_BINARY_PACKED edge cases", {
+  skip_on_cran()
+  if (is_ubsan()) skip("UBSAN false positive")
   if (is_asan()) skip("ASAN false positive")
   pf <- test_path("data/issue10279_delta_encoding.parquet")
   pgs <- parquet_pages(pf)

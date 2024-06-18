@@ -24,3 +24,7 @@ vcapply <- function(X, FUN, ...) {
 is_asan <- function() {
   .Call(is_asan_)
 }
+
+is_ubsan <- function() {
+  .Call(is_ubsan_)
+}

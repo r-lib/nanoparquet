@@ -58,6 +58,20 @@ SEXP is_asan_() {
 #endif
 }
 
+SEXP is_ubsan_() {
+#if defined(__has_feature)
+#   if __has_feature(undefined_behavior_sanitizer)
+#       define HAS_UBSAN 1
+#   endif
+#endif
+
+#ifdef HAS_UBSAN
+  return Rf_ScalarLogical(1);
+#else
+  return Rf_ScalarLogical(0);
+#endif
+}
+
 // R native routine registration
 #define CALLDEF(name, n) \
   { #name, (DL_FUNC)&name, n }
@@ -94,6 +108,7 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(test_memstream, 0),
 
   CALLDEF(is_asan_, 0),
+  CALLDEF(is_ubsan_, 0),
   {NULL, NULL, 0}
 };
 
