@@ -9,7 +9,6 @@ Authors@R: c(
     person("Posit Software, PBC", role = "cph"),
     person("RAD Game Tools", role = "cph"),
     person("Valve Software", role = "cph"),
-    person("Valve Software", role = "cph"),
     person("Tenacious Software LLC", role = "cph"),
     person("Facebook, Inc.", role = "cph"))
 Description: Self-sufficient reader and writer for flat 'Parquet' files.
