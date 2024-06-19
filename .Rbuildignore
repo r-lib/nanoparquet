@@ -7,3 +7,8 @@
 ^vignettes$
 ^docs$
 ^_pkgdown.yml$
+^setup\.py$
+^src/pywrapper\.cpp$
+^build$
+^dist$
+^nanoparquet.egg-info$
