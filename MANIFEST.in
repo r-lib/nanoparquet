@@ -1,0 +1,9 @@
+graft src/fastpforlib
+graft src/thrift
+graft src/thrift/protocol
+graft src/thrift/transport
+graft src/snappy
+graft src/miniz
+graft src/zstd/include
+graft src/lib
+graft src/parquet

@@ -28,31 +28,63 @@ ignored_files = [
   'write.cpp'
 ]
 extensions = ['.cpp', '.cc']
-include_paths = ['src', 'src/lib', 'src/thrift', 'src/zstd/include']
+include_paths = [
+  'src',
+  'src/lib',
+  'src/thrift',
+  'src/zstd/include'
+]
 toolchain_args = ['-std=c++11']
 if platform.system() == 'Darwin':
     toolchain_args.extend(['-stdlib=libc++', '-mmacosx-version-min=10.13'])
 
-def get_files(dirname):
-	file_list = os.listdir(dirname)
-	result = []
-	for fname in file_list:
-		if fname in ignored_files:
-			continue
-		full_name = os.path.join(dirname, fname)
-		if os.path.isdir(full_name):
-			result += get_files(full_name)
-		else:
-			if full_name.endswith('.cpp') or full_name.endswith('.cc'):
-				result.append(full_name)
-	return result
-
 libnanoparquet = Extension(
   'nanoparquet',
-  sources = get_files('src'),
+  sources = [
+    "src/pywrapper.cpp",
+
+    "src/lib/ParquetFile.cpp",
+    "src/lib/ParquetOutFile.cpp",
+    "src/lib/RleBpDecoder.cpp",
+
+    "src/parquet/parquet_types.cpp",
+
+    "src/thrift/protocol/TProtocol.cpp",
+    "src/thrift/transport/TTransportException.cpp",
+    "src/thrift/transport/TBufferTransports.cpp",
+
+    "src/fastpforlib/bitpacking.cpp",
+
+    "src/snappy/snappy.cc",
+    "src/snappy/snappy-sinksource.cc",
+
+    "src/miniz/miniz.cpp",
+
+    "src/zstd/common/entropy_common.cpp",
+    "src/zstd/common/error_private.cpp",
+    "src/zstd/common/fse_decompress.cpp",
+    "src/zstd/common/xxhash.cpp",
+    "src/zstd/common/zstd_common.cpp",
+    "src/zstd/decompress/huf_decompress.cpp",
+    "src/zstd/decompress/zstd_ddict.cpp",
+    "src/zstd/decompress/zstd_decompress.cpp",
+    "src/zstd/decompress/zstd_decompress_block.cpp",
+    "src/zstd/compress/fse_compress.cpp",
+    "src/zstd/compress/hist.cpp",
+    "src/zstd/compress/huf_compress.cpp",
+    "src/zstd/compress/zstd_compress.cpp",
+    "src/zstd/compress/zstd_compress_literals.cpp",
+    "src/zstd/compress/zstd_compress_sequences.cpp",
+    "src/zstd/compress/zstd_compress_superblock.cpp",
+    "src/zstd/compress/zstd_double_fast.cpp",
+    "src/zstd/compress/zstd_fast.cpp",
+    "src/zstd/compress/zstd_lazy.cpp",
+    "src/zstd/compress/zstd_ldm.cpp",
+    "src/zstd/compress/zstd_opt.cpp"
+  ],
 	include_dirs = include_paths,
-	extra_compile_args=toolchain_args,
-	extra_link_args=toolchain_args,
+	extra_compile_args = toolchain_args,
+	extra_link_args = toolchain_args,
 	language = 'c++'
 )
 

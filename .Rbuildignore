@@ -8,6 +8,8 @@
 ^docs$
 ^_pkgdown.yml$
 ^setup\.py$
+^MANIFEST.in$
+^pyproject\.toml$
 ^src/pywrapper\.cpp$
 ^build$
 ^dist$
