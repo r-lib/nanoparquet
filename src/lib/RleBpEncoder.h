@@ -21,7 +21,7 @@ uint32_t RleBpEncode(const T *input, uint32_t input_len,
                      uint8_t bit_width, uint8_t *output,
                      uint32_t output_len) {
   uint32_t iidx = 0;
-  int min_reps = bit_width > 4 ? 2 : 9 / bit_width;
+  int min_reps = bit_width > 4 ? 2 : 9 / (bit_width > 0 ? bit_Width : 1);
 
   if (input_len == 0) return 0;
 
