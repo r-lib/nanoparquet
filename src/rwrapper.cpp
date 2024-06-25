@@ -3,6 +3,7 @@
 extern "C" {
 
 SEXP nanoparquet_read(SEXP filesxp);
+SEXP nanoparquet_read2(SEXP filesxp);
 SEXP nanoparquet_write(
   SEXP dfsxp,
   SEXP filesxp,
@@ -78,6 +79,7 @@ SEXP is_ubsan_() {
 
 static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_read, 1),
+  CALLDEF(nanoparquet_read2, 1),
   CALLDEF(nanoparquet_write, 6),
   CALLDEF(nanoparquet_read_metadata, 1),
   CALLDEF(nanoparquet_read_schema, 1),
