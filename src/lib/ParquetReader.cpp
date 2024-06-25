@@ -268,9 +268,9 @@ void ParquetReader::read_dict_page_int32(
   }
 
   int32_t num_values = ph.dictionary_page_header.num_values;
-  int32_t *res = allocate_int32(column, row_group, 0, num_values);
+  int32_t *res;
+  add_dict_page_int32(column, row_group, &res, num_values);
   memcpy(res, buf, num_values * sizeof(int32_t));
-  add_dictionary_int32(column, row_group, res, num_values);
 }
 
 void ParquetReader::read_data_page_int32(
@@ -307,12 +307,12 @@ void ParquetReader::read_data_page_int32(
     throw runtime_error("Invalid page type, expected data page");
   }
 
-  int32_t *res = allocate_int32(column, row_group, page, num_values);
+  int32_t *res;
 
   switch (encoding) {
   case Encoding::PLAIN:
+    add_data_page_int32(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
     memcpy(res, buf, num_values * sizeof(int32_t));
-    add_int32(column, row_group, res, nullptr, num_values, from, from + num_values);
     break;
   // TODO: rest
   default:
