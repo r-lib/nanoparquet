@@ -155,7 +155,6 @@ Other contributors:
   \item Posit Software, PBC [copyright holder]
   \item RAD Game Tools [copyright holder]
   \item Valve Software [copyright holder]
-  \item Valve Software [copyright holder]
   \item Tenacious Software LLC [copyright holder]
   \item Facebook, Inc. [copyright holder]
 }

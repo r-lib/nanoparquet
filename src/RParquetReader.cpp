@@ -14,8 +14,8 @@ RParquetReader::RParquetReader(std::string filename)
     SEXP rg = Rf_allocVector(VECSXP, num_row_groups);
     SET_VECTOR_ELT(columns, i, rg);
     for (auto j = 0; j < Rf_length(rg); j++) {
-      // allocate memory for 10 pages, might need to extend this vector
-      SET_VECTOR_ELT(rg, j, Rf_allocVector(VECSXP, 10));
+      // allocate memory for 1000 pages, might need to extend this vector
+      SET_VECTOR_ELT(rg, j, Rf_allocVector(VECSXP, 1000));
     }
   }
 
