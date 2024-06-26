@@ -19,7 +19,14 @@ RParquetReader::RParquetReader(std::string filename)
     }
   }
 
-  const char *meta_named[] = { "num_rows", "col_names", "" };
+  const char *meta_named[] = {
+    "num_rows",
+    "col_name",
+    "type",
+    "converted_type",
+    "logical_type",
+    ""
+  };
   metadata = Rf_mkNamed(VECSXP, meta_named);
   R_PreserveObject(metadata);
   SET_VECTOR_ELT(metadata, 0, Rf_ScalarReal(fmt.num_rows));
@@ -33,6 +40,8 @@ RParquetReader::RParquetReader(std::string filename)
   }
   SET_VECTOR_ELT(metadata, 1, colnames);
   UNPROTECT(1);
+
+
 }
 
 RParquetReader::~RParquetReader() {
@@ -66,6 +75,8 @@ void RParquetReader::add_data_page_int32(
   uint64_t from,
   uint64_t to) {
 
+  // TODO: need to resize?
+
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
   SEXP v = Rf_allocVector(VECSXP, 4);
   SET_VECTOR_ELT(x, page, v);
@@ -84,6 +95,8 @@ void RParquetReader::add_dict_page_double(
   uint32_t row_group,
   double **dict,
   uint32_t dict_len) {
+
+  // TODO: need to resize?
 
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
   SEXP v = Rf_allocVector(REALSXP, dict_len);
