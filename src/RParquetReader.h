@@ -19,10 +19,28 @@ public:
   );
 
   virtual void add_data_page_int32(
-    uint32_t idx,
+    uint32_t columns,
     uint32_t row_group,
     uint32_t page,
     int32_t **data,
+    int32_t **present,
+    uint64_t len,
+    uint64_t from,
+    uint64_t to
+  );
+
+  virtual void add_dict_page_double(
+    uint32_t column,
+    uint32_t row_group,
+    double **dict,
+    uint32_t dict_len
+  );
+
+  virtual void add_data_page_double(
+    uint32_t columns,
+    uint32_t row_group,
+    uint32_t page,
+    double **data,
     int32_t **present,
     uint64_t len,
     uint64_t from,

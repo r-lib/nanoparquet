@@ -79,6 +79,41 @@ void RParquetReader::add_data_page_int32(
   SET_VECTOR_ELT(v, 3, Rf_ScalarReal(to));
 }
 
+void RParquetReader::add_dict_page_double(
+  uint32_t column,
+  uint32_t row_group,
+  double **dict,
+  uint32_t dict_len) {
+
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+  SEXP v = Rf_allocVector(REALSXP, dict_len);
+  SET_VECTOR_ELT(x, 0, v);
+  *dict = REAL(v);
+}
+
+void RParquetReader::add_data_page_double(
+  uint32_t column,
+  uint32_t row_group,
+  uint32_t page,
+  double **data,
+  int32_t **present,
+  uint64_t len,
+  uint64_t from,
+  uint64_t to) {
+
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+  SEXP v = Rf_allocVector(VECSXP, 4);
+  SET_VECTOR_ELT(x, page, v);
+  SET_VECTOR_ELT(v, 0, Rf_allocVector(REALSXP, len));
+  *data = REAL(VECTOR_ELT(v, 0));
+  if (present) {
+    SET_VECTOR_ELT(v, 1, Rf_allocVector(INTSXP, len));
+    *present = INTEGER(VECTOR_ELT(v, 1));
+  }
+  SET_VECTOR_ELT(v, 2, Rf_ScalarReal(from));
+  SET_VECTOR_ELT(v, 3, Rf_ScalarReal(to));
+}
+
 void RParquetReader::add_dict_indices(
   uint32_t column,
   uint32_t row_group,

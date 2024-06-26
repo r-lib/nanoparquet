@@ -167,38 +167,25 @@ void ParquetReader::read_column(uint32_t column) {
   if (!has_file_meta_data_) {
     throw runtime_error("Cannot read column, metadata is not known");
   }
-
   SchemaElement &sel = file_meta_data_.schema[column];
   if (!sel.__isset.type) {
     throw runtime_error("Invalid Parquet file, column type is not set");
   }
-
-  switch (sel.type) {
-    case Type::INT32:
-      read_column_int32(column);
-      break;
-    default:
-      throw runtime_error("Unknown Parquet type");
-      break;
-  }
-}
-
-void ParquetReader::read_column_int32(uint32_t column) {
-  SchemaElement &sel = file_meta_data_.schema[column];
   vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
 
   uint64_t from = 0;
   for (auto rgi = 0; rgi < rgs.size(); rgi++) {
     parquet::ColumnChunk cc = rgs[rgi].columns[leaf_cols[column]];
     parquet::ColumnMetaData cmd = cc.meta_data;
-    read_column_chunk_int32(column, rgi, cc, from);
+    read_column_chunk(column, rgi, sel, cc, from);
     from += cmd.num_values;
   }
 }
 
-void ParquetReader::read_column_chunk_int32(
+void ParquetReader::read_column_chunk(
   uint32_t column,
   uint32_t row_group,
+  parquet::SchemaElement &sel,
   parquet::ColumnChunk &cc,
   uint64_t from) {
 
@@ -224,7 +211,7 @@ void ParquetReader::read_column_chunk_int32(
     uint32_t ph_size = cmd.total_compressed_size;
     thrift_unpack((const uint8_t *) ptr, &ph_size, &dph, filename_);
     ptr += ph_size;
-    read_dict_page_int32(column, row_group, dph, ptr, dph.compressed_page_size);
+    read_dict_page(column, row_group, sel, dph, ptr, dph.compressed_page_size);
     ptr += dph.compressed_page_size;
   }
 
@@ -238,7 +225,7 @@ void ParquetReader::read_column_chunk_int32(
     switch (ph.type) {
     case PageType::DATA_PAGE:
     case PageType::DATA_PAGE_V2:
-      read_data_page_int32(column, row_group, page, from, ph, ptr, ph.compressed_page_size);
+      read_data_page(column, row_group, sel, page, from, ph, ptr, ph.compressed_page_size);
       page++;
       break;
     case PageType::DICTIONARY_PAGE:
@@ -252,9 +239,10 @@ void ParquetReader::read_column_chunk_int32(
   }
 }
 
-void ParquetReader::read_dict_page_int32(
+void ParquetReader::read_dict_page(
   uint32_t column,
   uint32_t row_group,
+  parquet::SchemaElement &sel,
   parquet::PageHeader &ph,
   const char *buf,
   int32_t len) {
@@ -268,14 +256,22 @@ void ParquetReader::read_dict_page_int32(
   }
 
   int32_t num_values = ph.dictionary_page_header.num_values;
-  int32_t *res;
-  add_dict_page_int32(column, row_group, &res, num_values);
-  memcpy(res, buf, num_values * sizeof(int32_t));
+  switch (sel.type) {
+  case Type::INT32: {
+    int32_t *res;
+    add_dict_page_int32(column, row_group, &res, num_values);
+    memcpy(res, buf, num_values * sizeof(int32_t));
+    break;
+  }
+  default:
+    throw runtime_error("Not implemented yet 1");
+  }
 }
 
-void ParquetReader::read_data_page_int32(
+void ParquetReader::read_data_page(
   uint32_t column,
   uint32_t row_group,
+  parquet::SchemaElement &sel,
   uint32_t page,
   uint64_t from,
   parquet::PageHeader &ph,
@@ -307,8 +303,37 @@ void ParquetReader::read_data_page_int32(
     throw runtime_error("Invalid page type, expected data page");
   }
 
-  int32_t *res;
+  // TODO: parse/skip repetition levels
+  // TODO: parse/skip definition levels
+  // TODO: uncompress
 
+  switch (sel.type) {
+  case Type::INT32: {
+    read_data_page_int32(column, row_group, sel, page, from, ph, buf, len, encoding, num_values);
+    break;
+  case Type::DOUBLE:
+    read_data_page_double(column, row_group, sel, page, from, ph, buf, len, encoding, num_values);
+    break;
+  }
+  default:
+    throw runtime_error("Not implemented yet");
+    break;
+  }
+}
+
+void ParquetReader::read_data_page_int32(
+  uint32_t column,
+  uint32_t row_group,
+  parquet::SchemaElement &sel,
+  uint32_t page,
+  uint64_t from,
+  parquet::PageHeader &ph,
+  const char *buf,
+  int32_t len,
+  parquet::Encoding::type encoding,
+  uint32_t num_values) {
+
+  int32_t *res;
   switch (encoding) {
   case Encoding::PLAIN:
     add_data_page_int32(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
@@ -319,5 +344,29 @@ void ParquetReader::read_data_page_int32(
     throw runtime_error("Not implemented yet");
     break;
   }
+}
 
+void ParquetReader::read_data_page_double(
+  uint32_t column,
+  uint32_t row_group,
+  parquet::SchemaElement &sel,
+  uint32_t page,
+  uint64_t from,
+  parquet::PageHeader &ph,
+  const char *buf,
+  int32_t len,
+  parquet::Encoding::type encoding,
+  uint32_t num_values) {
+
+  double *res;
+  switch (encoding) {
+  case Encoding::PLAIN:
+    add_data_page_double(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
+    memcpy(res, buf, num_values * sizeof(double));
+    break;
+  // TODO: rest
+  default:
+    throw runtime_error("Not implemented yet");
+    break;
+  }
 }
