@@ -120,6 +120,15 @@ private:
     const char *buf,
     int32_t len
   );
+  void read_data_page_rle(
+    uint32_t column,
+    uint32_t row_group,
+    uint32_t page,
+    uint64_t from,
+    const char *buf,
+    int32_t buflen,
+    uint32_t num_values
+  );
 
   void read_data_page_int32(
     uint32_t column,

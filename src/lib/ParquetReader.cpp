@@ -5,6 +5,7 @@
 
 #include "ParquetReader.h"
 #include "bytebuffer.h"
+#include "RleBpDecoder.h"
 
 using namespace std;
 using namespace parquet;
@@ -192,7 +193,7 @@ void ParquetReader::read_column_chunk(
   parquet::ColumnMetaData cmd = cc.meta_data;
   bool has_dictionary = cmd.__isset.dictionary_page_offset;
   int64_t dictionary_page_offset =
-    has_dictionary ? -1 : cmd.dictionary_page_offset;
+    has_dictionary ? cmd.dictionary_page_offset : -1;
   int64_t data_page_offset = cmd.data_page_offset;
   int64_t chunk_start =
     has_dictionary ? dictionary_page_offset : data_page_offset;
@@ -263,6 +264,12 @@ void ParquetReader::read_dict_page(
     memcpy(res, buf, num_values * sizeof(int32_t));
     break;
   }
+  case Type::DOUBLE: {
+    double *res;
+    add_dict_page_double(column, row_group, &res, num_values);
+    memcpy(res, buf, num_values * sizeof(double));
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet 1");
   }
@@ -321,6 +328,28 @@ void ParquetReader::read_data_page(
   }
 }
 
+void ParquetReader::read_data_page_rle(
+  uint32_t column,
+  uint32_t row_group,
+  uint32_t page,
+  uint64_t from,
+  const char *buf,
+  int32_t buflen,
+  uint32_t num_values) {
+
+  uint32_t *res;
+  add_dict_indices(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
+  int bw = *((uint8_t *) buf);
+  buf += 1;
+  if (bw == 0) {
+    memset(res, 0, num_values * sizeof(uint32_t));
+  } else {
+    RleBpDecoder dec((const uint8_t*) buf, buflen, bw);
+    // TODO: missing values
+    dec.GetBatch<uint32_t>(res, num_values);
+  }
+}
+
 void ParquetReader::read_data_page_int32(
   uint32_t column,
   uint32_t row_group,
@@ -333,12 +362,18 @@ void ParquetReader::read_data_page_int32(
   parquet::Encoding::type encoding,
   uint32_t num_values) {
 
-  int32_t *res;
   switch (encoding) {
-  case Encoding::PLAIN:
+  case Encoding::PLAIN: {
+    int32_t *res;
     add_data_page_int32(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
     memcpy(res, buf, num_values * sizeof(int32_t));
     break;
+  }
+  case Encoding::RLE_DICTIONARY:
+  case Encoding::PLAIN_DICTIONARY: {
+    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
+    break;
+  }
   // TODO: rest
   default:
     throw runtime_error("Not implemented yet");
@@ -363,6 +398,10 @@ void ParquetReader::read_data_page_double(
   case Encoding::PLAIN:
     add_data_page_double(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
     memcpy(res, buf, num_values * sizeof(double));
+    break;
+  case Encoding::RLE_DICTIONARY:
+  case Encoding::PLAIN_DICTIONARY:
+    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
     break;
   // TODO: rest
   default:

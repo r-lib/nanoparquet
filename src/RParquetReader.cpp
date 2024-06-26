@@ -14,8 +14,8 @@ RParquetReader::RParquetReader(std::string filename)
     SEXP rg = Rf_allocVector(VECSXP, num_row_groups);
     SET_VECTOR_ELT(columns, i, rg);
     for (auto j = 0; j < Rf_length(rg); j++) {
-      // allocate memory for 1000 pages, might need to extend this vector
-      SET_VECTOR_ELT(rg, j, Rf_allocVector(VECSXP, 1000));
+      // allocate memory for 10 pages, might need to extend this vector
+      SET_VECTOR_ELT(rg, j, Rf_allocVector(VECSXP, 10));
     }
   }
 
@@ -137,4 +137,15 @@ void RParquetReader::add_dict_indices(
   uint64_t from,
   uint64_t to) {
 
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+  SEXP v = Rf_allocVector(VECSXP, 4);
+  SET_VECTOR_ELT(x, page, v);
+  SET_VECTOR_ELT(v, 0, Rf_allocVector(INTSXP, len));
+  *dict_idx = (uint32_t*) INTEGER(VECTOR_ELT(v, 0));
+  if (present) {
+    SET_VECTOR_ELT(v, 1, Rf_allocVector(INTSXP, len));
+    *present = INTEGER(VECTOR_ELT(v, 1));
+  }
+  SET_VECTOR_ELT(v, 2, Rf_ScalarReal(from));
+  SET_VECTOR_ELT(v, 3, Rf_ScalarReal(to));
 }

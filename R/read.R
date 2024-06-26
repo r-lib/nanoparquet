@@ -23,7 +23,12 @@ read_parquet2 <- function(file, options = parquet_options()) {
         }
       } else {
         # dictionary
-        # TODO
+        for (pg in chunk[-1]) {
+          if (is.null(pg)) break
+          from <- pg[[3]] + 1L
+          to <- pg[[4]]
+          val[from:to] <- chunk[[1]][pg[[1]] + 1L]
+        }
       }
     }
     vals[[idx]] <- val
