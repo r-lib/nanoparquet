@@ -99,8 +99,7 @@ private:
     uint32_t column,
     uint32_t row_group,
     parquet::SchemaElement &sel,
-    parquet::ColumnChunk &cc,
-    uint64_t from
+    parquet::ColumnChunk &cc
   );
   void read_dict_page(
     uint32_t column,
@@ -110,7 +109,7 @@ private:
     const char *buf,
     int32_t len
   );
-  void read_data_page(
+  uint32_t read_data_page(
     uint32_t column,
     uint32_t row_group,
     parquet::SchemaElement &sel,

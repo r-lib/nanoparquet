@@ -13,14 +13,11 @@ RParquetReader::RParquetReader(std::string filename)
     if (fmt.schema[i].__isset.num_children) continue;
     SEXP rg = Rf_allocVector(VECSXP, num_row_groups);
     SET_VECTOR_ELT(columns, i, rg);
-    for (auto j = 0; j < Rf_length(rg); j++) {
-      // allocate memory for 10 pages, might need to extend this vector
-      SET_VECTOR_ELT(rg, j, Rf_allocVector(VECSXP, 10));
-    }
   }
 
   const char *meta_named[] = {
     "num_rows",
+    "row_group_num_rows",
     "col_name",
     "type",
     "converted_type",
@@ -30,6 +27,12 @@ RParquetReader::RParquetReader(std::string filename)
   metadata = Rf_mkNamed(VECSXP, meta_named);
   R_PreserveObject(metadata);
   SET_VECTOR_ELT(metadata, 0, Rf_ScalarReal(fmt.num_rows));
+  SEXP rgnr = PROTECT(Rf_allocVector(REALSXP, fmt.row_groups.size()));
+  for (auto i = 0; i < fmt.row_groups.size(); i++) {
+    REAL(rgnr)[i] = fmt.row_groups[i].num_rows;
+  }
+  SET_VECTOR_ELT(metadata, 1, rgnr);
+  UNPROTECT(1);
   SEXP colnames = PROTECT(Rf_allocVector(STRSXP, num_cols));
   for (auto i = 0; i < num_cols; i++) {
     SET_STRING_ELT(
@@ -38,10 +41,8 @@ RParquetReader::RParquetReader(std::string filename)
       Rf_mkCharCE(fmt.schema[i].name.c_str(), CE_UTF8)
     );
   }
-  SET_VECTOR_ELT(metadata, 1, colnames);
+  SET_VECTOR_ELT(metadata, 2, colnames);
   UNPROTECT(1);
-
-
 }
 
 RParquetReader::~RParquetReader() {
@@ -60,9 +61,16 @@ void RParquetReader::add_dict_page_int32(
   uint32_t dict_len) {
 
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
-  SEXP v = Rf_allocVector(INTSXP, dict_len);
-  SET_VECTOR_ELT(x, 0, v);
-  *dict = INTEGER(v);
+  if (Rf_isNull(x)) {
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    SEXP val = Rf_allocVector(VECSXP, 2);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, val);
+    SET_VECTOR_ELT(val, 0, Rf_allocVector(INTSXP, dict_len));
+    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
+    *dict = INTEGER(VECTOR_ELT(val, 0));
+  } else {
+    Rf_error("Dictionary already set");
+  }
 }
 
 void RParquetReader::add_data_page_int32(
@@ -75,19 +83,14 @@ void RParquetReader::add_data_page_int32(
   uint64_t from,
   uint64_t to) {
 
-  // TODO: need to resize?
-
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
-  SEXP v = Rf_allocVector(VECSXP, 4);
-  SET_VECTOR_ELT(x, page, v);
-  SET_VECTOR_ELT(v, 0, Rf_allocVector(INTSXP, len));
-  *data = INTEGER(VECTOR_ELT(v, 0));
-  if (present) {
-    SET_VECTOR_ELT(v, 1, Rf_allocVector(INTSXP, len));
-    *present = INTEGER(VECTOR_ELT(v, 1));
+  if (Rf_isNull(x)) {
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    x = Rf_allocVector(INTSXP, nr);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
   }
-  SET_VECTOR_ELT(v, 2, Rf_ScalarReal(from));
-  SET_VECTOR_ELT(v, 3, Rf_ScalarReal(to));
+  *data = INTEGER(x) + from;
+  // TODO: present
 }
 
 void RParquetReader::add_dict_page_double(
@@ -96,12 +99,17 @@ void RParquetReader::add_dict_page_double(
   double **dict,
   uint32_t dict_len) {
 
-  // TODO: need to resize?
-
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
-  SEXP v = Rf_allocVector(REALSXP, dict_len);
-  SET_VECTOR_ELT(x, 0, v);
-  *dict = REAL(v);
+  if (Rf_isNull(x)) {
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    SEXP val = Rf_allocVector(VECSXP, 2);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, val);
+    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict_len));
+    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
+    *dict = REAL(VECTOR_ELT(val, 0));
+  } else {
+    Rf_error("Dictionary already set");
+  }
 }
 
 void RParquetReader::add_data_page_double(
@@ -115,16 +123,13 @@ void RParquetReader::add_data_page_double(
   uint64_t to) {
 
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
-  SEXP v = Rf_allocVector(VECSXP, 4);
-  SET_VECTOR_ELT(x, page, v);
-  SET_VECTOR_ELT(v, 0, Rf_allocVector(REALSXP, len));
-  *data = REAL(VECTOR_ELT(v, 0));
-  if (present) {
-    SET_VECTOR_ELT(v, 1, Rf_allocVector(INTSXP, len));
-    *present = INTEGER(VECTOR_ELT(v, 1));
+  if (Rf_isNull(x)) {
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    x = Rf_allocVector(REALSXP, nr);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
   }
-  SET_VECTOR_ELT(v, 2, Rf_ScalarReal(from));
-  SET_VECTOR_ELT(v, 3, Rf_ScalarReal(to));
+  *data = REAL(x) + from;
+  // TODO: present
 }
 
 void RParquetReader::add_dict_indices(
@@ -138,14 +143,6 @@ void RParquetReader::add_dict_indices(
   uint64_t to) {
 
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
-  SEXP v = Rf_allocVector(VECSXP, 4);
-  SET_VECTOR_ELT(x, page, v);
-  SET_VECTOR_ELT(v, 0, Rf_allocVector(INTSXP, len));
-  *dict_idx = (uint32_t*) INTEGER(VECTOR_ELT(v, 0));
-  if (present) {
-    SET_VECTOR_ELT(v, 1, Rf_allocVector(INTSXP, len));
-    *present = INTEGER(VECTOR_ELT(v, 1));
-  }
-  SET_VECTOR_ELT(v, 2, Rf_ScalarReal(from));
-  SET_VECTOR_ELT(v, 3, Rf_ScalarReal(to));
+  *dict_idx = (uint32_t*) INTEGER(VECTOR_ELT(x, 1));
+  // TODO: present
 }

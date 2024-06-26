@@ -4,6 +4,7 @@
 
 read_parquet2 <- function(file, options = parquet_options()) {
   bits <- .Call(nanoparquet_read2, file)
+  return(bits)
   leaf_cols <- which(!vapply(bits[[2]], is.null, logical(1)))
   cnms <- bits[[1]][["col_name"]][leaf_cols]
   vals <- structure(vector("list", length(cnms)), names = cnms)

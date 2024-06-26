@@ -174,12 +174,10 @@ void ParquetReader::read_column(uint32_t column) {
   }
   vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
 
-  uint64_t from = 0;
   for (auto rgi = 0; rgi < rgs.size(); rgi++) {
     parquet::ColumnChunk cc = rgs[rgi].columns[leaf_cols[column]];
     parquet::ColumnMetaData cmd = cc.meta_data;
-    read_column_chunk(column, rgi, sel, cc, from);
-    from += cmd.num_values;
+    read_column_chunk(column, rgi, sel, cc);
   }
 }
 
@@ -187,8 +185,7 @@ void ParquetReader::read_column_chunk(
   uint32_t column,
   uint32_t row_group,
   parquet::SchemaElement &sel,
-  parquet::ColumnChunk &cc,
-  uint64_t from) {
+  parquet::ColumnChunk &cc) {
 
   parquet::ColumnMetaData cmd = cc.meta_data;
   bool has_dictionary = cmd.__isset.dictionary_page_offset;
@@ -217,6 +214,7 @@ void ParquetReader::read_column_chunk(
   }
 
   // data pages
+  uint64_t from = 0;
   uint32_t page = 1;
   while (ptr < end) {
     PageHeader ph;
@@ -225,10 +223,12 @@ void ParquetReader::read_column_chunk(
     ptr += ph_size;
     switch (ph.type) {
     case PageType::DATA_PAGE:
-    case PageType::DATA_PAGE_V2:
-      read_data_page(column, row_group, sel, page, from, ph, ptr, ph.compressed_page_size);
+    case PageType::DATA_PAGE_V2: {
+      uint32_t num_values = read_data_page(column, row_group, sel, page, from, ph, ptr, ph.compressed_page_size);
+      from += num_values;
       page++;
       break;
+    }
     case PageType::DICTIONARY_PAGE:
       throw runtime_error("Found dictionary page instead of data page");
       break;
@@ -275,7 +275,7 @@ void ParquetReader::read_dict_page(
   }
 }
 
-void ParquetReader::read_data_page(
+uint32_t ParquetReader::read_data_page(
   uint32_t column,
   uint32_t row_group,
   parquet::SchemaElement &sel,
@@ -326,6 +326,7 @@ void ParquetReader::read_data_page(
     throw runtime_error("Not implemented yet");
     break;
   }
+  return num_values;
 }
 
 void ParquetReader::read_data_page_rle(
