@@ -6,6 +6,10 @@
 
 namespace nanoparquet {
 
+struct int96_t {
+  int32_t value[3];
+};
+
 enum parquet_input_type {
   FILE_ON_DISK,
   MEMORY_BUFFER
@@ -64,6 +68,24 @@ public:
     uint32_t row_group,
     uint32_t page,
     int64_t **data,
+    int32_t **present,
+    uint64_t len,
+    uint64_t from,
+    uint64_t to
+  ) = 0;
+
+  virtual void add_dict_page_int96(
+    uint32_t column,
+    uint32_t row_group,
+    int96_t **dict,
+    uint32_t dict_len
+  ) = 0;
+
+  virtual void add_data_page_int96(
+    uint32_t column,
+    uint32_t row_group,
+    uint32_t page,
+    int96_t **data,
     int32_t **present,
     uint64_t len,
     uint64_t from,
@@ -164,6 +186,19 @@ protected:
   );
 
   void read_data_page_int64(
+    uint32_t column,
+    uint32_t row_group,
+    parquet::SchemaElement &sel,
+    uint32_t page,
+    uint64_t from,
+    parquet::PageHeader &ph,
+    const char *buf,
+    int32_t len,
+    parquet::Encoding::type encoding,
+    uint32_t num_values
+  );
+
+  void read_data_page_int96(
     uint32_t column,
     uint32_t row_group,
     parquet::SchemaElement &sel,

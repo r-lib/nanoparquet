@@ -49,6 +49,24 @@ public:
     uint64_t to
   );
 
+  void add_dict_page_int96(
+    uint32_t column,
+    uint32_t row_group,
+    int96_t **dict,
+    uint32_t dict_len
+  );
+
+  void add_data_page_int96(
+    uint32_t column,
+    uint32_t row_group,
+    uint32_t page,
+    int96_t **data,
+    int32_t **present,
+    uint64_t len,
+    uint64_t from,
+    uint64_t to
+  );
+
   void add_dict_page_double(
     uint32_t column,
     uint32_t row_group,
@@ -83,4 +101,5 @@ public:
 
 protected:
   void convert_int64_to_double(SEXP x);
+  void convert_int96_to_double(SEXP x, uint32_t idx);
 };
