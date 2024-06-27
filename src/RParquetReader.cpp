@@ -54,6 +54,43 @@ RParquetReader::~RParquetReader() {
   }
 }
 
+void RParquetReader::convert_columns_to_r() {
+  for (auto cn = 0; cn < file_meta_data_.schema.size(); cn++) {
+    parquet::SchemaElement &sel = file_meta_data_.schema[cn];
+    if (sel.__isset.num_children) {
+      continue;
+    }
+    for (auto rg = 0; rg < file_meta_data_.row_groups.size(); rg++) {
+      switch (sel.type) {
+      case parquet::Type::INT64: {
+        SEXP col = VECTOR_ELT(VECTOR_ELT(columns, cn), rg);
+        convert_int64_to_double(col);
+        break;
+      }
+      default:
+        // others are ok
+        break;
+      }
+    }
+  }
+}
+
+void RParquetReader::convert_int64_to_double(SEXP x) {
+  if (TYPEOF(x) == VECSXP) {
+    // dictionary
+    Rf_PrintValue(VECTOR_ELT(x, 1));
+    x = VECTOR_ELT(x, 0);
+  } else {
+    // plain
+  }
+  double *dp = REAL(x);
+  int64_t *ip = (int64_t*) REAL(x);
+  R_xlen_t l = Rf_xlength(x);
+  for (R_xlen_t i = 0; i < l; i++, dp++, ip++) {
+    *dp = static_cast<double>(*ip);
+  }
+}
+
 void RParquetReader::add_dict_page_int32(
   uint32_t column,
   uint32_t row_group,
@@ -90,6 +127,45 @@ void RParquetReader::add_data_page_int32(
     SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
   }
   *data = INTEGER(x) + from;
+  // TODO: present
+}
+
+void RParquetReader::add_dict_page_int64(
+  uint32_t column,
+  uint32_t row_group,
+  int64_t **dict,
+  uint32_t dict_len) {
+
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+  if (Rf_isNull(x)) {
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    SEXP val = Rf_allocVector(VECSXP, 2);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, val);
+    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict_len));
+    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
+    *dict = (int64_t*) REAL(VECTOR_ELT(val, 0));
+  } else {
+    Rf_error("Dictionary already set");
+  }
+}
+
+void RParquetReader::add_data_page_int64(
+  uint32_t column,
+  uint32_t row_group,
+  uint32_t page,
+  int64_t **data,
+  int32_t **present,
+  uint64_t len,
+  uint64_t from,
+  uint64_t to) {
+
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+  if (Rf_isNull(x)) {
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    x = Rf_allocVector(REALSXP, nr);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
+  }
+  *data = (int64_t*) REAL(x) + from;
   // TODO: present
 }
 

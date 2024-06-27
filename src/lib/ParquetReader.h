@@ -52,6 +52,24 @@ public:
     uint64_t to
   ) = 0;
 
+  virtual void add_dict_page_int64(
+    uint32_t column,
+    uint32_t row_group,
+    int64_t **dict,
+    uint32_t dict_len
+  ) = 0;
+
+  virtual void add_data_page_int64(
+    uint32_t column,
+    uint32_t row_group,
+    uint32_t page,
+    int64_t **data,
+    int32_t **present,
+    uint64_t len,
+    uint64_t from,
+    uint64_t to
+  ) = 0;
+
   virtual void add_dict_page_double(
     uint32_t column,
     uint32_t row_group,
@@ -81,7 +99,7 @@ public:
     uint64_t to
   ) = 0;
 
-private:
+protected:
   enum parquet_input_type file_type_;
   std::string filename_;
   std::ifstream pfile;
@@ -101,6 +119,7 @@ private:
     parquet::SchemaElement &sel,
     parquet::ColumnChunk &cc
   );
+
   void read_dict_page(
     uint32_t column,
     uint32_t row_group,
@@ -109,6 +128,7 @@ private:
     const char *buf,
     int32_t len
   );
+
   uint32_t read_data_page(
     uint32_t column,
     uint32_t row_group,
@@ -119,6 +139,7 @@ private:
     const char *buf,
     int32_t len
   );
+
   void read_data_page_rle(
     uint32_t column,
     uint32_t row_group,
@@ -130,6 +151,19 @@ private:
   );
 
   void read_data_page_int32(
+    uint32_t column,
+    uint32_t row_group,
+    parquet::SchemaElement &sel,
+    uint32_t page,
+    uint64_t from,
+    parquet::PageHeader &ph,
+    const char *buf,
+    int32_t len,
+    parquet::Encoding::type encoding,
+    uint32_t num_values
+  );
+
+  void read_data_page_int64(
     uint32_t column,
     uint32_t row_group,
     parquet::SchemaElement &sel,

@@ -8,6 +8,7 @@ SEXP nanoparquet_read2(SEXP filesxp) {
   RParquetReader reader(fname);
 
   reader.read_all_columns();
+  reader.convert_columns_to_r();
 
   SEXP res = Rf_allocVector(VECSXP, 2);
   SET_VECTOR_ELT(res, 0, reader.metadata);
