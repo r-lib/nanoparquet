@@ -15,6 +15,46 @@ enum parquet_input_type {
   MEMORY_BUFFER
 };
 
+template <typename T>
+struct DictPage {
+public:
+  uint32_t column;
+  uint32_t row_group;
+  T *dict;
+  uint32_t dict_len;
+};
+
+template <typename T>
+struct DataPage {
+public:
+  uint32_t column;
+  uint32_t row_group;
+  uint32_t page;
+  T *data;
+  int32_t *present;
+  uint64_t len;
+  uint64_t from;
+  uint64_t to;
+};
+
+struct DictIndexPage {
+  uint32_t column;
+  uint32_t row_group;
+  uint32_t page;
+  uint32_t *dict_idx;
+  int32_t *present;
+  uint64_t len;
+  uint64_t from;
+  uint64_t to;
+};
+
+struct StringSet {
+  const char *buffer;
+  uint32_t size;
+  std::vector<uint32_t> offsets;
+  std::vector<uint32_t> lengths;
+};
+
 class ParquetReader {
 public:
   ParquetReader(std::string filename);
@@ -38,106 +78,17 @@ public:
 
   // API to be implemented by the embedding software
 
-  virtual void add_dict_page_int32(
-    uint32_t column,
-    uint32_t row_group,
-    int32_t **dict,
-    uint32_t dict_len
-  ) = 0;
-
-  virtual void add_data_page_int32(
-    uint32_t column,
-    uint32_t row_group,
-    uint32_t page,
-    int32_t **data,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  ) = 0;
-
-  virtual void add_dict_page_int64(
-    uint32_t column,
-    uint32_t row_group,
-    int64_t **dict,
-    uint32_t dict_len
-  ) = 0;
-
-  virtual void add_data_page_int64(
-    uint32_t column,
-    uint32_t row_group,
-    uint32_t page,
-    int64_t **data,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  ) = 0;
-
-  virtual void add_dict_page_int96(
-    uint32_t column,
-    uint32_t row_group,
-    int96_t **dict,
-    uint32_t dict_len
-  ) = 0;
-
-  virtual void add_data_page_int96(
-    uint32_t column,
-    uint32_t row_group,
-    uint32_t page,
-    int96_t **data,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  ) = 0;
-
-  virtual void add_dict_page_float(
-    uint32_t column,
-    uint32_t row_group,
-    float **dict,
-    uint32_t dict_len
-  ) = 0;
-
-  virtual void add_data_page_float(
-    uint32_t column,
-    uint32_t row_group,
-    uint32_t page,
-    float **data,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  ) = 0;
-
-  virtual void add_dict_page_double(
-    uint32_t column,
-    uint32_t row_group,
-    double **dict,
-    uint32_t dict_len
-  ) = 0;
-
-  virtual void add_data_page_double(
-    uint32_t column,
-    uint32_t row_group,
-    uint32_t page,
-    double **data,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  ) = 0;
-
-  virtual void add_dict_indices(
-    uint32_t column,
-    uint32_t row_group,
-    uint32_t page,
-    uint32_t **dict_idx,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  ) = 0;
+  virtual void add_dict_page_int32(DictPage<int32_t> &dict) = 0;
+  virtual void add_data_page_int32(DataPage<int32_t> &data) = 0;
+  virtual void add_dict_page_int64(DictPage<int64_t> &dict) = 0;
+  virtual void add_data_page_int64(DataPage<int64_t> &data) = 0;
+  virtual void add_dict_page_int96(DictPage<int96_t> &dict) = 0;
+  virtual void add_data_page_int96(DataPage<int96_t> &data) = 0;
+  virtual void add_dict_page_float(DictPage<float> &dict) = 0;
+  virtual void add_data_page_float(DataPage<float> &data) = 0;
+  virtual void add_dict_page_double(DictPage<double> &dict) = 0;
+  virtual void add_data_page_double(DataPage<double> &data) = 0;
+  virtual void add_dict_index_page(DictIndexPage &idx) = 0;
 
 protected:
   enum parquet_input_type file_type_;

@@ -256,36 +256,36 @@ void ParquetReader::read_dict_page(
     throw runtime_error("Unknown encoding for dictionary page");
   }
 
-  int32_t num_values = ph.dictionary_page_header.num_values;
+  uint32_t num_values = ph.dictionary_page_header.num_values;
   switch (sel.type) {
   case Type::INT32: {
-    int32_t *res;
-    add_dict_page_int32(column, row_group, &res, num_values);
-    memcpy(res, buf, num_values * sizeof(int32_t));
+    DictPage<int32_t> dict = { column, row_group, nullptr, num_values };
+    add_dict_page_int32(dict);
+    memcpy(dict.dict, buf, num_values * sizeof(int32_t));
     break;
   }
   case Type::INT64: {
-    int64_t *res;
-    add_dict_page_int64(column, row_group, &res, num_values);
-    memcpy(res, buf, num_values * sizeof(int64_t));
+    DictPage<int64_t> dict = { column, row_group, nullptr, num_values };
+    add_dict_page_int64(dict);
+    memcpy(dict.dict, buf, num_values * sizeof(int64_t));
     break;
   }
   case Type::INT96: {
-    int96_t *res;
-    add_dict_page_int96(column, row_group, &res, num_values);
-    memcpy(res, buf, num_values * sizeof(int96_t));
+    DictPage<int96_t> dict = { column, row_group, nullptr, num_values };
+    add_dict_page_int96(dict);
+    memcpy(dict.dict, buf, num_values * sizeof(int96_t));
     break;
   }
   case Type::FLOAT: {
-    float *res;
-    add_dict_page_float(column, row_group, &res, num_values);
-    memcpy(res, buf, num_values * sizeof(float));
+    DictPage<float> dict = { column, row_group, nullptr, num_values };
+    add_dict_page_float(dict);
+    memcpy(dict.dict, buf, num_values * sizeof(float));
     break;
   }
   case Type::DOUBLE: {
-    double *res;
-    add_dict_page_double(column, row_group, &res, num_values);
-    memcpy(res, buf, num_values * sizeof(double));
+    DictPage<double> dict = { column, row_group, nullptr, num_values };
+    add_dict_page_double(dict);
+    memcpy(dict.dict, buf, num_values * sizeof(double));
     break;
   }
   default:
@@ -365,15 +365,16 @@ void ParquetReader::read_data_page_rle(
   uint32_t num_values) {
 
   uint32_t *res;
-  add_dict_indices(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
+  DictIndexPage dictidx = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
+  add_dict_index_page(dictidx);
   int bw = *((uint8_t *) buf);
   buf += 1; buflen -= 1;
   if (bw == 0) {
-    memset(res, 0, num_values * sizeof(uint32_t));
+    memset(dictidx.dict_idx, 0, num_values * sizeof(uint32_t));
   } else {
     RleBpDecoder dec((const uint8_t*) buf, buflen, bw);
     // TODO: missing values
-    dec.GetBatch<uint32_t>(res, num_values);
+    dec.GetBatch<uint32_t>(dictidx.dict_idx, num_values);
   }
 }
 
@@ -391,9 +392,11 @@ void ParquetReader::read_data_page_int32(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    int32_t *res;
-    add_data_page_int32(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
-    memcpy(res, buf, num_values * sizeof(int32_t));
+    DataPage<int32_t> data = {
+      column, row_group, page, nullptr, nullptr, num_values, from, from + num_values
+    };
+    add_data_page_int32(data);
+    memcpy(data.data, buf, num_values * sizeof(int32_t));
     break;
   }
   case Encoding::RLE_DICTIONARY:
@@ -422,9 +425,9 @@ void ParquetReader::read_data_page_int64(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    int64_t *res;
-    add_data_page_int64(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
-    memcpy(res, buf, num_values * sizeof(int64_t));
+    DataPage<int64_t> data = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
+    add_data_page_int64(data);
+    memcpy(data.data, buf, num_values * sizeof(int64_t));
     break;
   }
   case Encoding::RLE_DICTIONARY:
@@ -453,9 +456,9 @@ void ParquetReader::read_data_page_int96(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    int96_t *res;
-    add_data_page_int96(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
-    memcpy(res, buf, num_values * sizeof(int96_t));
+    DataPage<int96_t> data = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
+    add_data_page_int96(data);
+    memcpy(data.data, buf, num_values * sizeof(int96_t));
     break;
   }
   case Encoding::RLE_DICTIONARY:
@@ -482,12 +485,13 @@ void ParquetReader::read_data_page_double(
   parquet::Encoding::type encoding,
   uint32_t num_values) {
 
-  double *res;
   switch (encoding) {
-  case Encoding::PLAIN:
-    add_data_page_double(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
-    memcpy(res, buf, num_values * sizeof(double));
+  case Encoding::PLAIN: {
+    DataPage<double> data = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
+    add_data_page_double(data);
+    memcpy(data.data, buf, num_values * sizeof(double));
     break;
+  }
   case Encoding::RLE_DICTIONARY:
   case Encoding::PLAIN_DICTIONARY:
     read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
@@ -511,12 +515,13 @@ void ParquetReader::read_data_page_float(
   parquet::Encoding::type encoding,
   uint32_t num_values) {
 
-  float *res;
   switch (encoding) {
-  case Encoding::PLAIN:
-    add_data_page_float(column, row_group, page, &res, nullptr, num_values, from, from + num_values);
-    memcpy(res, buf, num_values * sizeof(float));
+  case Encoding::PLAIN: {
+    DataPage<float> data = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
+    add_data_page_float(data);
+    memcpy(data.data, buf, num_values * sizeof(float));
     break;
+  }
   case Encoding::RLE_DICTIONARY:
   case Encoding::PLAIN_DICTIONARY:
     read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);

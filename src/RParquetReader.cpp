@@ -159,214 +159,134 @@ void RParquetReader::convert_float_to_double(SEXP x) {
 
 // ------------------------------------------------------------------------
 
-void RParquetReader::add_dict_page_int32(
-  uint32_t column,
-  uint32_t row_group,
-  int32_t **dict,
-  uint32_t dict_len) {
-
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+void RParquetReader::add_dict_page_int32(DictPage<int32_t> &dict) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
     SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, val);
-    SET_VECTOR_ELT(val, 0, Rf_allocVector(INTSXP, dict_len));
+    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
+    SET_VECTOR_ELT(val, 0, Rf_allocVector(INTSXP, dict.dict_len));
     SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    *dict = INTEGER(VECTOR_ELT(val, 0));
+    dict.dict = INTEGER(VECTOR_ELT(val, 0));
   } else {
     Rf_error("Dictionary already set");
   }
 }
 
-void RParquetReader::add_data_page_int32(
-  uint32_t column,
-  uint32_t row_group,
-  uint32_t page,
-  int32_t **data,
-  int32_t **present,
-  uint64_t len,
-  uint64_t from,
-  uint64_t to) {
-
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+void RParquetReader::add_data_page_int32(DataPage<int32_t> &data) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
     x = Rf_allocVector(INTSXP, nr);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
   }
-  *data = INTEGER(x) + from;
+  data.data = INTEGER(x) + data.from;
   // TODO: present
 }
 
-void RParquetReader::add_dict_page_int64(
-  uint32_t column,
-  uint32_t row_group,
-  int64_t **dict,
-  uint32_t dict_len) {
-
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+void RParquetReader::add_dict_page_int64(DictPage<int64_t> &dict) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
     SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, val);
-    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict_len));
+    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
+    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict.dict_len));
     SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    *dict = (int64_t*) REAL(VECTOR_ELT(val, 0));
+    dict.dict = (int64_t*) REAL(VECTOR_ELT(val, 0));
   } else {
     Rf_error("Dictionary already set");
   }
 }
 
-void RParquetReader::add_data_page_int64(
-  uint32_t column,
-  uint32_t row_group,
-  uint32_t page,
-  int64_t **data,
-  int32_t **present,
-  uint64_t len,
-  uint64_t from,
-  uint64_t to) {
-
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+void RParquetReader::add_data_page_int64(DataPage<int64_t> &data) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
     x = Rf_allocVector(REALSXP, nr);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
   }
-  *data = (int64_t*) REAL(x) + from;
+  data.data = (int64_t*) REAL(x) + data.from;
   // TODO: present
 }
 
-void RParquetReader::add_dict_page_int96(
-  uint32_t column,
-  uint32_t row_group,
-  int96_t **dict,
-  uint32_t dict_len) {
-
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+void RParquetReader::add_dict_page_int96(DictPage<int96_t> &dict) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
     SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, val);
-    SET_VECTOR_ELT(val, 0, Rf_allocVector(INTSXP, dict_len * 3));
+    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
+    SET_VECTOR_ELT(val, 0, Rf_allocVector(INTSXP, dict.dict_len * 3));
     SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    *dict = (int96_t*) INTEGER(VECTOR_ELT(val, 0));
+    dict.dict = (int96_t*) INTEGER(VECTOR_ELT(val, 0));
   } else {
     Rf_error("Dictionary already set");
   }
 }
 
-void RParquetReader::add_data_page_int96(
-  uint32_t column,
-  uint32_t row_group,
-  uint32_t page,
-  int96_t **data,
-  int32_t **present,
-  uint64_t len,
-  uint64_t from,
-  uint64_t to) {
-
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+void RParquetReader::add_data_page_int96(DataPage<int96_t> &data) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
     x = Rf_allocVector(INTSXP, nr * 3);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
   }
-  *data = ((int96_t*) INTEGER(x)) + from;
+  data.data = ((int96_t*) INTEGER(x)) + data.from;
   // TODO: present
 }
 
-void RParquetReader::add_dict_page_double(
-  uint32_t column,
-  uint32_t row_group,
-  double **dict,
-  uint32_t dict_len) {
-
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
-    SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, val);
-    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict_len));
-    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    *dict = REAL(VECTOR_ELT(val, 0));
-  } else {
-    Rf_error("Dictionary already set");
-  }
-}
-
-void RParquetReader::add_data_page_double(
-  uint32_t column,
-  uint32_t row_group,
-  uint32_t page,
-  double **data,
-  int32_t **present,
-  uint64_t len,
-  uint64_t from,
-  uint64_t to) {
-
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
-    x = Rf_allocVector(REALSXP, nr);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
-  }
-  *data = REAL(x) + from;
-  // TODO: present
-}
-
-void RParquetReader::add_dict_page_float(
-  uint32_t column,
-  uint32_t row_group,
-  float **dict,
-  uint32_t dict_len) {
-
+void RParquetReader::add_dict_page_float(DictPage<float> &dict) {
   // We allocate doubles, that's what we'll need eventually
-
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
     SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, val);
-    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict_len));
+    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
+    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict.dict_len));
     SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    *dict = (float*) REAL(VECTOR_ELT(val, 0));
+    dict.dict = (float*) REAL(VECTOR_ELT(val, 0));
   } else {
     Rf_error("Dictionary already set");
   }
 }
 
-void RParquetReader::add_data_page_float(
-  uint32_t column,
-  uint32_t row_group,
-  uint32_t page,
-  float **data,
-  int32_t **present,
-  uint64_t len,
-  uint64_t from,
-  uint64_t to) {
-
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+void RParquetReader::add_data_page_float(DataPage<float> &data) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
     x = Rf_allocVector(REALSXP, nr);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
   }
-  *data = ((float*) REAL(x)) + from;
+  data.data = ((float*) REAL(x)) + data.from;
   // TODO: present
 }
 
-void RParquetReader::add_dict_indices(
-  uint32_t column,
-  uint32_t row_group,
-  uint32_t page,
-  uint32_t **dict_idx,
-  int32_t **present,
-  uint64_t len,
-  uint64_t from,
-  uint64_t to) {
+void RParquetReader::add_dict_page_double(DictPage<double> &dict) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
+  if (Rf_isNull(x)) {
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
+    SEXP val = Rf_allocVector(VECSXP, 2);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
+    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict.dict_len));
+    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
+    dict.dict = REAL(VECTOR_ELT(val, 0));
+  } else {
+    Rf_error("Dictionary already set");
+  }
+}
 
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
-  *dict_idx = (uint32_t*) INTEGER(VECTOR_ELT(x, 1));
+void RParquetReader::add_data_page_double(DataPage<double> &data) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
+  if (Rf_isNull(x)) {
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
+    x = Rf_allocVector(REALSXP, nr);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
+  }
+  data.data = REAL(x) + data.from;
+  // TODO: present
+}
+
+void RParquetReader::add_dict_index_page(DictIndexPage &idx) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, idx.column), idx.row_group);
+  idx.dict_idx = (uint32_t*) INTEGER(VECTOR_ELT(x, 1));
   // TODO: present
 }

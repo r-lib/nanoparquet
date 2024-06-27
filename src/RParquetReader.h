@@ -13,106 +13,17 @@ public:
 
   void convert_columns_to_r();
 
-  void add_dict_page_int32(
-    uint32_t column,
-    uint32_t row_group,
-    int32_t **dict,
-    uint32_t dict_len
-  );
-
-  void add_data_page_int32(
-    uint32_t columns,
-    uint32_t row_group,
-    uint32_t page,
-    int32_t **data,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  );
-
-  void add_dict_page_int64(
-    uint32_t column,
-    uint32_t row_group,
-    int64_t **dict,
-    uint32_t dict_len
-  );
-
-  void add_data_page_int64(
-    uint32_t column,
-    uint32_t row_group,
-    uint32_t page,
-    int64_t **data,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  );
-
-  void add_dict_page_int96(
-    uint32_t column,
-    uint32_t row_group,
-    int96_t **dict,
-    uint32_t dict_len
-  );
-
-  void add_data_page_int96(
-    uint32_t column,
-    uint32_t row_group,
-    uint32_t page,
-    int96_t **data,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  );
-
-  void add_dict_page_double(
-    uint32_t column,
-    uint32_t row_group,
-    double **dict,
-    uint32_t dict_len
-  );
-
-  void add_data_page_double(
-    uint32_t columns,
-    uint32_t row_group,
-    uint32_t page,
-    double **data,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  );
-
-  void add_dict_page_float(
-    uint32_t column,
-    uint32_t row_group,
-    float **dict,
-    uint32_t dict_len
-  );
-
-  void add_data_page_float(
-    uint32_t column,
-    uint32_t row_group,
-    uint32_t page,
-    float **data,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  );
-
-  void add_dict_indices(
-    uint32_t idx,
-    uint32_t row_group,
-    uint32_t page,
-    uint32_t **dict_idx,
-    int32_t **present,
-    uint64_t len,
-    uint64_t from,
-    uint64_t to
-  );
+  void add_dict_page_int32(DictPage<int32_t> &dict);
+  void add_data_page_int32(DataPage<int32_t> &data);
+  void add_dict_page_int64(DictPage<int64_t> &dict);
+  void add_data_page_int64(DataPage<int64_t> &data);
+  void add_dict_page_int96(DictPage<int96_t> &dict);
+  void add_data_page_int96(DataPage<int96_t> &data);
+  void add_dict_page_float(DictPage<float> &dict);
+  void add_data_page_float(DataPage<float> &data);
+  void add_dict_page_double(DictPage<double> &dict);
+  void add_data_page_double(DataPage<double> &data);
+  void add_dict_index_page(DictIndexPage &idx);
 
   SEXP columns = R_NilValue;
   SEXP metadata = R_NilValue;
