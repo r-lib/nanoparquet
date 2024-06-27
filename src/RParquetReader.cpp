@@ -88,6 +88,11 @@ void RParquetReader::convert_columns_to_r() {
         convert_int96_to_double(col, rg);
         break;
       }
+      case parquet::Type::FLOAT: {
+        SEXP col = VECTOR_ELT(VECTOR_ELT(columns, cn), rg);
+        convert_float_to_double(col);
+        break;
+      }
       default:
         // others are ok
         break;
@@ -130,6 +135,25 @@ void RParquetReader::convert_int96_to_double(SEXP v, uint32_t idx) {
 
   for (R_xlen_t i = 0; i < l; i++, ip++, dp++) {
     *dp = impala_timestamp_to_nanoseconds(*ip) / 1000000;
+  }
+}
+
+void RParquetReader::convert_float_to_double(SEXP x) {
+  if (TYPEOF(x) == VECSXP) {
+    // dictionary
+    x = VECTOR_ELT(x, 0);
+  } else {
+    // plain
+  }
+  R_xlen_t l = Rf_xlength(x);
+  double *start = REAL(x);
+  double *end = start + l;
+  float *fstart = (float*) REAL(x);
+  float *fend = fstart + l;
+  while (end > start) {
+    end--; fend--;
+    *end = *fend;
+    *end = static_cast<double>(*fend);
   }
 }
 
@@ -288,6 +312,47 @@ void RParquetReader::add_data_page_double(
     SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
   }
   *data = REAL(x) + from;
+  // TODO: present
+}
+
+void RParquetReader::add_dict_page_float(
+  uint32_t column,
+  uint32_t row_group,
+  float **dict,
+  uint32_t dict_len) {
+
+  // We allocate doubles, that's what we'll need eventually
+
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+  if (Rf_isNull(x)) {
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    SEXP val = Rf_allocVector(VECSXP, 2);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, val);
+    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict_len));
+    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
+    *dict = (float*) REAL(VECTOR_ELT(val, 0));
+  } else {
+    Rf_error("Dictionary already set");
+  }
+}
+
+void RParquetReader::add_data_page_float(
+  uint32_t column,
+  uint32_t row_group,
+  uint32_t page,
+  float **data,
+  int32_t **present,
+  uint64_t len,
+  uint64_t from,
+  uint64_t to) {
+
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, column), row_group);
+  if (Rf_isNull(x)) {
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[row_group];
+    x = Rf_allocVector(REALSXP, nr);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, column), row_group, x);
+  }
+  *data = ((float*) REAL(x)) + from;
   // TODO: present
 }
 
