@@ -177,11 +177,17 @@ void RParquetReader::add_data_page_int32(DataPage<int32_t> &data) {
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
   if (Rf_isNull(x)) {
     R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
-    x = Rf_allocVector(INTSXP, nr);
+    x = Rf_allocVector(VECSXP, 2);
     SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
+    SET_VECTOR_ELT(x, 0, Rf_allocVector(INTSXP, nr));
+    if (data.optional) {
+      SET_VECTOR_ELT(x, 1, Rf_allocVector(INTSXP, nr));
+    }
   }
-  data.data = INTEGER(x) + data.from;
-  // TODO: present
+  data.data = INTEGER(VECTOR_ELT(x, 0)) + data.from;
+  if (data.optional) {
+    data.present = INTEGER(VECTOR_ELT(x, 1)) + data.from;
+  }
 }
 
 void RParquetReader::add_dict_page_int64(DictPage<int64_t> &dict) {

@@ -59,11 +59,13 @@ public:
   uint32_t len;
   uint64_t from;
   uint64_t to;
+  bool optional;
 };
 
 struct BADataPage: public DataPage<char*> {
   BADataPage(uint32_t column_, uint32_t row_group_, uint32_t page_,
-             uint64_t len_, uint64_t from_, uint32_t total_len_)
+             uint64_t len_, uint64_t from_, uint32_t total_len_,
+             bool optional_)
     : strs(len_, total_len_) {
     column = column_;
     row_group = row_group_;
@@ -72,6 +74,7 @@ struct BADataPage: public DataPage<char*> {
     present = nullptr;
     len = len_;
     from = from_;
+    optional = optional_;
   }
   StringSet strs;
 };
@@ -186,7 +189,8 @@ protected:
     const char *buf,
     int32_t len,
     parquet::Encoding::type encoding,
-    uint32_t num_values
+    uint32_t num_values,
+    bool optional
   );
 
   void read_data_page_int64(
@@ -199,7 +203,8 @@ protected:
     const char *buf,
     int32_t len,
     parquet::Encoding::type encoding,
-    uint32_t num_values
+    uint32_t num_values,
+    bool optional
   );
 
   void read_data_page_int96(
@@ -212,7 +217,8 @@ protected:
     const char *buf,
     int32_t len,
     parquet::Encoding::type encoding,
-    uint32_t num_values
+    uint32_t num_values,
+    bool optional
   );
 
   void read_data_page_float(
@@ -225,7 +231,8 @@ protected:
     const char *buf,
     int32_t len,
     parquet::Encoding::type encoding,
-    uint32_t num_values
+    uint32_t num_values,
+    bool optional
   );
 
   void read_data_page_double(
@@ -238,7 +245,8 @@ protected:
     const char *buf,
     int32_t len,
     parquet::Encoding::type encoding,
-    uint32_t num_values
+    uint32_t num_values,
+    bool optional
   );
 
   void read_data_page_byte_array(
@@ -251,7 +259,8 @@ protected:
     const char *buf,
     int32_t len,
     parquet::Encoding::type encoding,
-    uint32_t num_values
+    uint32_t num_values,
+    bool optional
   );
 
   void read_data_page_fixed_len_byte_array(
@@ -264,7 +273,8 @@ protected:
     const char *buf,
     int32_t len,
     parquet::Encoding::type encoding,
-    uint32_t num_values
+    uint32_t num_values,
+    bool optional
   );
 
   void scan_byte_array_plain(StringSet &strs, const char *buf);
