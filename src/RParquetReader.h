@@ -24,6 +24,8 @@ public:
   void add_dict_page_double(DictPage<double> &dict);
   void add_data_page_double(DataPage<double> &data);
   void add_dict_index_page(DictIndexPage &idx);
+  void add_dict_page_byte_array(BADictPage &dict);
+  void add_data_page_byte_array(BADataPage &dict);
 
   SEXP columns = R_NilValue;
   SEXP metadata = R_NilValue;

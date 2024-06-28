@@ -288,6 +288,18 @@ void ParquetReader::read_dict_page(
     memcpy(dict.dict, buf, num_values * sizeof(double));
     break;
   }
+  case Type::BYTE_ARRAY: {
+    BADictPage dict(column, row_group, num_values, ph.uncompressed_page_size);
+    scan_byte_array_plain(dict.strs, buf);
+    add_dict_page_byte_array(dict);
+    break;
+  }
+  case Type::FIXED_LEN_BYTE_ARRAY: {
+    BADictPage dict(column, row_group, num_values, ph.uncompressed_page_size);
+    scan_fixed_len_byte_array_plain(dict.strs, buf, sel.type_length);
+    add_dict_page_byte_array(dict);
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet 1");
   }
@@ -348,6 +360,12 @@ uint32_t ParquetReader::read_data_page(
   case Type::DOUBLE:
     read_data_page_double(column, row_group, sel, page, from, ph, buf, len, encoding, num_values);
     break;
+  case Type::BYTE_ARRAY:
+    read_data_page_byte_array(column, row_group, sel, page, from, ph, buf, len, encoding, num_values);
+    break;
+  case Type::FIXED_LEN_BYTE_ARRAY:
+    read_data_page_fixed_len_byte_array(column, row_group, sel, page, from, ph, buf, len, encoding, num_values);
+    break;
   default:
     throw runtime_error("Not implemented yet");
     break;
@@ -364,7 +382,6 @@ void ParquetReader::read_data_page_rle(
   int32_t buflen,
   uint32_t num_values) {
 
-  uint32_t *res;
   DictIndexPage dictidx = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
   add_dict_index_page(dictidx);
   int bw = *((uint8_t *) buf);
@@ -473,6 +490,36 @@ void ParquetReader::read_data_page_int96(
   }
 }
 
+void ParquetReader::read_data_page_float(
+  uint32_t column,
+  uint32_t row_group,
+  parquet::SchemaElement &sel,
+  uint32_t page,
+  uint64_t from,
+  parquet::PageHeader &ph,
+  const char *buf,
+  int32_t len,
+  parquet::Encoding::type encoding,
+  uint32_t num_values) {
+
+  switch (encoding) {
+  case Encoding::PLAIN: {
+    DataPage<float> data = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
+    add_data_page_float(data);
+    memcpy(data.data, buf, num_values * sizeof(float));
+    break;
+  }
+  case Encoding::RLE_DICTIONARY:
+  case Encoding::PLAIN_DICTIONARY:
+    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
+    break;
+  // TODO: rest
+  default:
+    throw runtime_error("Not implemented yet");
+    break;
+  }
+}
+
 void ParquetReader::read_data_page_double(
   uint32_t column,
   uint32_t row_group,
@@ -503,7 +550,7 @@ void ParquetReader::read_data_page_double(
   }
 }
 
-void ParquetReader::read_data_page_float(
+void ParquetReader::read_data_page_byte_array(
   uint32_t column,
   uint32_t row_group,
   parquet::SchemaElement &sel,
@@ -517,9 +564,9 @@ void ParquetReader::read_data_page_float(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    DataPage<float> data = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
-    add_data_page_float(data);
-    memcpy(data.data, buf, num_values * sizeof(float));
+    BADataPage data(column, row_group, page, num_values, from, ph.uncompressed_page_size);
+    scan_byte_array_plain(data.strs, buf);
+    add_data_page_byte_array(data);
     break;
   }
   case Encoding::RLE_DICTIONARY:
@@ -530,5 +577,57 @@ void ParquetReader::read_data_page_float(
   default:
     throw runtime_error("Not implemented yet");
     break;
+  }
+}
+
+void ParquetReader::read_data_page_fixed_len_byte_array(
+  uint32_t column,
+  uint32_t row_group,
+  parquet::SchemaElement &sel,
+  uint32_t page,
+  uint64_t from,
+  parquet::PageHeader &ph,
+  const char *buf,
+  int32_t len,
+  parquet::Encoding::type encoding,
+  uint32_t num_values) {
+
+  switch (encoding) {
+  case Encoding::PLAIN: {
+    BADataPage data(column, row_group, page, num_values, from, ph.uncompressed_page_size);
+    scan_fixed_len_byte_array_plain(data.strs, buf, sel.type_length);
+    add_data_page_byte_array(data);
+    break;
+  }
+  case Encoding::RLE_DICTIONARY:
+  case Encoding::PLAIN_DICTIONARY:
+    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
+    break;
+  // TODO: rest
+  default:
+    throw runtime_error("Not implemented yet");
+    break;
+  }
+}
+
+void ParquetReader::scan_byte_array_plain(StringSet &strs, const char *buf) {
+  const char *start = buf;
+  const char *end = buf + strs.total_len;
+  strs.buf = buf;
+  // TODO: check for overflow
+  for (uint32_t i = 0; i < strs.len; i++) {
+    strs.lengths[i] = *((uint32_t*) buf);
+    buf += 4;
+    strs.offsets[i] = buf - start;
+    buf += strs.lengths[i];
+  }
+}
+
+void ParquetReader::scan_fixed_len_byte_array_plain(
+  StringSet &strs, const char *buf, uint32_t len) {
+  strs.buf = buf;
+  for (uint32_t i = 0; i < strs.len; i++) {
+    strs.lengths[i] = len;
+    strs.offsets[i] = i * len;
   }
 }
