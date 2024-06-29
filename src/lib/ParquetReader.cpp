@@ -351,6 +351,9 @@ uint32_t ParquetReader::read_data_page(
   // TODO: uncompress
 
   switch (cc.sel.type) {
+  case Type::BOOLEAN:
+    read_data_page_boolean(cc, page, from, ph, buf, len, encoding, num_values, optional);
+    break;
   case Type::INT32:
     read_data_page_int32(cc, page, from, ph, buf, len, encoding, num_values, optional);
     break;
@@ -403,6 +406,31 @@ void ParquetReader::read_data_page_rle(
     RleBpDecoder dec((const uint8_t*) buf, buflen, bw);
     // TODO: missing values
     dec.GetBatch<uint32_t>(dictidx.dict_idx, num_values);
+  }
+}
+
+void ParquetReader::read_data_page_boolean(
+  ColumnChunk &cc,
+  uint32_t page,
+  uint64_t from,
+  parquet::PageHeader &ph,
+  const char *buf,
+  int32_t len,
+  parquet::Encoding::type encoding,
+  uint32_t num_values,
+  bool optional) {
+
+  switch (encoding) {
+  case Encoding::PLAIN: {
+    DataPage data(cc, page, num_values, from, optional);
+    add_data_page(data);
+    unpack_plain_boolean((uint32_t*) data.data, (uint8_t*) buf, num_values);
+    break;
+  }
+  // TODO: rest
+  default:
+    throw runtime_error("Not implemented yet");
+    break;
   }
 }
 
@@ -609,6 +637,19 @@ void ParquetReader::read_data_page_fixed_len_byte_array(
   default:
     throw runtime_error("Not implemented yet");
     break;
+  }
+}
+
+void ParquetReader::unpack_plain_boolean(uint32_t *res, uint8_t *buf, uint32_t num_values) {
+  // TODO: fast unpacking
+  int byte_pos = 0;
+  for (int32_t i = 0; i < num_values; i++) {
+    res[i] = ((*buf) >> byte_pos) & 1;
+    byte_pos++;
+    if (byte_pos == 8) {
+      byte_pos = 0;
+      buf++;
+    }
   }
 }
 

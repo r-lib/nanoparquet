@@ -136,6 +136,8 @@ void RParquetReader::convert_int96_to_double(SEXP v, uint32_t idx) {
   for (R_xlen_t i = 0; i < l; i++, ip++, dp++) {
     *dp = impala_timestamp_to_nanoseconds(*ip) / 1000000;
   }
+  SET_VECTOR_ELT(v, idx, y);
+  UNPROTECT(1);
 }
 
 void RParquetReader::convert_float_to_double(SEXP x) {
@@ -196,13 +198,18 @@ void RParquetReader::add_dict_page(DictPage &dict) {
   dict.dict = (uint8_t*) DATAPTR(VECTOR_ELT(val, 0));
 }
 
+// ------------------------------------------------------------------------
+
 void RParquetReader::add_data_page(DataPage &data) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group);
-  int rtype;
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group); int rtype;
   R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.cc.row_group];
   R_xlen_t al = nr;
   int elsize;
   switch (data.cc.sel.type) {
+  case parquet::Type::BOOLEAN:
+    rtype = LGLSXP;
+    elsize = 4;
+    break;
   case parquet::Type::INT32:
     rtype = INTSXP;
     elsize = 4;
@@ -243,6 +250,8 @@ void RParquetReader::add_data_page(DataPage &data) {
     data.present = INTEGER(VECTOR_ELT(x, 1)) + data.from;
   }
 }
+
+// ------------------------------------------------------------------------
 
 void RParquetReader::add_dict_page_byte_array(BADictPage &dict) {
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group);

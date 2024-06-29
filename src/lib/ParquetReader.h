@@ -156,6 +156,18 @@ protected:
     uint32_t num_values
   );
 
+  void read_data_page_boolean(
+    ColumnChunk &cc,
+    uint32_t page,
+    uint64_t from,
+    parquet::PageHeader &ph,
+    const char *buf,
+    int32_t len,
+    parquet::Encoding::type encoding,
+    uint32_t num_values,
+    bool optional
+  );
+
   void read_data_page_int32(
     ColumnChunk &cc,
     uint32_t page,
@@ -240,6 +252,7 @@ protected:
     bool optional
   );
 
+  void unpack_plain_boolean(uint32_t *res, uint8_t *buf, uint32_t num_values);
   void scan_byte_array_plain(StringSet &strs, const char *buf);
   void scan_fixed_len_byte_array_plain(StringSet &strs, const char *buf, uint32_t len);
 };
