@@ -24,6 +24,7 @@
   `UNKNOWN`.
 * Only Snappy, Gzip and Zstd compression is supported.
 * Encryption is not supported.
+* Reading files from URLs is not supported.
 * Being single-threaded and not fully optimized, nanoparquet is probably
   not suited well for large data sets. It should be fine for a couple of
   gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro.

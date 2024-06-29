@@ -28,6 +28,7 @@ to Parquet.
 \code{UNKNOWN}.
 \item Only Snappy, Gzip and Zstd compression is supported.
 \item Encryption is not supported.
+\item Reading files from URLs is not supported.
 \item Being single-threaded and not fully optimized, nanoparquet is probably
 not suited well for large data sets. It should be fine for a couple of
 gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro.
@@ -154,7 +155,6 @@ Other contributors:
   \item Apache Software Foundation [copyright holder]
   \item Posit Software, PBC [copyright holder]
   \item RAD Game Tools [copyright holder]
-  \item Valve Software [copyright holder]
   \item Valve Software [copyright holder]
   \item Tenacious Software LLC [copyright holder]
   \item Facebook, Inc. [copyright holder]
