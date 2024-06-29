@@ -161,7 +161,7 @@ void RParquetReader::convert_float_to_double(SEXP x) {
 
 // ------------------------------------------------------------------------
 
-void RParquetReader::add_dict_page(DictPage &dict) {
+void RParquetReader::alloc_dict_page(DictPage &dict) {
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group);
   if (!Rf_isNull(x)) {
     throw std::runtime_error("Duplicate dictionary page");
@@ -191,7 +191,7 @@ void RParquetReader::add_dict_page(DictPage &dict) {
     throw std::runtime_error("Type not implemented yet");
   }
 
-  SEXP val = Rf_allocVector(VECSXP, 2);
+  SEXP val = Rf_allocVector(VECSXP, 3);
   SET_VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group, val);
   SET_VECTOR_ELT(val, 0, Rf_allocVector(rtype, al));
   SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
@@ -200,10 +200,10 @@ void RParquetReader::add_dict_page(DictPage &dict) {
 
 // ------------------------------------------------------------------------
 
-void RParquetReader::add_data_page(DataPage &data) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group); int rtype;
+void RParquetReader::alloc_data_page(DataPage &data) {
   R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.cc.row_group];
   R_xlen_t al = nr;
+  int rtype;
   int elsize;
   switch (data.cc.sel.type) {
   case parquet::Type::BOOLEAN:
@@ -231,10 +231,15 @@ void RParquetReader::add_data_page(DataPage &data) {
     rtype = REALSXP;
     elsize = 8;
     break;
+  case parquet::Type::BYTE_ARRAY:
+  case parquet::Type::FIXED_LEN_BYTE_ARRAY:
+    return alloc_data_page_byte_array(data);
+    break;
   default:
     throw std::runtime_error("Type not implemented yet");
   }
 
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group);
   if (Rf_isNull(x)) {
     R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.cc.row_group];
     x = Rf_allocVector(VECSXP, 2);
@@ -253,7 +258,7 @@ void RParquetReader::add_data_page(DataPage &data) {
 
 // ------------------------------------------------------------------------
 
-void RParquetReader::add_dict_page_byte_array(BADictPage &dict) {
+void RParquetReader::alloc_dict_page_byte_array(BADictPage &dict) {
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group);
   if (Rf_isNull(x)) {
     R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.cc.row_group];
@@ -272,7 +277,7 @@ void RParquetReader::add_dict_page_byte_array(BADictPage &dict) {
   }
 }
 
-void RParquetReader::add_data_page_byte_array(BADataPage &data) {
+void RParquetReader::alloc_data_page_byte_array(DataPage &data) {
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group);
   R_xlen_t xlen = Rf_xlength(x);
   if (xlen <= data.page) {
@@ -286,20 +291,19 @@ void RParquetReader::add_data_page_byte_array(BADataPage &data) {
     x = x2;
   }
   R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.cc.row_group];
-  SEXP val = Rf_allocVector(VECSXP, 5);
+  SEXP val = Rf_allocVector(VECSXP, 4);
   SET_VECTOR_ELT(x, data.page, val);
   SET_VECTOR_ELT(val, 0, Rf_allocVector(STRSXP, nr));
-  SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-  SET_VECTOR_ELT(val, 2, Rf_allocVector(RAWSXP, data.strs.total_len));
+  SET_VECTOR_ELT(val, 1, Rf_allocVector(RAWSXP, data.strs.total_len));
+  SET_VECTOR_ELT(val, 2, Rf_allocVector(INTSXP, data.strs.len));
   SET_VECTOR_ELT(val, 3, Rf_allocVector(INTSXP, data.strs.len));
-  SET_VECTOR_ELT(val, 4, Rf_allocVector(INTSXP, data.strs.len));
-  data.strs.buf = (char*) RAW(VECTOR_ELT(val, 2));
-  data.strs.offsets = (uint32_t*) INTEGER(VECTOR_ELT(val, 3));
-  data.strs.lengths = (uint32_t*) INTEGER(VECTOR_ELT(val, 4));
+  data.strs.buf = (char*) RAW(VECTOR_ELT(val, 1));
+  data.strs.offsets = (uint32_t*) INTEGER(VECTOR_ELT(val, 2));
+  data.strs.lengths = (uint32_t*) INTEGER(VECTOR_ELT(val, 3));
 }
 
-void RParquetReader::add_dict_index_page(DictIndexPage &idx) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, idx.column), idx.row_group);
-  idx.dict_idx = (uint32_t*) INTEGER(VECTOR_ELT(x, 1)) + idx.from;
+void RParquetReader::alloc_dict_index_page(DataPage &idx) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, idx.cc.column), idx.cc.row_group);
+  idx.data = (uint8_t*) (INTEGER(VECTOR_ELT(x, 1)) + idx.from);
   // TODO: present
 }

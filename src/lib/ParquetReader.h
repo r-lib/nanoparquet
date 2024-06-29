@@ -53,37 +53,26 @@ struct BADictPage : public DictPage {
 
 struct DataPage {
 public:
-  DataPage(ColumnChunk &cc_, uint32_t page_, uint32_t len_,
-           uint32_t from_, bool optional_)
-    : cc(cc_), page(page_), data(nullptr), present(nullptr), len(len_),
-      from(from_), optional(optional_) {
+  DataPage(ColumnChunk &cc_, parquet::PageHeader &ph_, uint32_t page_,
+           uint32_t len_, uint32_t from_, bool optional_)
+    : cc(cc_), ph(ph_), page(page_), data(nullptr), present(nullptr),
+      len(len_), from(from_), optional(optional_), strs(len_, ph.compressed_page_size) {
+    if (ph.__isset.data_page_header) {
+      encoding = ph.data_page_header.encoding;
+    } else {
+      encoding = ph.data_page_header_v2.encoding;
+    }
   }
   ColumnChunk &cc;
+  parquet::PageHeader &ph;
   uint32_t page;
   uint8_t *data;
   int32_t *present;
   uint32_t len;
   uint64_t from;
   bool optional;
-};
-
-struct BADataPage: public DataPage {
-  BADataPage(ColumnChunk &cc_, uint32_t page_, uint64_t len_,
-             uint64_t from_, uint32_t total_len_, bool optional_)
-    : DataPage(cc_, page_, len_, from_, optional_), strs(len_, total_len_) {
-  }
+  parquet::Encoding::type encoding;
   StringSet strs;
-};
-
-struct DictIndexPage {
-  uint32_t column;
-  uint32_t row_group;
-  uint32_t page;
-  uint32_t *dict_idx;
-  int32_t *present;
-  uint64_t len;
-  uint64_t from;
-  uint64_t to;
 };
 
 class ParquetReader {
@@ -109,11 +98,10 @@ public:
 
   // API to be implemented by the embedding software
 
-  virtual void add_dict_page(DictPage &dict) = 0;
-  virtual void add_dict_index_page(DictIndexPage &idx) = 0;
-  virtual void add_data_page(DataPage &data) = 0;
-  virtual void add_dict_page_byte_array(BADictPage &dict) = 0;
-  virtual void add_data_page_byte_array(BADataPage &dict) = 0;
+  virtual void alloc_dict_page(DictPage &dict) = 0;
+  virtual void alloc_dict_index_page(DataPage &idx) = 0;
+  virtual void alloc_dict_page_byte_array(BADictPage &dict) = 0;
+  virtual void alloc_data_page(DataPage &data) = 0;
 
 protected:
   enum parquet_input_type file_type_;
@@ -134,7 +122,7 @@ protected:
   void read_dict_page(
     ColumnChunk &cc,
     parquet::PageHeader &ph,
-    const char *buf,
+    uint8_t *buf,
     int32_t len
   );
 
@@ -143,118 +131,24 @@ protected:
     uint32_t page,
     uint64_t from,
     parquet::PageHeader &ph,
-    const char *buf,
+    uint8_t *buf,
     int32_t len
   );
 
-  void read_data_page_rle(
-    ColumnChunk &cc,
-    uint32_t page,
-    uint64_t from,
-    const char *buf,
-    int32_t buflen,
-    uint32_t num_values
-  );
+  void read_data_page_rle(DataPage &dp, uint8_t *buf);
 
-  void read_data_page_boolean(
-    ColumnChunk &cc,
-    uint32_t page,
-    uint64_t from,
-    parquet::PageHeader &ph,
-    const char *buf,
-    int32_t len,
-    parquet::Encoding::type encoding,
-    uint32_t num_values,
-    bool optional
-  );
-
-  void read_data_page_int32(
-    ColumnChunk &cc,
-    uint32_t page,
-    uint64_t from,
-    parquet::PageHeader &ph,
-    const char *buf,
-    int32_t len,
-    parquet::Encoding::type encoding,
-    uint32_t num_values,
-    bool optional
-  );
-
-  void read_data_page_int64(
-    ColumnChunk &cc,
-    uint32_t page,
-    uint64_t from,
-    parquet::PageHeader &ph,
-    const char *buf,
-    int32_t len,
-    parquet::Encoding::type encoding,
-    uint32_t num_values,
-    bool optional
-  );
-
-  void read_data_page_int96(
-    ColumnChunk &cc,
-    uint32_t page,
-    uint64_t from,
-    parquet::PageHeader &ph,
-    const char *buf,
-    int32_t len,
-    parquet::Encoding::type encoding,
-    uint32_t num_values,
-    bool optional
-  );
-
-  void read_data_page_float(
-    ColumnChunk &cc,
-    uint32_t page,
-    uint64_t from,
-    parquet::PageHeader &ph,
-    const char *buf,
-    int32_t len,
-    parquet::Encoding::type encoding,
-    uint32_t num_values,
-    bool optional
-  );
-
-  void read_data_page_double(
-    ColumnChunk &cc,
-    uint32_t page,
-    uint64_t from,
-    parquet::PageHeader &ph,
-    const char *buf,
-    int32_t len,
-    parquet::Encoding::type encoding,
-    uint32_t num_values,
-    bool optional
-  );
-
-  void read_data_page_byte_array(
-    ColumnChunk &cc,
-    uint32_t page,
-    uint64_t from,
-    parquet::PageHeader &ph,
-    const char *buf,
-    int32_t len,
-    parquet::Encoding::type encoding,
-    uint32_t num_values,
-    bool optional
-  );
-
-  void read_data_page_fixed_len_byte_array(
-    ColumnChunk &cc,
-    uint32_t page,
-    uint64_t from,
-    parquet::PageHeader &ph,
-    const char *buf,
-    int32_t len,
-    parquet::Encoding::type encoding,
-    uint32_t num_values,
-    bool optional
-  );
+  void read_data_page_boolean(DataPage &dp, uint8_t *buf, int32_t len);
+  void read_data_page_int32(DataPage &dp, uint8_t *buf, int32_t len);
+  void read_data_page_int64(DataPage &dp, uint8_t *buf, int32_t len);
+  void read_data_page_int96(DataPage &dp, uint8_t *buf, int32_t len);
+  void read_data_page_float(DataPage &dp, uint8_t *buf, int32_t len);
+  void read_data_page_double(DataPage &dp, uint8_t *buf, int32_t len);
+  void read_data_page_byte_array(DataPage &dp, uint8_t *buf, int32_t len);
+  void read_data_page_fixed_len_byte_array(DataPage &dp, uint8_t *buf, int32_t len);
 
   void unpack_plain_boolean(uint32_t *res, uint8_t *buf, uint32_t num_values);
-  void scan_byte_array_plain(StringSet &strs, const char *buf);
-  void scan_fixed_len_byte_array_plain(StringSet &strs, const char *buf, uint32_t len);
+  void scan_byte_array_plain(StringSet &strs, uint8_t *buf);
+  void scan_fixed_len_byte_array_plain(StringSet &strs, uint8_t *buf, uint32_t len);
 };
 
 } // namespace nanoparquet
