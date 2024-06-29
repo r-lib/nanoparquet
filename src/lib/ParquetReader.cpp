@@ -219,7 +219,7 @@ void ParquetReader::read_column_chunk(ColumnChunk &cc) {
     switch (ph.type) {
     case PageType::DATA_PAGE:
     case PageType::DATA_PAGE_V2: {
-      uint32_t num_values = read_data_page(cc.column, cc.row_group, cc.sel, page, from, ph, ptr, ph.compressed_page_size);
+      uint32_t num_values = read_data_page(cc, page, from, ph, ptr, ph.compressed_page_size);
       from += num_values;
       page++;
       break;
@@ -300,9 +300,7 @@ void ParquetReader::read_dict_page(
 }
 
 uint32_t ParquetReader::read_data_page(
-  uint32_t column,
-  uint32_t row_group,
-  parquet::SchemaElement &sel,
+  ColumnChunk &cc,
   uint32_t page,
   uint64_t from,
   parquet::PageHeader &ph,
@@ -331,7 +329,7 @@ uint32_t ParquetReader::read_data_page(
     throw runtime_error("Invalid page type, expected data page");
   }
 
-  bool optional = sel.repetition_type != FieldRepetitionType::REQUIRED;
+  bool optional = cc.sel.repetition_type != FieldRepetitionType::REQUIRED;
   const char *def_buf = nullptr;
   uint32_t def_len = 0;
   if (optional) {
@@ -352,30 +350,27 @@ uint32_t ParquetReader::read_data_page(
 
   // TODO: uncompress
 
-  // TODO: simplify/refactor
-  //  DataPage0 data(column, row_group, sel, page, from, ph, buf, len, encoding, num_values, optiona);
-
-  switch (sel.type) {
+  switch (cc.sel.type) {
   case Type::INT32:
-    read_data_page_int32(column, row_group, sel, page, from, ph, buf, len, encoding, num_values, optional);
+    read_data_page_int32(cc, page, from, ph, buf, len, encoding, num_values, optional);
     break;
   case Type::INT64:
-    read_data_page_int64(column, row_group, sel, page, from, ph, buf, len, encoding, num_values, optional);
+    read_data_page_int64(cc, page, from, ph, buf, len, encoding, num_values, optional);
     break;
   case Type::INT96:
-    read_data_page_int96(column, row_group, sel, page, from, ph, buf, len, encoding, num_values, optional);
+    read_data_page_int96(cc, page, from, ph, buf, len, encoding, num_values, optional);
     break;
   case Type::FLOAT:
-    read_data_page_float(column, row_group, sel, page, from, ph, buf, len, encoding, num_values, optional);
+    read_data_page_float(cc, page, from, ph, buf, len, encoding, num_values, optional);
     break;
   case Type::DOUBLE:
-    read_data_page_double(column, row_group, sel, page, from, ph, buf, len, encoding, num_values, optional);
+    read_data_page_double(cc, page, from, ph, buf, len, encoding, num_values, optional);
     break;
   case Type::BYTE_ARRAY:
-    read_data_page_byte_array(column, row_group, sel, page, from, ph, buf, len, encoding, num_values, optional);
+    read_data_page_byte_array(cc, page, from, ph, buf, len, encoding, num_values, optional);
     break;
   case Type::FIXED_LEN_BYTE_ARRAY:
-    read_data_page_fixed_len_byte_array(column, row_group, sel, page, from, ph, buf, len, encoding, num_values, optional);
+    read_data_page_fixed_len_byte_array(cc, page, from, ph, buf, len, encoding, num_values, optional);
     break;
   default:
     throw runtime_error("Not implemented yet");
@@ -391,15 +386,14 @@ uint32_t ParquetReader::read_data_page(
 }
 
 void ParquetReader::read_data_page_rle(
-  uint32_t column,
-  uint32_t row_group,
+  ColumnChunk &cc,
   uint32_t page,
   uint64_t from,
   const char *buf,
   int32_t buflen,
   uint32_t num_values) {
 
-  DictIndexPage dictidx = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
+  DictIndexPage dictidx = { cc.column, cc.row_group, page, nullptr, nullptr, num_values, from, from + num_values };
   add_dict_index_page(dictidx);
   int bw = *((uint8_t *) buf);
   buf += 1; buflen -= 1;
@@ -413,9 +407,7 @@ void ParquetReader::read_data_page_rle(
 }
 
 void ParquetReader::read_data_page_int32(
-  uint32_t column,
-  uint32_t row_group,
-  parquet::SchemaElement &sel,
+  ColumnChunk &cc,
   uint32_t page,
   uint64_t from,
   parquet::PageHeader &ph,
@@ -427,16 +419,14 @@ void ParquetReader::read_data_page_int32(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    DataPage<int32_t> data = {
-      column, row_group, page, nullptr, nullptr, num_values, from, from + num_values, optional
-    };
-    add_data_page_int32(data);
+    DataPage data(cc, page, num_values, from, optional);
+    add_data_page(data);
     memcpy(data.data, buf, num_values * sizeof(int32_t));
     break;
   }
   case Encoding::RLE_DICTIONARY:
   case Encoding::PLAIN_DICTIONARY: {
-    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
+    read_data_page_rle(cc, page, from, buf, ph.compressed_page_size, num_values);
     break;
   }
   // TODO: rest
@@ -447,9 +437,7 @@ void ParquetReader::read_data_page_int32(
 }
 
 void ParquetReader::read_data_page_int64(
-  uint32_t column,
-  uint32_t row_group,
-  parquet::SchemaElement &sel,
+  ColumnChunk &cc,
   uint32_t page,
   uint64_t from,
   parquet::PageHeader &ph,
@@ -461,14 +449,14 @@ void ParquetReader::read_data_page_int64(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    DataPage<int64_t> data = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
-    add_data_page_int64(data);
+    DataPage data(cc, page, num_values, from, optional);
+    add_data_page(data);
     memcpy(data.data, buf, num_values * sizeof(int64_t));
     break;
   }
   case Encoding::RLE_DICTIONARY:
   case Encoding::PLAIN_DICTIONARY: {
-    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
+    read_data_page_rle(cc, page, from, buf, ph.compressed_page_size, num_values);
     break;
   }
   // TODO: rest
@@ -479,9 +467,7 @@ void ParquetReader::read_data_page_int64(
 }
 
 void ParquetReader::read_data_page_int96(
-  uint32_t column,
-  uint32_t row_group,
-  parquet::SchemaElement &sel,
+  ColumnChunk &cc,
   uint32_t page,
   uint64_t from,
   parquet::PageHeader &ph,
@@ -493,14 +479,14 @@ void ParquetReader::read_data_page_int96(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    DataPage<int96_t> data = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
-    add_data_page_int96(data);
+    DataPage data(cc, page, num_values, from, optional);
+    add_data_page(data);
     memcpy(data.data, buf, num_values * sizeof(int96_t));
     break;
   }
   case Encoding::RLE_DICTIONARY:
   case Encoding::PLAIN_DICTIONARY: {
-    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
+    read_data_page_rle(cc, page, from, buf, ph.compressed_page_size, num_values);
     break;
   }
   // TODO: rest
@@ -511,9 +497,7 @@ void ParquetReader::read_data_page_int96(
 }
 
 void ParquetReader::read_data_page_float(
-  uint32_t column,
-  uint32_t row_group,
-  parquet::SchemaElement &sel,
+  ColumnChunk &cc,
   uint32_t page,
   uint64_t from,
   parquet::PageHeader &ph,
@@ -525,14 +509,14 @@ void ParquetReader::read_data_page_float(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    DataPage<float> data = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
-    add_data_page_float(data);
+    DataPage data(cc, page, num_values, from, optional);
+    add_data_page(data);
     memcpy(data.data, buf, num_values * sizeof(float));
     break;
   }
   case Encoding::RLE_DICTIONARY:
   case Encoding::PLAIN_DICTIONARY:
-    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
+    read_data_page_rle(cc, page, from, buf, ph.compressed_page_size, num_values);
     break;
   // TODO: rest
   default:
@@ -542,9 +526,7 @@ void ParquetReader::read_data_page_float(
 }
 
 void ParquetReader::read_data_page_double(
-  uint32_t column,
-  uint32_t row_group,
-  parquet::SchemaElement &sel,
+  ColumnChunk &cc,
   uint32_t page,
   uint64_t from,
   parquet::PageHeader &ph,
@@ -556,14 +538,14 @@ void ParquetReader::read_data_page_double(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    DataPage<double> data = { column, row_group, page, nullptr, nullptr, num_values, from, from + num_values };
-    add_data_page_double(data);
+    DataPage data(cc, page, num_values, from, optional);
+    add_data_page(data);
     memcpy(data.data, buf, num_values * sizeof(double));
     break;
   }
   case Encoding::RLE_DICTIONARY:
   case Encoding::PLAIN_DICTIONARY:
-    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
+    read_data_page_rle(cc, page, from, buf, ph.compressed_page_size, num_values);
     break;
   // TODO: rest
   default:
@@ -573,9 +555,7 @@ void ParquetReader::read_data_page_double(
 }
 
 void ParquetReader::read_data_page_byte_array(
-  uint32_t column,
-  uint32_t row_group,
-  parquet::SchemaElement &sel,
+  ColumnChunk &cc,
   uint32_t page,
   uint64_t from,
   parquet::PageHeader &ph,
@@ -587,14 +567,14 @@ void ParquetReader::read_data_page_byte_array(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    BADataPage data(column, row_group, page, num_values, from, ph.uncompressed_page_size, optional);
+    BADataPage data(cc, page, num_values, from, ph.uncompressed_page_size, optional);
     scan_byte_array_plain(data.strs, buf);
     add_data_page_byte_array(data);
     break;
   }
   case Encoding::RLE_DICTIONARY:
   case Encoding::PLAIN_DICTIONARY:
-    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
+    read_data_page_rle(cc, page, from, buf, ph.compressed_page_size, num_values);
     break;
   // TODO: rest
   default:
@@ -604,9 +584,7 @@ void ParquetReader::read_data_page_byte_array(
 }
 
 void ParquetReader::read_data_page_fixed_len_byte_array(
-  uint32_t column,
-  uint32_t row_group,
-  parquet::SchemaElement &sel,
+  ColumnChunk &cc,
   uint32_t page,
   uint64_t from,
   parquet::PageHeader &ph,
@@ -618,14 +596,14 @@ void ParquetReader::read_data_page_fixed_len_byte_array(
 
   switch (encoding) {
   case Encoding::PLAIN: {
-    BADataPage data(column, row_group, page, num_values, from, ph.uncompressed_page_size, optional);
-    scan_fixed_len_byte_array_plain(data.strs, buf, sel.type_length);
+    BADataPage data(cc, page, num_values, from, ph.uncompressed_page_size, optional);
+    scan_fixed_len_byte_array_plain(data.strs, buf, cc.sel.type_length);
     add_data_page_byte_array(data);
     break;
   }
   case Encoding::RLE_DICTIONARY:
   case Encoding::PLAIN_DICTIONARY:
-    read_data_page_rle(column, row_group, page, from, buf, ph.compressed_page_size, num_values);
+    read_data_page_rle(cc, page, from, buf, ph.compressed_page_size, num_values);
     break;
   // TODO: rest
   default:

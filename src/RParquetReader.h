@@ -15,14 +15,9 @@ public:
 
   void add_dict_page(DictPage &dict);
   void add_dict_index_page(DictIndexPage &idx);
-
-  void add_data_page_int32(DataPage<int32_t> &data);
-  void add_data_page_int64(DataPage<int64_t> &data);
-  void add_data_page_int96(DataPage<int96_t> &data);
-  void add_data_page_float(DataPage<float> &data);
-  void add_data_page_double(DataPage<double> &data);
+  void add_data_page(DataPage &data);
   void add_dict_page_byte_array(BADictPage &dict);
-  void add_data_page_byte_array(BADataPage &dict);
+  void add_data_page_byte_array(BADataPage &data);
 
   SEXP columns = R_NilValue;
   SEXP metadata = R_NilValue;

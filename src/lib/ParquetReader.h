@@ -53,33 +53,26 @@ struct BADictPage : public DictPage {
   StringSet strs;
 };
 
-template <typename T>
 struct DataPage {
 public:
-  uint32_t column;
-  uint32_t row_group;
+  DataPage(ColumnChunk &cc_, uint32_t page_, uint32_t len_,
+           uint32_t from_, bool optional_)
+    : cc(cc_), page(page_), data(nullptr), present(nullptr), len(len_),
+      from(from_), optional(optional_) {
+  }
+  ColumnChunk &cc;
   uint32_t page;
-  T *data;
+  uint8_t *data;
   int32_t *present;
   uint32_t len;
   uint64_t from;
-  uint64_t to;
   bool optional;
 };
 
-struct BADataPage: public DataPage<char*> {
-  BADataPage(uint32_t column_, uint32_t row_group_, uint32_t page_,
-             uint64_t len_, uint64_t from_, uint32_t total_len_,
-             bool optional_)
-    : strs(len_, total_len_) {
-    column = column_;
-    row_group = row_group_;
-    page = page_;
-    data = nullptr;
-    present = nullptr;
-    len = len_;
-    from = from_;
-    optional = optional_;
+struct BADataPage: public DataPage {
+  BADataPage(ColumnChunk &cc_, uint32_t page_, uint64_t len_,
+             uint64_t from_, uint32_t total_len_, bool optional_)
+    : DataPage(cc_, page_, len_, from_, optional_), strs(len_, total_len_) {
   }
   StringSet strs;
 };
@@ -120,12 +113,7 @@ public:
 
   virtual void add_dict_page(DictPage &dict) = 0;
   virtual void add_dict_index_page(DictIndexPage &idx) = 0;
-
-  virtual void add_data_page_int32(DataPage<int32_t> &data) = 0;
-  virtual void add_data_page_int64(DataPage<int64_t> &data) = 0;
-  virtual void add_data_page_int96(DataPage<int96_t> &data) = 0;
-  virtual void add_data_page_float(DataPage<float> &data) = 0;
-  virtual void add_data_page_double(DataPage<double> &data) = 0;
+  virtual void add_data_page(DataPage &data) = 0;
   virtual void add_dict_page_byte_array(BADictPage &dict) = 0;
   virtual void add_data_page_byte_array(BADataPage &dict) = 0;
 
@@ -153,9 +141,7 @@ protected:
   );
 
   uint32_t read_data_page(
-    uint32_t column,
-    uint32_t row_group,
-    parquet::SchemaElement &sel,
+    ColumnChunk &cc,
     uint32_t page,
     uint64_t from,
     parquet::PageHeader &ph,
@@ -164,8 +150,7 @@ protected:
   );
 
   void read_data_page_rle(
-    uint32_t column,
-    uint32_t row_group,
+    ColumnChunk &cc,
     uint32_t page,
     uint64_t from,
     const char *buf,
@@ -174,9 +159,7 @@ protected:
   );
 
   void read_data_page_int32(
-    uint32_t column,
-    uint32_t row_group,
-    parquet::SchemaElement &sel,
+    ColumnChunk &cc,
     uint32_t page,
     uint64_t from,
     parquet::PageHeader &ph,
@@ -188,9 +171,7 @@ protected:
   );
 
   void read_data_page_int64(
-    uint32_t column,
-    uint32_t row_group,
-    parquet::SchemaElement &sel,
+    ColumnChunk &cc,
     uint32_t page,
     uint64_t from,
     parquet::PageHeader &ph,
@@ -202,9 +183,7 @@ protected:
   );
 
   void read_data_page_int96(
-    uint32_t column,
-    uint32_t row_group,
-    parquet::SchemaElement &sel,
+    ColumnChunk &cc,
     uint32_t page,
     uint64_t from,
     parquet::PageHeader &ph,
@@ -216,9 +195,7 @@ protected:
   );
 
   void read_data_page_float(
-    uint32_t column,
-    uint32_t row_group,
-    parquet::SchemaElement &sel,
+    ColumnChunk &cc,
     uint32_t page,
     uint64_t from,
     parquet::PageHeader &ph,
@@ -230,9 +207,7 @@ protected:
   );
 
   void read_data_page_double(
-    uint32_t column,
-    uint32_t row_group,
-    parquet::SchemaElement &sel,
+    ColumnChunk &cc,
     uint32_t page,
     uint64_t from,
     parquet::PageHeader &ph,
@@ -244,9 +219,7 @@ protected:
   );
 
   void read_data_page_byte_array(
-    uint32_t column,
-    uint32_t row_group,
-    parquet::SchemaElement &sel,
+    ColumnChunk &cc,
     uint32_t page,
     uint64_t from,
     parquet::PageHeader &ph,
@@ -258,9 +231,7 @@ protected:
   );
 
   void read_data_page_fixed_len_byte_array(
-    uint32_t column,
-    uint32_t row_group,
-    parquet::SchemaElement &sel,
+    ColumnChunk &cc,
     uint32_t page,
     uint64_t from,
     parquet::PageHeader &ph,

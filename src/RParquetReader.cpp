@@ -196,65 +196,52 @@ void RParquetReader::add_dict_page(DictPage &dict) {
   dict.dict = (uint8_t*) DATAPTR(VECTOR_ELT(val, 0));
 }
 
-void RParquetReader::add_data_page_int32(DataPage<int32_t> &data) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
+void RParquetReader::add_data_page(DataPage &data) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group);
+  int rtype;
+  R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.cc.row_group];
+  R_xlen_t al = nr;
+  int elsize;
+  switch (data.cc.sel.type) {
+  case parquet::Type::INT32:
+    rtype = INTSXP;
+    elsize = 4;
+    break;
+  case parquet::Type::INT64:
+    rtype = REALSXP;
+    elsize = 8;
+    break;
+  case parquet::Type::INT96:
+    rtype = INTSXP;
+    elsize = 12;
+    al *= 3;
+    break;
+  case parquet::Type::FLOAT:
+    rtype = REALSXP;
+    elsize = 8;
+    break;
+  case parquet::Type::DOUBLE:
+    rtype = REALSXP;
+    elsize = 8;
+    break;
+  default:
+    throw std::runtime_error("Type not implemented yet");
+  }
+
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.cc.row_group];
     x = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
-    SET_VECTOR_ELT(x, 0, Rf_allocVector(INTSXP, nr));
+    SET_VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group, x);
+    SET_VECTOR_ELT(x, 0, Rf_allocVector(rtype, al));
     if (data.optional) {
       SET_VECTOR_ELT(x, 1, Rf_allocVector(INTSXP, nr));
     }
   }
-  data.data = INTEGER(VECTOR_ELT(x, 0)) + data.from;
+
+  data.data = ((uint8_t*) DATAPTR(VECTOR_ELT(x, 0))) + data.from * elsize;
   if (data.optional) {
     data.present = INTEGER(VECTOR_ELT(x, 1)) + data.from;
   }
-}
-
-void RParquetReader::add_data_page_int64(DataPage<int64_t> &data) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
-    x = Rf_allocVector(REALSXP, nr);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
-  }
-  data.data = (int64_t*) REAL(x) + data.from;
-  // TODO: present
-}
-
-void RParquetReader::add_data_page_int96(DataPage<int96_t> &data) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
-    x = Rf_allocVector(INTSXP, nr * 3);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
-  }
-  data.data = ((int96_t*) INTEGER(x)) + data.from;
-  // TODO: present
-}
-
-void RParquetReader::add_data_page_float(DataPage<float> &data) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
-    x = Rf_allocVector(REALSXP, nr);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
-  }
-  data.data = ((float*) REAL(x)) + data.from;
-  // TODO: present
-}
-
-void RParquetReader::add_data_page_double(DataPage<double> &data) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
-    x = Rf_allocVector(REALSXP, nr);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
-  }
-  data.data = REAL(x) + data.from;
-  // TODO: present
 }
 
 void RParquetReader::add_dict_page_byte_array(BADictPage &dict) {
@@ -277,11 +264,11 @@ void RParquetReader::add_dict_page_byte_array(BADictPage &dict) {
 }
 
 void RParquetReader::add_data_page_byte_array(BADataPage &data) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group);
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.cc.row_group];
     x = Rf_allocVector(STRSXP, nr);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group, x);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group, x);
   }
   for (uint32_t i = 0; i < data.strs.len; i++) {
     const char *s = data.strs.buf + data.strs.offsets[i];
