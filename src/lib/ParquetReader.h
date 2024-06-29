@@ -15,12 +15,20 @@ enum parquet_input_type {
   MEMORY_BUFFER
 };
 
-template <typename T>
-struct DictPage {
+struct ColumnChunk {
 public:
+  parquet::Type::type type;
   uint32_t column;
   uint32_t row_group;
-  T *dict;
+};
+
+struct DictPage {
+public:
+  DictPage(ColumnChunk &cc_, uint32_t dict_len_)
+    : cc(cc_), dict_len(dict_len_) {
+  }
+  ColumnChunk& cc;
+  uint8_t *dict = nullptr;
   uint32_t dict_len;
 };
 
@@ -37,13 +45,9 @@ struct StringSet {
   std::vector<uint32_t> lengths;
 };
 
-struct BADictPage : public DictPage<char*> {
-  BADictPage(uint32_t column_, uint32_t row_group_, uint32_t dict_len_,
-             uint32_t total_len_) : strs(dict_len_, total_len_) {
-    column = column_;
-    row_group = row_group_;
-    dict = nullptr;
-    dict_len = dict_len_;
+struct BADictPage : public DictPage {
+  BADictPage(ColumnChunk &cc_, uint32_t dict_len_, uint32_t total_len_)
+    : DictPage(cc_, dict_len_), strs(dict_len_, total_len_) {
   }
   StringSet strs;
 };
@@ -113,20 +117,16 @@ public:
 
   // API to be implemented by the embedding software
 
-  virtual void add_dict_page_int32(DictPage<int32_t> &dict) = 0;
+  virtual void add_dict_page(DictPage &dict) = 0;
+  virtual void add_dict_index_page(DictIndexPage &idx) = 0;
+
   virtual void add_data_page_int32(DataPage<int32_t> &data) = 0;
-  virtual void add_dict_page_int64(DictPage<int64_t> &dict) = 0;
   virtual void add_data_page_int64(DataPage<int64_t> &data) = 0;
-  virtual void add_dict_page_int96(DictPage<int96_t> &dict) = 0;
   virtual void add_data_page_int96(DataPage<int96_t> &data) = 0;
-  virtual void add_dict_page_float(DictPage<float> &dict) = 0;
   virtual void add_data_page_float(DataPage<float> &data) = 0;
-  virtual void add_dict_page_double(DictPage<double> &dict) = 0;
   virtual void add_data_page_double(DataPage<double> &data) = 0;
   virtual void add_dict_page_byte_array(BADictPage &dict) = 0;
   virtual void add_data_page_byte_array(BADataPage &dict) = 0;
-
-  virtual void add_dict_index_page(DictIndexPage &idx) = 0;
 
 protected:
   enum parquet_input_type file_type_;

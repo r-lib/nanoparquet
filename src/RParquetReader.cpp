@@ -159,18 +159,41 @@ void RParquetReader::convert_float_to_double(SEXP x) {
 
 // ------------------------------------------------------------------------
 
-void RParquetReader::add_dict_page_int32(DictPage<int32_t> &dict) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
-    SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
-    SET_VECTOR_ELT(val, 0, Rf_allocVector(INTSXP, dict.dict_len));
-    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    dict.dict = INTEGER(VECTOR_ELT(val, 0));
-  } else {
-    Rf_error("Dictionary already set");
+void RParquetReader::add_dict_page(DictPage &dict) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group);
+  if (!Rf_isNull(x)) {
+    throw std::runtime_error("Duplicate dictionary page");
   }
+
+  int rtype;
+  R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.cc.row_group];
+  R_xlen_t al = nr;
+  switch (dict.cc.type) {
+  case parquet::Type::INT32:
+    rtype = INTSXP;
+    break;
+  case parquet::Type::INT64:
+    rtype = REALSXP;
+    break;
+  case parquet::Type::INT96:
+    rtype = INTSXP;
+    al *= 3;
+    break;
+  case parquet::Type::FLOAT:
+    rtype = REALSXP;
+    break;
+  case parquet::Type::DOUBLE:
+    rtype = REALSXP;
+    break;
+  default:
+    throw std::runtime_error("Type not implemented yet");
+  }
+
+  SEXP val = Rf_allocVector(VECSXP, 2);
+  SET_VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group, val);
+  SET_VECTOR_ELT(val, 0, Rf_allocVector(rtype, al));
+  SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
+  dict.dict = (uint8_t*) DATAPTR(VECTOR_ELT(val, 0));
 }
 
 void RParquetReader::add_data_page_int32(DataPage<int32_t> &data) {
@@ -190,20 +213,6 @@ void RParquetReader::add_data_page_int32(DataPage<int32_t> &data) {
   }
 }
 
-void RParquetReader::add_dict_page_int64(DictPage<int64_t> &dict) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
-    SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
-    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict.dict_len));
-    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    dict.dict = (int64_t*) REAL(VECTOR_ELT(val, 0));
-  } else {
-    Rf_error("Dictionary already set");
-  }
-}
-
 void RParquetReader::add_data_page_int64(DataPage<int64_t> &data) {
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
   if (Rf_isNull(x)) {
@@ -213,20 +222,6 @@ void RParquetReader::add_data_page_int64(DataPage<int64_t> &data) {
   }
   data.data = (int64_t*) REAL(x) + data.from;
   // TODO: present
-}
-
-void RParquetReader::add_dict_page_int96(DictPage<int96_t> &dict) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
-    SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
-    SET_VECTOR_ELT(val, 0, Rf_allocVector(INTSXP, dict.dict_len * 3));
-    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    dict.dict = (int96_t*) INTEGER(VECTOR_ELT(val, 0));
-  } else {
-    Rf_error("Dictionary already set");
-  }
 }
 
 void RParquetReader::add_data_page_int96(DataPage<int96_t> &data) {
@@ -240,21 +235,6 @@ void RParquetReader::add_data_page_int96(DataPage<int96_t> &data) {
   // TODO: present
 }
 
-void RParquetReader::add_dict_page_float(DictPage<float> &dict) {
-  // We allocate doubles, that's what we'll need eventually
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
-    SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
-    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict.dict_len));
-    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    dict.dict = (float*) REAL(VECTOR_ELT(val, 0));
-  } else {
-    Rf_error("Dictionary already set");
-  }
-}
-
 void RParquetReader::add_data_page_float(DataPage<float> &data) {
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.column), data.row_group);
   if (Rf_isNull(x)) {
@@ -264,20 +244,6 @@ void RParquetReader::add_data_page_float(DataPage<float> &data) {
   }
   data.data = ((float*) REAL(x)) + data.from;
   // TODO: present
-}
-
-void RParquetReader::add_dict_page_double(DictPage<double> &dict) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
-    SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
-    SET_VECTOR_ELT(val, 0, Rf_allocVector(REALSXP, dict.dict_len));
-    SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    dict.dict = REAL(VECTOR_ELT(val, 0));
-  } else {
-    Rf_error("Dictionary already set");
-  }
 }
 
 void RParquetReader::add_data_page_double(DataPage<double> &data) {
@@ -292,11 +258,11 @@ void RParquetReader::add_data_page_double(DataPage<double> &data) {
 }
 
 void RParquetReader::add_dict_page_byte_array(BADictPage &dict) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group);
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group);
   if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.row_group];
+    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.cc.row_group];
     SEXP val = Rf_allocVector(VECSXP, 2);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.column), dict.row_group, val);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group, val);
     SET_VECTOR_ELT(val, 0, Rf_allocVector(STRSXP, dict.dict_len));
     SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
     SEXP d = VECTOR_ELT(val, 0);

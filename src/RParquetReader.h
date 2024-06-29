@@ -13,17 +13,14 @@ public:
 
   void convert_columns_to_r();
 
-  void add_dict_page_int32(DictPage<int32_t> &dict);
-  void add_data_page_int32(DataPage<int32_t> &data);
-  void add_dict_page_int64(DictPage<int64_t> &dict);
-  void add_data_page_int64(DataPage<int64_t> &data);
-  void add_dict_page_int96(DictPage<int96_t> &dict);
-  void add_data_page_int96(DataPage<int96_t> &data);
-  void add_dict_page_float(DictPage<float> &dict);
-  void add_data_page_float(DataPage<float> &data);
-  void add_dict_page_double(DictPage<double> &dict);
-  void add_data_page_double(DataPage<double> &data);
+  void add_dict_page(DictPage &dict);
   void add_dict_index_page(DictIndexPage &idx);
+
+  void add_data_page_int32(DataPage<int32_t> &data);
+  void add_data_page_int64(DataPage<int64_t> &data);
+  void add_data_page_int96(DataPage<int96_t> &data);
+  void add_data_page_float(DataPage<float> &data);
+  void add_data_page_double(DataPage<double> &data);
   void add_dict_page_byte_array(BADictPage &dict);
   void add_data_page_byte_array(BADataPage &dict);
 

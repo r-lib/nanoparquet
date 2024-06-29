@@ -256,46 +256,48 @@ void ParquetReader::read_dict_page(
     throw runtime_error("Unknown encoding for dictionary page");
   }
 
+  ColumnChunk cc = { sel.type, column, row_group };
   uint32_t num_values = ph.dictionary_page_header.num_values;
+
   switch (sel.type) {
   case Type::INT32: {
-    DictPage<int32_t> dict = { column, row_group, nullptr, num_values };
-    add_dict_page_int32(dict);
+    DictPage dict(cc, num_values);
+    add_dict_page(dict);
     memcpy(dict.dict, buf, num_values * sizeof(int32_t));
     break;
   }
   case Type::INT64: {
-    DictPage<int64_t> dict = { column, row_group, nullptr, num_values };
-    add_dict_page_int64(dict);
+    DictPage dict(cc, num_values);
+    add_dict_page(dict);
     memcpy(dict.dict, buf, num_values * sizeof(int64_t));
     break;
   }
   case Type::INT96: {
-    DictPage<int96_t> dict = { column, row_group, nullptr, num_values };
-    add_dict_page_int96(dict);
+    DictPage dict(cc, num_values);
+    add_dict_page(dict);
     memcpy(dict.dict, buf, num_values * sizeof(int96_t));
     break;
   }
   case Type::FLOAT: {
-    DictPage<float> dict = { column, row_group, nullptr, num_values };
-    add_dict_page_float(dict);
+    DictPage dict(cc, num_values);
+    add_dict_page(dict);
     memcpy(dict.dict, buf, num_values * sizeof(float));
     break;
   }
   case Type::DOUBLE: {
-    DictPage<double> dict = { column, row_group, nullptr, num_values };
-    add_dict_page_double(dict);
+    DictPage dict(cc, num_values);
+    add_dict_page(dict);
     memcpy(dict.dict, buf, num_values * sizeof(double));
     break;
   }
   case Type::BYTE_ARRAY: {
-    BADictPage dict(column, row_group, num_values, ph.uncompressed_page_size);
+    BADictPage dict(cc, num_values, ph.uncompressed_page_size);
     scan_byte_array_plain(dict.strs, buf);
     add_dict_page_byte_array(dict);
     break;
   }
   case Type::FIXED_LEN_BYTE_ARRAY: {
-    BADictPage dict(column, row_group, num_values, ph.uncompressed_page_size);
+    BADictPage dict(cc, num_values, ph.uncompressed_page_size);
     scan_fixed_len_byte_array_plain(dict.strs, buf, sel.type_length);
     add_dict_page_byte_array(dict);
     break;
