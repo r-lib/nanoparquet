@@ -284,14 +284,14 @@ void ParquetReader::read_dict_page(
   }
   case Type::BYTE_ARRAY: {
     BADictPage dict(cc, num_values, ph.uncompressed_page_size);
-    scan_byte_array_plain(dict.strs, buf);
     add_dict_page_byte_array(dict);
+    scan_byte_array_plain(dict.strs, buf);
     break;
   }
   case Type::FIXED_LEN_BYTE_ARRAY: {
     BADictPage dict(cc, num_values, ph.uncompressed_page_size);
-    scan_fixed_len_byte_array_plain(dict.strs, buf, cc.sel.type_length);
     add_dict_page_byte_array(dict);
+    scan_fixed_len_byte_array_plain(dict.strs, buf, cc.sel.type_length);
     break;
   }
   default:
@@ -568,8 +568,8 @@ void ParquetReader::read_data_page_byte_array(
   switch (encoding) {
   case Encoding::PLAIN: {
     BADataPage data(cc, page, num_values, from, ph.uncompressed_page_size, optional);
-    scan_byte_array_plain(data.strs, buf);
     add_data_page_byte_array(data);
+    scan_byte_array_plain(data.strs, buf);
     break;
   }
   case Encoding::RLE_DICTIONARY:
@@ -597,8 +597,8 @@ void ParquetReader::read_data_page_fixed_len_byte_array(
   switch (encoding) {
   case Encoding::PLAIN: {
     BADataPage data(cc, page, num_values, from, ph.uncompressed_page_size, optional);
-    scan_fixed_len_byte_array_plain(data.strs, buf, cc.sel.type_length);
     add_data_page_byte_array(data);
+    scan_fixed_len_byte_array_plain(data.strs, buf, cc.sel.type_length);
     break;
   }
   case Encoding::RLE_DICTIONARY:
@@ -615,7 +615,7 @@ void ParquetReader::read_data_page_fixed_len_byte_array(
 void ParquetReader::scan_byte_array_plain(StringSet &strs, const char *buf) {
   const char *start = buf;
   const char *end = buf + strs.total_len;
-  strs.buf = buf;
+  memcpy((void*) strs.buf, buf, strs.total_len);
   // TODO: check for overflow
   for (uint32_t i = 0; i < strs.len; i++) {
     strs.lengths[i] = *((uint32_t*) buf);
@@ -627,7 +627,7 @@ void ParquetReader::scan_byte_array_plain(StringSet &strs, const char *buf) {
 
 void ParquetReader::scan_fixed_len_byte_array_plain(
   StringSet &strs, const char *buf, uint32_t len) {
-  strs.buf = buf;
+  memcpy((void*) strs.buf, buf, strs.total_len);
   for (uint32_t i = 0; i < strs.len; i++) {
     strs.lengths[i] = len;
     strs.offsets[i] = i * len;

@@ -248,16 +248,16 @@ void RParquetReader::add_dict_page_byte_array(BADictPage &dict) {
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group);
   if (Rf_isNull(x)) {
     R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.cc.row_group];
-    SEXP val = Rf_allocVector(VECSXP, 2);
+    SEXP val = Rf_allocVector(VECSXP, 5);
     SET_VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group, val);
     SET_VECTOR_ELT(val, 0, Rf_allocVector(STRSXP, dict.dict_len));
     SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
-    SEXP d = VECTOR_ELT(val, 0);
-    for (uint32_t i = 0; i < dict.strs.len; i++) {
-      const char *s = dict.strs.buf + dict.strs.offsets[i];
-      uint32_t l = dict.strs.lengths[i];
-      SET_STRING_ELT(d, i, Rf_mkCharLenCE(s, l, CE_UTF8));
-    }
+    SET_VECTOR_ELT(val, 2, Rf_allocVector(RAWSXP, dict.strs.total_len));
+    SET_VECTOR_ELT(val, 3, Rf_allocVector(INTSXP, dict.strs.len));
+    SET_VECTOR_ELT(val, 4, Rf_allocVector(INTSXP, dict.strs.len));
+    dict.strs.buf = (char*) RAW(VECTOR_ELT(val, 2));
+    dict.strs.offsets = (uint32_t*) INTEGER(VECTOR_ELT(val, 3));
+    dict.strs.lengths = (uint32_t*) INTEGER(VECTOR_ELT(val, 4));
   } else {
     Rf_error("Dictionary already set");
   }
@@ -265,20 +265,32 @@ void RParquetReader::add_dict_page_byte_array(BADictPage &dict) {
 
 void RParquetReader::add_data_page_byte_array(BADataPage &data) {
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group);
-  if (Rf_isNull(x)) {
-    R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.cc.row_group];
-    x = Rf_allocVector(STRSXP, nr);
-    SET_VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group, x);
+  R_xlen_t xlen = Rf_xlength(x);
+  if (xlen <= data.page) {
+    // need to re-allocate in a longer list
+    R_xlen_t newlen = xlen * 1.6 + 5;
+    SEXP x2 = Rf_allocVector(VECSXP, newlen);
+    SET_VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group, x2);
+    for (auto i = 0; i < xlen; i++) {
+      SET_VECTOR_ELT(x2, i, VECTOR_ELT(x, i));
+    }
+    x = x2;
   }
-  for (uint32_t i = 0; i < data.strs.len; i++) {
-    const char *s = data.strs.buf + data.strs.offsets[i];
-    uint32_t l = data.strs.lengths[i];
-    SET_STRING_ELT(x, data.from + i, Rf_mkCharLenCE(s, l, CE_UTF8));
-  }
+  R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[data.cc.row_group];
+  SEXP val = Rf_allocVector(VECSXP, 5);
+  SET_VECTOR_ELT(x, data.page, val);
+  SET_VECTOR_ELT(val, 0, Rf_allocVector(STRSXP, nr));
+  SET_VECTOR_ELT(val, 1, Rf_allocVector(INTSXP, nr));
+  SET_VECTOR_ELT(val, 2, Rf_allocVector(RAWSXP, data.strs.total_len));
+  SET_VECTOR_ELT(val, 3, Rf_allocVector(INTSXP, data.strs.len));
+  SET_VECTOR_ELT(val, 4, Rf_allocVector(INTSXP, data.strs.len));
+  data.strs.buf = (char*) RAW(VECTOR_ELT(val, 2));
+  data.strs.offsets = (uint32_t*) INTEGER(VECTOR_ELT(val, 3));
+  data.strs.lengths = (uint32_t*) INTEGER(VECTOR_ELT(val, 4));
 }
 
 void RParquetReader::add_dict_index_page(DictIndexPage &idx) {
   SEXP x = VECTOR_ELT(VECTOR_ELT(columns, idx.column), idx.row_group);
-  idx.dict_idx = (uint32_t*) INTEGER(VECTOR_ELT(x, 1));
+  idx.dict_idx = (uint32_t*) INTEGER(VECTOR_ELT(x, 1)) + idx.from;
   // TODO: present
 }

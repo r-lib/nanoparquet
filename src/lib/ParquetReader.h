@@ -36,14 +36,12 @@ public:
 struct StringSet {
   StringSet(uint32_t len_, uint32_t total_len_)
     : buf(nullptr), len(len_), total_len(total_len_) {
-    offsets.resize(len);
-    lengths.resize(len);
   }
-  const char *buf;
+  char *buf;
   uint32_t len;
   uint32_t total_len;
-  std::vector<uint32_t> offsets;
-  std::vector<uint32_t> lengths;
+  uint32_t *offsets = nullptr;
+  uint32_t *lengths = nullptr;
 };
 
 struct BADictPage : public DictPage {
