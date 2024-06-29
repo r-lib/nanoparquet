@@ -174,20 +174,15 @@ void ParquetReader::read_column(uint32_t column) {
   }
   vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
 
-  for (auto rgi = 0; rgi < rgs.size(); rgi++) {
-    parquet::ColumnChunk cc = rgs[rgi].columns[leaf_cols[column]];
-    parquet::ColumnMetaData cmd = cc.meta_data;
-    read_column_chunk(column, rgi, sel, cc);
+  for (uint32_t rgi = 0; rgi < rgs.size(); rgi++) {
+    parquet::ColumnChunk pcc = rgs[rgi].columns[leaf_cols[column]];
+    ColumnChunk cc = { pcc, sel, column, rgi };
+    read_column_chunk(cc);
   }
 }
 
-void ParquetReader::read_column_chunk(
-  uint32_t column,
-  uint32_t row_group,
-  parquet::SchemaElement &sel,
-  parquet::ColumnChunk &cc) {
-
-  parquet::ColumnMetaData cmd = cc.meta_data;
+void ParquetReader::read_column_chunk(ColumnChunk &cc) {
+  parquet::ColumnMetaData cmd = cc.cc.meta_data;
   bool has_dictionary = cmd.__isset.dictionary_page_offset;
   int64_t dictionary_page_offset =
     has_dictionary ? cmd.dictionary_page_offset : -1;
@@ -209,7 +204,7 @@ void ParquetReader::read_column_chunk(
     uint32_t ph_size = cmd.total_compressed_size;
     thrift_unpack((const uint8_t *) ptr, &ph_size, &dph, filename_);
     ptr += ph_size;
-    read_dict_page(column, row_group, sel, dph, ptr, dph.compressed_page_size);
+    read_dict_page(cc, dph, ptr, dph.compressed_page_size);
     ptr += dph.compressed_page_size;
   }
 
@@ -224,7 +219,7 @@ void ParquetReader::read_column_chunk(
     switch (ph.type) {
     case PageType::DATA_PAGE:
     case PageType::DATA_PAGE_V2: {
-      uint32_t num_values = read_data_page(column, row_group, sel, page, from, ph, ptr, ph.compressed_page_size);
+      uint32_t num_values = read_data_page(cc.column, cc.row_group, cc.sel, page, from, ph, ptr, ph.compressed_page_size);
       from += num_values;
       page++;
       break;
@@ -241,9 +236,7 @@ void ParquetReader::read_column_chunk(
 }
 
 void ParquetReader::read_dict_page(
-  uint32_t column,
-  uint32_t row_group,
-  parquet::SchemaElement &sel,
+  ColumnChunk &cc,
   parquet::PageHeader &ph,
   const char *buf,
   int32_t len) {
@@ -256,10 +249,9 @@ void ParquetReader::read_dict_page(
     throw runtime_error("Unknown encoding for dictionary page");
   }
 
-  ColumnChunk cc = { sel.type, column, row_group };
   uint32_t num_values = ph.dictionary_page_header.num_values;
 
-  switch (sel.type) {
+  switch (cc.sel.type) {
   case Type::INT32: {
     DictPage dict(cc, num_values);
     add_dict_page(dict);
@@ -298,7 +290,7 @@ void ParquetReader::read_dict_page(
   }
   case Type::FIXED_LEN_BYTE_ARRAY: {
     BADictPage dict(cc, num_values, ph.uncompressed_page_size);
-    scan_fixed_len_byte_array_plain(dict.strs, buf, sel.type_length);
+    scan_fixed_len_byte_array_plain(dict.strs, buf, cc.sel.type_length);
     add_dict_page_byte_array(dict);
     break;
   }

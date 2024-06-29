@@ -17,7 +17,8 @@ enum parquet_input_type {
 
 struct ColumnChunk {
 public:
-  parquet::Type::type type;
+  parquet::ColumnChunk &cc;
+  parquet::SchemaElement &sel;
   uint32_t column;
   uint32_t row_group;
 };
@@ -142,17 +143,10 @@ protected:
   void init_file_on_disk();
   void check_meta_data();
 
-  void read_column_chunk(
-    uint32_t column,
-    uint32_t row_group,
-    parquet::SchemaElement &sel,
-    parquet::ColumnChunk &cc
-  );
+  void read_column_chunk(ColumnChunk &cc);
 
   void read_dict_page(
-    uint32_t column,
-    uint32_t row_group,
-    parquet::SchemaElement &sel,
+    ColumnChunk &cc,
     parquet::PageHeader &ph,
     const char *buf,
     int32_t len

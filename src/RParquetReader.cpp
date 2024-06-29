@@ -168,7 +168,7 @@ void RParquetReader::add_dict_page(DictPage &dict) {
   int rtype;
   R_xlen_t nr = REAL(VECTOR_ELT(metadata, 1))[dict.cc.row_group];
   R_xlen_t al = nr;
-  switch (dict.cc.type) {
+  switch (dict.cc.sel.type) {
   case parquet::Type::INT32:
     rtype = INTSXP;
     break;
