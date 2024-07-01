@@ -71,6 +71,7 @@ to Parquet.</p></li>
 <code>UNKNOWN</code>.</p></li>
 <li><p>Only Snappy, Gzip and Zstd compression is supported.</p></li>
 <li><p>Encryption is not supported.</p></li>
+<li><p>Reading files from URLs is not supported.</p></li>
 <li><p>Being single-threaded and not fully optimized, nanoparquet is probably
 not suited well for large data sets. It should be fine for a couple of
 gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro.
@@ -180,7 +181,6 @@ back as factors, both by nanoparquet and Arrow.</p></li>
 <li><p>Apache Software Foundation [copyright holder]</p></li>
 <li><p>Posit Software, PBC [copyright holder]</p></li>
 <li><p>RAD Game Tools [copyright holder]</p></li>
-<li><p>Valve Software [copyright holder]</p></li>
 <li><p>Valve Software [copyright holder]</p></li>
 <li><p>Tenacious Software LLC [copyright holder]</p></li>
 <li><p>Facebook, Inc. [copyright holder]</p></li>
