@@ -228,7 +228,7 @@ parquet_metadata <- function(file) {
 	res$row_groups <- as.data.frame(res$row_groups)
 	class(res$row_groups) <- c("tbl", class(res$row_groups))
 
-	res$column_chunks$type <- names(type_names)[res$column_chunk$type + 1L]
+	res$column_chunks$type <- names(type_names)[res$column_chunks$type + 1L]
 	res$column_chunks$encodings <- lapply(
 		res$column_chunks$encodings,
 		function(ec) { names(encodings)[ec + 1L] }
