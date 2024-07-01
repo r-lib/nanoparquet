@@ -264,7 +264,7 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   } else if (data.cc.sel.type == parquet::Type::BYTE_ARRAY ||
              data.cc.sel.type == parquet::Type::FIXED_LEN_BYTE_ARRAY) {
     SEXP v = VECTOR_ELT(x, 2);
-    R_xlen_t len = Rf_xlength(x);
+    R_xlen_t len = Rf_xlength(v);
     if (Rf_length(v) <= data.page) {
       R_xlen_t new_len = len * 1.5 + 5;
       SEXP nv = PROTECT(Rf_allocVector(VECSXP, new_len));
@@ -272,8 +272,8 @@ void RParquetReader::alloc_data_page(DataPage &data) {
         SET_VECTOR_ELT(nv, i, VECTOR_ELT(v, i));
       }
       SET_VECTOR_ELT(x, 2, nv);
-      v = nv;
       UNPROTECT(1);
+      v = nv;
     }
 
     SEXP p = Rf_allocVector(VECSXP, 4);

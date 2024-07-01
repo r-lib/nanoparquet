@@ -67,14 +67,19 @@ public:
 
 struct DataPage {
 public:
-  DataPage(ColumnChunk &cc_, parquet::PageHeader &ph_, uint32_t page_,
-           uint32_t len_, uint32_t from_)
-    : cc(cc_), ph(ph_), page(page_), data(nullptr), present(nullptr),
-      len(len_), from(from_) {
+  DataPage(ColumnChunk &cc, parquet::PageHeader &ph, uint32_t page,
+           uint32_t len, uint32_t from)
+    : cc(cc), ph(ph), page(page), data(nullptr), present(nullptr),
+      len(len), from(from) {
     if (ph.__isset.data_page_header) {
       encoding = ph.data_page_header.encoding;
     } else {
       encoding = ph.data_page_header_v2.encoding;
+    }
+    if (cc.sel.type == parquet::Type::BYTE_ARRAY ||
+        cc.sel.type == parquet::Type::FIXED_LEN_BYTE_ARRAY) {
+      strs.len = len;
+      strs.total_len = ph.uncompressed_page_size;
     }
   }
   ColumnChunk &cc;
