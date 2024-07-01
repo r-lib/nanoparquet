@@ -12,6 +12,7 @@ public:
   ~RParquetReader();
 
   void convert_columns_to_r();
+  void decode_dicts();
 
   void alloc_column_chunk(ColumnChunk &cc) ;
   void alloc_dict_page(DictPage &dict);
@@ -24,4 +25,7 @@ protected:
   void convert_int64_to_double(SEXP x);
   void convert_int96_to_double(SEXP x);
   void convert_float_to_double(SEXP x);
+  void convert_buffer_to_string(SEXP x);
+  SEXP convert_buffer_to_string1(SEXP x);
+  SEXP subset_vector(SEXP x, SEXP idx);
 };

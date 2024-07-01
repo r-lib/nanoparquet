@@ -212,7 +212,7 @@ void ParquetReader::read_column_chunk(ColumnChunk &cc) {
 
   // data pages
   uint64_t from = 0;
-  uint32_t page = 1;
+  uint32_t page = 0;
   while (ptr < end) {
     PageHeader ph;
     uint32_t ph_size = end - ptr;

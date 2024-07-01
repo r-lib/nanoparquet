@@ -93,6 +93,12 @@ void RParquetReader::convert_columns_to_r() {
         convert_float_to_double(col);
         break;
       }
+      case parquet::Type::BYTE_ARRAY:
+      case parquet::Type::FIXED_LEN_BYTE_ARRAY: {
+        SEXP col = VECTOR_ELT(VECTOR_ELT(columns, cn), rg);
+        convert_buffer_to_string(col);
+        break;
+      }
       default:
         // others are ok
         break;
@@ -148,6 +154,97 @@ void RParquetReader::convert_float_to_double(SEXP x) {
     *end = *fend;
     *end = static_cast<double>(*fend);
   }
+}
+
+void RParquetReader::convert_buffer_to_string(SEXP x) {
+  SEXP meta = VECTOR_ELT(x, 0);
+  bool dict = LOGICAL(VECTOR_ELT(meta, 4))[0];
+
+  if (dict) {
+    SEXP nv = convert_buffer_to_string1(VECTOR_ELT(x, 1));
+    SET_VECTOR_ELT(x, 1, nv);
+  } else {
+    SEXP data = VECTOR_ELT(x, 2);
+    R_xlen_t len = Rf_length(data);
+    for (R_xlen_t i = 0; i < len; i++) {
+      SEXP v = VECTOR_ELT(data, i);
+      if (Rf_isNull(v)) break;
+      SEXP nv = convert_buffer_to_string1(v);
+      SET_VECTOR_ELT(data, i, nv);
+    }
+  }
+}
+
+SEXP RParquetReader::convert_buffer_to_string1(SEXP x) {
+  R_xlen_t nr = INTEGER(VECTOR_ELT(x, 0))[0];
+  char *buf = (char*) RAW(VECTOR_ELT(x, 1));
+  uint32_t *offsets = (uint32_t*) INTEGER(VECTOR_ELT(x, 2));
+  uint32_t *lengths = (uint32_t*) INTEGER(VECTOR_ELT(x, 3));
+  SEXP nv = PROTECT(Rf_allocVector(STRSXP, nr));
+  for (R_xlen_t i = 0; i < nr; i++, offsets++, lengths++) {
+    char *s = buf + *offsets;
+    SET_STRING_ELT(nv, i, Rf_mkCharLenCE(s, *lengths, CE_UTF8));
+  }
+  UNPROTECT(1);
+  return nv;
+}
+
+// ------------------------------------------------------------------------
+
+void RParquetReader::decode_dicts() {
+  for (auto cn = 0; cn < file_meta_data_.schema.size(); cn++) {
+    parquet::SchemaElement &sel = file_meta_data_.schema[cn];
+    if (sel.__isset.num_children) {
+      continue;
+    }
+    for (auto rg = 0; rg < file_meta_data_.row_groups.size(); rg++) {
+      SEXP col = VECTOR_ELT(VECTOR_ELT(columns, cn), rg);
+      SEXP meta = VECTOR_ELT(col, 0);
+      bool dict = LOGICAL(VECTOR_ELT(meta, 4))[0];
+      if (!dict) {
+        continue;
+      }
+      SEXP nv = subset_vector(VECTOR_ELT(col, 1), VECTOR_ELT(col, 2));
+      SET_VECTOR_ELT(col, 2, nv);
+      SET_VECTOR_ELT(col, 1, R_NilValue);
+    }
+  }
+}
+
+SEXP RParquetReader::subset_vector(SEXP x, SEXP idx) {
+  int rtype = TYPEOF(x);
+  R_xlen_t len = Rf_xlength(idx);
+  SEXP nv = Rf_allocVector(rtype, len);
+  uint32_t *cidx = (uint32_t*) INTEGER(idx);
+
+  if (rtype == INTSXP) {
+    int *d = INTEGER(x);
+    int *val = INTEGER(nv);
+    for (R_xlen_t i = 0; i < len; i++) {
+      val[i] = d[cidx[i]];
+    }
+
+  } else if (rtype == REALSXP) {
+    double *d = REAL(x);
+    double *val = REAL(nv);
+    for (R_xlen_t i = 0; i < len; i++) {
+      val[i] = d[cidx[i]];
+    }
+
+  } else if (rtype == LGLSXP) {
+    int *d = LOGICAL(x);
+    int *val = LOGICAL(nv);
+    for (R_xlen_t i = 0; i < len; i++) {
+      val[i] = d[cidx[i]];
+    }
+
+  } else if (rtype == STRSXP) {
+    for (R_xlen_t i = 0; i < len; i++) {
+      SET_STRING_ELT(nv, i, STRING_ELT(x, cidx[i]));
+    }
+  }
+
+  return nv;
 }
 
 // ------------------------------------------------------------------------
