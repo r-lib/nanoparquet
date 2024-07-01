@@ -176,20 +176,22 @@ void ParquetReader::read_column(uint32_t column) {
 
   for (uint32_t rgi = 0; rgi < rgs.size(); rgi++) {
     parquet::ColumnChunk pcc = rgs[rgi].columns[leaf_cols[column]];
-    ColumnChunk cc = { pcc, sel, column, rgi };
+    ColumnChunk cc(pcc, sel, column, rgi, rgs[rgi].num_rows);
     read_column_chunk(cc);
   }
 }
 
 void ParquetReader::read_column_chunk(ColumnChunk &cc) {
   parquet::ColumnMetaData cmd = cc.cc.meta_data;
-  bool has_dictionary = cmd.__isset.dictionary_page_offset;
   int64_t dictionary_page_offset =
-    has_dictionary ? cmd.dictionary_page_offset : -1;
+    cc.has_dictionary ? cmd.dictionary_page_offset : -1;
   int64_t data_page_offset = cmd.data_page_offset;
   int64_t chunk_start =
-    has_dictionary ? dictionary_page_offset : data_page_offset;
+    cc.has_dictionary ? dictionary_page_offset : data_page_offset;
   int64_t chunk_end = chunk_start + cmd.total_compressed_size;
+
+  // Give a chance to R to allocate memory for the column chunk
+  alloc_column_chunk(cc);
 
   // read in the whole chunk
   tmp_buf.resize(cmd.total_compressed_size, false);
@@ -199,7 +201,7 @@ void ParquetReader::read_column_chunk(ColumnChunk &cc) {
   uint8_t *end = ptr + cmd.total_compressed_size;
 
   // dictionary page, if any
-  if (has_dictionary) {
+  if (cc.has_dictionary) {
     PageHeader dph;
     uint32_t ph_size = cmd.total_compressed_size;
     thrift_unpack(ptr, &ph_size, &dph, filename_);
@@ -253,44 +255,44 @@ void ParquetReader::read_dict_page(
 
   switch (cc.sel.type) {
   case Type::INT32: {
-    DictPage dict(cc, num_values);
+    DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
     memcpy(dict.dict, buf, num_values * sizeof(int32_t));
     break;
   }
   case Type::INT64: {
-    DictPage dict(cc, num_values);
+    DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
     memcpy(dict.dict, buf, num_values * sizeof(int64_t));
     break;
   }
   case Type::INT96: {
-    DictPage dict(cc, num_values);
+    DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
     memcpy(dict.dict, buf, num_values * sizeof(int96_t));
     break;
   }
   case Type::FLOAT: {
-    DictPage dict(cc, num_values);
+    DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
     memcpy(dict.dict, buf, num_values * sizeof(float));
     break;
   }
   case Type::DOUBLE: {
-    DictPage dict(cc, num_values);
+    DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
     memcpy(dict.dict, buf, num_values * sizeof(double));
     break;
   }
   case Type::BYTE_ARRAY: {
-    BADictPage dict(cc, num_values, ph.uncompressed_page_size);
-    alloc_dict_page_byte_array(dict);
+    DictPage dict(cc, ph, num_values, ph.uncompressed_page_size);
+    alloc_dict_page(dict);
     scan_byte_array_plain(dict.strs, buf);
     break;
   }
   case Type::FIXED_LEN_BYTE_ARRAY: {
-    BADictPage dict(cc, num_values, ph.uncompressed_page_size);
-    alloc_dict_page_byte_array(dict);
+    DictPage dict(cc, ph, num_values, ph.uncompressed_page_size);
+    alloc_dict_page(dict);
     scan_fixed_len_byte_array_plain(dict.strs, buf, cc.sel.type_length);
     break;
   }
@@ -329,11 +331,10 @@ uint32_t ParquetReader::read_data_page(
     throw runtime_error("Invalid page type, expected data page");
   }
 
-  bool optional = cc.sel.repetition_type != FieldRepetitionType::REQUIRED;
   uint8_t *def_buf = nullptr;
   uint32_t def_len = 0;
 
-  if (optional) {
+  if (cc.optional) {
     if (ph.type == PageType::DATA_PAGE &&
         ph.data_page_header.definition_level_encoding != Encoding::RLE) {
       throw runtime_error("Unknown definition level encoding");
@@ -351,17 +352,12 @@ uint32_t ParquetReader::read_data_page(
 
   // TODO: uncompress
 
-  DataPage dp(cc, ph, page, num_values, from, optional);
-  if (dp.encoding != parquet::Encoding::RLE_DICTIONARY &&
-      dp.encoding != parquet::Encoding::PLAIN_DICTIONARY) {
-    alloc_data_page(dp);
-  } else {
-    alloc_dict_index_page(dp);
-  }
+  DataPage dp(cc, ph, page, num_values, from);
+  alloc_data_page(dp);
 
-  if (optional) {
+  if (cc.optional) {
     RleBpDecoder dec((const uint8_t *)def_buf, def_len, 1);
-   // dec.GetBatch<uint8_t>(defined_ptr, num_values);
+    dec.GetBatch<int32_t>(dp.present, num_values);
   }
 
   switch (cc.sel.type) {

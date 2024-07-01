@@ -17,25 +17,30 @@ enum parquet_input_type {
 
 struct ColumnChunk {
 public:
+  ColumnChunk(parquet::ColumnChunk &cc, parquet::SchemaElement &sel,
+              uint32_t column, uint32_t row_group, int64_t num_rows)
+    : cc(cc), sel(sel), column(column), row_group(row_group),
+      num_rows(num_rows) {
+    parquet::ColumnMetaData cmd = cc.meta_data;
+    has_dictionary = cmd.__isset.dictionary_page_offset;
+    optional = sel.repetition_type !=
+      parquet::FieldRepetitionType::REQUIRED;
+  }
   parquet::ColumnChunk &cc;
   parquet::SchemaElement &sel;
   uint32_t column;
   uint32_t row_group;
-};
-
-struct DictPage {
-public:
-  DictPage(ColumnChunk &cc_, uint32_t dict_len_)
-    : cc(cc_), dict_len(dict_len_) {
-  }
-  ColumnChunk& cc;
-  uint8_t *dict = nullptr;
-  uint32_t dict_len;
+  int64_t num_rows;
+  bool has_dictionary;
+  bool optional;
 };
 
 struct StringSet {
-  StringSet(uint32_t len_, uint32_t total_len_)
-    : buf(nullptr), len(len_), total_len(total_len_) {
+  StringSet()
+    : buf(nullptr), len(0), total_len(0) {
+  }
+  StringSet(uint32_t len, uint32_t total_len)
+    : buf(nullptr), len(len), total_len(total_len) {
   }
   char *buf;
   uint32_t len;
@@ -44,19 +49,28 @@ struct StringSet {
   uint32_t *lengths = nullptr;
 };
 
-struct BADictPage : public DictPage {
-  BADictPage(ColumnChunk &cc_, uint32_t dict_len_, uint32_t total_len_)
-    : DictPage(cc_, dict_len_), strs(dict_len_, total_len_) {
+struct DictPage {
+public:
+  DictPage(ColumnChunk &cc, parquet::PageHeader &ph, uint32_t dict_len)
+    : cc(cc), ph(ph), dict_len(dict_len) {
   }
+  DictPage(ColumnChunk &cc, parquet::PageHeader &ph, uint32_t dict_len,
+           uint32_t total_len)
+    : cc(cc), ph(ph), dict_len(dict_len), strs(dict_len, total_len) {
+  }
+  ColumnChunk& cc;
+  parquet::PageHeader &ph;
+  uint8_t *dict = nullptr;
+  uint32_t dict_len;
   StringSet strs;
 };
 
 struct DataPage {
 public:
   DataPage(ColumnChunk &cc_, parquet::PageHeader &ph_, uint32_t page_,
-           uint32_t len_, uint32_t from_, bool optional_)
+           uint32_t len_, uint32_t from_)
     : cc(cc_), ph(ph_), page(page_), data(nullptr), present(nullptr),
-      len(len_), from(from_), optional(optional_), strs(len_, ph.compressed_page_size) {
+      len(len_), from(from_) {
     if (ph.__isset.data_page_header) {
       encoding = ph.data_page_header.encoding;
     } else {
@@ -70,7 +84,6 @@ public:
   int32_t *present;
   uint32_t len;
   uint64_t from;
-  bool optional;
   parquet::Encoding::type encoding;
   StringSet strs;
 };
@@ -98,9 +111,8 @@ public:
 
   // API to be implemented by the embedding software
 
+  virtual void alloc_column_chunk(ColumnChunk &cc) = 0;
   virtual void alloc_dict_page(DictPage &dict) = 0;
-  virtual void alloc_dict_index_page(DataPage &idx) = 0;
-  virtual void alloc_dict_page_byte_array(BADictPage &dict) = 0;
   virtual void alloc_data_page(DataPage &data) = 0;
 
 protected:
