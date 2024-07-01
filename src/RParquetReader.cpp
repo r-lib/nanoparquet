@@ -249,6 +249,41 @@ SEXP RParquetReader::subset_vector(SEXP x, SEXP idx) {
 
 // ------------------------------------------------------------------------
 
+// We create a VECSXP for every column chunk, with elements:
+// 0 metadata
+// 1 dictionary
+// 2 data
+// 3 present
+//
+// metadata:
+// 0 rtype: the R type, e.g. INTSXP
+// 1 elsize: parquet element size in bytes
+// 2 num_rows: number of rows in the row group
+// 3 rsize: how many R <rtype> makes up a Parquet type
+// 4 dict: whether there is a dictionary page
+//
+// dictionary:
+// - non-dictionary columns: NULL
+// - non byte arrays: dictionary values
+// - byte arrays: VECSXP:
+//   - number of dictionary values
+//   - raw buffer containing all strings
+//   - integer offsets within the buffer
+//   - integer lengths for the strings
+//
+// data:
+// - for columns with a dictionary: integer indices (w/o NAs)
+// - for non byte-array columns: actual values (w/o NAs)
+// - for byte-array columns: VECSXP:
+//   - number of values
+//   - raw buffer of all strings (w/o NAs)
+//   - integer offsets within the buffer
+//   - integer lengths for the strings
+//
+// present:
+// - NULL if the column is REQUIRED
+// - LGLSXP of num_values, whether a value is present or not
+
 void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
   // R type for the chunk, and its numer of bytes
   int rtype;
