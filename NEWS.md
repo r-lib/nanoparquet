@@ -1,4 +1,4 @@
-# nanoparquet (development version)
+# nanoparquet 0.3.1
 
 * This version fixes a `write_parquet()` crash (#73).
 
