@@ -14,6 +14,7 @@ public:
   void convert_columns_to_r();
   void decode_dicts();
   void handle_missing();
+  void rbind_row_groups();
 
   void alloc_column_chunk(ColumnChunk &cc) ;
   void alloc_dict_page(DictPage &dict);

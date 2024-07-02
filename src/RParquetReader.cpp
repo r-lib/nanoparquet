@@ -357,8 +357,8 @@ void RParquetReader::convert_buffer_to_string(SEXP x) {
     SEXP nv = PROTECT(Rf_allocVector(STRSXP, dict_len));
     R_xlen_t idx = 0;
     convert_buffer_to_string1(dict, nv, idx);
-    UNPROTECT(1);
     SET_VECTOR_ELT(x, 1, nv);
+    UNPROTECT(1);
   } else {
     R_xlen_t nr = REAL(VECTOR_ELT(meta, 2))[0];
     SEXP nv = PROTECT(Rf_allocVector(STRSXP, nr));
@@ -370,8 +370,8 @@ void RParquetReader::convert_buffer_to_string(SEXP x) {
       if (Rf_isNull(v)) break;
       convert_buffer_to_string1(v, nv, idx);
     }
-    UNPROTECT(1);
     SET_VECTOR_ELT(x, 2, nv);
+    UNPROTECT(1);
   }
 }
 
@@ -529,5 +529,50 @@ void RParquetReader::handle_missing() {
 
       SET_VECTOR_ELT(col, 3, R_NilValue);
     }
+  }
+}
+
+// ------------------------------------------------------------------------
+
+void RParquetReader::rbind_row_groups() {
+  R_xlen_t nc = Rf_xlength(columns);
+  R_xlen_t nr = file_meta_data_.num_rows;
+  for (auto c = 0; c < nc; c++) {
+    SEXP col = VECTOR_ELT(columns, c);
+    if (Rf_isNull(col)) {
+      continue;
+    }
+    // TODO: make this work with zero rows. I.e. we need to assign the
+    // R types when we parse the Parquet metadata, not when we add a
+    // column chunk.
+    R_xlen_t rgn = Rf_xlength(col);
+    if (rgn == 0) {
+      Rf_error("No rown in Parquet file");
+    }
+    int rtype = TYPEOF(VECTOR_ELT(VECTOR_ELT(col, 0), 2));
+    SEXP nv = PROTECT(Rf_allocVector(rtype, nr));
+    R_xlen_t idx = 0;
+    for (auto rgi = 0; rgi < rgn; rgi++) {
+      SEXP rg = VECTOR_ELT(col, rgi);
+      SEXP data = VECTOR_ELT(rg, 2);
+      R_xlen_t dl = Rf_xlength(data);
+
+      if (rtype == INTSXP) {
+        memcpy(INTEGER(nv) + idx, INTEGER(data), dl * sizeof(int));
+      } else if (rtype == REALSXP) {
+        memcpy(REAL(nv) + idx, REAL(data), dl * sizeof(double));
+      } else if (rtype == LGLSXP) {
+        memcpy(LOGICAL(nv) + idx, LOGICAL(data), dl * sizeof(int));
+      } else if (rtype == STRSXP) {
+        for (auto i = 0; i < dl; i++) {
+          SET_STRING_ELT(nv, idx++, STRING_ELT(data, i));
+        }
+      }
+
+      idx += dl;
+    }
+
+    SET_VECTOR_ELT(columns, c, nv);
+    UNPROTECT(1);
   }
 }
