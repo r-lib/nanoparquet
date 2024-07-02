@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,14 +21,8 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
-<li class="nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-news">News</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-news">
-    <h6 class="dropdown-header" data-toc-skip>Releases</h6>
-    <a class="external-link dropdown-item" href="https://www.tidyverse.org/blog/2024/06/nanoparquet-0-3-0/">Version 0.3.0</a>
-    <div class="dropdown-divider"></div>
-    <a class="dropdown-item" href="../news/index.html">Changelog</a>
-  </div>
+<li class="nav-item">
+  <a class="nav-link" href="../news/index.html">Changelog</a>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off"></form>
@@ -77,6 +71,7 @@ to Parquet.</p></li>
 <code>UNKNOWN</code>.</p></li>
 <li><p>Only Snappy, Gzip and Zstd compression is supported.</p></li>
 <li><p>Encryption is not supported.</p></li>
+<li><p>Reading files from URLs is not supported.</p></li>
 <li><p>Being single-threaded and not fully optimized, nanoparquet is probably
 not suited well for large data sets. It should be fine for a couple of
 gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro.
@@ -186,7 +181,6 @@ back as factors, both by nanoparquet and Arrow.</p></li>
 <li><p>Apache Software Foundation [copyright holder]</p></li>
 <li><p>Posit Software, PBC [copyright holder]</p></li>
 <li><p>RAD Game Tools [copyright holder]</p></li>
-<li><p>Valve Software [copyright holder]</p></li>
 <li><p>Valve Software [copyright holder]</p></li>
 <li><p>Tenacious Software LLC [copyright holder]</p></li>
 <li><p>Facebook, Inc. [copyright holder]</p></li>
