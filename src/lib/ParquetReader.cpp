@@ -221,7 +221,8 @@ void ParquetReader::read_column_chunk(ColumnChunk &cc) {
     switch (ph.type) {
     case PageType::DATA_PAGE:
     case PageType::DATA_PAGE_V2: {
-      uint32_t num_values = read_data_page(cc, page, from, ph, ptr, ph.compressed_page_size);
+      DataPage dp(cc, ph, page, from);
+      uint32_t num_values = read_data_page(dp, ptr, ph.compressed_page_size);
       from += num_values;
       page++;
       break;
@@ -301,66 +302,78 @@ void ParquetReader::read_dict_page(
   }
 }
 
-uint32_t ParquetReader::read_data_page(
-  ColumnChunk &cc,
-  uint32_t page,
-  uint64_t from,
-  parquet::PageHeader &ph,
-  uint8_t *buf,
-  int32_t len) {
-
-  int32_t num_values;
-  Encoding::type encoding;
-
-  switch (ph.type) {
-  case PageType::DATA_PAGE:
-    if (!ph.__isset.data_page_header) {
-      throw runtime_error("Invalid page, data page header not set");
-    }
-    num_values = ph.data_page_header.num_values;
-    encoding = ph.data_page_header.encoding;
-    break;
-  case PageType::DATA_PAGE_V2:
-    if (!ph.__isset.data_page_header_v2) {
-      throw runtime_error("Invalid page, data page header not set");
-    }
-    num_values = ph.data_page_header_v2.num_values;
-    encoding = ph.data_page_header_v2.encoding;
-    break;
-  default:
-    throw runtime_error("Invalid page type, expected data page");
+uint32_t ParquetReader::read_data_page(DataPage &dp, uint8_t *buf, int32_t len) {
+  if (dp.ph.type == PageType::DATA_PAGE) {
+    return read_data_page_v1(dp, buf, len);
+  } else if (dp.ph.type == PageType::DATA_PAGE_V2) {
+    return read_data_page_v2(dp, buf, len);
   }
+}
+
+uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t len) {
+  if (!dp.ph.__isset.data_page_header) {
+    throw runtime_error("Invalid page, data page header not set");
+  }
+  dp.set_num_values(dp.ph.data_page_header.num_values);
+  dp.encoding = dp.ph.data_page_header.encoding;
 
   uint8_t *def_buf = nullptr;
   uint32_t def_len = 0;
 
-  if (cc.optional) {
-    if (ph.type == PageType::DATA_PAGE &&
-        ph.data_page_header.definition_level_encoding != Encoding::RLE) {
+  if (dp.cc.optional) {
+    if (dp.ph.data_page_header.definition_level_encoding != Encoding::RLE) {
       throw runtime_error("Unknown definition level encoding");
     }
     def_buf = buf;
-    if (ph.type == PageType::DATA_PAGE) {
-      memcpy(&def_len, def_buf, sizeof(uint32_t));
-      def_buf += sizeof(uint32_t);
-      buf += sizeof(uint32_t);
-    } else {
-      def_len = ph.data_page_header_v2.definition_levels_byte_length;
-    }
+    memcpy(&def_len, def_buf, sizeof(uint32_t));
+    def_buf += sizeof(uint32_t);
+    buf += sizeof(uint32_t);
+    len -= sizeof(uint32_t);
     buf += def_len;
-  }
-
-  // TODO: uncompress
-
-  DataPage dp(cc, ph, page, num_values, from);
-  alloc_data_page(dp);
-
-  if (cc.optional) {
+    len -= def_len;
+    def_levels.resize(dp.num_values);
     RleBpDecoder dec((const uint8_t *)def_buf, def_len, 1);
-    dec.GetBatch<int32_t>(dp.present, num_values);
+    uint32_t num_present = dec.GetBatchCount<uint8_t>(
+      (uint8_t*) def_levels.ptr,
+      dp.num_values
+    );
+    dp.set_num_present(num_present);
+  }
+  alloc_data_page(dp);
+  memcpy(dp.present, def_levels.ptr, dp.num_values);
+
+  return read_data_page_internal(dp, buf, len);
+}
+
+uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t len) {
+  if (!dp.ph.__isset.data_page_header_v2) {
+    throw runtime_error("Invalid page, data page v2 header not set");
+  }
+  dp.set_num_values(dp.ph.data_page_header_v2.num_values);
+  dp.encoding = dp.ph.data_page_header_v2.encoding;
+
+  uint8_t *def_buf = nullptr;
+  uint32_t def_len = 0;
+
+  if (dp.cc.optional) {
+    def_buf = buf;
+    def_len = dp.ph.data_page_header_v2.definition_levels_byte_length;
+    buf += def_len;
+    len -= def_len;
+    uint32_t num_present = dp.num_values - dp.ph.data_page_header_v2.num_nulls;
+    dp.set_num_present(num_present);
+    alloc_data_page(dp);
+    RleBpDecoder dec((const uint8_t *)def_buf, def_len, 1);
+    dec.GetBatch<uint8_t>(dp.present, dp.num_values);
+  } else {
+    alloc_data_page(dp);
   }
 
-  switch (cc.sel.type) {
+  return read_data_page_internal(dp, buf, len);
+}
+
+uint32_t ParquetReader::read_data_page_internal(DataPage &dp, uint8_t *buf, int32_t len) {
+  switch (dp.cc.sel.type) {
   case Type::BOOLEAN:
     read_data_page_boolean(dp, buf, len);
     break;
@@ -390,7 +403,7 @@ uint32_t ParquetReader::read_data_page(
     break;
   }
 
-  return num_values;
+  return dp.num_present;
 }
 
 void ParquetReader::read_data_page_rle(DataPage &dp, uint8_t *buf) {
@@ -398,18 +411,18 @@ void ParquetReader::read_data_page_rle(DataPage &dp, uint8_t *buf) {
   int bw = *((uint8_t *) buf);
   buf += 1; buflen -= 1;
   if (bw == 0) {
-    memset(dp.data, 0, dp.len * sizeof(uint32_t));
+    memset(dp.data, 0, dp.num_present * sizeof(uint32_t));
   } else {
     RleBpDecoder dec((const uint8_t*) buf, buflen, bw);
     // TODO: missing values
-    dec.GetBatch<uint32_t>((uint32_t*) dp.data, dp.len);
+    dec.GetBatch<uint32_t>((uint32_t*) dp.data, dp.num_present);
   }
 }
 
 void ParquetReader::read_data_page_boolean(DataPage &dp, uint8_t *buf, int32_t len) {
   switch (dp.encoding) {
   case Encoding::PLAIN: {
-    unpack_plain_boolean((uint32_t*) dp.data, (uint8_t*) buf, dp.len);
+    unpack_plain_boolean((uint32_t*) dp.data, (uint8_t*) buf, dp.num_present);
     break;
   }
   // TODO: rest
@@ -426,7 +439,7 @@ void ParquetReader::read_data_page_int32(
 
   switch (dp.encoding) {
   case Encoding::PLAIN: {
-    memcpy(dp.data, buf, dp.len * sizeof(int32_t));
+    memcpy(dp.data, buf, dp.num_present * sizeof(int32_t));
     break;
   }
   case Encoding::RLE_DICTIONARY:
@@ -448,7 +461,7 @@ void ParquetReader::read_data_page_int64(
 
   switch (dp.encoding) {
   case Encoding::PLAIN: {
-    memcpy(dp.data, buf, dp.len * sizeof(int64_t));
+    memcpy(dp.data, buf, dp.num_present * sizeof(int64_t));
     break;
   }
   case Encoding::RLE_DICTIONARY:
@@ -470,7 +483,7 @@ void ParquetReader::read_data_page_int96(
 
   switch (dp.encoding) {
   case Encoding::PLAIN: {
-    memcpy(dp.data, buf, dp.len * sizeof(int96_t));
+    memcpy(dp.data, buf, dp.num_present * sizeof(int96_t));
     break;
   }
   case Encoding::RLE_DICTIONARY:
@@ -492,7 +505,7 @@ void ParquetReader::read_data_page_float(
 
   switch (dp.encoding) {
   case Encoding::PLAIN: {
-    memcpy(dp.data, buf, dp.len * sizeof(float));
+    memcpy(dp.data, buf, dp.num_present * sizeof(float));
     break;
   }
   case Encoding::RLE_DICTIONARY:
@@ -513,7 +526,7 @@ void ParquetReader::read_data_page_double(
 
   switch (dp.encoding) {
   case Encoding::PLAIN: {
-    memcpy(dp.data, buf, dp.len * sizeof(double));
+    memcpy(dp.data, buf, dp.num_present * sizeof(double));
     break;
   }
   case Encoding::RLE_DICTIONARY:

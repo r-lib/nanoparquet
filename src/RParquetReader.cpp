@@ -352,7 +352,7 @@ void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
   }
 
   if (cc.optional) {
-    SET_VECTOR_ELT(x, 3, Rf_allocVector(LGLSXP, num_rows));
+    SET_VECTOR_ELT(x, 3, Rf_allocVector(RAWSXP, num_rows));
   }
 }
 
@@ -410,10 +410,10 @@ void RParquetReader::alloc_data_page(DataPage &data) {
 
     SEXP p = Rf_allocVector(VECSXP, 4);
     SET_VECTOR_ELT(v, data.page, p);
-    SET_VECTOR_ELT(p, 0, Rf_ScalarInteger(data.len));
+    SET_VECTOR_ELT(p, 0, Rf_ScalarInteger(data.num_present));
     SET_VECTOR_ELT(p, 1, Rf_allocVector(RAWSXP, data.strs.total_len));
-    SET_VECTOR_ELT(p, 2, Rf_allocVector(INTSXP, data.len));
-    SET_VECTOR_ELT(p, 3, Rf_allocVector(INTSXP, data.len));
+    SET_VECTOR_ELT(p, 2, Rf_allocVector(INTSXP, data.num_present));
+    SET_VECTOR_ELT(p, 3, Rf_allocVector(INTSXP, data.num_present));
     data.strs.buf = (char*) RAW(VECTOR_ELT(p, 1));
     data.strs.offsets = (uint32_t*) INTEGER(VECTOR_ELT(p, 2));
     data.strs.lengths = (uint32_t*) INTEGER(VECTOR_ELT(p, 3));
@@ -423,6 +423,6 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   }
 
   if (data.cc.optional) {
-    data.present = INTEGER(VECTOR_ELT(x, 3)) + data.from;
+    data.present = (uint8_t*) RAW(VECTOR_ELT(x, 3)) + data.from;
   }
 }

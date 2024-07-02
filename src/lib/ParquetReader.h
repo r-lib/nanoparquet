@@ -68,9 +68,9 @@ public:
 struct DataPage {
 public:
   DataPage(ColumnChunk &cc, parquet::PageHeader &ph, uint32_t page,
-           uint32_t len, uint32_t from)
+           uint32_t from)
     : cc(cc), ph(ph), page(page), data(nullptr), present(nullptr),
-      len(len), from(from) {
+      num_values(0), num_present(0), from(from) {
     if (ph.__isset.data_page_header) {
       encoding = ph.data_page_header.encoding;
     } else {
@@ -78,16 +78,26 @@ public:
     }
     if (cc.sel.type == parquet::Type::BYTE_ARRAY ||
         cc.sel.type == parquet::Type::FIXED_LEN_BYTE_ARRAY) {
-      strs.len = len;
+      strs.len = num_present;
       strs.total_len = ph.uncompressed_page_size;
     }
+  }
+  void set_num_values(uint32_t num_values_) {
+    num_values = num_values_;
+    num_present = num_values_;
+    strs.len = num_values_;
+  }
+  void set_num_present(uint32_t num_present_) {
+    num_present = num_present_;
+    strs.len = num_present_;
   }
   ColumnChunk &cc;
   parquet::PageHeader &ph;
   uint32_t page;
   uint8_t *data;
-  int32_t *present;
-  uint32_t len;
+  uint8_t *present;
+  uint32_t num_values;
+  uint32_t num_present;
   uint64_t from;
   parquet::Encoding::type encoding;
   StringSet strs;
@@ -130,6 +140,7 @@ protected:
   std::vector<int> leaf_cols; // map schema columns to leaf columns in chunks
 
   ByteBuffer tmp_buf;
+  ByteBuffer def_levels;
 
   void init_file_on_disk();
   void check_meta_data();
@@ -143,14 +154,10 @@ protected:
     int32_t len
   );
 
-  uint32_t read_data_page(
-    ColumnChunk &cc,
-    uint32_t page,
-    uint64_t from,
-    parquet::PageHeader &ph,
-    uint8_t *buf,
-    int32_t len
-  );
+  uint32_t read_data_page(DataPage &dp, uint8_t *buf, int32_t len);
+  uint32_t read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t len);
+  uint32_t read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t len);
+  uint32_t read_data_page_internal(DataPage &dp, uint8_t *buf, int32_t len);
 
   void read_data_page_rle(DataPage &dp, uint8_t *buf);
 
