@@ -70,6 +70,197 @@ RParquetReader::~RParquetReader() {
 
 // ------------------------------------------------------------------------
 
+// We create a VECSXP for every column chunk, with elements:
+// 0 metadata
+// 1 dictionary
+// 2 data
+// 3 present
+//
+// metadata:
+// 0 rtype: the R type, e.g. INTSXP
+// 1 elsize: parquet element size in bytes
+// 2 num_rows: number of rows in the row group (REALSXP)
+// 3 rsize: how many R <rtype> makes up a Parquet type
+// 4 dict: whether there is a dictionary page
+// 5 num_present: number of non-missing values (REALSXP)
+//
+// dictionary:
+// - non-dictionary columns: NULL
+// - non byte arrays: dictionary values
+// - byte arrays: VECSXP:
+//   - number of dictionary values (INTSXP)
+//   - raw buffer containing all strings
+//   - integer offsets within the buffer
+//   - integer lengths for the strings
+//
+// data:
+// - for columns with a dictionary: integer indices (w/o NAs)
+// - for non byte-array columns: actual values (w/o NAs)
+// - for byte-array columns: VECSXP:
+//   - number of values
+//   - raw buffer of all strings (w/o NAs)
+//   - integer offsets within the buffer
+//   - integer lengths for the strings
+//
+// present:
+// - NULL if the column is REQUIRED
+// - LGLSXP of num_values, whether a value is present or not
+
+void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
+  // R type for the chunk, and its numer of bytes
+  int rtype;
+  int elsize = -1;
+  // number of rows in the column chunks
+  R_xlen_t num_rows = cc.num_rows;
+  // how many R elements we need for one parquet element
+  int rsize = 1;
+  bool dict = cc.has_dictionary;
+  bool byte_array = false;
+
+  switch (cc.sel.type) {
+  case parquet::Type::BOOLEAN:
+    rtype = LGLSXP;
+    elsize = sizeof(int);
+    break;
+  case parquet::Type::INT32:
+    rtype = INTSXP;
+    elsize = sizeof(int);
+    break;
+  case parquet::Type::INT64:
+    rtype = REALSXP;
+    elsize = sizeof(double);
+    break;
+  case parquet::Type::INT96:
+    rtype = INTSXP;
+    elsize = sizeof(int) * 3;
+    rsize = 3;
+    break;
+  case parquet::Type::FLOAT:
+    rtype = REALSXP;
+    elsize = sizeof(double);
+    break;
+  case parquet::Type::DOUBLE:
+    rtype = REALSXP;
+    elsize = sizeof(double);
+    break;
+  case parquet::Type::BYTE_ARRAY:
+  case parquet::Type::FIXED_LEN_BYTE_ARRAY:
+    rtype = STRSXP;
+    byte_array = true;
+    break;
+  default:
+    throw std::runtime_error("Type not implemented yet");
+  }
+
+  const char *nms[] = { "metadata", "dict", "data", "present", "" };
+  SEXP x = Rf_mkNamed(VECSXP, nms);
+  SET_VECTOR_ELT(VECTOR_ELT(columns, cc.column), cc.row_group, x);
+  const char *nms2[] = {
+    "rtype",
+    "elsize",
+    "num_rows",
+    "rsize",
+    "dict",
+    "num_pressent",
+    ""
+  };
+  SEXP metadata = Rf_mkNamed(VECSXP, nms2);
+  SET_VECTOR_ELT(x, 0, metadata);
+  SET_VECTOR_ELT(metadata, 0, Rf_ScalarInteger(rtype));
+  SET_VECTOR_ELT(metadata, 1, Rf_ScalarInteger(elsize));
+  SET_VECTOR_ELT(metadata, 2, Rf_ScalarReal(num_rows));
+  SET_VECTOR_ELT(metadata, 3, Rf_ScalarInteger(rsize));
+  SET_VECTOR_ELT(metadata, 4, Rf_ScalarLogical(dict));
+  SET_VECTOR_ELT(metadata, 5, Rf_ScalarReal(0));
+
+  // dictionary is allocated later, at the dict page
+
+  // data is allocaed later for byte arrays
+  if (dict) {
+    SET_VECTOR_ELT(x, 2, Rf_allocVector(INTSXP, num_rows));
+  } else if (!byte_array) {
+    SET_VECTOR_ELT(x, 2, Rf_allocVector(rtype, num_rows * rsize));
+  }
+
+  if (cc.optional) {
+    SET_VECTOR_ELT(x, 3, Rf_allocVector(RAWSXP, num_rows));
+  }
+}
+
+// ------------------------------------------------------------------------
+
+void RParquetReader::alloc_dict_page(DictPage &dict) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group);
+  SEXP meta = VECTOR_ELT(x, 0);
+  int rtype = INTEGER(VECTOR_ELT(meta, 0))[0];
+  int rsize = INTEGER(VECTOR_ELT(meta, 3))[0];
+
+  if (dict.cc.sel.type == parquet::Type::BYTE_ARRAY ||
+      dict.cc.sel.type == parquet::Type::FIXED_LEN_BYTE_ARRAY) {
+    SEXP vals = Rf_allocVector(VECSXP, 4);
+    SET_VECTOR_ELT(x, 1, vals);
+    SET_VECTOR_ELT(vals, 0, Rf_ScalarInteger(dict.dict_len));
+    SET_VECTOR_ELT(vals, 1, Rf_allocVector(RAWSXP, dict.strs.total_len));
+    SET_VECTOR_ELT(vals, 2, Rf_allocVector(INTSXP, dict.dict_len));
+    SET_VECTOR_ELT(vals, 3, Rf_allocVector(INTSXP, dict.dict_len));
+    dict.strs.buf = (char*) RAW(VECTOR_ELT(vals, 1));
+    dict.strs.offsets = (uint32_t*) INTEGER(VECTOR_ELT(vals, 2));
+    dict.strs.lengths = (uint32_t*) INTEGER(VECTOR_ELT(vals, 3));
+  } else {
+    SEXP vals = Rf_allocVector(rtype, dict.dict_len * rsize);
+    SET_VECTOR_ELT(x, 1, vals);
+    dict.dict = (uint8_t*) DATAPTR(vals);
+  }
+}
+
+// ------------------------------------------------------------------------
+
+void RParquetReader::alloc_data_page(DataPage &data) {
+  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group);
+  SEXP meta = VECTOR_ELT(x, 0);
+  int elsize = INTEGER(VECTOR_ELT(meta, 3))[0];
+  int dict = LOGICAL(VECTOR_ELT(meta, 4))[0];
+
+  if (dict) {
+    data.data = (uint8_t *) INTEGER(VECTOR_ELT(x, 2)) + data.from;
+
+  } else if (data.cc.sel.type == parquet::Type::BYTE_ARRAY ||
+             data.cc.sel.type == parquet::Type::FIXED_LEN_BYTE_ARRAY) {
+    SEXP v = VECTOR_ELT(x, 2);
+    R_xlen_t len = Rf_xlength(v);
+    if (Rf_length(v) <= data.page) {
+      R_xlen_t new_len = len * 1.5 + 5;
+      SEXP nv = PROTECT(Rf_allocVector(VECSXP, new_len));
+      for (R_xlen_t i = 0; i < len; i++) {
+        SET_VECTOR_ELT(nv, i, VECTOR_ELT(v, i));
+      }
+      SET_VECTOR_ELT(x, 2, nv);
+      UNPROTECT(1);
+      v = nv;
+    }
+
+    SEXP p = Rf_allocVector(VECSXP, 4);
+    SET_VECTOR_ELT(v, data.page, p);
+    SET_VECTOR_ELT(p, 0, Rf_ScalarInteger(data.num_present));
+    SET_VECTOR_ELT(p, 1, Rf_allocVector(RAWSXP, data.strs.total_len));
+    SET_VECTOR_ELT(p, 2, Rf_allocVector(INTSXP, data.num_present));
+    SET_VECTOR_ELT(p, 3, Rf_allocVector(INTSXP, data.num_present));
+    data.strs.buf = (char*) RAW(VECTOR_ELT(p, 1));
+    data.strs.offsets = (uint32_t*) INTEGER(VECTOR_ELT(p, 2));
+    data.strs.lengths = (uint32_t*) INTEGER(VECTOR_ELT(p, 3));
+
+  } else {
+    data.data = ((uint8_t*) DATAPTR(VECTOR_ELT(x, 2))) + data.from * elsize;
+  }
+
+  if (data.cc.optional) {
+    REAL(VECTOR_ELT(meta, 5))[0] += data.num_present;
+    data.present = (uint8_t*) RAW(VECTOR_ELT(x, 3)) + data.from;
+  }
+}
+
+// ------------------------------------------------------------------------
+
 void RParquetReader::convert_columns_to_r() {
   for (auto cn = 0; cn < file_meta_data_.schema.size(); cn++) {
     parquet::SchemaElement &sel = file_meta_data_.schema[cn];
@@ -158,35 +349,41 @@ void RParquetReader::convert_float_to_double(SEXP x) {
 
 void RParquetReader::convert_buffer_to_string(SEXP x) {
   SEXP meta = VECTOR_ELT(x, 0);
-  bool dict = LOGICAL(VECTOR_ELT(meta, 4))[0];
+  bool isdict = LOGICAL(VECTOR_ELT(meta, 4))[0];
 
-  if (dict) {
-    SEXP nv = convert_buffer_to_string1(VECTOR_ELT(x, 1));
+  if (isdict) {
+    SEXP dict = VECTOR_ELT(x, 1);
+    R_xlen_t dict_len = INTEGER(VECTOR_ELT(dict, 0))[0];
+    SEXP nv = PROTECT(Rf_allocVector(STRSXP, dict_len));
+    R_xlen_t idx = 0;
+    convert_buffer_to_string1(dict, nv, idx);
+    UNPROTECT(1);
     SET_VECTOR_ELT(x, 1, nv);
   } else {
+    R_xlen_t nr = REAL(VECTOR_ELT(meta, 2))[0];
+    SEXP nv = PROTECT(Rf_allocVector(STRSXP, nr));
+    R_xlen_t idx = 0;
     SEXP data = VECTOR_ELT(x, 2);
     R_xlen_t len = Rf_length(data);
     for (R_xlen_t i = 0; i < len; i++) {
       SEXP v = VECTOR_ELT(data, i);
       if (Rf_isNull(v)) break;
-      SEXP nv = convert_buffer_to_string1(v);
-      SET_VECTOR_ELT(data, i, nv);
+      convert_buffer_to_string1(v, nv, idx);
     }
+    UNPROTECT(1);
+    SET_VECTOR_ELT(x, 2, nv);
   }
 }
 
-SEXP RParquetReader::convert_buffer_to_string1(SEXP x) {
+void RParquetReader::convert_buffer_to_string1(SEXP x, SEXP nv, R_xlen_t &idx) {
   R_xlen_t nr = INTEGER(VECTOR_ELT(x, 0))[0];
   char *buf = (char*) RAW(VECTOR_ELT(x, 1));
   uint32_t *offsets = (uint32_t*) INTEGER(VECTOR_ELT(x, 2));
   uint32_t *lengths = (uint32_t*) INTEGER(VECTOR_ELT(x, 3));
-  SEXP nv = PROTECT(Rf_allocVector(STRSXP, nr));
   for (R_xlen_t i = 0; i < nr; i++, offsets++, lengths++) {
     char *s = buf + *offsets;
-    SET_STRING_ELT(nv, i, Rf_mkCharLenCE(s, *lengths, CE_UTF8));
+    SET_STRING_ELT(nv, idx++, Rf_mkCharLenCE(s, *lengths, CE_UTF8));
   }
-  UNPROTECT(1);
-  return nv;
 }
 
 // ------------------------------------------------------------------------
@@ -247,182 +444,90 @@ SEXP RParquetReader::subset_vector(SEXP x, SEXP idx) {
   return nv;
 }
 
-// ------------------------------------------------------------------------
-
-// We create a VECSXP for every column chunk, with elements:
-// 0 metadata
-// 1 dictionary
-// 2 data
-// 3 present
-//
-// metadata:
-// 0 rtype: the R type, e.g. INTSXP
-// 1 elsize: parquet element size in bytes
-// 2 num_rows: number of rows in the row group
-// 3 rsize: how many R <rtype> makes up a Parquet type
-// 4 dict: whether there is a dictionary page
-//
-// dictionary:
-// - non-dictionary columns: NULL
-// - non byte arrays: dictionary values
-// - byte arrays: VECSXP:
-//   - number of dictionary values
-//   - raw buffer containing all strings
-//   - integer offsets within the buffer
-//   - integer lengths for the strings
-//
-// data:
-// - for columns with a dictionary: integer indices (w/o NAs)
-// - for non byte-array columns: actual values (w/o NAs)
-// - for byte-array columns: VECSXP:
-//   - number of values
-//   - raw buffer of all strings (w/o NAs)
-//   - integer offsets within the buffer
-//   - integer lengths for the strings
-//
-// present:
-// - NULL if the column is REQUIRED
-// - LGLSXP of num_values, whether a value is present or not
-
-void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
-  // R type for the chunk, and its numer of bytes
-  int rtype;
-  int elsize = -1;
-  // number of rows in the column chunks
-  R_xlen_t num_rows = cc.num_rows;
-  // how many R elements we need for one parquet element
-  int rsize = 1;
-  bool dict = cc.has_dictionary;
-  bool byte_array = false;
-
-  switch (cc.sel.type) {
-  case parquet::Type::BOOLEAN:
-    rtype = LGLSXP;
-    elsize = sizeof(int);
-    break;
-  case parquet::Type::INT32:
-    rtype = INTSXP;
-    elsize = sizeof(int);
-    break;
-  case parquet::Type::INT64:
-    rtype = REALSXP;
-    elsize = sizeof(double);
-    break;
-  case parquet::Type::INT96:
-    rtype = INTSXP;
-    elsize = sizeof(int) * 3;
-    rsize = 3;
-    break;
-  case parquet::Type::FLOAT:
-    rtype = REALSXP;
-    elsize = sizeof(double);
-    break;
-  case parquet::Type::DOUBLE:
-    rtype = REALSXP;
-    elsize = sizeof(double);
-    break;
-  case parquet::Type::BYTE_ARRAY:
-  case parquet::Type::FIXED_LEN_BYTE_ARRAY:
-    rtype = STRSXP;
-    byte_array = true;
-    break;
-  default:
-    throw std::runtime_error("Type not implemented yet");
-  }
-
-  const char *nms[] = { "metadata", "dict", "data", "present", "" };
-  SEXP x = Rf_mkNamed(VECSXP, nms);
-  SET_VECTOR_ELT(VECTOR_ELT(columns, cc.column), cc.row_group, x);
-  const char *nms2[] = { "rtype", "elsize", "num_rows", "rsize", "dict", "" };
-  SEXP metadata = Rf_mkNamed(VECSXP, nms2);
-  SET_VECTOR_ELT(x, 0, metadata);
-  SET_VECTOR_ELT(metadata, 0, Rf_ScalarInteger(rtype));
-  SET_VECTOR_ELT(metadata, 1, Rf_ScalarInteger(elsize));
-  SET_VECTOR_ELT(metadata, 2, Rf_ScalarReal(num_rows));
-  SET_VECTOR_ELT(metadata, 3, Rf_ScalarInteger(rsize));
-  SET_VECTOR_ELT(metadata, 4, Rf_ScalarLogical(dict));
-
-  // dictionary is allocated later, at the dict page
-
-  // data is allocaed later for byte arrays
-  if (dict) {
-    SET_VECTOR_ELT(x, 2, Rf_allocVector(INTSXP, num_rows));
-  } else if (!byte_array) {
-    SET_VECTOR_ELT(x, 2, Rf_allocVector(rtype, num_rows * rsize));
-  }
-
-  if (cc.optional) {
-    SET_VECTOR_ELT(x, 3, Rf_allocVector(RAWSXP, num_rows));
-  }
-}
-
-// ------------------------------------------------------------------------
-
-void RParquetReader::alloc_dict_page(DictPage &dict) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, dict.cc.column), dict.cc.row_group);
-  SEXP meta = VECTOR_ELT(x, 0);
-  int rtype = INTEGER(VECTOR_ELT(meta, 0))[0];
-  int rsize = INTEGER(VECTOR_ELT(meta, 3))[0];
-
-  if (dict.cc.sel.type == parquet::Type::BYTE_ARRAY ||
-      dict.cc.sel.type == parquet::Type::FIXED_LEN_BYTE_ARRAY) {
-    SEXP vals = Rf_allocVector(VECSXP, 4);
-    SET_VECTOR_ELT(x, 1, vals);
-    SET_VECTOR_ELT(vals, 0, Rf_ScalarInteger(dict.dict_len));
-    SET_VECTOR_ELT(vals, 1, Rf_allocVector(RAWSXP, dict.strs.total_len));
-    SET_VECTOR_ELT(vals, 2, Rf_allocVector(INTSXP, dict.dict_len));
-    SET_VECTOR_ELT(vals, 3, Rf_allocVector(INTSXP, dict.dict_len));
-    dict.strs.buf = (char*) RAW(VECTOR_ELT(vals, 1));
-    dict.strs.offsets = (uint32_t*) INTEGER(VECTOR_ELT(vals, 2));
-    dict.strs.lengths = (uint32_t*) INTEGER(VECTOR_ELT(vals, 3));
-  } else {
-    SEXP vals = Rf_allocVector(rtype, dict.dict_len * rsize);
-    SET_VECTOR_ELT(x, 1, vals);
-    dict.dict = (uint8_t*) DATAPTR(vals);
-  }
-}
-
-// ------------------------------------------------------------------------
-
-void RParquetReader::alloc_data_page(DataPage &data) {
-  SEXP x = VECTOR_ELT(VECTOR_ELT(columns, data.cc.column), data.cc.row_group);
-  SEXP meta = VECTOR_ELT(x, 0);
-  int elsize = INTEGER(VECTOR_ELT(meta, 3))[0];
-  int dict = LOGICAL(VECTOR_ELT(meta, 4))[0];
-
-  if (dict) {
-    data.data = (uint8_t *) INTEGER(VECTOR_ELT(x, 2)) + data.from;
-
-  } else if (data.cc.sel.type == parquet::Type::BYTE_ARRAY ||
-             data.cc.sel.type == parquet::Type::FIXED_LEN_BYTE_ARRAY) {
-    SEXP v = VECTOR_ELT(x, 2);
-    R_xlen_t len = Rf_xlength(v);
-    if (Rf_length(v) <= data.page) {
-      R_xlen_t new_len = len * 1.5 + 5;
-      SEXP nv = PROTECT(Rf_allocVector(VECSXP, new_len));
-      for (R_xlen_t i = 0; i < len; i++) {
-        SET_VECTOR_ELT(nv, i, VECTOR_ELT(v, i));
-      }
-      SET_VECTOR_ELT(x, 2, nv);
-      UNPROTECT(1);
-      v = nv;
+void RParquetReader::handle_missing() {
+  for (auto cn = 0; cn < file_meta_data_.schema.size(); cn++) {
+    parquet::SchemaElement &sel = file_meta_data_.schema[cn];
+    if (sel.__isset.num_children) {
+      continue;
     }
+    if (sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
+      continue;
+    }
+    for (auto rg = 0; rg < file_meta_data_.row_groups.size(); rg++) {
+      SEXP col = VECTOR_ELT(VECTOR_ELT(columns, cn), rg);
+      SEXP meta = VECTOR_ELT(col, 0);
+      SEXP data = VECTOR_ELT(col, 2);
+      SEXP pres = VECTOR_ELT(col, 3);
+      bool isdict = LOGICAL(VECTOR_ELT(meta, 4))[0];
+      R_xlen_t num_values = REAL(VECTOR_ELT(meta, 2))[0];
+      R_xlen_t num_present = REAL(VECTOR_ELT(meta, 5))[0];
+      R_xlen_t num_missing = num_values - num_present;
+      int rtype = INTEGER(VECTOR_ELT(meta, 0))[0];
 
-    SEXP p = Rf_allocVector(VECSXP, 4);
-    SET_VECTOR_ELT(v, data.page, p);
-    SET_VECTOR_ELT(p, 0, Rf_ScalarInteger(data.num_present));
-    SET_VECTOR_ELT(p, 1, Rf_allocVector(RAWSXP, data.strs.total_len));
-    SET_VECTOR_ELT(p, 2, Rf_allocVector(INTSXP, data.num_present));
-    SET_VECTOR_ELT(p, 3, Rf_allocVector(INTSXP, data.num_present));
-    data.strs.buf = (char*) RAW(VECTOR_ELT(p, 1));
-    data.strs.offsets = (uint32_t*) INTEGER(VECTOR_ELT(p, 2));
-    data.strs.lengths = (uint32_t*) INTEGER(VECTOR_ELT(p, 3));
+      // Need to do this backwards to be able to do it in place
+      if (isdict || rtype == INTSXP) {
+        int *src = INTEGER(data) + num_present - 1;
+        int *tgt = INTEGER(data) + num_values - 1;
+        uint8_t *p = (uint8_t*) RAW(pres) + num_values - 1;
+        while (num_missing > 0) {
+          if (*p) {
+            *tgt-- = *src--;
+            p--;
+          } else {
+            *tgt-- = NA_INTEGER;
+            p--;
+            num_missing--;
+          }
+        }
 
-  } else {
-    data.data = ((uint8_t*) DATAPTR(VECTOR_ELT(x, 2))) + data.from * elsize;
-  }
+      } else if (rtype == REALSXP) {
+        double *src = REAL(data) + num_present - 1;
+        double *tgt = REAL(data) + num_values - 1;
+        uint8_t *p = (uint8_t*) RAW(pres) + num_values - 1;
+        while (num_missing > 0) {
+          if (*p) {
+            *tgt-- = *src--;
+            p--;
+          } else {
+            *tgt-- = NA_REAL;
+            p--;
+            num_missing--;
+          }
+        }
 
-  if (data.cc.optional) {
-    data.present = (uint8_t*) RAW(VECTOR_ELT(x, 3)) + data.from;
+      } else if (rtype == LGLSXP) {
+        int *src = LOGICAL(data) + num_present - 1;
+        int *tgt = LOGICAL(data) + num_values - 1;
+        uint8_t *p = (uint8_t*) RAW(pres) + num_values - 1;
+        while (num_missing > 0) {
+          if (*p) {
+            *tgt-- = *src--;
+            p--;
+          } else {
+            *tgt-- = NA_LOGICAL;
+            p--;
+            num_missing--;
+          }
+        }
+
+      } else if (rtype == STRSXP) {
+        R_xlen_t src = num_present - 1;
+        R_xlen_t tgt = num_values - 1;
+        uint8_t *p = (uint8_t*) RAW(pres) + num_values - 1;
+
+        while (num_missing > 0) {
+          if (*p) {
+            SET_STRING_ELT(data, tgt--, STRING_ELT(data, src--));
+            p--;
+          } else {
+            SET_STRING_ELT(data, tgt--, R_NaString);
+            p--;
+            num_missing--;
+          }
+        }
+      }
+
+      SET_VECTOR_ELT(col, 3, R_NilValue);
+    }
   }
 }
