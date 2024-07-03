@@ -307,6 +307,8 @@ uint32_t ParquetReader::read_data_page(DataPage &dp, uint8_t *buf, int32_t len) 
     return read_data_page_v1(dp, buf, len);
   } else if (dp.ph.type == PageType::DATA_PAGE_V2) {
     return read_data_page_v2(dp, buf, len);
+  } else {
+    throw std::runtime_error("Invalid data page");
   }
 }
 

@@ -20,6 +20,8 @@ RParquetReader::RParquetReader(std::string filename)
   uint32_t num_cols = fmt.schema.size();
   uint32_t num_row_groups = fmt.row_groups.size();
 
+  create_metadata();
+
   columns = Rf_allocVector(VECSXP, num_cols);
   R_PreserveObject(columns);
   for (auto i = 0; i < num_cols; i++) {
@@ -28,43 +30,152 @@ RParquetReader::RParquetReader(std::string filename)
     SEXP rg = Rf_allocVector(VECSXP, num_row_groups);
     SET_VECTOR_ELT(columns, i, rg);
   }
-
-  const char *meta_named[] = {
-    "num_rows",
-    "row_group_num_rows",
-    "col_name",
-    "type",
-    "converted_type",
-    "logical_type",
-    ""
-  };
-  metadata = Rf_mkNamed(VECSXP, meta_named);
-  R_PreserveObject(metadata);
-  SET_VECTOR_ELT(metadata, 0, Rf_ScalarReal(fmt.num_rows));
-  SEXP rgnr = PROTECT(Rf_allocVector(REALSXP, fmt.row_groups.size()));
-  for (auto i = 0; i < fmt.row_groups.size(); i++) {
-    REAL(rgnr)[i] = fmt.row_groups[i].num_rows;
-  }
-  SET_VECTOR_ELT(metadata, 1, rgnr);
-  UNPROTECT(1);
-  SEXP colnames = PROTECT(Rf_allocVector(STRSXP, num_cols));
-  for (auto i = 0; i < num_cols; i++) {
-    SET_STRING_ELT(
-      colnames,
-      i,
-      Rf_mkCharCE(fmt.schema[i].name.c_str(), CE_UTF8)
-    );
-  }
-  SET_VECTOR_ELT(metadata, 2, colnames);
-  UNPROTECT(1);
 }
 
 RParquetReader::~RParquetReader() {
   if (!Rf_isNull(columns)) {
     R_ReleaseObject(columns);
   }
-  if (!Rf_isNull(metadata)) {
-    R_ReleaseObject(metadata);
+}
+
+// ------------------------------------------------------------------------
+
+// TODO: this does not need to be an R object
+
+void RParquetReader::create_metadata() {
+  parquet::FileMetaData fmt = get_file_meta_data();
+  metadata.num_rows = fmt.num_rows;
+  metadata.num_cols = fmt.schema.size();
+  metadata.num_row_groups = fmt.row_groups.size();
+  metadata.row_group_num_rows.resize(metadata.num_row_groups);
+
+  for (auto i = 0; i < fmt.row_groups.size(); i++) {
+    metadata.row_group_num_rows[i] = fmt.row_groups[i].num_rows;
+  }
+
+  metadata.r_types.resize(metadata.num_cols);
+  for (auto i = 0; i < metadata.num_cols; i++) {
+    if (fmt.schema[i].__isset.num_children) {
+      continue;
+    }
+    rtype rt(fmt.schema[i]);
+    metadata.r_types[i] = rt;
+  }
+}
+
+// ------------------------------------------------------------------------
+
+rtype::rtype(parquet::SchemaElement &sel) {
+  switch (sel.type) {
+  case parquet::Type::BOOLEAN:
+    type = LGLSXP;
+    elsize = sizeof(int);
+    break;
+  case parquet::Type::INT32:
+    type = INTSXP;
+    elsize = sizeof(int);
+    if ((sel.__isset.logicalType && sel.logicalType.__isset.DATE) ||
+        (sel.__isset.converted_type &&
+         sel.converted_type == parquet::ConvertedType::DATE)) {
+      classes.push_back("Date");
+    } else if ((sel.__isset.logicalType && sel.logicalType.__isset.TIME &&
+                sel.logicalType.TIME.unit.__isset.MILLIS) ||
+               (sel.__isset.converted_type &&
+                sel.converted_type == parquet::ConvertedType::TIME_MILLIS)) {
+      classes.push_back("hms");
+      classes.push_back("difftime");
+      units.push_back("secs");
+    }
+    break;
+  case parquet::Type::INT64:
+    type = REALSXP;
+    elsize = sizeof(double);
+    if ((sel.__isset.logicalType &&
+         sel.logicalType.__isset.TIMESTAMP &&
+         (sel.logicalType.TIMESTAMP.unit.__isset.MILLIS ||
+          sel.logicalType.TIMESTAMP.unit.__isset.MICROS ||
+          sel.logicalType.TIMESTAMP.unit.__isset.NANOS)) ||
+        (sel.__isset.converted_type &&
+         (sel.converted_type == parquet::ConvertedType::TIMESTAMP_MILLIS ||
+          sel.converted_type == parquet::ConvertedType::TIMESTAMP_MICROS))) {
+      classes.push_back("POSIXct");
+      classes.push_back("POSIXt");
+      if (sel.__isset.logicalType &&
+          sel.logicalType.__isset.TIMESTAMP) {
+        if (sel.logicalType.TIMESTAMP.unit.__isset.MILLIS) {
+          time_fct = 1;
+        } else if (sel.logicalType.TIMESTAMP.unit.__isset.MICROS) {
+          time_fct = 1000;
+        } else if (sel.logicalType.TIMESTAMP.unit.__isset.NANOS) {
+          time_fct = 1000 * 1000;
+        }
+      } else if (sel.__isset.converted_type) {
+        if (sel.converted_type == parquet::ConvertedType::TIMESTAMP_MILLIS) {
+          time_fct = 1;
+        } else if (sel.converted_type == parquet::ConvertedType::TIMESTAMP_MICROS) {
+          time_fct = 1000;
+        }
+      }
+      if (!sel.__isset.logicalType ||
+          (sel.logicalType.__isset.TIMESTAMP &&
+           sel.logicalType.TIMESTAMP.isAdjustedToUTC)) {
+        tzone = "UTC";
+      }
+    } else if ((sel.__isset.logicalType &&
+                sel.logicalType.__isset.TIME &&
+                (sel.logicalType.TIME.unit.__isset.MICROS ||
+                   sel.logicalType.TIME.unit.__isset.NANOS)) ||
+                 (sel.__isset.converted_type &&
+                  sel.converted_type == parquet::ConvertedType::TIME_MICROS)) {
+        // can be MICROS or NANOS currently, other values read as INT64
+      if (sel.__isset.logicalType &&
+          sel.logicalType.__isset.TIME) {
+        if (sel.logicalType.TIME.unit.__isset.MICROS) {
+          time_fct = 1000;
+        } else if (sel.logicalType.TIME.unit.__isset.NANOS) {
+          time_fct = 1000 * 1000;
+        }
+      } else if (sel.converted_type == parquet::ConvertedType::TIME_MICROS) {
+        time_fct = 1000;
+      }
+      classes.push_back("hms");
+      classes.push_back("difftime");
+      units.push_back("secs");
+    }
+    break;
+  case parquet::Type::INT96:
+    type = INTSXP;
+    elsize = sizeof(int) * 3;
+    rsize = 3;
+    classes.push_back("POSIXct");
+    classes.push_back("POSIXt");
+    tzone = "UTC";
+    break;
+  case parquet::Type::FLOAT:
+    type = REALSXP;
+    elsize = sizeof(double);
+    break;
+  case parquet::Type::DOUBLE:
+    type = REALSXP;
+    elsize = sizeof(double);
+    break;
+  case parquet::Type::BYTE_ARRAY:
+  case parquet::Type::FIXED_LEN_BYTE_ARRAY:
+    byte_array = true;
+    if ((sel.__isset.logicalType &&
+         (sel.logicalType.__isset.STRING ||
+          sel.logicalType.__isset.ENUM ||
+          sel.logicalType.__isset.UUID)) ||
+        (sel.__isset.converted_type &&
+         sel.converted_type == parquet::ConvertedType::UTF8)) {
+      type = STRSXP;
+    } else if (sel.__isset.converted_type &&
+               sel.converted_type == parquet::ConvertedType::DECIMAL) {
+      type = REALSXP;
+    } else {
+      type = VECSXP;
+    }
+    break;
   }
 }
 
