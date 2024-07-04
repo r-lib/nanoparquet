@@ -9,11 +9,13 @@ SEXP nanoparquet_read2(SEXP filesxp) {
 
   reader.read_all_columns();
   reader.convert_columns_to_r();
-  reader.handle_missing();
-  reader.decode_dicts();
-  reader.rbind_row_groups();
+  // reader.decode_dicts();
 
-  return reader.columns;
+  SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+  SET_VECTOR_ELT(res, 0, reader.columns);
+  SET_VECTOR_ELT(res, 1, reader.tmpdata);
+  UNPROTECT(1);
+  return res;
 }
 
 } // extern "C"

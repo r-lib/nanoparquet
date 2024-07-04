@@ -342,9 +342,17 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
     dp.set_num_present(num_present);
   }
   alloc_data_page(dp);
-  memcpy(dp.present, def_levels.ptr, dp.num_values);
+  if (dp.cc.optional && dp.present != nullptr) {
+    memcpy(dp.present, def_levels.ptr, dp.num_values);
+  }
 
-  return read_data_page_internal(dp, buf, len);
+  uint32_t ret = read_data_page_internal(dp, buf, len);
+  if (dp.cc.optional) {
+    dp.present = (uint8_t*) def_levels.ptr;
+  }
+  add_data_page(dp);
+
+  return ret;
 }
 
 uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t len) {
@@ -366,12 +374,23 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
     dp.set_num_present(num_present);
     alloc_data_page(dp);
     RleBpDecoder dec((const uint8_t *)def_buf, def_len, 1);
-    dec.GetBatch<uint8_t>(dp.present, dp.num_values);
+    if (dp.present) {
+      dec.GetBatch<uint8_t>(dp.present, dp.num_values);
+    } else {
+      def_levels.resize(dp.num_values);
+      dec.GetBatch<uint8_t>((uint8_t*) def_levels.ptr, dp.num_values);
+    }
   } else {
     alloc_data_page(dp);
   }
 
-  return read_data_page_internal(dp, buf, len);
+  uint32_t ret = read_data_page_internal(dp, buf, len);
+  if (!dp.present) {
+    dp.present = (uint8_t*) def_levels.ptr;
+  }
+  add_data_page(dp);
+
+  return ret;
 }
 
 uint32_t ParquetReader::read_data_page_internal(DataPage &dp, uint8_t *buf, int32_t len) {

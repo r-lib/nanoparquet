@@ -129,6 +129,7 @@ public:
   virtual void alloc_column_chunk(ColumnChunk &cc) = 0;
   virtual void alloc_dict_page(DictPage &dict) = 0;
   virtual void alloc_data_page(DataPage &data) = 0;
+  virtual void add_data_page(DataPage &data) = 0;
 
 protected:
   enum parquet_input_type file_type_;
