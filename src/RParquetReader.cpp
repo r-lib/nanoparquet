@@ -624,20 +624,23 @@ void RParquetReader::convert_column_to_r_float(uint32_t cn) {
 }
 
 void RParquetReader::convert_column_to_r_ba_string(uint32_t cn) {
-
+  for (auto rg = 0; rg < metadata.num_row_groups; rg++) {
+    SEXP x = VECTOR_ELT(VECTOR_ELT(tmpdata, cn), rg);
+    convert_buffer_to_string(x);
+  }
 }
 
 void RParquetReader::convert_column_to_r_ba_decimal(uint32_t cn) {
-
+  // TODO
 }
 
 void RParquetReader::convert_column_to_r_ba_raw(uint32_t cn) {
-
+  // TODO
 }
 
 void RParquetReader::convert_buffer_to_string(SEXP x) {
   SEXP meta = VECTOR_ELT(x, 0);
-  bool isdict = LOGICAL(VECTOR_ELT(meta, 4))[0];
+  bool isdict = LOGICAL(VECTOR_ELT(meta, 1))[0];
 
   if (isdict) {
     SEXP dict = VECTOR_ELT(x, 1);
@@ -648,7 +651,7 @@ void RParquetReader::convert_buffer_to_string(SEXP x) {
     SET_VECTOR_ELT(x, 1, nv);
     UNPROTECT(1);
   } else {
-    R_xlen_t nr = REAL(VECTOR_ELT(meta, 2))[0];
+    R_xlen_t nr = REAL(VECTOR_ELT(meta, 0))[0];
     SEXP nv = PROTECT(Rf_allocVector(STRSXP, nr));
     R_xlen_t idx = 0;
     SEXP data = VECTOR_ELT(x, 2);

@@ -52,8 +52,6 @@ public:
   RParquetReader(std::string filename);
   ~RParquetReader();
 
-  rtype get_r_type(parquet::SchemaElement &sel);
-
   void create_metadata();
   void convert_columns_to_r();
   void decode_dicts();
@@ -78,7 +76,6 @@ protected:
   void convert_column_to_r_ba_decimal(uint32_t cn);
   void convert_column_to_r_ba_raw(uint32_t cn);
 
-  void convert_float_to_double(SEXP x);
   void convert_buffer_to_string(SEXP x);
   void convert_buffer_to_string1(SEXP x, SEXP nv, R_xlen_t &idx);
   SEXP subset_vector(SEXP x, SEXP idx);
