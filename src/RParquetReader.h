@@ -61,10 +61,11 @@ public:
   void alloc_column_chunk(ColumnChunk &cc) ;
   void alloc_dict_page(DictPage &dict);
   void alloc_data_page(DataPage &data);
-  void add_data_page(DataPage &data);
 
   SEXP columns = R_NilValue;
   SEXP tmpdata = R_NilValue;
+  SEXP present = R_NilValue;
+  std::vector<std::vector<uint32_t>> num_present;
   rmetadata metadata;
 
 protected:

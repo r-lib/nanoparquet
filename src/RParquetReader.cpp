@@ -19,6 +19,13 @@ RParquetReader::RParquetReader(std::string filename)
 
   // metadata
   create_metadata();
+  num_present.resize(metadata.num_cols);
+  for (auto i = 0; i < metadata.num_cols; i++) {
+    if (file_meta_data_.schema[i].repetition_type !=
+        parquet::FieldRepetitionType::REQUIRED) {
+      num_present[i].resize(metadata.num_row_groups);
+    }
+  }
 
   // columns
   columns = Rf_allocVector(VECSXP, metadata.num_cols);
@@ -26,6 +33,9 @@ RParquetReader::RParquetReader(std::string filename)
   // temporary data for dictionaries
   tmpdata = Rf_allocVector(VECSXP, metadata.num_cols);
   R_PreserveObject(tmpdata);
+  // missing values
+  present = Rf_allocVector(VECSXP, metadata.num_cols);
+  R_PreserveObject(present);
 
   for (auto i = 0; i < metadata.num_cols; i++) {
     // skip non-leaf columns
@@ -41,6 +51,10 @@ RParquetReader::RParquetReader(std::string filename)
       // For byte arrays we need a temporary structure
       SET_VECTOR_ELT(tmpdata, i, Rf_allocVector(VECSXP, metadata.num_row_groups));
     }
+    if (file_meta_data_.schema[i].repetition_type !=
+        parquet::FieldRepetitionType::REQUIRED) {
+      SET_VECTOR_ELT(present, i, Rf_allocVector(RAWSXP, metadata.num_rows));
+    }
   }
 }
 
@@ -50,6 +64,9 @@ RParquetReader::~RParquetReader() {
   }
   if (!Rf_isNull(tmpdata)) {
     R_ReleaseObject(tmpdata);
+  }
+  if (!Rf_isNull(present)) {
+    R_ReleaseObject(present);
   }
 }
 
@@ -220,7 +237,6 @@ rtype::rtype(parquet::SchemaElement &sel) {
 // 0 metadata
 // 1 dictionary
 // 2 data
-// 3 present
 //
 // metadata:
 // 0 rtype: the R type, e.g. INTSXP
@@ -228,7 +244,6 @@ rtype::rtype(parquet::SchemaElement &sel) {
 // 2 num_rows: number of rows in the row group (REALSXP)
 // 3 rsize: how many R <rtype> makes up a Parquet type
 // 4 dict: whether there is a dictionary page
-// 5 num_present: number of non-missing values (REALSXP)
 //
 // dictionary:
 // - non-dictionary columns: NULL
@@ -258,21 +273,19 @@ void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
     return;
   }
 
-  const char *nms[] = { "metadata", "dict", "data", "present", "" };
+  const char *nms[] = { "metadata", "dict", "data", "" };
   SEXP x = Rf_mkNamed(VECSXP, nms);
   SET_VECTOR_ELT(VECTOR_ELT(tmpdata, cc.column), cc.row_group, x);
   bool dict = cc.has_dictionary;
   const char *nms2[] = {
     "num_rows",
     "dict",
-    "num_pressent",
     ""
   };
   SEXP metadata = Rf_mkNamed(VECSXP, nms2);
   SET_VECTOR_ELT(x, 0, metadata);
   SET_VECTOR_ELT(metadata, 0, Rf_ScalarReal(cc.num_rows));
   SET_VECTOR_ELT(metadata, 1, Rf_ScalarLogical(dict));
-  SET_VECTOR_ELT(metadata, 2, Rf_ScalarReal(0));
 
   // dictionary is allocated later, at the dict page
 
@@ -314,13 +327,16 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   bool ba = metadata.r_types[data.cc.column].byte_array;
   bool dict = data.cc.has_dictionary;
 
+  if (data.cc.optional) {
+    num_present[data.cc.column][data.cc.row_group] += data.num_present;
+    int64_t off = metadata.row_group_offsets[data.cc.row_group];
+    data.present = (uint8_t*) RAW(VECTOR_ELT(present, data.cc.column)) +
+      off + data.from;
+  }
+
   if (ba) {
     SEXP x = VECTOR_ELT(VECTOR_ELT(tmpdata, data.cc.column), data.cc.row_group);
     SEXP meta = VECTOR_ELT(x, 0);
-    if (data.cc.optional) {
-      REAL(VECTOR_ELT(meta, 5))[0] += data.num_present;
-      data.present = (uint8_t*) RAW(VECTOR_ELT(x, 3)) + data.from;
-    }
     if (dict) {
       data.data = (uint8_t *) (INTEGER(VECTOR_ELT(x, 2)) + data.from);
     } else {
@@ -357,100 +373,6 @@ void RParquetReader::alloc_data_page(DataPage &data) {
     int64_t off = metadata.row_group_offsets[data.cc.column];
     int elsize = metadata.r_types[data.cc.column].elsize;
     data.data = ((uint8_t*) DATAPTR(x)) + (off + data.from) * elsize;
-  }
-}
-
-void RParquetReader::add_data_page(DataPage &data) {
-  // if this is not a byte array page then we need to use the NA values
-  if (metadata.r_types[data.cc.column].byte_array) {
-    return;
-  }
-  if (!data.cc.optional) {
-    return;
-  }
-  bool dict = data.cc.has_dictionary;
-  SEXP x = R_NilValue;
-
-  if (dict) {
-    x = VECTOR_ELT(
-      VECTOR_ELT(VECTOR_ELT(tmpdata, data.cc.column), data.cc.row_group),
-      2
-    );
-  } else {
-    x = VECTOR_ELT(columns, data.cc.column);
-  }
-
-  int rsize = metadata.r_types[data.cc.column].rsize;
-  int rtype = TYPEOF(x);
-  int64_t off = metadata.row_group_offsets[data.cc.column];
-  uint32_t num_values = data.num_values;
-  uint32_t num_present = data.num_present;
-  R_xlen_t num_missing = num_values - num_present;
-  uint8_t *p = data.present + num_values - 1;
-
-  if (dict || (rtype == INTSXP && rsize == 1)) {
-    int *src = INTEGER(x) + (off + data.from);
-    int *tgt = src + num_values - 1;
-    src += num_present - 1;
-    while (num_missing > 0) {
-      if (*p) {
-        *tgt-- = *src--;
-        p--;
-      } else {
-        *tgt-- = NA_INTEGER;
-        p--;
-        num_missing--;
-      }
-    }
-
-  } else if (rtype == INTSXP && rsize == 3) {
-    int *src = INTEGER(x) + (off + data.from) * rsize;
-    int *tgt = src + (num_values - 1) * rsize;
-    src += (num_present - 1) * rsize;
-    while (num_missing > 0) {
-      if (*p) {
-        *tgt-- = *src--;
-        *tgt-- = *src--;
-        *tgt-- = *src--;
-        p--;
-      } else {
-        *tgt-- = NA_INTEGER;
-        *tgt-- = NA_INTEGER;
-        *tgt-- = NA_INTEGER;
-        p--;
-        num_missing--;
-      }
-    }
-
-  } else if (rtype == REALSXP) {
-    double *src = REAL(x) + (off + data.from);
-    double *tgt = src + num_values - 1;
-    src += num_present - 1;
-    while (num_missing > 0) {
-      if (*p) {
-        *tgt-- = *src--;
-        p--;
-      } else {
-        *tgt-- = NA_REAL;
-        p--;
-        num_missing--;
-      }
-    }
-
-  } else if (rtype == LGLSXP) {
-    int *src = LOGICAL(x) + (off + data.from);
-    int *tgt = src + num_values - 1;
-    src += num_present - 1;
-    while (num_missing > 0) {
-      if (*p) {
-        *tgt-- = *src--;
-        p--;
-      } else {
-        *tgt-- = NA_LOGICAL;
-        p--;
-        num_missing--;
-      }
-    }
   }
 }
 
