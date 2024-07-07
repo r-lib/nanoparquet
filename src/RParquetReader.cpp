@@ -206,8 +206,8 @@ rtype::rtype(parquet::SchemaElement &sel) {
 
 // ------------------------------------------------------------------------
 
-// The alloc_*() functions do not allowed to call the R API, so they
-// can run concurrently.
+// The alloc_*() functions are not allowed to call the R API, so they
+// can run concurrently for column chunks.
 
 void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
   if (metadata.r_types[cc.column].byte_array) {
@@ -271,10 +271,15 @@ void RParquetReader::alloc_data_page(DataPage &data) {
 
   } else if (!rt.byte_array) {
     int64_t off = metadata.row_group_offsets[rg];
-    data.data = metadata.dataptr[cl] + (off + page_off) * rt.elsize;
-
+    if (tmpdata[cl].size() > 0) {
+      data.data = tmpdata[cl].data() + (off + page_off) * rt.elsize;
+    } else {
+      data.data = metadata.dataptr[cl] +
+        (off + page_off) * (rt.elsize / rt.rsize);
+    }
   } else {
     tmpbytes bapage;
+    bapage.from = (metadata.row_group_offsets[rg] + page_off * rt.elsize);
     bapage.buffer.resize(data.strs.total_len);
     bapage.offsets.resize(data.num_present);
     bapage.lengths.resize(data.num_present);
@@ -354,25 +359,24 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
     bool hasmiss = num_present != num_values;
     if (!hasdict && !hasmiss) {
       continue;
-    }
-    if (!hasdict && hasmiss) {
+    } else if (!hasdict && hasmiss) {
       // missing values in place
       int64_t from = pp->metadata.row_group_offsets[cl];
       SEXP x = VECTOR_ELT(pp->columns, cl);
       switch (TYPEOF(x)) {
       case INTSXP: {
         int *beg = INTEGER(x) + from;
-        int *end = beg + num_values - 1;
-        int *pend = beg + num_present - 1;
-        uint8_t *pres = pp->present[cl][rg].map.data() + num_values - 1;
+        int *endm1 = beg + num_values - 1;
+        int *pendm1 = beg + num_present - 1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
         uint32_t num_miss = num_values - num_present;
         while (num_miss > 0) {
-          if (*pres) {
-            *end-- = *pend--;
-            pres--;
+          if (*presm1) {
+            *endm1-- = *pendm1--;
+            presm1--;
           } else {
-            *end = NA_INTEGER;
-            pres--;
+            *endm1 = NA_INTEGER;
+            presm1--;
             num_miss--;
           }
         }
@@ -380,17 +384,17 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
       }
       case REALSXP: {
         double *beg = REAL(x) + from;
-        double *end = beg + num_values - 1;
-        double *pend = beg + num_present - 1;
-        uint8_t *pres = pp->present[cl][rg].map.data() + num_values - 1;
+        double *endm1 = beg + num_values - 1;
+        double *pendm1 = beg + num_present - 1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
         uint32_t num_miss = num_values - num_present;
         while (num_miss > 0) {
-          if (*pres) {
-            *end-- = *pend--;
-            pres--;
+          if (*presm1) {
+            *endm1-- = *pendm1--;
+            presm1--;
           } else {
-            *end = NA_REAL;
-            pres--;
+            *endm1 = NA_REAL;
+            presm1--;
             num_miss--;
           }
         }
@@ -398,17 +402,17 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
       }
       case LGLSXP: {
         int *beg = LOGICAL(x) + from;
-        int *end = beg + num_values - 1;
-        int *pend = beg + num_present - 1;
-        uint8_t *pres = pp->present[cl][rg].map.data() + num_values - 1;
+        int *endm1 = beg + num_values - 1;
+        int *pendm1 = beg + num_present - 1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
         uint32_t num_miss = num_values - num_present;
         while (num_miss > 0) {
-          if (*pres) {
-            *end-- = *pend--;
-            pres--;
+          if (*presm1) {
+            *endm1-- = *pendm1--;
+            presm1--;
           } else {
-            *end = NA_LOGICAL;
-            pres--;
+            *endm1 = NA_LOGICAL;
+            presm1--;
             num_miss--;
           }
         }
@@ -417,11 +421,9 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
       default:
         throw std::runtime_error("Unknown type when processing dictionaries");
       }
-    }
-
-    if (hasdict && !hasmiss) {
+    } else if (hasdict && !hasmiss) {
       // only dict
-      int64_t from = pp->metadata.row_group_offsets[cl];
+      int64_t from = pp->metadata.row_group_offsets[rg];
       SEXP x = VECTOR_ELT(pp->columns, cl);
       switch (TYPEOF(x)) {
       case INTSXP: {
@@ -456,47 +458,46 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         break;
       }
       default:
+        std::cerr << TYPEOF(x) << std::endl;
         throw std::runtime_error("Unknown type when processing dictionaries");
       }
-    }
-
-    if (hasdict && hasmiss) {
+    } else if (hasdict && hasmiss) {
       // dict + missing values
-      int64_t from = pp->metadata.row_group_offsets[cl];
+      int64_t from = pp->metadata.row_group_offsets[rg];
       SEXP x = VECTOR_ELT(pp->columns, cl);
       switch (TYPEOF(x)) {
       case INTSXP: {
         int *beg = INTEGER(x) + from;
-        int *end = beg + num_values - 1;
+        int *endm1 = beg + num_values - 1;
         int *dict = (int*) pp->dicts[cl][rg].buffer.data();
-        uint32_t *idx =
+        uint32_t *idxm1 =
           (uint32_t*) pp->dicts[cl][rg].indices.data() + num_present - 1;
-        uint8_t *pres = pp->present[cl][rg].map.data() + num_values - 1;
-        while (end >= beg) {
-          if (*pres) {
-            *end-- = dict[*idx--];
-            pres--;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+        while (endm1 >= beg) {
+          if (*presm1) {
+            *endm1-- = dict[*idxm1--];
+            presm1--;
           } else {
-            *end-- = NA_INTEGER;
-            pres--;
+            *endm1-- = NA_INTEGER;
+            presm1--;
           }
         }
         break;
       }
       case REALSXP: {
         double *beg = REAL(x) + from;
-        double *end = beg + num_values - 1;
+        double *endm1 = beg + num_values - 1;
         double *dict = (double*) pp->dicts[cl][rg].buffer.data();
-        uint32_t *idx =
+        uint32_t *idxm1 =
           (uint32_t*) pp->dicts[cl][rg].indices.data() + num_present - 1;
-        uint8_t *pres = pp->present[cl][rg].map.data() + num_values - 1;
-        while (end >= beg) {
-          if (*pres) {
-            *end-- = dict[*idx--];
-            pres--;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+        while (endm1 >= beg) {
+          if (*presm1) {
+            *endm1-- = dict[*idxm1--];
+            presm1--;
           } else {
-            *end = NA_INTEGER;
-            pres--;
+            *endm1 = NA_INTEGER;
+            presm1--;
           }
         }
         break;
@@ -504,18 +505,18 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
       case LGLSXP: {
         // BOOLEAN dictionaries are not really possible...
         int *beg = LOGICAL(x) + from;
-        int *end = beg + num_values - 1;
+        int *endm1 = beg + num_values - 1;
         int *dict = (int*) pp->dicts[cl][rg].buffer.data();
-        uint32_t *idx =
+        uint32_t *idxm1 =
           (uint32_t*) pp->dicts[cl][rg].indices.data() + num_present - 1;
-        uint8_t *pres = pp->present[cl][rg].map.data() + num_values - 1;
-        while (end >= beg) {
-          if (*pres) {
-            *end-- = dict[*idx--];
-            pres--;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+        while (endm1 >= beg) {
+          if (*presm1) {
+            *endm1-- = dict[*idxm1--];
+            presm1--;
           } else {
-            *end-- = NA_LOGICAL;
-            pres--;
+            *endm1-- = NA_LOGICAL;
+            presm1--;
           }
         }
         break;
@@ -526,6 +527,8 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
     }
   }
 }
+
+// ------------------------------------------------------------------------
 
 void convert_column_to_r_int64_nodict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
@@ -538,15 +541,133 @@ void convert_column_to_r_int64_nodict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_int64_dict_nomiss(postprocess *pp, uint32_t cl) {
-
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    int64_t from = pp->metadata.row_group_offsets[rg];
+    // in theory some row groups might be dict encoded, some not
+    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
+    double *beg = REAL(x) + from;
+    double *end = beg + num_values;
+    if (!hasdict) {
+      int64_t *ibeg = (int64_t*) beg;
+      while (beg < end) {
+        *beg++ = static_cast<double>(*ibeg++);
+      }
+    } else {
+      // first convert tbe dict values
+      double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
+      double *dend = dbeg + pp->dicts[cl][rg].dict_len;
+      int64_t *idbeg = (int64_t *) dbeg;
+      while (dbeg < dend) {
+        *dbeg++ = static_cast<double>(*idbeg++);
+      }
+      double *dict = (double*) pp -> dicts[cl][rg].buffer.data();
+      uint32_t *didx = pp->dicts[cl][rg].indices.data();
+      while (beg < end) {
+        *beg++ = dict[*didx++];
+      }
+    }
+  }
 }
 
 void convert_column_to_r_int64_nodict_miss(postprocess *pp, uint32_t cl) {
-
+  // Need to process this by row group, because the present values are
+  // stored at the beginning of each row group.
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
+    int64_t *ibeg = (int64_t*) beg;
+    uint32_t num_present = pp->present[cl][rg].num_present;
+    bool hasmiss = num_present != num_values;
+    if (!hasmiss) {
+      double *end = beg + num_values;
+      while (beg < end) {
+        *beg++ = static_cast<double>(*ibeg++);
+      }
+    } else {
+      double *endm1 = beg + num_values - 1;
+      int64_t *pendm1 = ibeg + num_present - 1;
+      uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+      while (beg <= endm1) {
+        if (*presm1) {
+          *endm1-- = static_cast<double>(*pendm1--);
+          presm1--;
+        } else {
+          *endm1 = NA_REAL;
+          presm1--;
+        }
+      }
+    }
+  }
 }
 
 void convert_column_to_r_int64_dict_miss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
+    // In theory this happen
+    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
+    if (!hasdict) {
+      int64_t *ibeg = (int64_t *)beg;
+      uint32_t num_present = pp->present[cl][rg].num_present;
+      bool hasmiss = num_present != num_values;
+      if (!hasmiss) {
+        double *end = beg + num_values;
+        while (beg < end) {
+          *beg++ = static_cast<double>(*ibeg++);
+        }
+      } else {
+        double *endm1 = beg + num_values - 1;
+        int64_t *pendm1 = ibeg + num_present - 1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+        while (beg <= endm1) {
+          if (*presm1) {
+            *endm1-- = static_cast<double>(*pendm1--);
+            presm1--;
+          } else {
+            *endm1 = NA_REAL;
+            presm1--;
+          }
+        }
+      }
 
+    } else {
+      // convert dict values first
+      double *dbeg = (double *)pp->dicts[cl][rg].buffer.data();
+      double *dend = dbeg + pp->dicts[cl][rg].dict_len;
+      int64_t *idbeg = (int64_t *)dbeg;
+      while (dbeg < dend) {
+        *dbeg++ = static_cast<double>(*idbeg++);
+      }
+      double *dict = (double *)pp->dicts[cl][rg].buffer.data();
+
+      uint32_t num_present = pp->present[cl][rg].num_present;
+      bool hasmiss = num_present != num_values;
+      if (!hasmiss) {
+        double *end = beg + num_values;
+        uint32_t *didx = pp->dicts[cl][rg].indices.data();
+        while (beg < end) {
+          *beg++ = dict[*didx++];
+        }
+      } else {
+        double *endm1 = beg + num_values - 1;
+        uint32_t *dendm1 = pp->dicts[cl][rg].indices.data() + num_present - 1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+        while (beg <= endm1) {
+          if (*presm1) {
+            *endm1-- = dict[*dendm1--];
+            presm1--;
+          } else {
+            *endm1-- = NA_REAL;
+            presm1--;
+          }
+        }
+      }
+    }
+  }
 }
 
 void convert_column_to_r_int64(postprocess *pp, uint32_t cl) {
@@ -562,6 +683,206 @@ void convert_column_to_r_int64(postprocess *pp, uint32_t cl) {
     convert_column_to_r_int64_dict_miss(pp, cl);
   }
 }
+
+// ------------------------------------------------------------------------
+
+void convert_column_to_r_float_nodict_nomiss(postprocess *pp, uint32_t cl) {
+  // Need to do this by row group because the values are at the beginning
+  // of the memory area of the row group
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    int64_t off = pp->metadata.row_group_offsets[rg];
+    double *beg = REAL(x) + off;
+    double *end = beg + num_values - 1;
+    float *fend = ((float*) beg) + num_values - 1;
+    while (beg <= end) {
+      *end-- = static_cast<double>(*fend--);
+    }
+  }
+}
+
+void convert_column_to_r_float_dict_nomiss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    int64_t off = pp->metadata.row_group_offsets[rg];
+    double *beg = REAL(x) + off;
+    // In theory we might dictionary encode a subset of the columns only
+    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
+    if (!hasdict) {
+      double *end = beg + num_values - 1;
+      float *fend = ((float*) beg) + num_values - 1;
+      while (beg <= end) {
+        *end-- = static_cast<double>(*fend--);
+      }
+    } else {
+      // Convert the dictionary first
+      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+      double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
+      double *dend = dbeg + dict_len - 1;
+      float *fdend = ((float*) dbeg) + dict_len - 1;
+      while (dbeg <= dend) {
+        *dend-- = static_cast<double>(*fdend--);
+      }
+
+      // fill in the dict
+      double *end = beg + num_values;
+      double *dict = (double*) pp->dicts[cl][rg].buffer.data();
+      uint32_t *didx = pp->dicts[cl][rg].indices.data();
+      while (beg < end) {
+        *beg++ = dict[*didx++];
+      }
+    }
+  }
+}
+
+void convert_column_to_r_float_nodict_miss(postprocess *pp, uint32_t cl) {
+  // Need to process this by row group, because the present values are
+  // stored at the beginning of each row group.
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
+    double *endm1 = beg + num_values - 1;
+    float *fendm1 = ((float*) beg) + num_values - 1;
+    uint32_t num_present = pp->present[cl][rg].num_present;
+    bool hasmiss = num_present != num_values;
+    if (!hasmiss) {
+      while (beg <= endm1) {
+        *endm1-- = static_cast<double>(*fendm1--);
+      }
+    } else {
+      uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+      while (beg <= endm1) {
+        if (*presm1) {
+          *endm1-- = static_cast<double>(*fendm1--);
+          presm1--;
+        } else {
+          *endm1 = NA_REAL;
+          presm1--;
+        }
+      }
+    }
+  }
+}
+
+void convert_column_to_r_float_dict_miss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
+    // In theory this happen
+    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
+    if (!hasdict) {
+      uint32_t num_present = pp->present[cl][rg].num_present;
+      bool hasmiss = num_present != num_values;
+      if (!hasmiss) {
+        double *endm1 = beg + num_values - 1;
+        float *fendm1 = ((float*) beg) + num_values - 1;
+        while (beg <= endm1) {
+          *endm1-- = static_cast<double>(*fendm1--);
+        }
+      } else {
+        // nodict, miss
+        double *endm1 = beg + num_values - 1;
+        float *fendm1 = ((float*) beg) + num_present - 1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+        while (beg <= endm1) {
+          if (*presm1) {
+            *endm1-- = static_cast<double>(*fendm1--);
+            presm1--;
+          } else {
+            *endm1 = NA_REAL;
+            presm1--;
+          }
+        }
+      }
+
+    } else {
+      // convert dict values first
+      double *dbeg = (double *)pp->dicts[cl][rg].buffer.data();
+      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+      double *dendm1 = dbeg + dict_len - 1;
+      float *fdendm1 = ((float*) dbeg) + dict_len - 1;
+      while (dbeg <= dendm1) {
+        *dendm1-- = static_cast<double>(*fdendm1--);
+      }
+      // fill in values
+      double *dict = (double *)pp->dicts[cl][rg].buffer.data();
+      uint32_t num_present = pp->present[cl][rg].num_present;
+      bool hasmiss = num_present != num_values;
+      if (!hasmiss) {
+        double *end = beg + num_values;
+        uint32_t *didx = pp->dicts[cl][rg].indices.data();
+        while (beg < end) {
+          *beg++ = dict[*didx++];
+        }
+      } else {
+        double *endm1 = beg + num_values - 1;
+        uint32_t *dendm1 = pp->dicts[cl][rg].indices.data() + num_present - 1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+        while (beg <= endm1) {
+          if (*presm1) {
+            *endm1-- = dict[*dendm1--];
+            presm1--;
+          } else {
+            *endm1-- = NA_REAL;
+            presm1--;
+          }
+        }
+      }
+    }
+  }
+}
+
+void convert_column_to_r_float(postprocess *pp, uint32_t cl) {
+  bool hasdict0 = pp->dicts[cl].size() > 0;
+  bool hasmiss0 = pp->present[cl].size() > 0;
+  if (!hasdict0 && !hasmiss0) {
+    convert_column_to_r_float_nodict_nomiss(pp, cl);
+  } else if (hasdict0 && !hasmiss0) {
+    convert_column_to_r_float_dict_nomiss(pp, cl);
+  } else if (!hasdict0 && hasmiss0) {
+    convert_column_to_r_float_nodict_miss(pp, cl);
+  } else if (hasdict0 && hasmiss0) {
+    convert_column_to_r_float_dict_miss(pp, cl);
+  }
+}
+
+// ------------------------------------------------------------------------
+
+void convert_column_to_r_int96_nodict_nomiss(postprocess *pp, uint32_t cl) {
+
+}
+
+void convert_column_to_r_int96_dict_nomiss(postprocess *pp, uint32_t cl) {
+
+}
+
+void convert_column_to_r_int96_nodict_miss(postprocess *pp, uint32_t cl) {
+
+}
+
+void convert_column_to_r_int96_dict_miss(postprocess *pp, uint32_t cl) {
+
+}
+
+void convert_column_to_r_int96(postprocess *pp, uint32_t cl) {
+  bool hasdict0 = pp->dicts[cl].size() > 0;
+  bool hasmiss0 = pp->present[cl].size() > 0;
+  if (!hasdict0 && !hasmiss0) {
+    convert_column_to_r_int96_nodict_nomiss(pp, cl);
+  } else if (hasdict0 && !hasmiss0) {
+    convert_column_to_r_int96_dict_nomiss(pp, cl);
+  } else if (!hasdict0 && hasmiss0) {
+    convert_column_to_r_int96_nodict_miss(pp, cl);
+  } else if (hasdict0 && hasmiss0) {
+    convert_column_to_r_int96_dict_miss(pp, cl);
+  }
+}
+
+// ------------------------------------------------------------------------
 
 void convert_columns_to_r_(postprocess *pp) {
 
@@ -584,19 +905,19 @@ void convert_columns_to_r_(postprocess *pp) {
       convert_column_to_r_int64(pp, cl);
       break;
     case INT96_DOUBLE:
-      // convert_column_to_r_int96(cl);
+      convert_column_to_r_int96(pp, cl);
       break;
     case FLOAT_DOUBLE:
-      // convert_column_to_r_float(cl);
+      convert_column_to_r_float(pp, cl);
       break;
     case BA_STRING:
-      // convert_column_to_r_ba_string(cl);
+      // convert_column_to_r_ba_string(pp, cl);
       break;
     case BA_DECIMAL:
-      // convert_column_to_r_ba_decimal(cl);
+      // convert_column_to_r_ba_decimal(pp, cl);
       break;
     case BA_RAW:
-      // convert_column_to_r_ba_raw(cl);
+      // convert_column_to_r_ba_raw(pp, cl);
       break;
     default:
       break;

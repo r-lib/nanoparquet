@@ -50,6 +50,9 @@ public:
 
 struct tmpbytes {
 public:
+  // we need to know where this page goes to be able to process row groups
+  // concurrently
+  int64_t from;
   std::vector<uint8_t> buffer;
   std::vector<uint32_t> offsets;
   std::vector<uint32_t> lengths;
