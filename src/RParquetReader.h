@@ -47,6 +47,27 @@ public:
   std::vector<rtype> r_types;
 };
 
+struct tmpbytes {
+public:
+  std::vector<uint8_t> buffer;
+  std::vector<uint32_t> offsets;
+  std::vector<uint32_t> lengths;
+};
+
+struct tmpdict {
+public:
+  uint32_t dict_len;
+  std::vector<uint8_t> buffer;
+  tmpbytes bytes;
+  std::vector<uint32_t> indices;
+};
+
+struct presentmap {
+public:
+  uint32_t num_present;
+  std::vector<uint8_t> map;
+};
+
 class RParquetReader : public ParquetReader {
 public:
   RParquetReader(std::string filename);
@@ -63,21 +84,10 @@ public:
   void alloc_data_page(DataPage &data);
 
   SEXP columns = R_NilValue;
-  SEXP tmpdata = R_NilValue;
-  SEXP present = R_NilValue;
-  std::vector<std::vector<uint32_t>> num_present;
+
+  std::vector<std::vector<uint8_t>> tmpdata;
+  std::vector<std::vector<tmpdict>> dicts;
+  std::vector<std::vector<std::vector<tmpbytes>>> byte_arrays;
+  std::vector<std::vector<presentmap>> present;
   rmetadata metadata;
-
-protected:
-  void convert_column_to_r_dicts(uint32_t cn);
-  void convert_column_to_r_int64(uint32_t cn);
-  void convert_column_to_r_int96(uint32_t cn);
-  void convert_column_to_r_float(uint32_t cn);
-  void convert_column_to_r_ba_string(uint32_t cn);
-  void convert_column_to_r_ba_decimal(uint32_t cn);
-  void convert_column_to_r_ba_raw(uint32_t cn);
-
-  void convert_buffer_to_string(SEXP x);
-  void convert_buffer_to_string1(SEXP x, SEXP nv, R_xlen_t &idx);
-  SEXP subset_vector(SEXP x, SEXP idx);
 };
