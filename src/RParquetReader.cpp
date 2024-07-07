@@ -35,6 +35,7 @@ RParquetReader::RParquetReader(std::string filename)
 
     rtype rt = metadata.r_types[i];
     SET_VECTOR_ELT(columns, i, Rf_allocVector(rt.type, metadata.num_rows));
+    metadata.dataptr[i] = (uint8_t*) DATAPTR(VECTOR_ELT(columns, i));
     if (rt.type != rt.tmptype && rt.tmptype != NILSXP) {
       tmpdata[i].resize(metadata.num_rows * rt.elsize);
     }
@@ -56,6 +57,7 @@ void RParquetReader::create_metadata() {
   metadata.num_row_groups = fmt.row_groups.size();
   metadata.row_group_num_rows.resize(metadata.num_row_groups);
   metadata.row_group_offsets.resize(metadata.num_row_groups);
+  metadata.dataptr.resize(metadata.num_cols);
 
   for (auto i = 0; i < fmt.row_groups.size(); i++) {
     metadata.row_group_num_rows[i] = fmt.row_groups[i].num_rows;
@@ -204,6 +206,9 @@ rtype::rtype(parquet::SchemaElement &sel) {
 
 // ------------------------------------------------------------------------
 
+// The alloc_*() functions do not allowed to call the R API, so they
+// can run concurrently.
+
 void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
   if (metadata.r_types[cc.column].byte_array) {
     if (byte_arrays[cc.column].size() == 0) {
@@ -265,9 +270,8 @@ void RParquetReader::alloc_data_page(DataPage &data) {
     data.data = (uint8_t*) dicts[cl][rg].indices.data() + page_off;
 
   } else if (!rt.byte_array) {
-    SEXP x = VECTOR_ELT(columns, cl);
     int64_t off = metadata.row_group_offsets[rg];
-    data.data = ((uint8_t*) DATAPTR(x)) + (off + page_off) * rt.elsize;
+    data.data = metadata.dataptr[cl] + (off + page_off) * rt.elsize;
 
   } else {
     tmpbytes bapage;

@@ -45,6 +45,7 @@ public:
   std::vector<int64_t> row_group_num_rows;
   std::vector<int64_t> row_group_offsets;
   std::vector<rtype> r_types;
+  std::vector<uint8_t*> dataptr;
 };
 
 struct tmpbytes {

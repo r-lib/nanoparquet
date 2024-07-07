@@ -606,7 +606,6 @@ void ParquetReader::unpack_plain_boolean(uint32_t *res, uint8_t *buf, uint32_t n
 
 void ParquetReader::scan_byte_array_plain(StringSet &strs, uint8_t *buf) {
   uint8_t *start = buf;
-  uint8_t *end = buf + strs.total_len;
   memcpy((void*) strs.buf, buf, strs.total_len);
   // TODO: check for overflow
   for (uint32_t i = 0; i < strs.len; i++) {
