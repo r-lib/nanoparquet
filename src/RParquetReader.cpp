@@ -4,12 +4,12 @@ constexpr int64_t kJulianToUnixEpochDays = 2440588LL;
 constexpr int64_t kMillisecondsInADay = 86400000LL;
 constexpr int64_t kNanosecondsInADay = kMillisecondsInADay * 1000LL * 1000LL;
 
-static int64_t impala_timestamp_to_nanoseconds(const int96_t &impala_timestamp) {
+static int64_t impala_timestamp_to_milliseconds(const int96_t &impala_timestamp) {
   int64_t days_since_epoch = impala_timestamp.value[2] - kJulianToUnixEpochDays;
 
   int64_t nanoseconds;
   memcpy(&nanoseconds, impala_timestamp.value, sizeof(nanoseconds));
-  return days_since_epoch * kNanosecondsInADay + nanoseconds;
+  return (days_since_epoch * kNanosecondsInADay + nanoseconds) / 1000000;
 }
 
 // ------------------------------------------------------------------------
@@ -533,7 +533,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_int64_nodict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   double *beg = REAL(x);
-  double *end = REAL(x) + pp->metadata.num_rows;
+  double *end = beg + pp->metadata.num_rows;
   int64_t *ibeg = (int64_t*) beg;
   while (beg < end) {
     *beg++ = static_cast<double>(*ibeg++);
@@ -853,19 +853,150 @@ void convert_column_to_r_float(postprocess *pp, uint32_t cl) {
 // ------------------------------------------------------------------------
 
 void convert_column_to_r_int96_nodict_nomiss(postprocess *pp, uint32_t cl) {
-
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  int96_t *src = (int96_t*) pp->tmpdata[cl].data();
+  double *beg = REAL(x);
+  double *end = beg + pp->metadata.num_rows;
+  while (beg < end) {
+    *beg++ = impala_timestamp_to_milliseconds(*src++);
+  }
 }
 
 void convert_column_to_r_int96_dict_nomiss(postprocess *pp, uint32_t cl) {
-
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  int96_t *src0 = (int96_t*) pp->tmpdata[cl].data();
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    int64_t from = pp->metadata.row_group_offsets[rg];
+    // in theory some row groups might be dict encoded, some not
+    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
+    double *beg = REAL(x) + from;
+    double *end = beg + num_values;
+    if (!hasdict) {
+      int96_t *src = src0 + from;
+      while (beg < end) {
+        *beg++ = impala_timestamp_to_milliseconds(*src++);
+      }
+    } else {
+      // convert dict values in place
+      double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
+      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+      double *dend = dbeg + dict_len;
+      int96_t *idbeg = (int96_t*) dbeg;
+      while (dbeg < dend) {
+        *dbeg++ = impala_timestamp_to_milliseconds(*idbeg++);
+      }
+      double *dict = (double*) pp->dicts[cl][rg].buffer.data();
+      uint32_t *didx = pp->dicts[cl][rg].indices.data();
+      while (beg < end) {
+        *beg++ = dict[*didx++];
+      }
+    }
+  }
 }
 
 void convert_column_to_r_int96_nodict_miss(postprocess *pp, uint32_t cl) {
+  // Need to process this by row group, because the present values are
+  // stored at the beginning of each row group.
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  int96_t *src0 = (int96_t*) pp->tmpdata[cl].data();
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    int64_t from = pp->metadata.row_group_offsets[rg];
+    double *beg = REAL(x) + from;
+    int96_t *ibeg = src0 + from;
+    uint32_t num_present = pp->present[cl][rg].num_present;
+    bool hasmiss = num_present != num_values;
+    if (!hasmiss) {
+      double *end = beg + num_values;
+      while (beg < end) {
+        *beg++ = impala_timestamp_to_milliseconds(*ibeg++);
+      }
+    } else {
+      double *endm1 = beg + num_values - 1;
+      int96_t *pendm1 = ibeg + num_present - 1;
+      uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+      while (beg <= endm1) {
+        if (*presm1) {
+          *endm1-- = impala_timestamp_to_milliseconds(*pendm1--);
+          presm1--;
+        } else {
+          *endm1 = NA_REAL;
+          presm1--;
+        }
+      }
+    }
+  }
 
 }
 
 void convert_column_to_r_int96_dict_miss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  int96_t *src0 = (int96_t*) pp->tmpdata[cl].data();
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    int64_t from = pp->metadata.row_group_offsets[rg];
+    double *beg = REAL(x) + from;
+    // In theory this happen
+    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
+    if (!hasdict) {
+      int96_t *ibeg = src0 + from;
+      uint32_t num_present = pp->present[cl][rg].num_present;
+      bool hasmiss = num_present != num_values;
+      if (!hasmiss) {
+        double *end = beg + num_values;
+        while (beg < end) {
+          *beg++ = impala_timestamp_to_milliseconds(*ibeg++);
+        }
+      } else {
+        double *endm1 = beg + num_values - 1;
+        int96_t *pendm1 = ibeg + num_present - 1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+        while (beg <= endm1) {
+          if (*presm1) {
+            *endm1-- = impala_timestamp_to_milliseconds(*pendm1--);
+            presm1--;
+          } else {
+            *endm1 = NA_REAL;
+            presm1--;
+          }
+        }
+      }
 
+    } else {
+      // convert dict values first
+      double *dbeg = (double *)pp->dicts[cl][rg].buffer.data();
+      double *dend = dbeg + pp->dicts[cl][rg].dict_len;
+      int96_t *idbeg = (int96_t *) dbeg;
+      while (dbeg < dend) {
+        *dbeg++ = impala_timestamp_to_milliseconds(*idbeg++);
+      }
+      double *dict = (double *)pp->dicts[cl][rg].buffer.data();
+
+      uint32_t num_present = pp->present[cl][rg].num_present;
+      bool hasmiss = num_present != num_values;
+      if (!hasmiss) {
+        double *end = beg + num_values;
+        uint32_t *didx = pp->dicts[cl][rg].indices.data();
+        while (beg < end) {
+          *beg++ = dict[*didx++];
+        }
+      } else {
+        double *endm1 = beg + num_values - 1;
+        uint32_t *dendm1 = pp->dicts[cl][rg].indices.data() + num_present - 1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+        while (beg <= endm1) {
+          if (*presm1) {
+            *endm1-- = dict[*dendm1--];
+            presm1--;
+          } else {
+            *endm1-- = NA_REAL;
+            presm1--;
+          }
+        }
+      }
+    }
+  }
 }
 
 void convert_column_to_r_int96(postprocess *pp, uint32_t cl) {
@@ -880,6 +1011,24 @@ void convert_column_to_r_int96(postprocess *pp, uint32_t cl) {
   } else if (hasdict0 && hasmiss0) {
     convert_column_to_r_int96_dict_miss(pp, cl);
   }
+}
+
+// ------------------------------------------------------------------------
+
+void convert_column_to_r_ba_string(postprocess *pp, uint32_t cl) {
+
+}
+
+// ------------------------------------------------------------------------
+
+void convert_column_to_r_ba_decimal(postprocess *pp, uint32_t cl) {
+
+}
+
+// ------------------------------------------------------------------------
+
+void convert_column_to_r_ba_raw(postprocess *pp, uint32_t cl) {
+
 }
 
 // ------------------------------------------------------------------------
@@ -911,13 +1060,13 @@ void convert_columns_to_r_(postprocess *pp) {
       convert_column_to_r_float(pp, cl);
       break;
     case BA_STRING:
-      // convert_column_to_r_ba_string(pp, cl);
+      convert_column_to_r_ba_string(pp, cl);
       break;
     case BA_DECIMAL:
-      // convert_column_to_r_ba_decimal(pp, cl);
+      convert_column_to_r_ba_decimal(pp, cl);
       break;
     case BA_RAW:
-      // convert_column_to_r_ba_raw(pp, cl);
+      convert_column_to_r_ba_raw(pp, cl);
       break;
     default:
       break;
