@@ -250,18 +250,24 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   auto rg = data.cc.row_group;
   rtype rt = metadata.r_types[cl];
 
+  // If there are missing values, then the page offset is defined by
+  // the number of present values. I.e. within each column chunk we put the
+  // present values at the beginning of the memory allocated for that
+  // column chunk.
+  uint32_t page_off = data.from;
   if (data.cc.optional) {
+    page_off = present[cl][rg].num_present;
     present[cl][rg].num_present += data.num_present;
     data.present = present[cl][rg].map.data() + data.from;
   }
 
   if (data.cc.has_dictionary) {
-    data.data = (uint8_t*) dicts[cl][rg].indices.data() + data.from;
+    data.data = (uint8_t*) dicts[cl][rg].indices.data() + page_off;
 
   } else if (!rt.byte_array) {
     SEXP x = VECTOR_ELT(columns, cl);
     int64_t off = metadata.row_group_offsets[rg];
-    data.data = ((uint8_t*) DATAPTR(x)) + (off + data.from) * rt.elsize;
+    data.data = ((uint8_t*) DATAPTR(x)) + (off + page_off) * rt.elsize;
 
   } else {
     tmpbytes bapage;
