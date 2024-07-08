@@ -13,7 +13,8 @@ enum r_type_conversion {
   FLOAT_DOUBLE = 3,
   BA_STRING = 4,
   BA_DECIMAL = 5,
-  BA_RAW = 6
+  BA_RAW = 6,
+  BA_UUID = 7
 };
 
 class rtype {

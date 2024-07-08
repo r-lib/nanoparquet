@@ -185,13 +185,16 @@ rtype::rtype(parquet::SchemaElement &sel) {
          (sel.logicalType.__isset.STRING ||
           sel.logicalType.__isset.ENUM ||
           sel.logicalType.__isset.JSON ||
-          sel.logicalType.__isset.BSON ||
-          sel.logicalType.__isset.UUID)) ||
+          sel.logicalType.__isset.BSON)) ||
         (sel.__isset.converted_type &&
          sel.converted_type == parquet::ConvertedType::UTF8)) {
       type = STRSXP;
       tmptype = NILSXP;
       type_conversion = BA_STRING;
+    } else if (sel.__isset.logicalType && sel.logicalType.__isset.UUID) {
+      type = STRSXP;
+      tmptype = NILSXP;
+      type_conversion = BA_UUID;
     } else if ((sel.__isset.logicalType &&
                 (sel.logicalType.__isset.DECIMAL)) ||
                (sel.__isset.converted_type &&
@@ -1365,6 +1368,104 @@ void convert_column_to_r_ba_raw(postprocess *pp, uint32_t cl) {
 
 // ------------------------------------------------------------------------
 
+void convert_column_to_r_ba_uuid_nodict_nomiss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  char uuid[37];
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
+    for (auto it = rgba.begin(); it != rgba.end(); ++it) {
+      int64_t from = it->from;
+      for (auto i = 0; i < it->offsets.size(); i++) {
+        char *s = (char*) it->buffer.data() + it->offsets[i];
+        snprintf(
+          uuid, 37,
+          "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+          s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9],
+          s[10], s[11], s[12], s[13], s[14], s[15]
+        );
+        SET_VECTOR_ELT(x, from, Rf_mkCharLenCE(uuid, 36, CE_UTF8));
+        from++;
+      }
+    }
+  }
+}
+
+void convert_column_to_r_ba_uuid_dict_nomiss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  char uuid[37];
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
+    if (!hasdict) {
+      std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
+      for (auto it = rgba.begin(); it != rgba.end(); ++it) {
+        int64_t from = it->from;
+        for (auto i = 0; i < it->offsets.size(); i++) {
+          char *s = (char*) it->buffer.data() + it->offsets[i];
+          snprintf(
+            uuid, 37,
+            "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+            s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9],
+            s[10], s[11], s[12], s[13], s[14], s[15]
+          );
+          SET_STRING_ELT(x, from, Rf_mkCharLenCE(uuid, 36, CE_UTF8));
+          from++;
+        }
+      }
+    } else {
+      // convert dictionary first
+      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+      SEXP tmp = PROTECT(Rf_allocVector(STRSXP, dict_len));
+      tmpbytes &ba = pp->dicts[cl][rg].bytes;
+      for (uint32_t i = 0; i < dict_len; i++) {
+        char *s = (char*) ba.buffer.data() + ba.offsets[i];
+        snprintf(
+          uuid, 37,
+          "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+          s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9],
+          s[10], s[11], s[12], s[13], s[14], s[15]
+        );
+        SET_STRING_ELT(tmp, i, Rf_mkCharLenCE(uuid, 36, CE_UTF8));
+      }
+
+      // fill in
+      uint32_t *didx = pp->dicts[cl][rg].indices.data();
+      uint32_t *end = didx + pp->dicts[cl][rg].indices.size();
+      int64_t from = pp->metadata.row_group_offsets[rg];
+      while (didx < end) {
+        SET_STRING_ELT(x, from, STRING_ELT(tmp, *didx));
+        from++;
+        didx++;
+      }
+      UNPROTECT(1);
+    }
+  }
+}
+
+void convert_column_to_r_ba_uuid_nodict_miss(postprocess *pp, uint32_t cl) {
+  convert_column_to_r_ba_uuid_nodict_nomiss(pp, cl);
+  convert_column_to_r_ba_string_miss(pp, cl);
+}
+
+void convert_column_to_r_ba_uuid_dict_miss(postprocess *pp, uint32_t cl) {
+  convert_column_to_r_ba_uuid_dict_nomiss(pp, cl);
+  convert_column_to_r_ba_string_miss(pp, cl);
+}
+
+void convert_column_to_r_ba_uuid(postprocess *pp, uint32_t cl) {
+  bool hasdict0 = pp->dicts[cl].size() > 0;
+  bool hasmiss0 = pp->present[cl].size() > 0;
+  if (!hasdict0 && !hasmiss0) {
+    convert_column_to_r_ba_uuid_nodict_nomiss(pp, cl);
+  } else if (hasdict0 && !hasmiss0) {
+    convert_column_to_r_ba_uuid_dict_nomiss(pp, cl);
+  } else if (!hasdict0 && hasmiss0) {
+    convert_column_to_r_ba_uuid_nodict_miss(pp, cl);
+  } else if (hasdict0 && hasmiss0) {
+    convert_column_to_r_ba_uuid_dict_miss(pp, cl);
+  }
+}
+
+// ------------------------------------------------------------------------
 
 void convert_columns_to_r_(postprocess *pp) {
 
@@ -1400,6 +1501,9 @@ void convert_columns_to_r_(postprocess *pp) {
       break;
     case BA_RAW:
       convert_column_to_r_ba_raw(pp, cl);
+      break;
+    case BA_UUID:
+      convert_column_to_r_ba_uuid(pp, cl);
       break;
     default:
       break;
