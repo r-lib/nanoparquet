@@ -184,6 +184,8 @@ rtype::rtype(parquet::SchemaElement &sel) {
     if ((sel.__isset.logicalType &&
          (sel.logicalType.__isset.STRING ||
           sel.logicalType.__isset.ENUM ||
+          sel.logicalType.__isset.JSON ||
+          sel.logicalType.__isset.BSON ||
           sel.logicalType.__isset.UUID)) ||
         (sel.__isset.converted_type &&
          sel.converted_type == parquet::ConvertedType::UTF8)) {
