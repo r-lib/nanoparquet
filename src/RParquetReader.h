@@ -35,6 +35,8 @@ public:
   std::string tzone = "";
   double time_fct = 1.0;
   bool byte_array = false;
+  // for DECIMAL
+  int32_t scale;
 };
 
 struct rmetadata {
