@@ -655,9 +655,99 @@ void RParquetOutFile::write_dictionary_indices(
   }
 }
 
-parquet::LogicalType parse_ptype(SEXP typ) {
-  parquet::LogicalType lt;
+bool nanoparquet_map_to_parquet_type(
+  SEXP x,
+  SEXP options,
+  parquet::SchemaElement &sel,
+  std::string &rtype) {
 
+  switch (TYPEOF(x)) {
+  case INTSXP: {
+    if (Rf_isFactor(x)) {
+      rtype = "factor";
+      parquet::StringType st;
+      parquet::LogicalType lt;
+      lt.__set_STRING(st);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+    } else if (Rf_inherits(x, "Date")) {
+      rtype = "integer";
+      parquet::DateType dt;
+      parquet::LogicalType lt;
+      lt.__set_DATE(dt);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+    } else if (Rf_inherits(x, "hms")) {
+      rtype = "hms";
+      parquet::TimeType tt;
+      tt.__set_isAdjustedToUTC(true);
+      parquet::TimeUnit tu;
+      tu.__set_MILLIS(parquet::MilliSeconds());
+      tt.__set_unit(tu);
+      parquet::LogicalType lt;
+      lt.__set_TIME(tt);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+    } else {
+      rtype = "integer";
+      parquet::IntType it;
+      it.__set_bitWidth(32);
+      it.__set_isSigned(true);
+      parquet::LogicalType lt;
+      lt.__set_INTEGER(it);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+    }
+    break;
+  }
+  case REALSXP: {
+    if (Rf_inherits(x, "POSIXct")) {
+      rtype = "POSIXct";
+      parquet::TimestampType tt;
+      tt.__set_isAdjustedToUTC(true);
+      parquet::TimeUnit tu;
+      tu.__set_MICROS(parquet::MicroSeconds());
+      tt.__set_unit(tu);
+      parquet::LogicalType lt;
+      lt.__set_TIMESTAMP(tt);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+
+    } else if (Rf_inherits(x, "difftime")) {
+      rtype = "difftime";
+      sel.__set_type(parquet::Type::INT64);
+
+    } else {
+      rtype = "double";
+      sel.__set_type(parquet::Type::DOUBLE);
+    }
+    break;
+  }
+  case STRSXP: {
+    rtype = "character";
+    parquet::StringType st;
+    parquet::LogicalType lt;
+    lt.__set_STRING(st);
+    sel.__set_logicalType(lt);
+    sel.__set_type(get_type_from_logical_type(lt));
+    sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+    break;
+  }
+  case LGLSXP: {
+    rtype = "logical";
+    sel.__set_type(parquet::Type::BOOLEAN);
+    break;
+  }
+  default:
+    return false;
+  }
+
+  return true;
 }
 
 void RParquetOutFile::write(
@@ -760,102 +850,6 @@ void RParquetOutFile::write(
   ParquetOutFile::write();
 
   UNPROTECT(2);
-}
-
-
-bool nanoparquet_map_to_parquet_type(
-  SEXP x,
-  SEXP options,
-  parquet::SchemaElement &sel,
-  std::string &rtype) {
-
-  switch (TYPEOF(x)) {
-  case INTSXP: {
-    if (Rf_isFactor(x)) {
-      rtype = "factor";
-      parquet::StringType st;
-      parquet::LogicalType lt;
-      lt.__set_STRING(st);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
-    } else if (Rf_inherits(x, "Date")) {
-      rtype = "integer";
-      parquet::DateType dt;
-      parquet::LogicalType lt;
-      lt.__set_DATE(dt);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
-    } else if (Rf_inherits(x, "hms")) {
-      rtype = "hms";
-      parquet::TimeType tt;
-      tt.__set_isAdjustedToUTC(true);
-      parquet::TimeUnit tu;
-      tu.__set_MILLIS(parquet::MilliSeconds());
-      tt.__set_unit(tu);
-      parquet::LogicalType lt;
-      lt.__set_TIME(tt);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
-    } else {
-      rtype = "integer";
-      parquet::IntType it;
-      it.__set_bitWidth(32);
-      it.__set_isSigned(true);
-      parquet::LogicalType lt;
-      lt.__set_INTEGER(it);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
-    }
-    break;
-  }
-  case REALSXP: {
-    if (Rf_inherits(x, "POSIXct")) {
-      rtype = "POSIXct";
-      parquet::TimestampType tt;
-      tt.__set_isAdjustedToUTC(true);
-      parquet::TimeUnit tu;
-      tu.__set_MICROS(parquet::MicroSeconds());
-      tt.__set_unit(tu);
-      parquet::LogicalType lt;
-      lt.__set_TIMESTAMP(tt);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
-
-    } else if (Rf_inherits(x, "difftime")) {
-      rtype = "difftime";
-      sel.__set_type(parquet::Type::INT64);
-
-    } else {
-      rtype = "double";
-      sel.__set_type(parquet::Type::DOUBLE);
-    }
-    break;
-  }
-  case STRSXP: {
-    rtype = "character";
-    parquet::StringType st;
-    parquet::LogicalType lt;
-    lt.__set_STRING(st);
-    sel.__set_logicalType(lt);
-    sel.__set_type(get_type_from_logical_type(lt));
-    sel.__set_converted_type(get_converted_type_from_logical_type(lt));
-    break;
-  }
-  case LGLSXP: {
-    rtype = "logical";
-    sel.__set_type(parquet::Type::BOOLEAN);
-    break;
-  }
-  default:
-    return false;
-  }
-
-  return true;
 }
 
 extern "C" {
