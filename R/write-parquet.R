@@ -109,7 +109,8 @@ write_parquet <- function(
 		dim,
 		compression,
 		metadata,
-		required
+		required,
+		options
 	)
 
 	if (is.null(res)) {

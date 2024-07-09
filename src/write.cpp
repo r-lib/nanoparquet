@@ -67,7 +67,7 @@ public:
   void write_dictionary_indices(std::ostream &file, uint32_t idx,
                                 uint64_t from, uint64_t until);
 
-  void write(SEXP dfsxp, SEXP dim, SEXP metadata, SEXP rrequired);
+  void write(SEXP dfsxp, SEXP dim, SEXP metadata, SEXP rrequired, SEXP options);
 
 private:
   SEXP df = R_NilValue;
@@ -754,7 +754,8 @@ void RParquetOutFile::write(
     SEXP dfsxp,
     SEXP dim,
     SEXP metadata,
-    SEXP rrequired) {
+    SEXP rrequired,
+    SEXP options) {
   df = dfsxp;
   required = rrequired;
   dicts = PROTECT(Rf_allocVector(VECSXP, Rf_length(df)));
@@ -764,74 +765,18 @@ void RParquetOutFile::write(
   R_xlen_t nc = INTEGER(dim)[1];
   for (R_xlen_t idx = 0; idx < nc; idx++) {
     SEXP col = VECTOR_ELT(dfsxp, idx);
-    int rtype = TYPEOF(col);
+    std::string rtypename;
+    parquet::SchemaElement sel;
     bool req = LOGICAL(required)[idx];
     bool dict = should_use_dict_encoding(idx);
-    switch (rtype) {
-    case INTSXP: {
-      if (Rf_isFactor(col)) {
-        parquet::StringType st;
-        parquet::LogicalType logical_type;
-        logical_type.__set_STRING(st);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
-      } else if (Rf_inherits(col, "Date")) {
-        parquet::DateType dt;
-        parquet::LogicalType logical_type;
-        logical_type.__set_DATE(dt);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
-      } else if (Rf_inherits(col, "hms")) {
-        parquet::TimeUnit tu;
-        tu.__set_MILLIS(parquet::MilliSeconds());
-        parquet::TimeType tt;
-        tt.__set_isAdjustedToUTC(true);
-        tt.__set_unit(tu);
-        parquet::LogicalType logical_type;
-        logical_type.__set_TIME(tt);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
-      } else {
-        parquet::IntType it;
-        it.__set_isSigned(true);
-        it.__set_bitWidth(32);
-        parquet::LogicalType logical_type;
-        logical_type.__set_INTEGER(it);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
-      }
-      break;
+    bool ok = nanoparquet_map_to_parquet_type(col, options, sel, rtypename);
+    if (!ok) {
+      throw runtime_error("Cannot write R column to Parquet");
     }
-    case REALSXP: {
-      if (Rf_inherits(col, "POSIXct")) {
-        parquet::TimeUnit tu;
-        tu.__set_MICROS(parquet::MicroSeconds());
-        parquet::TimestampType ttt;
-        ttt.__set_isAdjustedToUTC(true);
-        ttt.__set_unit(tu);
-        parquet::LogicalType logical_type;
-        logical_type.__set_TIMESTAMP(ttt);
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
-      } else if (Rf_inherits(col, "difftime")) {
-        parquet::Type::type type = parquet::Type::INT64;
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req, dict);
-
-      } else {
-        parquet::Type::type type = parquet::Type::DOUBLE;
-        schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req, dict);
-      }
-      break;
-    }
-    case STRSXP: {
-      parquet::StringType st;
-      parquet::LogicalType logical_type;
-      logical_type.__set_STRING(st);
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), logical_type, req, dict);
-      break;
-    }
-    case LGLSXP: {
-      parquet::Type::type type = parquet::Type::BOOLEAN;
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), type, req, dict);
-      break;
-    }
-    default:
-      throw runtime_error("Uninmplemented R type");  // # nocov
+    if (sel.__isset.logicalType) {
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), sel.logicalType, req, dict);
+    } else {
+      schema_add_column(CHAR(STRING_ELT(nms, idx)), sel.type, req, dict);
     }
   }
 
@@ -860,7 +805,8 @@ SEXP nanoparquet_write(
   SEXP dim,
   SEXP compression,
   SEXP metadata,
-  SEXP required) {
+  SEXP required,
+  SEXP options) {
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_write: filename must be a string"); // # nocov
@@ -895,14 +841,14 @@ SEXP nanoparquet_write(
       MemStream ms;
       std::ostream &os = ms.stream();
       RParquetOutFile of(os, codec);
-      of.write(dfsxp, dim, metadata, required);
+      of.write(dfsxp, dim, metadata, required, options);
       R_xlen_t bufsize = ms.size();
       SEXP res = Rf_allocVector(RAWSXP, bufsize);
       ms.copy(RAW(res), bufsize);
       return res;
     } else {
       RParquetOutFile of(fname, codec);
-      of.write(dfsxp, dim, metadata, required);
+      of.write(dfsxp, dim, metadata, required, options);
       return R_NilValue;
     }
   } catch (std::exception &ex) {
