@@ -5,6 +5,8 @@
 
 #include "lib/memstream.h"
 
+#include "protect.h"
+
 using namespace nanoparquet;
 using namespace std;
 
@@ -653,6 +655,11 @@ void RParquetOutFile::write_dictionary_indices(
   }
 }
 
+parquet::LogicalType parse_ptype(SEXP typ) {
+  parquet::LogicalType lt;
+
+}
+
 void RParquetOutFile::write(
     SEXP dfsxp,
     SEXP dim,
@@ -755,6 +762,102 @@ void RParquetOutFile::write(
   UNPROTECT(2);
 }
 
+
+bool nanoparquet_map_to_parquet_type(
+  SEXP x,
+  SEXP options,
+  parquet::SchemaElement &sel,
+  std::string &rtype) {
+
+  switch (TYPEOF(x)) {
+  case INTSXP: {
+    if (Rf_isFactor(x)) {
+      rtype = "factor";
+      parquet::StringType st;
+      parquet::LogicalType lt;
+      lt.__set_STRING(st);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+    } else if (Rf_inherits(x, "Date")) {
+      rtype = "integer";
+      parquet::DateType dt;
+      parquet::LogicalType lt;
+      lt.__set_DATE(dt);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+    } else if (Rf_inherits(x, "hms")) {
+      rtype = "hms";
+      parquet::TimeType tt;
+      tt.__set_isAdjustedToUTC(true);
+      parquet::TimeUnit tu;
+      tu.__set_MILLIS(parquet::MilliSeconds());
+      tt.__set_unit(tu);
+      parquet::LogicalType lt;
+      lt.__set_TIME(tt);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+    } else {
+      rtype = "integer";
+      parquet::IntType it;
+      it.__set_bitWidth(32);
+      it.__set_isSigned(true);
+      parquet::LogicalType lt;
+      lt.__set_INTEGER(it);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+    }
+    break;
+  }
+  case REALSXP: {
+    if (Rf_inherits(x, "POSIXct")) {
+      rtype = "POSIXct";
+      parquet::TimestampType tt;
+      tt.__set_isAdjustedToUTC(true);
+      parquet::TimeUnit tu;
+      tu.__set_MICROS(parquet::MicroSeconds());
+      tt.__set_unit(tu);
+      parquet::LogicalType lt;
+      lt.__set_TIMESTAMP(tt);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+
+    } else if (Rf_inherits(x, "difftime")) {
+      rtype = "difftime";
+      sel.__set_type(parquet::Type::INT64);
+
+    } else {
+      rtype = "double";
+      sel.__set_type(parquet::Type::DOUBLE);
+    }
+    break;
+  }
+  case STRSXP: {
+    rtype = "character";
+    parquet::StringType st;
+    parquet::LogicalType lt;
+    lt.__set_STRING(st);
+    sel.__set_logicalType(lt);
+    sel.__set_type(get_type_from_logical_type(lt));
+    sel.__set_converted_type(get_converted_type_from_logical_type(lt));
+    break;
+  }
+  case LGLSXP: {
+    rtype = "logical";
+    sel.__set_type(parquet::Type::BOOLEAN);
+    break;
+  }
+  default:
+    return false;
+  }
+
+  return true;
+}
+
 extern "C" {
 
 SEXP nanoparquet_write(
@@ -820,99 +923,32 @@ SEXP nanoparquet_write(
   return R_NilValue; // # nocov
 }
 
+extern SEXP convert_logical_type(parquet::LogicalType ltype, SEXP *uwt);
+
 SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options) {
+  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
+  R_API_START();
   R_xlen_t nc = Rf_xlength(df);
   SEXP res = PROTECT(Rf_allocVector(VECSXP, nc));
   for (R_xlen_t cl = 0; cl < nc; cl++) {
     SEXP col = VECTOR_ELT(df, cl);
+    parquet::SchemaElement sel;
+    std::string rtype;
+    nanoparquet_map_to_parquet_type(col, options, sel, rtype);
     SEXP typ = Rf_allocVector(VECSXP, 3);
     SET_VECTOR_ELT(res, cl, typ);
-    switch (TYPEOF(col)) {
-    case INTSXP: {
-      if (Rf_isFactor(col)) {
-        SET_VECTOR_ELT(typ, 0, Rf_mkString("BYTE_ARRAY"));
-        SET_VECTOR_ELT(typ, 1, Rf_mkString("factor"));
-        const char *nms[] = { "type", "" };
-        SEXP lt = Rf_mkNamed(VECSXP, nms);
-        SET_VECTOR_ELT(typ, 2, lt);
-        SET_VECTOR_ELT(lt, 0, Rf_mkString("STRING"));
-
-      } else if (Rf_inherits(col, "Date")) {
-        SET_VECTOR_ELT(typ, 0, Rf_mkString("INT32"));
-        SET_VECTOR_ELT(typ, 1, Rf_mkString("integer"));
-        const char *nms[] = { "type", "" };
-        SEXP lt = Rf_mkNamed(VECSXP, nms);
-        SET_VECTOR_ELT(typ, 2, lt);
-        SET_VECTOR_ELT(lt, 0, Rf_mkString("DATE"));
-
-      } else if (Rf_inherits(col, "hms")) {
-        SET_VECTOR_ELT(typ, 0, Rf_mkString("INT32"));
-        SET_VECTOR_ELT(typ, 0, Rf_mkString("hms"));
-        const char *nms[] = { "type", "is_adjusted_to_utc", "unit", ""};
-        SEXP lt = Rf_mkNamed(VECSXP, nms);
-        SET_VECTOR_ELT(typ, 2, lt);
-        SET_VECTOR_ELT(lt, 0, Rf_mkString("DATE"));
-        SET_VECTOR_ELT(lt, 1, Rf_ScalarLogical(1));
-        SET_VECTOR_ELT(lt, 2, Rf_mkString("millis"));
-
-      } else {
-        SET_VECTOR_ELT(typ, 0, Rf_mkString("INT32"));
-        SET_VECTOR_ELT(typ, 1, Rf_mkString("integer"));
-        const char *nms[] = { "type", "bit_width", "is_signed", "" };
-        SEXP lt = Rf_mkNamed(VECSXP, nms);
-        SET_VECTOR_ELT(typ, 2, lt);
-        SET_VECTOR_ELT(lt, 0, Rf_mkString("INT"));
-        SET_VECTOR_ELT(lt, 1, Rf_ScalarInteger(32));
-        SET_VECTOR_ELT(lt, 2, Rf_ScalarLogical(1));
-
-      }
-      break;
-    }
-    case REALSXP: {
-      if (Rf_inherits(col, "POSIXct")) {
-        SET_VECTOR_ELT(typ, 0, Rf_mkString("INT64"));
-        SET_VECTOR_ELT(typ, 1, Rf_mkString("POSIXct"));
-        const char *nms[] = { "type", "is_adjusted_to_utc", "unit", "" };
-        SEXP lt = Rf_mkNamed(VECSXP, nms);
-        SET_VECTOR_ELT(typ, 2, lt);
-        SET_VECTOR_ELT(lt, 0, Rf_mkString("TIMESTAMP"));
-        SET_VECTOR_ELT(lt, 1, Rf_ScalarLogical(1));
-        SET_VECTOR_ELT(lt, 2, Rf_mkString("micros"));
-
-      } else if (Rf_inherits(col, "difftime")) {
-        SET_VECTOR_ELT(typ, 0, Rf_mkString("INT64"));
-        SET_VECTOR_ELT(typ, 1, Rf_mkString("difftime"));
-        SET_VECTOR_ELT(typ, 2, R_NilValue);
-
-      } else {
-        SET_VECTOR_ELT(typ, 0, Rf_mkString("DOUBLE"));
-        SET_VECTOR_ELT(typ, 1, Rf_mkString("double"));
-        SET_VECTOR_ELT(typ, 2, R_NilValue);
-      }
-      break;
-    }
-    case STRSXP: {
-      SET_VECTOR_ELT(typ, 0, Rf_mkString("BYTE_ARRAY"));
-      SET_VECTOR_ELT(typ, 1, Rf_mkString("character"));
-      const char *nms[] = { "type", "" };
-      SEXP lt = Rf_mkNamed(VECSXP, nms);
-      SET_VECTOR_ELT(typ, 2, lt);
-      SET_VECTOR_ELT(lt, 0, Rf_mkString("STRING"));
-      break;
-    }
-    case LGLSXP: {
-      SET_VECTOR_ELT(typ, 0, Rf_mkString("DOUBLE"));
-      SET_VECTOR_ELT(typ, 1, Rf_mkString("double"));
+    SET_VECTOR_ELT(typ, 0, Rf_mkString(to_string(sel.type).c_str()));
+    SET_VECTOR_ELT(typ, 1, Rf_mkString(rtype.c_str()));
+    if (sel.__isset.logicalType) {
+      SET_VECTOR_ELT(typ, 2, convert_logical_type(sel.logicalType, &uwtoken));
+    } else {
       SET_VECTOR_ELT(typ, 2, R_NilValue);
-      break;
-    }
-    default:
-      SET_VECTOR_ELT(typ, 0, Rf_ScalarString(NA_STRING));
     }
   }
 
-  UNPROTECT(1);
+  UNPROTECT(2);
   return res;
+  R_API_END();
 }
 
 } // extern "C"

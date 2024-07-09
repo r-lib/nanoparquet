@@ -177,8 +177,10 @@ void ParquetOutFile::add_key_value_metadata(
   kv.push_back(kv0);
 }
 
-parquet::Type::type ParquetOutFile::get_type_from_logical_type(
-    parquet::LogicalType logical_type) {
+namespace nanoparquet {
+
+parquet::Type::type get_type_from_logical_type(
+  parquet::LogicalType &logical_type) {
 
   if (logical_type.__isset.STRING) {
     return Type::BYTE_ARRAY;
@@ -211,9 +213,8 @@ parquet::Type::type ParquetOutFile::get_type_from_logical_type(
   }
 }
 
-parquet::ConvertedType::type
-ParquetOutFile::get_converted_type_from_logical_type(
-    parquet::LogicalType logical_type) {
+parquet::ConvertedType::type get_converted_type_from_logical_type(
+    parquet::LogicalType &logical_type) {
 
   if (logical_type.__isset.STRING) {
     return ConvertedType::UTF8;
@@ -248,6 +249,8 @@ ParquetOutFile::get_converted_type_from_logical_type(
   } else {
     throw runtime_error("Unimplemented logical type");              // # nocov
   }
+}
+
 }
 
 void ParquetOutFile::write_data_(
