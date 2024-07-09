@@ -820,4 +820,99 @@ SEXP nanoparquet_write(
   return R_NilValue; // # nocov
 }
 
+SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options) {
+  R_xlen_t nc = Rf_xlength(df);
+  SEXP res = PROTECT(Rf_allocVector(VECSXP, nc));
+  for (R_xlen_t cl = 0; cl < nc; cl++) {
+    SEXP col = VECTOR_ELT(df, cl);
+    SEXP typ = Rf_allocVector(VECSXP, 3);
+    SET_VECTOR_ELT(res, cl, typ);
+    switch (TYPEOF(col)) {
+    case INTSXP: {
+      if (Rf_isFactor(col)) {
+        SET_VECTOR_ELT(typ, 0, Rf_mkString("BYTE_ARRAY"));
+        SET_VECTOR_ELT(typ, 1, Rf_mkString("factor"));
+        const char *nms[] = { "type", "" };
+        SEXP lt = Rf_mkNamed(VECSXP, nms);
+        SET_VECTOR_ELT(typ, 2, lt);
+        SET_VECTOR_ELT(lt, 0, Rf_mkString("STRING"));
+
+      } else if (Rf_inherits(col, "Date")) {
+        SET_VECTOR_ELT(typ, 0, Rf_mkString("INT32"));
+        SET_VECTOR_ELT(typ, 1, Rf_mkString("integer"));
+        const char *nms[] = { "type", "" };
+        SEXP lt = Rf_mkNamed(VECSXP, nms);
+        SET_VECTOR_ELT(typ, 2, lt);
+        SET_VECTOR_ELT(lt, 0, Rf_mkString("DATE"));
+
+      } else if (Rf_inherits(col, "hms")) {
+        SET_VECTOR_ELT(typ, 0, Rf_mkString("INT32"));
+        SET_VECTOR_ELT(typ, 0, Rf_mkString("hms"));
+        const char *nms[] = { "type", "is_adjusted_to_utc", "unit", ""};
+        SEXP lt = Rf_mkNamed(VECSXP, nms);
+        SET_VECTOR_ELT(typ, 2, lt);
+        SET_VECTOR_ELT(lt, 0, Rf_mkString("DATE"));
+        SET_VECTOR_ELT(lt, 1, Rf_ScalarLogical(1));
+        SET_VECTOR_ELT(lt, 2, Rf_mkString("millis"));
+
+      } else {
+        SET_VECTOR_ELT(typ, 0, Rf_mkString("INT32"));
+        SET_VECTOR_ELT(typ, 1, Rf_mkString("integer"));
+        const char *nms[] = { "type", "bit_width", "is_signed", "" };
+        SEXP lt = Rf_mkNamed(VECSXP, nms);
+        SET_VECTOR_ELT(typ, 2, lt);
+        SET_VECTOR_ELT(lt, 0, Rf_mkString("INT"));
+        SET_VECTOR_ELT(lt, 1, Rf_ScalarInteger(32));
+        SET_VECTOR_ELT(lt, 2, Rf_ScalarLogical(1));
+
+      }
+      break;
+    }
+    case REALSXP: {
+      if (Rf_inherits(col, "POSIXct")) {
+        SET_VECTOR_ELT(typ, 0, Rf_mkString("INT64"));
+        SET_VECTOR_ELT(typ, 1, Rf_mkString("POSIXct"));
+        const char *nms[] = { "type", "is_adjusted_to_utc", "unit", "" };
+        SEXP lt = Rf_mkNamed(VECSXP, nms);
+        SET_VECTOR_ELT(typ, 2, lt);
+        SET_VECTOR_ELT(lt, 0, Rf_mkString("TIMESTAMP"));
+        SET_VECTOR_ELT(lt, 1, Rf_ScalarLogical(1));
+        SET_VECTOR_ELT(lt, 2, Rf_mkString("micros"));
+
+      } else if (Rf_inherits(col, "difftime")) {
+        SET_VECTOR_ELT(typ, 0, Rf_mkString("INT64"));
+        SET_VECTOR_ELT(typ, 1, Rf_mkString("difftime"));
+        SET_VECTOR_ELT(typ, 2, R_NilValue);
+
+      } else {
+        SET_VECTOR_ELT(typ, 0, Rf_mkString("DOUBLE"));
+        SET_VECTOR_ELT(typ, 1, Rf_mkString("double"));
+        SET_VECTOR_ELT(typ, 2, R_NilValue);
+      }
+      break;
+    }
+    case STRSXP: {
+      SET_VECTOR_ELT(typ, 0, Rf_mkString("BYTE_ARRAY"));
+      SET_VECTOR_ELT(typ, 1, Rf_mkString("character"));
+      const char *nms[] = { "type", "" };
+      SEXP lt = Rf_mkNamed(VECSXP, nms);
+      SET_VECTOR_ELT(typ, 2, lt);
+      SET_VECTOR_ELT(lt, 0, Rf_mkString("STRING"));
+      break;
+    }
+    case LGLSXP: {
+      SET_VECTOR_ELT(typ, 0, Rf_mkString("DOUBLE"));
+      SET_VECTOR_ELT(typ, 1, Rf_mkString("double"));
+      SET_VECTOR_ELT(typ, 2, R_NilValue);
+      break;
+    }
+    default:
+      SET_VECTOR_ELT(typ, 0, Rf_ScalarString(NA_STRING));
+    }
+  }
+
+  UNPROTECT(1);
+  return res;
+}
+
 } // extern "C"

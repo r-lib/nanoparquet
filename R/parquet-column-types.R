@@ -114,74 +114,8 @@ parquet_column_types_file <- function(file, options) {
 	sch[, cols]
 }
 
-# TODO this is duplicated from the C++ code
-
-map_to_parquet_type <- function(x, options) {
-	if (typeof(x) == "integer") {
-		if (inherits(x, "factor")) {
-			list(
-				"BYTE_ARRAY",
-				"factor",
-				structure(list(type = "STRING"), class = "nanoparquet_logical_type")
-			)
-		} else if (inherits(x, "Date")) {
-			list(
-				"INT32",
-				"integer",
-				structure(list(type = "DATE"), class = "nanoparquet_logical_type")
-			)
-		} else if (inherits(x, "hms")) {
-			list(
-				"INT32",
-				"hms",
-				structure(
-					list(type = "TIME", is_adjusted_to_utc = TRUE, unit = "millis"),
-					class = "nanoparquet_logical_type"
-				)
-			)
-		} else {
-			list(
-				"INT32",
-				"integer",
-				structure(
-					list(type = "INT", bit_width = 32, is_signed = TRUE),
-					class = "nanoparquet_logical_type"
-				)
-			)
-		}
-	} else if (typeof(x) == "double") {
-		if (inherits(x, "POSIXct")) {
-			list(
-				"INT64",
-				"POSIXct",
-				structure(
-					list(type = "TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "micros"),
-					class = "nanoparquet_logical_type"
-				)
-			)
-		} else if (inherits(x, "difftime")) {
-			list("INT64", "difftime", NULL)
-		} else {
-			list("DOUBLE", "double", NULL)
-		}
-
-	} else if (typeof(x) == "character") {
-		list(
-			"BYTE_ARRAY",
-			"character",
-			structure(list(type = "STRING"), class = "nanoparquet_logical_type")
-		)
-
-	} else if (typeof(x) == "logical") {
-		list("BOOLEAN", "logical", NULL)
-
-	} else {
-		list(NA_character_, class(x)[[1]], NULL)
-	}
-}
-
 parquet_column_types_df <- function(df, options) {
-	types <- lapply(df, map_to_parquet_type, options)
+	types <- .Call(nanoparquet_map_to_parquet_types, df, options)
 	type_tab <- data.frame(
 		file_name = rep(NA_character_, length(df)),
 		name = names(df),
