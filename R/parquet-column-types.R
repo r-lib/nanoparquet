@@ -1,0 +1,197 @@
+#' Map between R and Parquet data types
+#'
+#' This function works two ways. It can map the R types of a data frame to
+#' Parquet types, to see how [write_parquet()] would write out the data
+#' frame. It can also map the types of a Parquet file to R types, to see
+#' how [read_parquet()] would read the file into R.
+#'
+#' @param x Path to a Parquet file, or a data frame.
+#' @param options Nanoparquet options, see [parquet_options()].
+#' @return Data frame with columns:
+#'   * `file_name`: file name.
+#'   * `name`: column name.
+#'   * `type`: (low level) Parquet data type.
+#'   * `r_type`: the R type that corresponds to the Parquet type.
+#'     Might be `NA` if [read_parquet()] cannot read this column. See
+#'     [nanoparquet-types] for the type mapping rules.
+#'   * `repetition_type`: whether the column in `REQUIRED` (cannot be
+#'     `NA`) or `OPTIONAL` (may be `NA`). `REPEATED` columns are not
+#'     currently supported by nanoparquet.
+#'   * `logical_type`: Parquet logical type in a list column.
+#'      An element has at least an entry called `type`, and potentially
+#'      additional entries, e.g. `bit_width`, `is_signed`, etc.
+#'
+#' @seealso [parquet_metadata()] to read more metadata,
+#'   [parquet_info()] for a very short summary.
+#'   [parquet_schema()] for the complete Parquet schema.
+#'   [read_parquet()], [write_parquet()], [nanoparquet-types].
+#' @export
+
+parquet_column_types <- function(x, options = parquet_options()) {
+	if (is.character(x)) {
+		parquet_column_types_file(x, options)
+	} else if (is.data.frame(x)) {
+		parquet_column_types_df(x, options)
+	} else {
+		stop("`x` must be a file name or a data frame in `parquet_column_types()`")
+	}
+}
+
+parquet_column_types_file <- function(file, options) {
+  mtd <- parquet_metadata(file)
+	sch <- mtd$schema
+
+	kv <- mtd$file_meta_data$key_value_metadata[[1]]
+
+	type_map <- c(
+		BOOLEAN = "logical",
+		INT32 = "integer",
+		INT64 = "double",
+		DOUBLE = "double",
+		FLOAT = "double",
+		INT96 = "POSIXct",
+		FIXED_LEN_BYTE_ARRAY = "raw",
+		BYTE_ARRAY = "raw"
+	)
+
+	# keep leaf columns only, arrow schema is for leaf columns
+	sch <- sch[is.na(sch$num_children) | sch$num_children == 0L, ]
+	sch$r_type <- unname(type_map[sch$type])
+
+	sch$r_type[
+		sch$type == "FIXED_LEN_BYTE_ARRAY" &
+		sch$converted_type == "DECIMAL"] <- "double"
+	sch$r_type[
+		vapply(sch$logical_type, function(x) {
+			!is.null(x$type) && x$type %in% c("STRING", "ENUM", "UUID")
+		}, logical(1)) |
+		sch$converted_type == "UTF8"] <- "character"
+
+	# detected from Arrow schema
+	if (options[["use_arrow_metadata"]]) {
+		spec <- if ("ARROW:schema" %in% kv$key) {
+			kv <- mtd$file_meta_data$key_value_metadata[[1]]
+			arrow_find_special(
+				kv$value[match("ARROW:schema", kv$key)],
+				file
+			)
+		}
+		if (length(spec$factor)) sch$r_type[spec$factor] <- "factor"
+		if (length(spec$difftime)) sch$r_type[spec$difftime] <- "difftime"
+	}
+
+	# TODO: this is duplicated in the C++ code
+	# our own conversions
+	dates <- vapply(
+		sch$logical_type,
+		function(lt) !is.null(lt$type) && lt$type == "DATE",
+		logical(1)
+	) | sch$converted_type == "DATE"
+	sch$r_type[dates] <- "Date"
+
+	hmss <- vapply(
+		sch$logical_type,
+		function(lt) !is.null(lt$type) && lt$type == "TIME",
+		logical(1)
+	) | sch$converted_type == "TIME_MILLIS"
+	sch$r_type[hmss] <- "hms"
+
+	poscts <- vapply(
+		sch$logical_type,
+		function(lt) !is.null(lt) && lt$type == "TIMESTAMP",
+		logical(1)
+	) | sch$converted_type == "TIMESTAMP_MICROS"
+	sch$r_type[poscts] <- "POSIXct"
+
+	cols <- c(
+		"file_name",
+		"name",
+		"type",
+		"r_type",
+		"repetition_type",
+		"logical_type"
+	)
+	sch[, cols]
+}
+
+# TODO this is duplicated from the C++ code
+
+map_to_parquet_type <- function(x, options) {
+	if (typeof(x) == "integer") {
+		if (inherits(x, "factor")) {
+			list(
+				"BYTE_ARRAY",
+				"factor",
+				structure(list(type = "STRING"), class = "nanoparquet_logical_type")
+			)
+		} else if (inherits(x, "Date")) {
+			list(
+				"INT32",
+				"integer",
+				structure(list(type = "DATE"), class = "nanoparquet_logical_type")
+			)
+		} else if (inherits(x, "hms")) {
+			list(
+				"INT32",
+				"hms",
+				structure(
+					list(type = "TIME", is_adjusted_to_utc = TRUE, unit = "millis"),
+					class = "nanoparquet_logical_type"
+				)
+			)
+		} else {
+			list(
+				"INT32",
+				"integer",
+				structure(
+					list(type = "INT", bit_width = 32, is_signed = TRUE),
+					class = "nanoparquet_logical_type"
+				)
+			)
+		}
+	} else if (typeof(x) == "double") {
+		if (inherits(x, "POSIXct")) {
+			list(
+				"INT64",
+				"POSIXct",
+				structure(
+					list(type = "TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "micros"),
+					class = "nanoparquet_logical_type"
+				)
+			)
+		} else if (inherits(x, "difftime")) {
+			list("INT64", "difftime", NULL)
+		} else {
+			list("DOUBLE", "double", NULL)
+		}
+
+	} else if (typeof(x) == "character") {
+		list(
+			"BYTE_ARRAY",
+			"character",
+			structure(list(type = "STRING"), class = "nanoparquet_logical_type")
+		)
+
+	} else if (typeof(x) == "logical") {
+		list("BOOLEAN", "logical", NULL)
+
+	} else {
+		list(NA_character_, class(x)[[1]], NULL)
+	}
+}
+
+parquet_column_types_df <- function(df, options) {
+	types <- lapply(df, map_to_parquet_type, options)
+	type_tab <- data.frame(
+		file_name = rep(NA_character_, length(df)),
+		name = names(df),
+		type = vapply(types, function(x) x[[1]], ""),
+		r_type = vapply(types, function(x) x[[2]], ""),
+		repetition_type = ifelse(vapply(df, anyNA, TRUE), "OPTIONAL", "REQUIRED"),
+		logical_type = I(unname(lapply(types, function(x) x[[3]])))
+	)
+
+	rownames(type_tab) <- NULL
+	class(type_tab) <- c("tbl", class(type_tab))
+	type_tab
+}
