@@ -17,7 +17,6 @@ class MemStream : public std::streambuf {
       std::fill(bufs.begin(), bufs.end(), nullptr);
       sizes.resize(num_bufs);
       sizes[0] = size1;
-      setp(0, 0);
     }
 
     // no copies please!
@@ -26,12 +25,12 @@ class MemStream : public std::streambuf {
 
     std::streamsize xsputn(const char* s, std::streamsize n) override {
       if (n == 0) return n;
+      pos += n;
       // the very first allocation
       if (sbuf == nullptr) {
         bufs[bufptr] = std::unique_ptr<char[]>(new char[sizes[bufptr]]);
         sbuf = bufs[bufptr].get();
         sptr = 0;
-	setp(sbuf, sbuf + sizes[bufptr]);
       }
       uint64_t space = sizes[bufptr] - sptr;
       if (n > space) {
@@ -45,14 +44,11 @@ class MemStream : public std::streambuf {
         }
         bufs[bufptr] = std::unique_ptr<char[]>(new char[sizes[bufptr]]);
         sbuf = bufs[bufptr].get();
-	setp(sbuf, sbuf + sizes[bufptr]);
         memcpy(sbuf, s + space, of);
         sptr = of;
-        pbump(of);
        } else {
         memcpy(sbuf + sptr, s, n);
         sptr += n;
-        pbump(n);
       }
       return n;
     }
@@ -70,12 +66,7 @@ class MemStream : public std::streambuf {
     }
 
     uint64_t size() {
-      uint64_t s = 0;
-      for (int i = 0; i < bufptr; i++) {
-        s += sizes[i];
-      }
-      s += sptr;
-      return s;
+      return pos;
     }
 
     uint64_t copy(uint8_t *dst, uint64_t len) {
@@ -116,7 +107,8 @@ class MemStream : public std::streambuf {
         dir == std::ios_base::beg) {
       throw std::runtime_error("Cannot seek in output buffer");
     }
-    return pptr() - pbase();
+
+    return pos;
   }
 
   private:
@@ -130,4 +122,5 @@ class MemStream : public std::streambuf {
     int bufptr = 0;            // number of active buffer
     char *sbuf = nullptr;      // pointer to active buffer
     uint64_t sptr = 0;         // position inside the active buffer
+    uint64_t pos = 0;
 };

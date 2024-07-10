@@ -1,5 +1,8 @@
 # nanoparquet (development version)
 
+* `write_parquet(file = ":raw:")` now works correctly for larger data
+  frames (#77).
+
 # nanoparquet 0.3.1
 
 * This version fixes a `write_parquet()` crash (#73).
