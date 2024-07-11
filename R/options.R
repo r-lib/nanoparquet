@@ -48,7 +48,3 @@ parquet_options <- function(
     write_arrow_metadata = write_arrow_metadata
   )
 }
-
-is_flag <- function(x) {
-  is.logical(x) && length(x) == 1 && !is.na(x)
-}

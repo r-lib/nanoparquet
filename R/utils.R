@@ -28,3 +28,16 @@ is_asan <- function() {
 is_ubsan <- function() {
   .Call(is_ubsan_)
 }
+
+is_flag <- function(x) {
+  is.logical(x) && length(x) == 1 && !is.na(x)
+}
+
+is_string <- function(x) {
+  is.character(x) && length(x) == 1 && !is.na(x)
+}
+
+is_uint32 <- function(x) {
+  is.numeric(x) && length(x) == 1 && !is.na(x) &&
+    round(x) == x && x >= 0 && x <= 4294967295
+}
