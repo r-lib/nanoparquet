@@ -6,7 +6,7 @@ test_that("rle_decode", {
     x = as.factor(sample(letters, 100, replace = TRUE))
   )
   arrow::write_parquet(d, tmp)
-  pages <- parquet_pages(tmp)
+  pages <- read_parquet_pages(tmp)
   data_page <- read_parquet_page(tmp, pages$page_header_offset[2])
   data <- data_page$data
   def_len <- readBin(data, "int", n = 1)

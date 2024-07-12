@@ -39,9 +39,9 @@
 #' @seealso [read_parquet_page()] to read a page.
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
-#' nanoparquet:::parquet_pages(file_name)
+#' nanoparquet:::read_parquet_pages(file_name)
 
-parquet_pages <- function(file) {
+read_parquet_pages <- function(file) {
 	file <- path.expand(file)
 	res <- .Call(nanoparquet_read_pages, file)
 	res$encoding <- names(encodings)[res$encoding + 1L]
@@ -59,9 +59,9 @@ parquet_pages <- function(file) {
 #'
 #' @param file Path to a Parquet file.
 #' @param offset Integer offset of the start of the page in the file.
-#'   See [parquet_pages()] for a list of all pages and their offsets.
+#'   See [read_parquet_pages()] for a list of all pages and their offsets.
 #' @return Named list. Many entries correspond to the columns of
-#'   the result of [parquet_pages()]. Additional entries are:
+#'   the result of [read_parquet_pages()]. Additional entries are:
 #'   * `codec`: compression codec. Possible values:
 #'   * `has_repetition_levels`: whether the page has repetition levels.
 #'   * `has_definition_levels`: whether the page has definition levels.
@@ -83,10 +83,10 @@ parquet_pages <- function(file) {
 #'     is the same as `compressed_data`.
 #'
 #' @keywords internal
-#' @seealso [parquet_pages()] for a summary of all pages.
+#' @seealso [read_parquet_pages()] for a summary of all pages.
 #' @examplesIf Sys.getenv("IN_PKGDOWN") == "true"
 #' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
-#' nanoparquet:::parquet_pages(file_name)
+#' nanoparquet:::read_parquet_pages(file_name)
 #' options(max.print = 100)  # otherwise long raw vector
 #' nanoparquet:::read_parquet_page(file_name, 4L)
 

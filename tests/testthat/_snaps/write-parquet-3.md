@@ -3,49 +3,49 @@
     Code
       parquet_type("BOOLEAN")
     Output
-      [[1]]
+      $type
       [1] "BOOLEAN"
       
     Code
       parquet_type("INT32")
     Output
-      [[1]]
+      $type
       [1] "INT32"
       
     Code
       parquet_type("INT64")
     Output
-      [[1]]
+      $type
       [1] "INT64"
       
     Code
       parquet_type("INT96")
     Output
-      [[1]]
+      $type
       [1] "INT96"
       
     Code
       parquet_type("FLOAT")
     Output
-      [[1]]
+      $type
       [1] "FLOAT"
       
     Code
       parquet_type("DOUBLE")
     Output
-      [[1]]
+      $type
       [1] "DOUBLE"
       
     Code
       parquet_type("BYTE_ARRAY")
     Output
-      [[1]]
+      $type
       [1] "BYTE_ARRAY"
       
     Code
       parquet_type("FIXED_LEN_BYTE_ARRAY", type_length = 10)
     Output
-      [[1]]
+      $type
       [1] "FIXED_LEN_BYTE_ARRAY"
       
       $type_length
@@ -54,7 +54,7 @@
     Code
       parquet_type("STRING")
     Output
-      [[1]]
+      $type
       [1] "BYTE_ARRAY"
       
       $logical_type
@@ -63,7 +63,7 @@
     Code
       parquet_type("ENUM")
     Output
-      [[1]]
+      $type
       [1] "BYTE_ARRAY"
       
       $logical_type
@@ -72,7 +72,7 @@
     Code
       parquet_type("UUID")
     Output
-      [[1]]
+      $type
       [1] "FIXED_LEN_BYTE_ARRAY"
       
       $logical_type
@@ -84,7 +84,7 @@
     Code
       parquet_type("INT", bit_width = 8, is_signed = TRUE)
     Output
-      [[1]]
+      $type
       [1] "INT32"
       
       $logical_type
@@ -99,7 +99,7 @@
     Code
       parquet_type("INT", bit_width = 16, is_signed = TRUE)
     Output
-      [[1]]
+      $type
       [1] "INT32"
       
       $logical_type
@@ -114,7 +114,7 @@
     Code
       parquet_type("INT", bit_width = 32, is_signed = FALSE)
     Output
-      [[1]]
+      $type
       [1] "INT32"
       
       $logical_type
@@ -129,7 +129,7 @@
     Code
       parquet_type("INT", bit_width = 64, is_signed = FALSE)
     Output
-      [[1]]
+      $type
       [1] "INT64"
       
       $logical_type
@@ -144,7 +144,7 @@
     Code
       parquet_type("DECIMAL", precision = 5, primitive_type = "INT32")
     Output
-      [[1]]
+      $type
       [1] "INT32"
       
       $logical_type
@@ -159,7 +159,7 @@
     Code
       parquet_type("DECIMAL", precision = 5, scale = 0, primitive_type = "INT32")
     Output
-      [[1]]
+      $type
       [1] "INT32"
       
       $logical_type
@@ -174,7 +174,7 @@
     Code
       parquet_type("DECIMAL", precision = 5, scale = 5, primitive_type = "INT64")
     Output
-      [[1]]
+      $type
       [1] "INT64"
       
       $logical_type
@@ -189,7 +189,7 @@
     Code
       parquet_type("DECIMAL", precision = 5, primitive_type = "BYTE_ARRAY")
     Output
-      [[1]]
+      $type
       [1] "BYTE_ARRAY"
       
       $logical_type
@@ -205,7 +205,7 @@
       parquet_type("DECIMAL", precision = 5, primitive_type = "FIXED_LEN_BYTE_ARRAY",
         type_length = 5)
     Output
-      [[1]]
+      $type
       [1] "FIXED_LEN_BYTE_ARRAY"
       
       $logical_type
@@ -223,7 +223,7 @@
     Code
       parquet_type("FLOAT16")
     Output
-      [[1]]
+      $type
       [1] "FIXED_LEN_BYTE_ARRAY"
       
       $logical_type
@@ -235,7 +235,7 @@
     Code
       parquet_type("DATE")
     Output
-      [[1]]
+      $type
       [1] "INT32"
       
       $logical_type
@@ -244,7 +244,7 @@
     Code
       parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")
     Output
-      [[1]]
+      $type
       [1] "INT32"
       
       $logical_type
@@ -259,7 +259,7 @@
     Code
       parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MICROS")
     Output
-      [[1]]
+      $type
       [1] "INT64"
       
       $logical_type
@@ -274,7 +274,7 @@
     Code
       parquet_type("TIME", is_adjusted_utc = TRUE, unit = "NANOS")
     Output
-      [[1]]
+      $type
       [1] "INT64"
       
       $logical_type
@@ -289,7 +289,7 @@
     Code
       parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")
     Output
-      [[1]]
+      $type
       [1] "INT64"
       
       $logical_type
@@ -304,7 +304,7 @@
     Code
       parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")
     Output
-      [[1]]
+      $type
       [1] "INT64"
       
       $logical_type
@@ -319,7 +319,7 @@
     Code
       parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "NANOS")
     Output
-      [[1]]
+      $type
       [1] "INT64"
       
       $logical_type
@@ -334,7 +334,7 @@
     Code
       parquet_type("INTERVAL")
     Output
-      [[1]]
+      $type
       [1] "FIXED_LEN_BYTE_ARRAY"
       
       $logical_type
@@ -346,7 +346,7 @@
     Code
       parquet_type("JSON")
     Output
-      [[1]]
+      $type
       [1] "BYTE_ARRAY"
       
       $logical_type
@@ -355,7 +355,7 @@
     Code
       parquet_type("BSON")
     Output
-      [[1]]
+      $type
       [1] "BYTE_ARRAY"
       
       $logical_type

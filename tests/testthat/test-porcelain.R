@@ -1,5 +1,5 @@
 test_that("parquet_pages", {
-  pp <- parquet_pages(test_path("data/mtcars-arrow.parquet"))
+  pp <- read_parquet_pages(test_path("data/mtcars-arrow.parquet"))
   expect_snapshot(as.data.frame(pp))
 })
 
@@ -111,7 +111,7 @@ test_that("DELTA_BINARY_PACKED edge cases", {
   if (is_ubsan()) skip("UBSAN false positive")
   if (is_asan()) skip("ASAN false positive")
   pf <- test_path("data/issue10279_delta_encoding.parquet")
-  pgs <- parquet_pages(pf)
+  pgs <- read_parquet_pages(pf)
   expect_snapshot({
     # this is BOOLEAN in the file, which should not happen AFAICT
     p1 <- read_parquet_page(pf, pgs$page_header_offset[1])
