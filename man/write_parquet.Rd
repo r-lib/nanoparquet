@@ -47,5 +47,5 @@ write_parquet(mtcars2, "mtcars.parquet")
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=parquet_metadata]{parquet_metadata()}}, \code{\link[=read_parquet]{read_parquet()}}.
+\code{\link[=read_parquet_metadata]{read_parquet_metadata()}}, \code{\link[=read_parquet]{read_parquet()}}.
 }

@@ -7,7 +7,7 @@ test_that("parquet_type", {
     parquet_type("FLOAT")
     parquet_type("DOUBLE")
     parquet_type("BYTE_ARRAY")
-    parquet_type("FIXED_LEN_BYTE_ARRAY", length = 10)
+    parquet_type("FIXED_LEN_BYTE_ARRAY", type_length = 10)
 
     parquet_type("STRING")
     parquet_type("ENUM")
@@ -24,7 +24,7 @@ test_that("parquet_type", {
       "DECIMAL",
       precision = 5,
       primitive_type = "FIXED_LEN_BYTE_ARRAY",
-      length = 5
+      type_length = 5
     )
     parquet_type("FLOAT16")
     parquet_type("DATE")
@@ -57,7 +57,7 @@ test_that("parquet_type", {
       "DECIMAL",
       precision = 12,
       primitive_type = "FIXED_LEN_BYTE_ARRAY",
-      length = 5
+      type_length = 5
     )
     parquet_type("TIME", is_adjusted_utc = TRUE)
     parquet_type("TIME", unit = "MILLIS")

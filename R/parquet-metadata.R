@@ -69,7 +69,7 @@ page_types <- c(
   DATA_PAGE_V2 = 3
 )
 
-format_schema_result <- function(sch) {
+format_schema_result <- function(mtd, sch, options) {
   sch$type <- names(type_names)[sch$type + 1L]
   sch$converted_type <-
     names(ctype_names)[sch$converted_type + 1L]
@@ -77,7 +77,8 @@ format_schema_result <- function(sch) {
     names(repetition_types)[sch$repetition_type + 1L]
   sch$logical_type <- I(sch$logical_type)
   sch <- as.data.frame(sch)
-  class(sch) <- c("tbl", class(sch))
+	sch <- add_r_type_to_schema(mtd, sch, options)
+  class(sch) <- c("nanoparquet_schema", "tbl", class(sch))
 
 	sch
 }
@@ -89,6 +90,8 @@ format_schema_result <- function(sch) {
 #' compression or other reason.
 #'
 #' @param file Path to a Parquet file.
+#' @param options Options that potentially alter the default Parquet to R
+#'   type mappings, see [parquet_options()].
 #' @return A named list with entries:
 #'   * `file_meta_data`: a data frame with file meta data:
 #'     - `file_name`: file name.
@@ -108,6 +111,10 @@ format_schema_result <- function(sch) {
 #'     search order. Most important columns are:
 #'     - `file_name`: file name.
 #'     - `name`: column name.
+#'     - `r_type`: the R type that corresponds to the Parquet type.
+#'       Might be `NA` if [read_parquet()] cannot read this column. See
+#'       [nanoparquet-types] for the type mapping rules.
+#'     - `r_type`:
 #'     - `type`: data type. One of the low level data types.
 #'     - `type_length`: length for fixed length byte arrays.
 #'     - `repettion_type`: character, one of `REQUIRED`, `OPTIONAL` or
@@ -150,15 +157,15 @@ format_schema_result <- function(sch) {
 #'       are no dictionary pages.
 #'
 #' @export
-#' @seealso [parquet_info()] for a much shorter summary.
-#'   [parquet_column_types()] and [parquet_schema()] for column information.
+#' @seealso [read_parquet_info()] for a much shorter summary.
+#'   [read_parquet_schema()] for column information.
 #'   [read_parquet()] to read, [write_parquet()] to write Parquet files,
 #'   [nanoparquet-types] for the R <-> Parquet type mappings.
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
-#' nanoparquet::parquet_metadata(file_name)
+#' nanoparquet::read_parquet_metadata(file_name)
 
-parquet_metadata <- function(file) {
+read_parquet_metadata <- function(file, options = parquet_options()) {
 	file <- path.expand(file)
 	res <- .Call(nanoparquet_read_metadata, file)
 
@@ -171,7 +178,7 @@ parquet_metadata <- function(file) {
 	res$file_meta_data <- as.data.frame(res$file_meta_data)
 	class(res$file_meta_data) <- c("tbl", class(res$file_meta_data))
 
-	res$schema <- format_schema_result(res$schema)
+	res$schema <- format_schema_result(res, res$schema, options)
 
 	res$row_groups <- as.data.frame(res$row_groups)
 	class(res$row_groups) <- c("tbl", class(res$row_groups))
@@ -190,6 +197,17 @@ parquet_metadata <- function(file) {
 	res
 }
 
+#' @export
+#' @rdname read_parquet_metadata
+
+parquet_metadata <- function(file) {
+	warning(
+		"`parquet_metadata()` is deprecated. ",
+		"Please use `read_parquet_metadata()` instead."
+	)
+	read_parquet_metadata(file)
+}
+
 #' Read the schema of a Parquet file
 #'
 #' This function should work on all files, even if [read_parquet()] is
@@ -197,8 +215,10 @@ parquet_metadata <- function(file) {
 #' compression or other reason.
 #'
 #' @param file Path to a Parquet file.
+#' @param options Return value of [parquet_options()], options that
+#'   potentially modify the Parquet to R type mappings.
 #' @return
-# -- If YOU UPDATE THIS, ALSO UPDATE parquet_metadata ABOVE ---------------
+# -- If YOU UPDATE THIS, ALSO UPDATE read_parquet_metadata ABOVE ----------
 #'     Data frame, the schema of the file. It has one row for
 #'     each node (inner node or leaf node). For flat files this means one
 #'     root node (inner node), always the first one, and then one row for
@@ -206,6 +226,9 @@ parquet_metadata <- function(file) {
 #'     search order. Most important columns are:
 #'     - `file_name`: file name.
 #'     - `name`: column name.
+#'     - `r_type`: the R type that corresponds to the Parquet type.
+#'       Might be `NA` if [read_parquet()] cannot read this column. See
+#'       [nanoparquet-types] for the type mapping rules.
 #'     - `type`: data type. One of the low level data types.
 #'     - `type_length`: length for fixed length byte arrays.
 #'     - `repettion_type`: character, one of `REQUIRED`, `OPTIONAL` or
@@ -217,17 +240,15 @@ parquet_metadata <- function(file) {
 #'       integer for the root node, and `NA` for a leaf node.
 # -------------------------------------------------------------------------
 #'
-#' @seealso [parquet_metadata()] to read more metadata,
-#'   [parquet_column_types()] to show the columns R would read,
-#'   [parquet_info()] to show only basic information.
+#' @seealso [read_parquet_metadata()] to read more metadata,
+#'   [read_parquet_info()] to show only basic information.
 #'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @export
 
-parquet_schema <- function(file) {
+read_parquet_schema <- function(file, options = parquet_options()) {
 	file <- path.expand(file)
-	res <- .Call(nanoparquet_read_schema, file)
-	res <- format_schema_result(res)
-	res
+	mtd <- read_parquet_metadata(file, options = options)
+	mtd$schema
 }
 
 #' Short summary of a Parquet file
@@ -243,14 +264,14 @@ parquet_schema <- function(file) {
 #'   * `created_by`: A string scalar, usually the name of the software
 #'       that created the file. `NA` if not available.
 #'
-#' @seealso [parquet_metadata()] to read more metadata,
-#'   [parquet_column_types()] and [parquet_schema()] for column information.
+#' @seealso [read_parquet_metadata()] to read more metadata,
+#'   [read_parquet_schema()] for column information.
 #'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @export
 
-parquet_info <- function(file) {
+read_parquet_info <- function(file) {
 	file <- path.expand(file)
-	mtd <- parquet_metadata(file)
+	mtd <- read_parquet_metadata(file)
 	info <- data.frame(
 		stringsAsFactors = FALSE,
 		file_name = file,
@@ -263,4 +284,15 @@ parquet_info <- function(file) {
 	)
 	class(info) <- c("tbl", class(info))
 	info
+}
+
+#' @export
+#' @rdname read_parquet_info
+
+parquet_info <- function(file) {
+	warning(
+		"`parquet_info()` is deprecated, please use `read_parquet_info() ",
+		"instead."
+	)
+	read_parquet_info(file)
 }

@@ -5,7 +5,7 @@ test_that("factors are written as strings", {
 
   write_parquet(mt, tmp)
   expect_snapshot(
-    as.data.frame(parquet_schema(tmp))[
+    as.data.frame(read_parquet_schema(tmp))[
       c("name", "type", "converted_type", "logical_type")
     ]
   )
@@ -129,7 +129,7 @@ test_that("writing metadata", {
   on.exit(unlink(tmp), add = TRUE)
 
   write_parquet(mt, tmp, metadata = c("foo" = "bar"))
-  kvm <- parquet_metadata(tmp)$file_meta_data$key_value_metadata[[1]]
+  kvm <- read_parquet_metadata(tmp)$file_meta_data$key_value_metadata[[1]]
   expect_snapshot(as.data.frame(kvm)[1,])
 })
 
@@ -294,7 +294,7 @@ test_that("REQ RLE", {
   write_parquet(d, tmp, compression = "uncompressed")
   pgs <- parquet_pages(tmp)
   expect_snapshot({
-    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_metadata(tmp)$column_chunks$encodings
     data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
   })
   expect_equal(
@@ -305,7 +305,7 @@ test_that("REQ RLE", {
   write_parquet(d, tmp, compression = "snappy")
   pgs <- parquet_pages(tmp)
   expect_snapshot({
-    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_metadata(tmp)$column_chunks$encodings
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
   })
 })
@@ -321,7 +321,7 @@ test_that("OPT RLE", {
   write_parquet(d, tmp, compression = "uncompressed")
   pgs <- parquet_pages(tmp)
   expect_snapshot({
-    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_metadata(tmp)$column_chunks$encodings
     data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
   })
   expect_equal(
@@ -342,7 +342,7 @@ test_that("OPT RLE", {
   write_parquet(d, tmp, compression = "snappy")
   pgs <- parquet_pages(tmp)
   expect_snapshot({
-    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_metadata(tmp)$column_chunks$encodings
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
   })
 })

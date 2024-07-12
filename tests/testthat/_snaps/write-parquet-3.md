@@ -43,12 +43,12 @@
       [1] "BYTE_ARRAY"
       
     Code
-      parquet_type("FIXED_LEN_BYTE_ARRAY", length = 10)
+      parquet_type("FIXED_LEN_BYTE_ARRAY", type_length = 10)
     Output
       [[1]]
       [1] "FIXED_LEN_BYTE_ARRAY"
       
-      $length
+      $type_length
       [1] 10
       
     Code
@@ -78,7 +78,7 @@
       $logical_type
       [1] "UUID"
       
-      $length
+      $type_length
       [1] 16
       
     Code
@@ -203,7 +203,7 @@
       
     Code
       parquet_type("DECIMAL", precision = 5, primitive_type = "FIXED_LEN_BYTE_ARRAY",
-        length = 5)
+        type_length = 5)
     Output
       [[1]]
       [1] "FIXED_LEN_BYTE_ARRAY"
@@ -217,7 +217,7 @@
       $precision
       [1] 5
       
-      $length
+      $type_length
       [1] 5
       
     Code
@@ -229,7 +229,7 @@
       $logical_type
       [1] "FLOAT16"
       
-      $length
+      $type_length
       [1] 2
       
     Code
@@ -340,7 +340,7 @@
       $logical_type
       [1] "INTERVAL"
       
-      $length
+      $type_length
       [1] 12
       
     Code
@@ -373,7 +373,7 @@
       parquet_type("FIXED_LEN_BYTE_ARRAY")
     Condition
       Error in `fixed_len_byte_array()`:
-      ! !is.null(length) is not TRUE
+      ! !is.null(type_length) is not TRUE
     Code
       parquet_type("INT", bit_width = 8)
     Condition
@@ -431,10 +431,10 @@
       ! precision <= 18 is not TRUE
     Code
       parquet_type("DECIMAL", precision = 12, primitive_type = "FIXED_LEN_BYTE_ARRAY",
-        length = 5)
+        type_length = 5)
     Condition
       Error in `decimal()`:
-      ! precision <= floor(log10(2^(8 * length - 1) - 1)) is not TRUE
+      ! precision <= floor(log10(2^(8 * type_length - 1) - 1)) is not TRUE
     Code
       parquet_type("TIME", is_adjusted_utc = TRUE)
     Condition

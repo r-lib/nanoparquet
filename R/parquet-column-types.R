@@ -1,5 +1,9 @@
 #' Map between R and Parquet data types
 #'
+#' Note that this function is now deprecated. Please use
+#' [read_parquet_schema()] for files, and [infer_parquet_schema()] for
+#' data frames.
+#'
 #' This function works two ways. It can map the R types of a data frame to
 #' Parquet types, to see how [write_parquet()] would write out the data
 #' frame. It can also map the types of a Parquet file to R types, to see
@@ -21,26 +25,33 @@
 #'      An element has at least an entry called `type`, and potentially
 #'      additional entries, e.g. `bit_width`, `is_signed`, etc.
 #'
-#' @seealso [parquet_metadata()] to read more metadata,
-#'   [parquet_info()] for a very short summary.
-#'   [parquet_schema()] for the complete Parquet schema.
+#' @seealso [read_parquet_metadata()] to read more metadata,
+#'   [read_parquet_info()] for a very short summary.
+#'   [read_parquet_schema()] for the complete Parquet schema.
 #'   [read_parquet()], [write_parquet()], [nanoparquet-types].
 #' @export
 
 parquet_column_types <- function(x, options = parquet_options()) {
+	warning(
+		"`parquet_column_types()` is deprecated, please use ",
+		"`read_parquet_schema()` or `parquet_schema()` instead."
+  )
 	if (is.character(x)) {
 		parquet_column_types_file(x, options)
 	} else if (is.data.frame(x)) {
-		parquet_column_types_df(x, options)
+		infer_parquet_schema(x, options)
 	} else {
 		stop("`x` must be a file name or a data frame in `parquet_column_types()`")
 	}
 }
 
 parquet_column_types_file <- function(file, options) {
-  mtd <- parquet_metadata(file)
+  mtd <- read_parquet_metadata(file)
 	sch <- mtd$schema
+	add_r_type_to_schema(mtd, sch, options)
+}
 
+add_r_type_to_schema <- function(mtd, sch, options) {
 	kv <- mtd$file_meta_data$key_value_metadata[[1]]
 
 	type_map <- c(
@@ -54,8 +65,6 @@ parquet_column_types_file <- function(file, options) {
 		BYTE_ARRAY = "raw"
 	)
 
-	# keep leaf columns only, arrow schema is for leaf columns
-	sch <- sch[is.na(sch$num_children) | sch$num_children == 0L, ]
 	sch$r_type <- unname(type_map[sch$type])
 
 	sch$r_type[
@@ -106,26 +115,8 @@ parquet_column_types_file <- function(file, options) {
 	cols <- c(
 		"file_name",
 		"name",
-		"type",
 		"r_type",
-		"repetition_type",
-		"logical_type"
+		setdiff(colnames(sch), c("file_name", "name"))
 	)
 	sch[, cols]
-}
-
-parquet_column_types_df <- function(df, options) {
-	types <- .Call(nanoparquet_map_to_parquet_types, df, options)
-	type_tab <- data.frame(
-		file_name = rep(NA_character_, length(df)),
-		name = names(df),
-		type = vapply(types, function(x) x[[1]], ""),
-		r_type = vapply(types, function(x) x[[2]], ""),
-		repetition_type = ifelse(vapply(df, anyNA, TRUE), "OPTIONAL", "REQUIRED"),
-		logical_type = I(unname(lapply(types, function(x) x[[3]])))
-	)
-
-	rownames(type_tab) <- NULL
-	class(type_tab) <- c("tbl", class(type_tab))
-	type_tab
 }

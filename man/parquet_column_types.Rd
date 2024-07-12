@@ -29,14 +29,19 @@ additional entries, e.g. \code{bit_width}, \code{is_signed}, etc.
 }
 }
 \description{
+Note that this function is now deprecated. Please use
+\code{\link[=read_parquet_schema]{read_parquet_schema()}} for files, and \code{\link[=infer_parquet_schema]{infer_parquet_schema()}} for
+data frames.
+}
+\details{
 This function works two ways. It can map the R types of a data frame to
 Parquet types, to see how \code{\link[=write_parquet]{write_parquet()}} would write out the data
 frame. It can also map the types of a Parquet file to R types, to see
 how \code{\link[=read_parquet]{read_parquet()}} would read the file into R.
 }
 \seealso{
-\code{\link[=parquet_metadata]{parquet_metadata()}} to read more metadata,
-\code{\link[=parquet_info]{parquet_info()}} for a very short summary.
-\code{\link[=parquet_schema]{parquet_schema()}} for the complete Parquet schema.
+\code{\link[=read_parquet_metadata]{read_parquet_metadata()}} to read more metadata,
+\code{\link[=read_parquet_info]{read_parquet_info()}} for a very short summary.
+\code{\link[=read_parquet_schema]{read_parquet_schema()}} for the complete Parquet schema.
 \code{\link[=read_parquet]{read_parquet()}}, \code{\link[=write_parquet]{write_parquet()}}, \link{nanoparquet-types}.
 }

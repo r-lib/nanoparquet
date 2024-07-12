@@ -8,9 +8,9 @@
 #' @export
 #' @seealso See [write_parquet()] to write Parquet files,
 #'   [nanoparquet-types] for the R <-> Parquet type mapping.
-#'   See [parquet_info()], for general information,
-#'   [parquet_column_types()] and [parquet_schema()] for information about the
-#'   columns, and [parquet_metadata()] for the complete metadata.
+#'   See [read_parquet_info()], for general information,
+#'   [read_parquet_schema()] for information about the
+#'   columns, and [read_parquet_metadata()] for the complete metadata.
 #' @examples
 #' file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
 #' parquet_df <- nanoparquet::read_parquet(file_name)
