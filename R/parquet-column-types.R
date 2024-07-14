@@ -116,7 +116,7 @@ add_r_type_to_schema <- function(mtd, sch, options) {
 		"file_name",
 		"name",
 		"r_type",
-		setdiff(colnames(sch), c("file_name", "name"))
+		setdiff(colnames(sch), c("file_name", "name", "r_type"))
 	)
 	sch[, cols]
 }

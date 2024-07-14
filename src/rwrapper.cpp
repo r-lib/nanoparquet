@@ -13,6 +13,7 @@ SEXP nanoparquet_write(
   SEXP options
 );
 SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options);
+SEXP nanoparquet_logical_to_converted(SEXP logical_type);
 SEXP nanoparquet_read_metadata(SEXP filesxp);
 SEXP nanoparquet_read_schema(SEXP filesxp);
 SEXP nanoparquet_read_pages(SEXP filesxp);
@@ -82,6 +83,7 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_read, 1),
   CALLDEF(nanoparquet_write, 7),
   CALLDEF(nanoparquet_map_to_parquet_types, 2),
+  CALLDEF(nanoparquet_logical_to_converted, 1),
   CALLDEF(nanoparquet_read_metadata, 1),
   CALLDEF(nanoparquet_read_schema, 1),
   CALLDEF(nanoparquet_read_pages, 1),

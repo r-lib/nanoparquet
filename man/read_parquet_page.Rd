@@ -10,11 +10,11 @@ read_parquet_page(file, offset)
 \item{file}{Path to a Parquet file.}
 
 \item{offset}{Integer offset of the start of the page in the file.
-See \code{\link[=parquet_pages]{parquet_pages()}} for a list of all pages and their offsets.}
+See \code{\link[=read_parquet_pages]{read_parquet_pages()}} for a list of all pages and their offsets.}
 }
 \value{
 Named list. Many entries correspond to the columns of
-the result of \code{\link[=parquet_pages]{parquet_pages()}}. Additional entries are:
+the result of \code{\link[=read_parquet_pages]{read_parquet_pages()}}. Additional entries are:
 \itemize{
 \item \code{codec}: compression codec. Possible values:
 \item \code{has_repetition_levels}: whether the page has repetition levels.
@@ -43,12 +43,12 @@ Read a page from a Parquet file
 \examples{
 \dontshow{if (Sys.getenv("IN_PKGDOWN") == "true") (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
-nanoparquet:::parquet_pages(file_name)
+nanoparquet:::read_parquet_pages(file_name)
 options(max.print = 100)  # otherwise long raw vector
 nanoparquet:::read_parquet_page(file_name, 4L)
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=parquet_pages]{parquet_pages()}} for a summary of all pages.
+\code{\link[=read_parquet_pages]{read_parquet_pages()}} for a summary of all pages.
 }
 \keyword{internal}

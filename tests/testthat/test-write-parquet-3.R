@@ -34,7 +34,6 @@ test_that("parquet_type", {
     parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")
     parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")
     parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "NANOS")
-    parquet_type("INTERVAL")
     parquet_type("JSON")
     parquet_type("BSON")
   })

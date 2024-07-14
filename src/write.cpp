@@ -670,7 +670,6 @@ bool nanoparquet_map_to_parquet_type(
       lt.__set_STRING(st);
       sel.__set_logicalType(lt);
       sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
     } else if (Rf_inherits(x, "Date")) {
       rtype = "integer";
       parquet::DateType dt;
@@ -678,7 +677,6 @@ bool nanoparquet_map_to_parquet_type(
       lt.__set_DATE(dt);
       sel.__set_logicalType(lt);
       sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
     } else if (Rf_inherits(x, "hms")) {
       rtype = "hms";
       parquet::TimeType tt;
@@ -690,7 +688,6 @@ bool nanoparquet_map_to_parquet_type(
       lt.__set_TIME(tt);
       sel.__set_logicalType(lt);
       sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
     } else {
       rtype = "integer";
       parquet::IntType it;
@@ -700,7 +697,6 @@ bool nanoparquet_map_to_parquet_type(
       lt.__set_INTEGER(it);
       sel.__set_logicalType(lt);
       sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
     }
     break;
   }
@@ -716,7 +712,6 @@ bool nanoparquet_map_to_parquet_type(
       lt.__set_TIMESTAMP(tt);
       sel.__set_logicalType(lt);
       sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_converted_type(get_converted_type_from_logical_type(lt));
 
     } else if (Rf_inherits(x, "difftime")) {
       rtype = "difftime";
@@ -735,7 +730,6 @@ bool nanoparquet_map_to_parquet_type(
     lt.__set_STRING(st);
     sel.__set_logicalType(lt);
     sel.__set_type(get_type_from_logical_type(lt));
-    sel.__set_converted_type(get_converted_type_from_logical_type(lt));
     break;
   }
   case LGLSXP: {
@@ -747,6 +741,7 @@ bool nanoparquet_map_to_parquet_type(
     return false;
   }
 
+  fill_converted_type_for_logical_type(sel);
   return true;
 }
 
@@ -889,6 +884,151 @@ SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options) {
   UNPROTECT(2);
   return res;
   R_API_END();
+}
+
+#define NUMERIC_SCALAR(x) \
+  (TYPEOF(x) == INTSXP ? INTEGER(x)[0] : REAL(x)[0])
+
+bool r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
+  const char *ctype = CHAR(STRING_ELT(VECTOR_ELT(logical_type, 0), 0));
+  parquet::LogicalType lt;
+  if (!strcmp(ctype, "STRING")) {
+    lt.__set_STRING(parquet::StringType());
+    sel.__set_logicalType(lt);
+
+  } else if (!strcmp(ctype, "ENUM")) {
+    lt.__set_ENUM(parquet::EnumType());
+    sel.__set_logicalType(lt);
+
+  } else if (!strcmp(ctype, "DECIMAL")) {
+    parquet::DecimalType dt;
+    if (Rf_length(logical_type) != 3) {
+      Rf_error("Parquet decimal logical type needs scale and precision");
+    }
+    if (!Rf_isNull(VECTOR_ELT(logical_type, 1))) {
+      dt.__set_scale(NUMERIC_SCALAR(VECTOR_ELT(logical_type, 1)));
+      sel.__set_scale(dt.scale);
+    }
+    dt.__set_precision(NUMERIC_SCALAR(VECTOR_ELT(logical_type, 2)));
+    sel.__set_precision(dt.precision);
+    lt.__set_DECIMAL(dt);
+    sel.__set_logicalType(lt);
+
+  } else if (!strcmp(ctype, "DATE")) {
+    lt.__set_DATE(parquet::DateType());
+    sel.__set_logicalType(lt);
+
+  } else if (!strcmp(ctype, "TIME")) {
+    parquet::TimeUnit tu;
+    parquet::TimeType tt;
+    tt.__set_isAdjustedToUTC(LOGICAL(VECTOR_ELT(logical_type, 1))[0]);
+    const char *unit = CHAR(STRING_ELT(VECTOR_ELT(logical_type, 2), 0));
+    if (!strcmp(unit, "MILLIS")) {
+      tu.__set_MILLIS(parquet::MilliSeconds());
+    } else if (!strcmp(unit, "MICROS")) {
+      tu.__set_MICROS(parquet::MicroSeconds());
+    } else if (!strcmp(unit, "NANOS")) {
+      tu.__set_NANOS(parquet::NanoSeconds());
+    } else {
+      Rf_error("Unknown TIME time unit: %s", unit);
+    }
+    tt.__set_unit(tu);
+    lt.__set_TIME(tt);
+    sel.__set_logicalType(lt);
+
+  } else if (!strcmp(ctype, "TIMESTAMP")) {
+    parquet::TimeUnit tu;
+    parquet::TimestampType tt;
+    tt.__set_isAdjustedToUTC(LOGICAL(VECTOR_ELT(logical_type, 1))[0]);
+    const char *unit = CHAR(STRING_ELT(VECTOR_ELT(logical_type, 2), 0));
+    if (!strcmp(unit, "MILLIS")) {
+      tu.__set_MILLIS(parquet::MilliSeconds());
+    } else if (!strcmp(unit, "MICROS")) {
+      tu.__set_MICROS(parquet::MicroSeconds());
+    } else if (!strcmp(unit, "NANOS")) {
+      tu.__set_NANOS(parquet::NanoSeconds());
+    } else {
+      Rf_error("Unknown TIME time unit: %s", unit);
+    }
+    tt.__set_unit(tu);
+    lt.__set_TIMESTAMP(tt);
+    sel.__set_logicalType(lt);
+
+  } else if (!strcmp(ctype, "INT") || !strcmp(ctype, "INTEGER")) {
+    parquet::IntType it;
+    if (Rf_xlength(logical_type) != 3) {
+      Rf_error("Parquet integer logical type needs bit width and signedness");
+    }
+    it.__set_bitWidth(NUMERIC_SCALAR(VECTOR_ELT(logical_type, 1)));
+    it.__set_isSigned(LOGICAL(VECTOR_ELT(logical_type, 2))[0]);
+    lt.__set_INTEGER(it);
+    sel.__set_logicalType(lt);
+
+  } else if (!strcmp(ctype, "JSON")) {
+    lt.__set_JSON(parquet::JsonType());
+    sel.__set_logicalType(lt);
+
+  } else if (!strcmp(ctype, "BSON")) {
+    lt.__set_BSON(parquet::BsonType());
+    sel.__set_logicalType(lt);
+
+  } else if (!strcmp(ctype, "UUID")) {
+    lt.__set_UUID(parquet::UUIDType());
+    sel.__set_logicalType(lt);
+
+  } else if (!strcmp(ctype, "FLOAT16")) {
+    lt.__set_FLOAT16(parquet::Float16Type());
+    sel.__set_logicalType(lt);
+
+  } else {
+    Rf_error("Unknown Parquet logical type: %s", ctype);
+  }
+
+  return true;
+}
+
+SEXP nanoparquet_logical_to_converted(SEXP logical_type) {
+  const char *nms[] = { "converted_type", "scale", "precision", "" };
+  SEXP res = PROTECT(Rf_mkNamed(VECSXP, nms));
+  SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(NA_INTEGER));
+  SET_VECTOR_ELT(res, 1, Rf_ScalarInteger(NA_INTEGER));
+  SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(NA_INTEGER));
+
+  parquet::SchemaElement sel;
+  if (!r_to_logical_type(logical_type, sel)) {
+    // Unknown logucal type, do nothing
+    UNPROTECT(1);
+    return res;
+  }
+
+  bool err_ = false;
+  char error_buffer_[8192];                                              \
+  error_buffer_[0] = '\0';                                               \
+  try {
+    fill_converted_type_for_logical_type(sel);
+  } catch(std::exception& ex) {                                          \
+    strncpy(error_buffer_, ex.what(), sizeof(error_buffer_) - 1);        \
+  } catch(std::string& ex) {                                             \
+    strncpy(error_buffer_, ex.c_str(), sizeof(error_buffer_) - 1);       \
+  } catch(...) {                                                         \
+    Rf_error("nanoparquet error @ " __FILE__ ":" STR(__LINE__));         \
+  }                                                                      \
+  if (err_) {
+    Rf_error("%s", error_buffer_);
+  }
+
+  if (sel.__isset.converted_type) {
+    INTEGER(VECTOR_ELT(res, 0))[0] = sel.converted_type;
+  }
+  if (sel.__isset.scale) {
+    INTEGER(VECTOR_ELT(res, 1))[0] = sel.scale;
+  }
+  if (sel.__isset.precision) {
+    INTEGER(VECTOR_ELT(res, 2))[0] = sel.precision;
+  }
+
+  UNPROTECT(1);
+  return res;
 }
 
 } // extern "C"

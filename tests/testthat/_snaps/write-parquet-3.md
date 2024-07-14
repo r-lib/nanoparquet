@@ -58,7 +58,20 @@
       [1] "BYTE_ARRAY"
       
       $logical_type
+      $type
       [1] "STRING"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "UTF8"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
       
     Code
       parquet_type("ENUM")
@@ -67,7 +80,20 @@
       [1] "BYTE_ARRAY"
       
       $logical_type
+      $type
       [1] "ENUM"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "ENUM"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
       
     Code
       parquet_type("UUID")
@@ -76,10 +102,23 @@
       [1] "FIXED_LEN_BYTE_ARRAY"
       
       $logical_type
+      $type
       [1] "UUID"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
       
       $type_length
       [1] 16
+      
+      $converted_type
+      [1] NA
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
       
     Code
       parquet_type("INT", bit_width = 8, is_signed = TRUE)
@@ -88,6 +127,7 @@
       [1] "INT32"
       
       $logical_type
+      $type
       [1] "INT"
       
       $bit_width
@@ -96,6 +136,18 @@
       $is_signed
       [1] TRUE
       
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "INT_8"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
+      
     Code
       parquet_type("INT", bit_width = 16, is_signed = TRUE)
     Output
@@ -103,6 +155,7 @@
       [1] "INT32"
       
       $logical_type
+      $type
       [1] "INT"
       
       $bit_width
@@ -111,6 +164,18 @@
       $is_signed
       [1] TRUE
       
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "INT_16"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
+      
     Code
       parquet_type("INT", bit_width = 32, is_signed = FALSE)
     Output
@@ -118,6 +183,7 @@
       [1] "INT32"
       
       $logical_type
+      $type
       [1] "INT"
       
       $bit_width
@@ -126,6 +192,18 @@
       $is_signed
       [1] FALSE
       
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "UINT_32"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
+      
     Code
       parquet_type("INT", bit_width = 64, is_signed = FALSE)
     Output
@@ -133,6 +211,7 @@
       [1] "INT64"
       
       $logical_type
+      $type
       [1] "INT"
       
       $bit_width
@@ -141,6 +220,18 @@
       $is_signed
       [1] FALSE
       
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "UINT_64"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
+      
     Code
       parquet_type("DECIMAL", precision = 5, primitive_type = "INT32")
     Output
@@ -148,6 +239,7 @@
       [1] "INT32"
       
       $logical_type
+      $type
       [1] "DECIMAL"
       
       $scale
@@ -155,6 +247,18 @@
       
       $precision
       [1] 5
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $scale
+      [1] 0
+      
+      $precision
+      [1] 5
+      
+      $converted_type
+      [1] "DECIMAL"
       
     Code
       parquet_type("DECIMAL", precision = 5, scale = 0, primitive_type = "INT32")
@@ -163,6 +267,7 @@
       [1] "INT32"
       
       $logical_type
+      $type
       [1] "DECIMAL"
       
       $scale
@@ -171,6 +276,18 @@
       $precision
       [1] 5
       
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $scale
+      [1] 0
+      
+      $precision
+      [1] 5
+      
+      $converted_type
+      [1] "DECIMAL"
+      
     Code
       parquet_type("DECIMAL", precision = 5, scale = 5, primitive_type = "INT64")
     Output
@@ -178,6 +295,7 @@
       [1] "INT64"
       
       $logical_type
+      $type
       [1] "DECIMAL"
       
       $scale
@@ -185,6 +303,18 @@
       
       $precision
       [1] 5
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $scale
+      [1] 5
+      
+      $precision
+      [1] 5
+      
+      $converted_type
+      [1] "DECIMAL"
       
     Code
       parquet_type("DECIMAL", precision = 5, primitive_type = "BYTE_ARRAY")
@@ -193,6 +323,7 @@
       [1] "BYTE_ARRAY"
       
       $logical_type
+      $type
       [1] "DECIMAL"
       
       $scale
@@ -200,6 +331,18 @@
       
       $precision
       [1] 5
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $scale
+      [1] 0
+      
+      $precision
+      [1] 5
+      
+      $converted_type
+      [1] "DECIMAL"
       
     Code
       parquet_type("DECIMAL", precision = 5, primitive_type = "FIXED_LEN_BYTE_ARRAY",
@@ -209,6 +352,7 @@
       [1] "FIXED_LEN_BYTE_ARRAY"
       
       $logical_type
+      $type
       [1] "DECIMAL"
       
       $scale
@@ -217,8 +361,20 @@
       $precision
       [1] 5
       
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $scale
+      [1] 0
+      
+      $precision
+      [1] 5
+      
       $type_length
       [1] 5
+      
+      $converted_type
+      [1] "DECIMAL"
       
     Code
       parquet_type("FLOAT16")
@@ -227,10 +383,23 @@
       [1] "FIXED_LEN_BYTE_ARRAY"
       
       $logical_type
+      $type
       [1] "FLOAT16"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
       
       $type_length
       [1] 2
+      
+      $converted_type
+      [1] NA
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
       
     Code
       parquet_type("DATE")
@@ -239,7 +408,20 @@
       [1] "INT32"
       
       $logical_type
+      $type
       [1] "DATE"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "DATE"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
       
     Code
       parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")
@@ -248,6 +430,7 @@
       [1] "INT32"
       
       $logical_type
+      $type
       [1] "TIME"
       
       $is_adjusted_utc
@@ -255,6 +438,18 @@
       
       $unit
       [1] "MILLIS"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "TIME_MILLIS"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
       
     Code
       parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MICROS")
@@ -263,6 +458,7 @@
       [1] "INT64"
       
       $logical_type
+      $type
       [1] "TIME"
       
       $is_adjusted_utc
@@ -270,6 +466,18 @@
       
       $unit
       [1] "MICROS"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "TIME_MICROS"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
       
     Code
       parquet_type("TIME", is_adjusted_utc = TRUE, unit = "NANOS")
@@ -278,6 +486,7 @@
       [1] "INT64"
       
       $logical_type
+      $type
       [1] "TIME"
       
       $is_adjusted_utc
@@ -286,6 +495,18 @@
       $unit
       [1] "NANOS"
       
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] NA
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
+      
     Code
       parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")
     Output
@@ -293,6 +514,7 @@
       [1] "INT64"
       
       $logical_type
+      $type
       [1] "TIMESTAMP"
       
       $is_adjusted_utc
@@ -301,6 +523,18 @@
       $unit
       [1] "MILLIS"
       
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "TIMESTAMP_MILLIS"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
+      
     Code
       parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")
     Output
@@ -308,6 +542,7 @@
       [1] "INT64"
       
       $logical_type
+      $type
       [1] "TIMESTAMP"
       
       $is_adjusted_utc
@@ -316,6 +551,18 @@
       $unit
       [1] "MICROS"
       
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "TIMESTAMP_MICROS"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
+      
     Code
       parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "NANOS")
     Output
@@ -323,6 +570,7 @@
       [1] "INT64"
       
       $logical_type
+      $type
       [1] "TIMESTAMP"
       
       $is_adjusted_utc
@@ -331,17 +579,17 @@
       $unit
       [1] "NANOS"
       
-    Code
-      parquet_type("INTERVAL")
-    Output
-      $type
-      [1] "FIXED_LEN_BYTE_ARRAY"
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
       
-      $logical_type
-      [1] "INTERVAL"
+      $converted_type
+      [1] NA
       
-      $type_length
-      [1] 12
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
       
     Code
       parquet_type("JSON")
@@ -350,7 +598,20 @@
       [1] "BYTE_ARRAY"
       
       $logical_type
+      $type
       [1] "JSON"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "JSON"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
       
     Code
       parquet_type("BSON")
@@ -359,7 +620,20 @@
       [1] "BYTE_ARRAY"
       
       $logical_type
+      $type
       [1] "BSON"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $converted_type
+      [1] "BSON"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
       
 
 ---

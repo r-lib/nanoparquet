@@ -131,9 +131,7 @@ void ParquetOutFile::schema_add_column(
   } else {
     sch.__set_repetition_type(FieldRepetitionType::OPTIONAL);
   }
-  ConvertedType::type converted_type =
-      get_converted_type_from_logical_type(logical_type);
-  sch.__set_converted_type(converted_type);
+  fill_converted_type_for_logical_type(sch);
   schemas.push_back(sch);
   schemas[0].__set_num_children(schemas[0].num_children + 1);
 
@@ -213,42 +211,82 @@ parquet::Type::type get_type_from_logical_type(
   }
 }
 
-parquet::ConvertedType::type get_converted_type_from_logical_type(
-    parquet::LogicalType &logical_type) {
+void fill_converted_type_for_logical_type(
+    parquet::SchemaElement &sel) {
+
+  if (!sel.__isset.logicalType) {
+    return;
+  }
+  parquet::LogicalType &logical_type = sel.logicalType;
 
   if (logical_type.__isset.STRING) {
-    return ConvertedType::UTF8;
+    sel.__set_converted_type(ConvertedType::UTF8);
+
+  } else if (logical_type.__isset.ENUM) {
+    sel.__set_converted_type(ConvertedType::ENUM);
+
+  } else if (logical_type.__isset.DECIMAL) {
+    sel.__set_converted_type(ConvertedType::DECIMAL);
+    parquet::DecimalType &dt = logical_type.DECIMAL;
+    sel.__set_scale(dt.scale);
+    sel.__set_precision(dt.precision);
+
+  } else if (logical_type.__isset.DATE) {
+    sel.__set_converted_type(ConvertedType::DATE);
+
+  } else if (logical_type.__isset.TIME) {
+    if (logical_type.TIME.unit.__isset.MILLIS) {
+      // we do this even if not adjusted to UTC, according to the spec
+      // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-time-convertedtype
+      sel.__set_converted_type(ConvertedType::TIME_MILLIS);
+    } else if (logical_type.TIME.unit.__isset.MICROS) {
+      sel.__set_converted_type(ConvertedType::TIME_MICROS);
+    }
+
+  } else if (logical_type.__isset.TIMESTAMP) {
+    if (logical_type.TIMESTAMP.unit.__isset.MILLIS) {
+      // we do this even if not adjusted to UTC, according to the spec
+      // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-timestamp-convertedtype
+      sel.__set_converted_type(ConvertedType::TIMESTAMP_MILLIS);
+    } else if (logical_type.TIMESTAMP.unit.__isset.MICROS) {
+      sel.__set_converted_type(ConvertedType::TIMESTAMP_MICROS);
+    }
 
   } else if (logical_type.__isset.INTEGER) {
     IntType it = logical_type.INTEGER;
-    if (!it.isSigned) {
-      throw runtime_error("Unsigned integers are not implemented"); // # nocov
+    if (it.isSigned) {
+      if (it.bitWidth == 8) {
+        sel.__set_converted_type(ConvertedType::INT_8);
+      } else if (it.bitWidth == 16) {
+        sel.__set_converted_type(ConvertedType::INT_16);
+      } else if (it.bitWidth == 32) {
+        sel.__set_converted_type(ConvertedType::INT_32);
+      } else if (it.bitWidth == 64) {
+        sel.__set_converted_type(ConvertedType::INT_64);
+      }
+    } else {
+      if (it.bitWidth == 8) {
+        sel.__set_converted_type(ConvertedType::UINT_8);
+      } else if (it.bitWidth == 16) {
+        sel.__set_converted_type(ConvertedType::UINT_16);
+      } else if (it.bitWidth == 32) {
+        sel.__set_converted_type(ConvertedType::UINT_32);
+      } else if (it.bitWidth == 64) {
+        sel.__set_converted_type(ConvertedType::UINT_64);
+      }
     }
-    if (it.bitWidth != 32) {
-      throw runtime_error("Only 32 bit integers are implemented");  // # nocov
-    }
-    return ConvertedType::INT_32;
 
-  } else if (logical_type.__isset.DATE) {
-    return ConvertedType::DATE;
+  } else if (logical_type.__isset.JSON) {
+    sel.__set_converted_type(ConvertedType::JSON);
 
-  } else if (logical_type.__isset.TIME &&
-             logical_type.TIME.unit.__isset.MILLIS) {
-    // we do this even if not adjusted to UTC, according to the spec
-    // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-time-convertedtype
-    // (Although we only create UTC TIME right now)
-    return ConvertedType::TIME_MILLIS;
-
-  } else if (logical_type.__isset.TIMESTAMP &&
-             logical_type.TIMESTAMP.unit.__isset.MICROS) {
-    // we do this even if not adjusted to UTC, according to the spec
-    // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-timestamp-convertedtype
-    // (Although we only create UTC TIMESTAMP right now)
-    return ConvertedType::TIMESTAMP_MICROS;
-
-  } else {
-    throw runtime_error("Unimplemented logical type");              // # nocov
+  } else if (logical_type.__isset.BSON) {
+    sel.__set_converted_type(ConvertedType::BSON);
   }
+
+  // There is no INTERVAL logical type? What's going on here?
+  // For the other logical types (e.g. UNKNOWN, FLOAT16) we don't fill in
+  // a converted type because there isn't one.
+  // We also skip types we don't know about.
 }
 
 }
