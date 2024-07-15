@@ -1,6 +1,6 @@
 #' Create a Parquet schema
 #'
-#' You can use this schema to speficy how to write out a data frame to
+#' You can use this schema to specify how to write out a data frame to
 #' a Parquet file with [write_parquet()].
 #'
 #' @param ... Parquet type specifications, see below.
@@ -61,7 +61,7 @@
 #'
 #' ## Missing values
 #'
-#' Each type might also have a `repetition_type` parameter, with posibble
+#' Each type might also have a `repetition_type` parameter, with possible
 #' values `"REQUIRED"`, `"OPTIONAL"` or `"REPEATED"`. `"REQUIRED"` columns
 #' do not allow missing values. Missing values are allowed in `"OPTIONAL"`
 #' columns. `"REPEATED"` columns are currently not supported in

@@ -18,7 +18,7 @@ Data frame with the same columns as \code{\link[=read_parquet_schema]{read_parqu
 \code{scale}, \code{precision}.
 }
 \description{
-You can use this schema to speficy how to write out a data frame to
+You can use this schema to specify how to write out a data frame to
 a Parquet file with \code{\link[=write_parquet]{write_parquet()}}.
 }
 \details{
@@ -76,7 +76,7 @@ supports the \code{scale} parameter, it defaults to zero if not specified.
 Logical types \code{MAP}, \code{LIST} and \code{UNKNOWN} are not supported currently.
 \subsection{Missing values}{
 
-Each type might also have a \code{repetition_type} parameter, with posibble
+Each type might also have a \code{repetition_type} parameter, with possible
 values \code{"REQUIRED"}, \code{"OPTIONAL"} or \code{"REPEATED"}. \code{"REQUIRED"} columns
 do not allow missing values. Missing values are allowed in \code{"OPTIONAL"}
 columns. \code{"REPEATED"} columns are currently not supported in
