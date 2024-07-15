@@ -1,6 +1,12 @@
 # parquet_type
 
     Code
+      parquet_type("AUTO")
+    Output
+      $type
+      [1] NA
+      
+    Code
       parquet_type("BOOLEAN")
     Output
       $type
@@ -639,6 +645,75 @@
 ---
 
     Code
+      parquet_type("INT32", repetition_type = "OPTIONAL")
+    Output
+      $type
+      [1] "INT32"
+      
+      $repetition_type
+      [1] "OPTIONAL"
+      
+    Code
+      parquet_type("STRING", repetition_type = "REQUIRED")
+    Output
+      $type
+      [1] "BYTE_ARRAY"
+      
+      $logical_type
+      $type
+      [1] "STRING"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $repetition_type
+      [1] "REQUIRED"
+      
+      $converted_type
+      [1] "UTF8"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
+      
+    Code
+      parquet_type("TIME", repetition_type = "REPEATED", is_adjusted_utc = TRUE,
+        unit = "MILLIS")
+    Output
+      $type
+      [1] "INT32"
+      
+      $logical_type
+      $type
+      [1] "TIME"
+      
+      $is_adjusted_utc
+      [1] TRUE
+      
+      $unit
+      [1] "MILLIS"
+      
+      attr(,"class")
+      [1] "nanoparquet_logical_type"
+      
+      $repetition_type
+      [1] "REPEATED"
+      
+      $converted_type
+      [1] "TIME_MILLIS"
+      
+      $scale
+      [1] NA
+      
+      $precision
+      [1] NA
+      
+
+---
+
+    Code
       parquet_type("FOO")
     Condition
       Error in `err()`:
@@ -764,6 +839,16 @@
     Condition
       Error in `err()`:
       ! Parquet type 'UNKNOWN' is not supported by nanoparquet
+    Code
+      parquet_type("INT32", repetition_type = TRUE)
+    Condition
+      Error in `parquet_type()`:
+      ! is_string(repetition_type) is not TRUE
+    Code
+      parquet_type("INT32", repetition_type = "FOO")
+    Condition
+      Error in `parquet_type()`:
+      ! repetition_type %in% c("REQUIRED", "OPTIONAL", "REPEATED") is not TRUE
 
 # parquet_schema
 
@@ -864,4 +949,16 @@
       8            DATE         DATE           NA    NA        NA       NA
       9            JSON         JSON           NA    NA        NA       NA
       10           BSON         BSON           NA    NA        NA       NA
+
+---
+
+    Code
+      as.data.frame(sch5)
+    Output
+          file_name name r_type  type type_length repetition_type converted_type
+      foo      <NA>  foo   <NA>  <NA>          NA            <NA>           <NA>
+      bar      <NA>  bar   <NA> INT32          NA            <NA>           <NA>
+          logical_type num_children scale precision field_id
+      foo                        NA    NA        NA       NA
+      bar                        NA    NA        NA       NA
 

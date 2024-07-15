@@ -61,7 +61,7 @@ parquet_schema_create <- function(types) {
 parquet_type <- function(type, type_length = NULL, bit_width = NULL,
                          is_signed = NULL, precision = NULL, scale = NULL,
                          is_adjusted_utc = NULL, unit = NULL,
-                         primitive_type = NULL) {
+                         primitive_type = NULL, repetition_type = NULL) {
 
   fixed_len_byte_array <- function() {
     stopifnot(
@@ -187,6 +187,9 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
   }
 
   ptype <- switch (type,
+    # dummy type to denote auto-detection
+    AUTO = list(type = NA_character_),
+
     # primitive types
     BOOLEAN = list(type = "BOOLEAN"),
     INT32 = list(type = "INT32"),
@@ -243,6 +246,14 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
     # bail
     err(type)
   )
+
+  if (!is.null(repetition_type)) {
+    stopifnot(
+      is_string(repetition_type),
+      repetition_type %in% c("REQUIRED", "OPTIONAL", "REPEATED")
+    )
+    ptype[["repetition_type"]] <- repetition_type
+  }
 
   # check that every non-NULL parameter is used
   stopifnot(

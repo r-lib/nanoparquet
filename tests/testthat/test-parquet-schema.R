@@ -1,5 +1,6 @@
 test_that("parquet_type", {
   expect_snapshot({
+    parquet_type("AUTO")
     parquet_type("BOOLEAN")
     parquet_type("INT32")
     parquet_type("INT64")
@@ -38,6 +39,17 @@ test_that("parquet_type", {
     parquet_type("BSON")
   })
 
+  expect_snapshot({
+    parquet_type("INT32", repetition_type = "OPTIONAL")
+    parquet_type("STRING", repetition_type = "REQUIRED")
+    parquet_type(
+      "TIME",
+      repetition_type = "REPEATED",
+      is_adjusted_utc = TRUE,
+      unit = "MILLIS"
+    )
+  })
+
   expect_snapshot(error = TRUE, {
     parquet_type("FOO")
     parquet_type("FIXED_LEN_BYTE_ARRAY")
@@ -69,6 +81,8 @@ test_that("parquet_type", {
     parquet_type("LIST")
     parquet_type("MAP")
     parquet_type("UNKNOWN")
+    parquet_type("INT32", repetition_type = TRUE)
+    parquet_type("INT32", repetition_type = "FOO")
   })
 
   # Need this as well for covr, which does not handle stop()
@@ -129,4 +143,10 @@ test_that("parquet_schema", {
     "BSON"
   )
   expect_snapshot(as.data.frame(sch4))
+
+  sch5 <- parquet_schema(
+    foo = "AUTO",
+    bar = "INT32"
+  )
+  expect_snapshot(as.data.frame(sch5))
 })
