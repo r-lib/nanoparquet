@@ -8,7 +8,7 @@
 #'   [parquet_schema()] to create a Parquet schema from scratch.
 #' @export
 
-infer_parquet_schema <- function(df, options) {
+infer_parquet_schema <- function(df, options = parquet_options()) {
 	types <- .Call(nanoparquet_map_to_parquet_types, df, options)
 	type_tab <- data.frame(
 		file_name = rep(NA_character_, length(df)),

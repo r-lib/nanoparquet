@@ -765,3 +765,103 @@
       Error in `err()`:
       ! Parquet type 'UNKNOWN' is not supported by nanoparquet
 
+# parquet_schema
+
+    Code
+      as.data.frame(sch)
+    Output
+        file_name name r_type                 type type_length repetition_type
+      1      <NA> <NA>   <NA>                INT32          NA            <NA>
+      2      <NA> <NA>   <NA>              BOOLEAN          NA            <NA>
+      3      <NA> <NA>   <NA>                INT32          NA            <NA>
+      4      <NA> <NA>   <NA>                INT64          NA            <NA>
+      5      <NA> <NA>   <NA>                INT96          NA            <NA>
+      6      <NA> <NA>   <NA>                FLOAT          NA            <NA>
+      7      <NA> <NA>   <NA>           BYTE_ARRAY          NA            <NA>
+      8      <NA> <NA>   <NA> FIXED_LEN_BYTE_ARRAY          10            <NA>
+        converted_type logical_type num_children scale precision field_id
+      1           <NA>                        NA    NA        NA       NA
+      2           <NA>                        NA    NA        NA       NA
+      3           <NA>                        NA    NA        NA       NA
+      4           <NA>                        NA    NA        NA       NA
+      5           <NA>                        NA    NA        NA       NA
+      6           <NA>                        NA    NA        NA       NA
+      7           <NA>                        NA    NA        NA       NA
+      8           <NA>                        NA    NA        NA       NA
+
+---
+
+    Code
+      as.data.frame(sch2)
+    Output
+        file_name name r_type                 type type_length repetition_type
+      a      <NA>    a   <NA>                INT32          NA            <NA>
+      b      <NA>    b   <NA>              BOOLEAN          NA            <NA>
+      c      <NA>    c   <NA>                INT32          NA            <NA>
+      d      <NA>    d   <NA>                INT64          NA            <NA>
+      e      <NA>    e   <NA>                INT96          NA            <NA>
+      f      <NA>    f   <NA>                FLOAT          NA            <NA>
+      g      <NA>    g   <NA>           BYTE_ARRAY          NA            <NA>
+             <NA> <NA>   <NA> FIXED_LEN_BYTE_ARRAY          10            <NA>
+        converted_type logical_type num_children scale precision field_id
+      a           <NA>                        NA    NA        NA       NA
+      b           <NA>                        NA    NA        NA       NA
+      c           <NA>                        NA    NA        NA       NA
+      d           <NA>                        NA    NA        NA       NA
+      e           <NA>                        NA    NA        NA       NA
+      f           <NA>                        NA    NA        NA       NA
+      g           <NA>                        NA    NA        NA       NA
+                  <NA>                        NA    NA        NA       NA
+
+---
+
+    Code
+      as.data.frame(sch3)
+    Output
+        file_name name r_type                 type type_length repetition_type
+      a      <NA>    a   <NA>                INT32          NA            <NA>
+      b      <NA>    b   <NA>              BOOLEAN          NA            <NA>
+      c      <NA>    c   <NA>                INT32          NA            <NA>
+      d      <NA>    d   <NA>                INT64          NA            <NA>
+      e      <NA>    e   <NA>                INT96          NA            <NA>
+      f      <NA>    f   <NA>                FLOAT          NA            <NA>
+      g      <NA>    g   <NA>           BYTE_ARRAY          NA            <NA>
+      h      <NA>    h   <NA> FIXED_LEN_BYTE_ARRAY          10            <NA>
+        converted_type logical_type num_children scale precision field_id
+      a           <NA>                        NA    NA        NA       NA
+      b           <NA>                        NA    NA        NA       NA
+      c           <NA>                        NA    NA        NA       NA
+      d           <NA>                        NA    NA        NA       NA
+      e           <NA>                        NA    NA        NA       NA
+      f           <NA>                        NA    NA        NA       NA
+      g           <NA>                        NA    NA        NA       NA
+      h           <NA>                        NA    NA        NA       NA
+
+---
+
+    Code
+      as.data.frame(sch4)
+    Output
+         file_name name r_type                 type type_length repetition_type
+      1       <NA> <NA>   <NA>           BYTE_ARRAY          NA            <NA>
+      2       <NA> <NA>   <NA>           BYTE_ARRAY          NA            <NA>
+      3       <NA> <NA>   <NA> FIXED_LEN_BYTE_ARRAY          16            <NA>
+      4       <NA> <NA>   <NA>                INT32          NA            <NA>
+      5       <NA> <NA>   <NA>                INT64          NA            <NA>
+      6       <NA> <NA>   <NA>                INT64          NA            <NA>
+      7       <NA> <NA>   <NA> FIXED_LEN_BYTE_ARRAY           2            <NA>
+      8       <NA> <NA>   <NA>                INT32          NA            <NA>
+      9       <NA> <NA>   <NA>           BYTE_ARRAY          NA            <NA>
+      10      <NA> <NA>   <NA>           BYTE_ARRAY          NA            <NA>
+         converted_type logical_type num_children scale precision field_id
+      1            UTF8       STRING           NA    NA        NA       NA
+      2            ENUM         ENUM           NA    NA        NA       NA
+      3            <NA>         UUID           NA    NA        NA       NA
+      4           INT_8 INT, 8, TRUE           NA    NA        NA       NA
+      5         UINT_64 INT, 64,....           NA    NA        NA       NA
+      6         DECIMAL DECIMAL,....           NA     0         5       NA
+      7            <NA>      FLOAT16           NA    NA        NA       NA
+      8            DATE         DATE           NA    NA        NA       NA
+      9            JSON         JSON           NA    NA        NA       NA
+      10           BSON         BSON           NA    NA        NA       NA
+

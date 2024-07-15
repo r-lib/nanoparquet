@@ -70,4 +70,63 @@ test_that("parquet_type", {
     parquet_type("MAP")
     parquet_type("UNKNOWN")
   })
+
+  # Need this as well for covr, which does not handle stop()
+  # in snapshots, apparently
+  expect_error(parquet_type("FOO"), "not supported by nanoparquet")
+  expect_error(parquet_type("LIST"), "not supported by nanoparquet")
+  expect_error(parquet_type("MAP"), "not supported by nanoparquet")
+  expect_error(parquet_type("UNKNOWN"), "not supported by nanoparquet")
+})
+
+test_that("parquet_schema", {
+  sch <- parquet_schema(
+    "INT32",
+    "BOOLEAN",
+    "INT32",
+    "INT64",
+    "INT96",
+    "FLOAT",
+    "BYTE_ARRAY",
+    list("FIXED_LEN_BYTE_ARRAY", type_length = 10)
+  )
+  expect_snapshot(as.data.frame(sch))
+
+  sch2 <- parquet_schema(
+    a = "INT32",
+    b = "BOOLEAN",
+    c = "INT32",
+    d = "INT64",
+    e = "INT96",
+    f = "FLOAT",
+    g = "BYTE_ARRAY",
+    list("FIXED_LEN_BYTE_ARRAY", type_length = 10)
+  )
+  expect_snapshot(as.data.frame(sch2))
+
+  sch3 <- parquet_schema(
+    a = "INT32",
+    b = "BOOLEAN",
+    c = "INT32",
+    d = "INT64",
+    e = "INT96",
+    f = "FLOAT",
+    g = "BYTE_ARRAY",
+    h = list("FIXED_LEN_BYTE_ARRAY", type_length = 10)
+  )
+  expect_snapshot(as.data.frame(sch3))
+
+  sch4 <- parquet_schema(
+    "STRING",
+    "ENUM",
+    "UUID",
+    list("INTEGER", bit_width = 8, is_signed = TRUE),
+    list("INTEGER", bit_width = 64, is_signed = FALSE),
+    list("DECIMAL", precision = 5, primitive_type = "INT64"),
+    "FLOAT16",
+    "DATE",
+    "JSON",
+    "BSON"
+  )
+  expect_snapshot(as.data.frame(sch4))
 })

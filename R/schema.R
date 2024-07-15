@@ -38,8 +38,11 @@ parquet_schema_create <- function(types) {
       ptypes,
       function(x) x[["repetition_type"]] %||% NA_character_
     ),
-    converted_type = map_chr(ptypes, "[[", "converted_type"),
-    logical_type = I(lapply(ptypes, "[[", "logical_type")),
+    converted_type = map_chr(
+      ptypes,
+      function(x) x[["converted_type"]] %||% NA_character_
+    ),
+    logical_type = I(unname(lapply(ptypes, "[[", "logical_type"))),
     num_children = as.integer(na),
     scale = map_int(
       ptypes,
@@ -47,7 +50,7 @@ parquet_schema_create <- function(types) {
     ),
     precision = map_int(
       ptypes,
-      function(x) x[["precition"]] %||% NA_integer_
+      function(x) x[["precision"]] %||% NA_integer_
     ),
     field_id = as.integer(na)
   )
@@ -65,7 +68,10 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
       ! is.null(type_length),
       is_uint32(type_length)
     )
-    r <- list(type = "FIXED_LEN_BYTE_ARRAY", type_length = as.double(type_length))
+    r <- list(
+      type = "FIXED_LEN_BYTE_ARRAY",
+      type_length = as.integer(type_length)
+    )
     type_length <<- NULL
     r
   }
@@ -116,16 +122,16 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
       type = primitive_type,
       logical_type = list(
         type = "DECIMAL",
-        scale = scale,
-        precision = precision
+        scale = if (!is.null(scale)) as.integer(scale),
+        precision = as.integer(precision)
       ),
-      scale = scale,
-      precision = precision
+      scale = as.integer(scale %||% 0),
+      precision = as.integer(precision)
     )
     precision <<- NULL
     scale <<- NULL
     if (primitive_type == "FIXED_LEN_BYTE_ARRAY") {
-      r[["type_length"]] <- type_length
+      r[["type_length"]] <- as.integer(type_length)
       type_length <<- NULL
     }
     primitive_type <<- NULL
@@ -175,7 +181,9 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
   }
 
   err <- function(typename) {
+    # nocov start this is probably a covr bug that this is not covered
     stop("Parquet type '", typename, "' is not supported by nanoparquet")
+    # nocov end
   }
 
   ptype <- switch (type,
@@ -209,7 +217,7 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
     FLOAT16 = list(
       type = "FIXED_LEN_BYTE_ARRAY",
       logical_type = list(type = "FLOAT16"),
-      type_length = 2
+      type_length = 2L
     ),
     DATE = list(type = "INT32", logical_type = list(type = "DATE")),
     TIME = time(),
