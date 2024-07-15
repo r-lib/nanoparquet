@@ -4,7 +4,7 @@
 \alias{infer_parquet_schema}
 \title{Infer Parquet schema of a data frame}
 \usage{
-infer_parquet_schema(df, options)
+infer_parquet_schema(df, options = parquet_options())
 }
 \arguments{
 \item{df}{Data frame.}

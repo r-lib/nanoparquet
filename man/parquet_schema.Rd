@@ -11,6 +11,83 @@ parquet_schema(...)
 For backwards compatibility, you can supply a file name
 here, and then \code{parquet_schema} behaves as \code{\link[=read_parquet_schema]{read_parquet_schema()}}.}
 }
+\value{
+Data frame with the same columns as \code{\link[=read_parquet_schema]{read_parquet_schema()}}:
+\code{file_name}, \code{name}, \code{r_type}, \code{type}, \code{type_length},
+\code{repetition_type}, \code{converted_type}, \code{logical_type}, \code{num_children},
+\code{scale}, \code{precision}.
+}
 \description{
-Create a Parquet schema
+You can use this schema to speficy how to write out a data frame to
+a Parquet file with \code{\link[=write_parquet]{write_parquet()}}.
+}
+\details{
+A schema is a list of potentially named type specifications. A schema
+is stored in a data frame. Each (potentially named) argument of
+\code{parquet_schema} may be a character scalar, or a list. Parameterized
+types need to be specified as a list. Primitive Parquet types may be
+specified as a string or a list.
+}
+\section{Possible types:}{
+Special type:
+\itemize{
+\item \code{"AUTO"}: this is not a Parquet type, but it tells \code{\link[=write_parquet]{write_parquet()}}
+to map the R type to Parquet automatically, using the default mapping
+rules.
+}
+
+Primitive Parquet types:
+\itemize{
+\item \code{"BOOLEAN"}
+\item \code{"INT32"}
+\item \code{"INT64"}
+\item \code{"INT96"}
+\item \code{"FLOAT"}
+\item \code{"DOUBLE"}
+\item \code{"BYTE_ARRAY"}
+\item \code{"FIXED_LEN_BYTE_ARRAY"}: fixed-length byte array. It needs a
+\code{type_length} parameter, an integer between 0 and 2^31-1.
+}
+
+Parquet logical types:
+\itemize{
+\item \code{"STRING"}
+\item \code{"ENUM"}
+\item \code{"UUID"}
+\item \code{"INTEGER"}: signed or unsigned integer. It needs a \code{bit_width} and
+an \code{is_signed} parameter. \code{bit_width} must be 8, 16, 32 or 64.
+\code{is_signed} must be \code{TRUE} or \code{FALSE}.
+\item \code{"INT"}: same as \code{"INTEGER"}. The Parquet documentation uses \code{"INT"},
+but the actual specification uses \code{"INTEGER"}. Both are supported in
+nanoparquet.
+\item \code{"DECIMAL"}: decimal number of specified scale and precision.
+It needs the \code{precision} and \code{primitive_type} parameters. Also
+supports the \code{scale} parameter, it defaults to zero if not specified.
+\item \code{"FLOAT16"}
+\item \code{"DATE"}
+\item \code{"TIME"}: needs an \code{is_adjusted_utc} (\code{TRUE} or \code{FALSE}) and a
+\code{unit} parameter. \code{unit} must be \code{"MILLIS"}, \code{"MICROS"} or \code{"NANOS"}.
+\item \code{"TIMESTAMP"}: needs an \code{is_adjusted_utc} (\code{TRUE} or \code{FALSE}) and a
+\code{unit} parameter. \code{unit} must be \code{"MILLIS"}, \code{"MICROS"} or \code{"NANOS"}.
+\item \code{"JSON"}
+\item \code{"BSON"}
+}
+
+Logical types \code{MAP}, \code{LIST} and \code{UNKNOWN} are not supported currently.
+\subsection{Missing values}{
+
+Each type might also have a \code{repetition_type} parameter, with posibble
+values \code{"REQUIRED"}, \code{"OPTIONAL"} or \code{"REPEATED"}. \code{"REQUIRED"} columns
+do not allow missing values. Missing values are allowed in \code{"OPTIONAL"}
+columns. \code{"REPEATED"} columns are currently not supported in
+\code{\link[=write_parquet]{write_parquet()}}.
+}
+}
+
+\examples{
+parquet_schema(
+  c1 = "INT32",
+  c2 = list("INT", bit_width = 64, is_signed = TRUE),
+  c3 = list("STRING", repetition_type = "OPTIONAL")
+)
 }
