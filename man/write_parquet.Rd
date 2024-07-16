@@ -7,6 +7,7 @@
 write_parquet(
   x,
   file,
+  schema = NULL,
   compression = c("snappy", "gzip", "zstd", "uncompressed"),
   metadata = NULL,
   options = parquet_options()
@@ -18,6 +19,11 @@ write_parquet(
 \item{file}{Path to the output file. If this is the string \code{":raw:"},
 then the data frame is written to a memory buffer, and the memory
 buffer is returned as a raw vector.}
+
+\item{schema}{Parquet schema. Specify a schema to tweak the default
+nanoparquet R -> Parquet type mappings. Use \code{\link[=parquet_schema]{parquet_schema()}} to
+create a schema that you can use here, or \code{\link[=read_parquet_schema]{read_parquet_schema()}} to
+use the schema of a Parquet file.}
 
 \item{compression}{Compression algorithm to use. Currently \code{"snappy"}
 (the default), \code{"gzip"}, \code{"zstd"}, and \code{"uncompressed"} are supported.}

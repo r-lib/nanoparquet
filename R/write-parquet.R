@@ -9,6 +9,10 @@
 #' @param file Path to the output file. If this is the string `":raw:"`,
 #'   then the data frame is written to a memory buffer, and the memory
 #'   buffer is returned as a raw vector.
+#' @param schema Parquet schema. Specify a schema to tweak the default
+#'   nanoparquet R -> Parquet type mappings. Use [parquet_schema()] to
+#'   create a schema that you can use here, or [read_parquet_schema()] to
+#'   use the schema of a Parquet file.
 #' @param compression Compression algorithm to use. Currently `"snappy"`
 #'   (the default), `"gzip"`, `"zstd"`, and `"uncompressed"` are supported.
 #' @param metadata Additional key-value metadata to add to the file.
@@ -28,6 +32,7 @@
 write_parquet <- function(
   x,
   file,
+  schema = NULL,
   compression = c("snappy", "gzip", "zstd", "uncompressed"),
   metadata = NULL,
   options = parquet_options()) {
@@ -36,6 +41,8 @@ write_parquet <- function(
   codecs <- c("uncompressed" = 0L, "snappy" = 1L, "gzip" = 2L, "zstd" = 6L)
   compression <- codecs[match.arg(compression)]
   dim <- as.integer(dim(x))
+
+  schema <- map_schema_to_df(schema, x, options)
 
   if (is.null(metadata)) {
     metadata <- list(character(), character())
@@ -99,8 +106,20 @@ write_parquet <- function(
     )
   }
 
-  # easier here than calling back to R
-  required <- !vapply(x, anyNA, logical(1))
+  # if schema has REQUIRED, but the column has NAs, that's an error
+  rt <- schema[["repetition_type"]]
+  req <- !is.na(rt) & rt == "REQUIRED"
+  hasna <- vapply(x, anyNA, logical(1))
+  bad <- which(req & hasna)
+  if (length(bad) > 0) {
+    stop(
+      "Parquet schema does not allow missing values for column",
+      if (length(bad) > 1) "s", ":", paste(names(x)[bad], collapse = ", ")
+    )
+  }
+  schema[["repetition_type"]][is.na(rt)] <-
+    ifelse(hasna[is.na(rt)], "OPITONAL", "REQUIRED")
+  required <- schema[["repetition_type"]] == "REQUIRED"
 
   res <- .Call(
     nanoparquet_write,
@@ -110,7 +129,8 @@ write_parquet <- function(
     compression,
     metadata,
     required,
-    options
+    options,
+    schema
   )
 
   if (is.null(res)) {

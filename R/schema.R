@@ -350,3 +350,65 @@ logical_to_converted <- function(logical_type) {
   res[["converted_type"]] <- names(ctype_names)[res[["converted_type"]] + 1 ]
   res
 }
+
+map_schema_to_df <- function(schema, df, options) {
+  stopifnot(
+    is.null(schema) || is.data.frame(schema),
+    is.data.frame(df)
+  )
+  # no need to deal with internal nodes for now
+  schema <- schema[is.na(schema[["num_children"]]), ]
+  nms <- schema$name
+
+  schema <- if (is.null(schema)) {
+    # no schema at all, everything auto-detected
+    do.call(
+      "parquet_schema",
+      structure(as.list(rep("AUTO", ncol(df))), names = names(df))
+    )
+
+  } else if (!is.null(nms) && !anyNA(nms) && !any(nms == "")) {
+    # all properly named
+    dfmiss <- setdiff(nms, names(df))
+    if (length(dfmiss) > 0){
+      stop(
+        "Parquet schema column", if (length(dfmiss) > 1) "s",
+        "missing from the data: ", paste(dfmiss, collapse = ", ")
+      )
+    }
+    # add AUTO to missing columns
+    smiss <- setdiff(names(df), nms)
+    auto <- do.call(
+      "parquet_schema",
+      structure(as.list(rep("AUTO", length(smiss))), names = smiss)
+    )
+    schema <- rbind(schema, auto)
+    schema[match(names(df), schema$name), ]
+
+  } else {
+    if (nrow(schema) != ncol(df)) {
+      stop(
+        "Parquet schema size does not match data size. ",
+        "They must match, unless the schema is fully named."
+      )
+    }
+    if (is.null(nms) || all(is.na(nms) | nms == "")) {
+      # no names at all, ok
+      schema
+    } else {
+      # some names, those must match
+      if (is.na(nms) | nms == names(df)) {
+        stop(
+          "Parquet schema names do not fully match data frame names."
+        )
+      }
+      schema
+    }
+  }
+
+  schema[["type"]] <- type_names[schema[["type"]]]
+  schema[["repetition_type"]] <- repetition_types[schema[["repetition_type"]]]
+  schema[["converted_type"]] <- ctype_names[schema[["converted_type"]]]
+
+  schema
+}

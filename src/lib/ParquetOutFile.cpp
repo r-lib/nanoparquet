@@ -68,26 +68,16 @@ void ParquetOutFile::set_num_rows(uint32_t nr) {
   num_rows_set = true;
 }
 
-void ParquetOutFile::schema_add_column(std::string name,
-                                       parquet::Type::type type,
-                                       bool required, bool dict) {
-
-  SchemaElement sch;
-  sch.__set_name(name);
-  sch.__set_type(type);
-  if (required) {
-    sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
-  } else {
-    sch.__set_repetition_type(FieldRepetitionType::OPTIONAL);
-  }
-  schemas.push_back(sch);
+void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
+                                       bool dict) {
+  schemas.push_back(sel);
   schemas[0].__set_num_children(schemas[0].num_children + 1);
 
   ColumnMetaData cmd;
-  cmd.__set_type(type);
+  cmd.__set_type(sel.type);
   vector<Encoding::type> encs;
   if (dict) {
-    if (type == Type::BOOLEAN) {
+    if (sel.type == Type::BOOLEAN) {
       encs.push_back(Encoding::RLE);              // def levels + BOOLEAN
       encodings.push_back(Encoding::RLE);
     } else {
@@ -100,9 +90,10 @@ void ParquetOutFile::schema_add_column(std::string name,
     encs.push_back(Encoding::PLAIN);
     encodings.push_back(Encoding::PLAIN);
   }
+
   cmd.__set_encodings(encs);
   vector<string> paths;
-  paths.push_back(name);
+  paths.push_back(sel.name);
   cmd.__set_path_in_schema(paths);
   cmd.__set_codec(codec);
   // num_values set later
@@ -110,58 +101,6 @@ void ParquetOutFile::schema_add_column(std::string name,
   // total_compressed_size set later
   // data_page_offset  set later
   // dictionary_page_offset set later when we have dictionaries
-  column_meta_data.push_back(cmd);
-
-  num_cols++;
-}
-
-void ParquetOutFile::schema_add_column(
-    std::string name,
-    parquet::LogicalType logical_type,
-    bool required,
-    bool dict) {
-
-  SchemaElement sch;
-  sch.__set_name(name);
-  Type::type type = get_type_from_logical_type(logical_type);
-  sch.__set_type(type);
-  sch.__set_logicalType(logical_type);
-  if (required) {
-    sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
-  } else {
-    sch.__set_repetition_type(FieldRepetitionType::OPTIONAL);
-  }
-  fill_converted_type_for_logical_type(sch);
-  schemas.push_back(sch);
-  schemas[0].__set_num_children(schemas[0].num_children + 1);
-
-  ColumnMetaData cmd;
-  cmd.__set_type(type);
-  vector<Encoding::type> encs;
-  if (dict) {
-    if (type == Type::BOOLEAN) {
-      encs.push_back(Encoding::RLE);              // def levels + BOOLEAN
-      encodings.push_back(Encoding::RLE);
-    } else {
-      encs.push_back(Encoding::PLAIN);            // the dict itself
-      encs.push_back(Encoding::RLE);              // definition levels
-      encs.push_back(Encoding::RLE_DICTIONARY);   // dictionary page
-      encodings.push_back(Encoding::RLE_DICTIONARY);
-    }
-  } else {
-    encs.push_back(Encoding::PLAIN);
-    encodings.push_back(Encoding::PLAIN);
-  }
-  cmd.__set_encodings(encs);
-  vector<string> paths;
-  paths.push_back(name);
-  cmd.__set_path_in_schema(paths);
-  cmd.__set_codec(codec);
-  // num_values set later
-  // total_uncompressed_size set later
-  // total_compressed_size set later
-  // data_page_offset  set later
-  // dictionary_page_offset set later
   column_meta_data.push_back(cmd);
 
   num_cols++;

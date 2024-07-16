@@ -67,7 +67,14 @@ public:
   void write_dictionary_indices(std::ostream &file, uint32_t idx,
                                 uint64_t from, uint64_t until);
 
-  void write(SEXP dfsxp, SEXP dim, SEXP metadata, SEXP rrequired, SEXP options);
+  void write(
+    SEXP dfsxp,
+    SEXP dim,
+    SEXP metadata,
+    SEXP rrequired,
+    SEXP options,
+    SEXP schema
+  );
 
 private:
   SEXP df = R_NilValue;
@@ -745,147 +752,6 @@ bool nanoparquet_map_to_parquet_type(
   return true;
 }
 
-void RParquetOutFile::write(
-    SEXP dfsxp,
-    SEXP dim,
-    SEXP metadata,
-    SEXP rrequired,
-    SEXP options) {
-  df = dfsxp;
-  required = rrequired;
-  dicts = PROTECT(Rf_allocVector(VECSXP, Rf_length(df)));
-  SEXP nms = PROTECT(Rf_getAttrib(dfsxp, R_NamesSymbol));
-  R_xlen_t nr = INTEGER(dim)[0];
-  set_num_rows(nr);
-  R_xlen_t nc = INTEGER(dim)[1];
-  for (R_xlen_t idx = 0; idx < nc; idx++) {
-    SEXP col = VECTOR_ELT(dfsxp, idx);
-    std::string rtypename;
-    parquet::SchemaElement sel;
-    bool req = LOGICAL(required)[idx];
-    bool dict = should_use_dict_encoding(idx);
-    bool ok = nanoparquet_map_to_parquet_type(col, options, sel, rtypename);
-    if (!ok) {
-      throw runtime_error("Cannot write R column to Parquet");
-    }
-    if (sel.__isset.logicalType) {
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), sel.logicalType, req, dict);
-    } else {
-      schema_add_column(CHAR(STRING_ELT(nms, idx)), sel.type, req, dict);
-    }
-  }
-
-  if (!Rf_isNull(metadata)) {
-    SEXP keys = VECTOR_ELT(metadata, 0);
-    SEXP vals = VECTOR_ELT(metadata, 1);
-    R_xlen_t len = Rf_xlength(keys);
-    for (auto i = 0; i < len; i++) {
-      add_key_value_metadata(
-        CHAR(STRING_ELT(keys, i)),
-        CHAR(STRING_ELT(vals, i))
-      );
-    }
-  }
-
-  ParquetOutFile::write();
-
-  UNPROTECT(2);
-}
-
-extern "C" {
-
-SEXP nanoparquet_write(
-  SEXP dfsxp,
-  SEXP filesxp,
-  SEXP dim,
-  SEXP compression,
-  SEXP metadata,
-  SEXP required,
-  SEXP options) {
-
-  if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_error("nanoparquet_write: filename must be a string"); // # nocov
-  }
-
-  int c_compression = INTEGER(compression)[0];
-  parquet::CompressionCodec::type codec;
-  switch(c_compression) {
-    case 0:
-      codec = parquet::CompressionCodec::UNCOMPRESSED;
-      break;
-    case 1:
-      codec = parquet::CompressionCodec::SNAPPY;
-      break;
-    case 2:
-      codec = parquet::CompressionCodec::GZIP;
-      break;
-    case 6:
-      codec = parquet::CompressionCodec::ZSTD;
-      break;
-    default:
-      Rf_error("Invalid compression type code: %d", c_compression); // # nocov
-      break;
-  }
-
-  char error_buffer[8192];
-  error_buffer[0] = '\0';
-
-  try {
-    std::string fname = (char *) CHAR(STRING_ELT(filesxp, 0));
-    if (fname == ":raw:") {
-      MemStream ms;
-      std::ostream &os = ms.stream();
-      RParquetOutFile of(os, codec);
-      of.write(dfsxp, dim, metadata, required, options);
-      R_xlen_t bufsize = ms.size();
-      SEXP res = Rf_allocVector(RAWSXP, bufsize);
-      ms.copy(RAW(res), bufsize);
-      return res;
-    } else {
-      RParquetOutFile of(fname, codec);
-      of.write(dfsxp, dim, metadata, required, options);
-      return R_NilValue;
-    }
-  } catch (std::exception &ex) {
-    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1); // # nocov
-  }
-
-  if (error_buffer[0] != '\0') {         // # nocov
-    Rf_error("%s", error_buffer);        // # nocov
-  }                                      // # nocov
-
-  // never reached
-  return R_NilValue; // # nocov
-}
-
-extern SEXP convert_logical_type(parquet::LogicalType ltype, SEXP *uwt);
-
-SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options) {
-  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
-  R_xlen_t nc = Rf_xlength(df);
-  SEXP res = PROTECT(Rf_allocVector(VECSXP, nc));
-  for (R_xlen_t cl = 0; cl < nc; cl++) {
-    SEXP col = VECTOR_ELT(df, cl);
-    parquet::SchemaElement sel;
-    std::string rtype;
-    nanoparquet_map_to_parquet_type(col, options, sel, rtype);
-    SEXP typ = Rf_allocVector(VECSXP, 3);
-    SET_VECTOR_ELT(res, cl, typ);
-    SET_VECTOR_ELT(typ, 0, Rf_mkString(to_string(sel.type).c_str()));
-    SET_VECTOR_ELT(typ, 1, Rf_mkString(rtype.c_str()));
-    if (sel.__isset.logicalType) {
-      SET_VECTOR_ELT(typ, 2, convert_logical_type(sel.logicalType, &uwtoken));
-    } else {
-      SET_VECTOR_ELT(typ, 2, R_NilValue);
-    }
-  }
-
-  UNPROTECT(2);
-  return res;
-  R_API_END();
-}
-
 #define NUMERIC_SCALAR(x) \
   (TYPEOF(x) == INTSXP ? INTEGER(x)[0] : REAL(x)[0])
 
@@ -985,6 +851,186 @@ bool r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
   }
 
   return true;
+}
+
+void RParquetOutFile::write(
+  SEXP dfsxp,
+  SEXP dim,
+  SEXP metadata,
+  SEXP rrequired,
+  SEXP options,
+  SEXP schema) {
+
+  df = dfsxp;
+  required = rrequired;
+  dicts = PROTECT(Rf_allocVector(VECSXP, Rf_length(df)));
+  SEXP nms = PROTECT(Rf_getAttrib(dfsxp, R_NamesSymbol));
+  int *type = INTEGER(VECTOR_ELT(schema, 3));
+  int *type_length = INTEGER(VECTOR_ELT(schema, 4));
+  int *converted_type = INTEGER(VECTOR_ELT(schema, 6));
+  SEXP logical_type = VECTOR_ELT(schema, 7);
+  int *scale = INTEGER(VECTOR_ELT(schema, 9));
+  int *precision = INTEGER(VECTOR_ELT(schema, 10));
+
+  R_xlen_t nr = INTEGER(dim)[0];
+  set_num_rows(nr);
+  R_xlen_t nc = INTEGER(dim)[1];
+  for (R_xlen_t idx = 0; idx < nc; idx++) {
+    SEXP col = VECTOR_ELT(dfsxp, idx);
+    bool req = LOGICAL(required)[idx];
+    std::string rtypename;
+    parquet::SchemaElement sel;
+    sel.__set_name(CHAR(STRING_ELT(nms, idx)));
+    if (req) {
+      sel.__set_repetition_type(parquet::FieldRepetitionType::REQUIRED);
+    } else {
+      sel.__set_repetition_type(parquet::FieldRepetitionType::OPTIONAL);
+    }
+
+    if (type[idx] == NA_INTEGER) {
+      // default mapping
+      bool ok = nanoparquet_map_to_parquet_type(col, options, sel, rtypename);
+      if (!ok) {
+        throw runtime_error("Cannot write R column to Parquet");
+      }
+      fill_converted_type_for_logical_type(sel);
+    } else {
+      // use the supplied schema
+      sel.__set_type((parquet::Type::type) type[idx]);
+      if (type_length[idx] != NA_INTEGER) {
+        sel.__set_type_length(type_length[idx]);
+      }
+      if (converted_type[idx] != NA_INTEGER) {
+        sel.__set_converted_type((parquet::ConvertedType::type) converted_type[idx]);
+      }
+      if (!Rf_isNull(VECTOR_ELT(logical_type, idx))) {
+        bool ok = r_to_logical_type(VECTOR_ELT(logical_type, idx), sel);
+        if (!ok) {
+          throw runtime_error("Unknown logical type");
+        }
+      }
+      if (scale[idx] != NA_INTEGER) {
+        sel.__set_scale(scale[idx]);
+      }
+      if (precision[idx] != NA_INTEGER) {
+        sel.__set_precision(precision[idx]);
+      }
+    }
+
+    bool dict = should_use_dict_encoding(idx);
+    schema_add_column(sel, dict);
+  }
+
+  if (!Rf_isNull(metadata)) {
+    SEXP keys = VECTOR_ELT(metadata, 0);
+    SEXP vals = VECTOR_ELT(metadata, 1);
+    R_xlen_t len = Rf_xlength(keys);
+    for (auto i = 0; i < len; i++) {
+      add_key_value_metadata(
+        CHAR(STRING_ELT(keys, i)),
+        CHAR(STRING_ELT(vals, i))
+      );
+    }
+  }
+
+  ParquetOutFile::write();
+
+  UNPROTECT(2);
+}
+
+extern "C" {
+
+SEXP nanoparquet_write(
+  SEXP dfsxp,
+  SEXP filesxp,
+  SEXP dim,
+  SEXP compression,
+  SEXP metadata,
+  SEXP required,
+  SEXP options,
+  SEXP schema) {
+
+  if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
+    Rf_error("nanoparquet_write: filename must be a string"); // # nocov
+  }
+
+  int c_compression = INTEGER(compression)[0];
+  parquet::CompressionCodec::type codec;
+  switch(c_compression) {
+    case 0:
+      codec = parquet::CompressionCodec::UNCOMPRESSED;
+      break;
+    case 1:
+      codec = parquet::CompressionCodec::SNAPPY;
+      break;
+    case 2:
+      codec = parquet::CompressionCodec::GZIP;
+      break;
+    case 6:
+      codec = parquet::CompressionCodec::ZSTD;
+      break;
+    default:
+      Rf_error("Invalid compression type code: %d", c_compression); // # nocov
+      break;
+  }
+
+  char error_buffer[8192];
+  error_buffer[0] = '\0';
+
+  try {
+    std::string fname = (char *) CHAR(STRING_ELT(filesxp, 0));
+    if (fname == ":raw:") {
+      MemStream ms;
+      std::ostream &os = ms.stream();
+      RParquetOutFile of(os, codec);
+      of.write(dfsxp, dim, metadata, required, options, schema);
+      R_xlen_t bufsize = ms.size();
+      SEXP res = Rf_allocVector(RAWSXP, bufsize);
+      ms.copy(RAW(res), bufsize);
+      return res;
+    } else {
+      RParquetOutFile of(fname, codec);
+      of.write(dfsxp, dim, metadata, required, options, schema);
+      return R_NilValue;
+    }
+  } catch (std::exception &ex) {
+    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1); // # nocov
+  }
+
+  if (error_buffer[0] != '\0') {         // # nocov
+    Rf_error("%s", error_buffer);        // # nocov
+  }                                      // # nocov
+
+  // never reached
+  return R_NilValue; // # nocov
+}
+
+extern SEXP convert_logical_type(parquet::LogicalType ltype, SEXP *uwt);
+
+SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options) {
+  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
+  R_API_START();
+  R_xlen_t nc = Rf_xlength(df);
+  SEXP res = PROTECT(Rf_allocVector(VECSXP, nc));
+  for (R_xlen_t cl = 0; cl < nc; cl++) {
+    SEXP col = VECTOR_ELT(df, cl);
+    parquet::SchemaElement sel;
+    std::string rtype;
+    nanoparquet_map_to_parquet_type(col, options, sel, rtype);
+    SEXP typ = Rf_allocVector(VECSXP, 3);
+    SET_VECTOR_ELT(res, cl, typ);
+    SET_VECTOR_ELT(typ, 0, Rf_mkString(to_string(sel.type).c_str()));
+    SET_VECTOR_ELT(typ, 1, Rf_mkString(rtype.c_str()));
+    if (sel.__isset.logicalType) {
+      SET_VECTOR_ELT(typ, 2, convert_logical_type(sel.logicalType, &uwtoken));
+    } else {
+      SET_VECTOR_ELT(typ, 2, R_NilValue);
+    }
+  }
+
+  UNPROTECT(2);
+  return res;
+  R_API_END();
 }
 
 SEXP nanoparquet_logical_to_converted(SEXP logical_type) {
