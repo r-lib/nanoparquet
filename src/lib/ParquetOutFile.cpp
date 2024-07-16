@@ -317,11 +317,12 @@ void ParquetOutFile::write_present_data_(
 void ParquetOutFile::write_dictionary_(
   std::ostream &file,
   uint32_t idx,
-  uint32_t size) {
+  uint32_t size,
+  parquet::Type::type type) {
 
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   uint32_t start = file.tellp();
-  write_dictionary(file, idx);
+  write_dictionary(file, idx, type);
   uint32_t end = file.tellp();
   if (end - start != size) {
     throw runtime_error(
@@ -510,7 +511,7 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
     // then the data directly to the file
     ph.__set_compressed_page_size(dict_size);
     write_page_header(idx, ph);
-    write_dictionary_(pfile, idx, dict_size);
+    write_dictionary_(pfile, idx, dict_size, se.type);
 
   } else {
     // With compression we need two temporary buffers
@@ -518,7 +519,7 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
     buf_unc.reset(dict_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_(*os0, idx, dict_size);
+    write_dictionary_(*os0, idx, dict_size, se.type);
 
     // 2. compress buf_unc to buf_com
     size_t cdict_size = compress(cmd->codec, buf_unc, dict_size, buf_com);
