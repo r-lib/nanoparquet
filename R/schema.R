@@ -75,7 +75,8 @@
 
 parquet_schema <- function(...) {
 	args <- list(...)
-	if (length(args) == 1 && !is.null(args[[1]]) && file.exists(args[[1]]) &&
+	if (length(args) == 1 && is_string(args[[1]])  && !is.null(args[[1]]) &&
+      file.exists(args[[1]]) &&
       (is.null(names(args)) || names(args)[1] %in% c("", "file"))) {
 		warning(
 			"Using `parquet_schema()` to read the schema from a file is deprecated. ",
