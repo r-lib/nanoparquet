@@ -13,9 +13,7 @@ here, and then \code{parquet_schema} behaves as \code{\link[=read_parquet_schema
 }
 \value{
 Data frame with the same columns as \code{\link[=read_parquet_schema]{read_parquet_schema()}}:
-\code{file_name}, \code{name}, \code{r_type}, \code{type}, \code{type_length},
-\code{repetition_type}, \code{converted_type}, \code{logical_type}, \code{num_children},
-\code{scale}, \code{precision}.
+\code{file_name}, \code{name}, \code{r_type}, \code{type}, \code{type_length}, \code{repetition_type}, \code{converted_type}, \code{logical_type}, \code{num_children}, \code{scale}, \code{precision}, \code{field_id}.
 }
 \description{
 You can use this schema to specify how to write out a data frame to

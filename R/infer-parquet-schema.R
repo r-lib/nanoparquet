@@ -2,9 +2,12 @@
 #'
 #' @param df Data frame.
 #' @param options Return value of [parquet_options()], may modify the
-#' R to Parquet type mappings.
+#'   R to Parquet type mappings.
+#' @return Data frame, the inferred schema. It has the same columns as
+#'   the return value of [read_parquet_schema()]:
+#'   `r paste0("\u0060", names(infer_parquet_schema(mtcars)), "\u0060", collapse = ", ")`.
 #'
-#' @seealso [read_parquet_schema()] to the schema of a Parquet file,
+#' @seealso [read_parquet_schema()] to read the schema of a Parquet file,
 #'   [parquet_schema()] to create a Parquet schema from scratch.
 #' @export
 

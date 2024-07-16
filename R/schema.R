@@ -7,9 +7,7 @@
 #'   For backwards compatibility, you can supply a file name
 #'   here, and then `parquet_schema` behaves as [read_parquet_schema()].
 #' @return Data frame with the same columns as [read_parquet_schema()]:
-#'   `file_name`, `name`, `r_type`, `type`, `type_length`,
-#'   `repetition_type`, `converted_type`, `logical_type`, `num_children`,
-#'   `scale`, `precision`.
+#'   `r paste0("\u0060", names(parquet_schema("INT32")), "\u0060", collapse = ", ")`.
 #' @details
 #' A schema is a list of potentially named type specifications. A schema
 #' is stored in a data frame. Each (potentially named) argument of
