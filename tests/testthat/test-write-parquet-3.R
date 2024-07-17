@@ -161,3 +161,37 @@ test_that("write_parquet -> FIXED_LEN_BYTE_ARRAY", {
     as.data.frame(read_parquet(tmp))
   })
 })
+
+test_that("write_parquet -> STRING", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  # character -> STRING
+  d <- data.frame(d = c("foo", "bar", "foobar"))
+  write_parquet(d, tmp, schema = parquet_schema("STRING"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+})
+
+test_that("write_parquet -> ENUM", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  # character -> ENUM
+  d <- data.frame(d = c("foo", "bar", "foobar"))
+  write_parquet(d, tmp, schema = parquet_schema("ENUM"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  # factor -> ENUM
+  d <- data.frame(d = as.factor(c("foo", "bar", "foobar")))
+  write_parquet(d, tmp, schema = parquet_schema("ENUM"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+})

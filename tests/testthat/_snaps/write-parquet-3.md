@@ -713,3 +713,83 @@
       2 62, 61, 72
       3 61, 61, 61
 
+# write_parquet -> STRING
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name    r_type       type type_length repetition_type converted_type
+      1 schema      <NA>       <NA>          NA            <NA>           <NA>
+      2      d character BYTE_ARRAY          NA        REQUIRED           UTF8
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2       STRING           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+             d
+      1    foo
+      2    bar
+      3 foobar
+
+# write_parquet -> ENUM
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name    r_type       type type_length repetition_type converted_type
+      1 schema      <NA>       <NA>          NA            <NA>           <NA>
+      2      d character BYTE_ARRAY          NA        REQUIRED           ENUM
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2         ENUM           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+             d
+      1    foo
+      2    bar
+      3 foobar
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name    r_type       type type_length repetition_type converted_type
+      1 schema    factor       <NA>          NA            <NA>           <NA>
+      2      d character BYTE_ARRAY          NA        REQUIRED           ENUM
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2         ENUM           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+             d
+      1    foo
+      2    bar
+      3 foobar
+
+# write_parquet -> DECIMAL
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name  r_type  type type_length repetition_type converted_type logical_type
+      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
+      2      d integer INT32          NA        REQUIRED        DECIMAL DECIMAL,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA     0         3       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+         d
+      1 -3
+      2 -2
+      3 -1
+      4  0
+      5  1
+      6  2
+      7  3
+
