@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "lib/nanoparquet.h"
 #include "lib/bitpacker.h"
 
@@ -9,6 +11,49 @@
 
 using namespace nanoparquet;
 using namespace std;
+
+inline Int96 int32_to_int96(int32_t x) {
+  if (x >= 0) {
+    Int96 r = { 0, 0, 0 };
+    int32_t *p = (int32_t*) r.value;
+    *p = x;
+    return r;
+  } else {
+    Int96 r = { 0, 0xffffffff, 0xffffffff };
+    int32_t *p = (int32_t*) r.value;
+    *p = x;
+    return r;
+  }
+}
+
+inline Int96 double_to_int96(double x) {
+  x = trunc(x);
+  Int96 r = { 0, 0, 0 };
+  bool neg = x < 0;
+  x = neg ? -x : x;
+
+  // absolute value first
+  // TODO: what to do if too big?
+  r.value[0] = fmod(x, 0xffffffff);
+  x = trunc(x / 0xffffffff);
+  r.value[1] = fmod(x, 0xffffffff);
+  x = trunc(x / 0xffffffff);
+  r.value[2] = x;
+
+  // TODO: what to do if too small?
+  if (neg) {
+    r.value[0] = ~r.value[0] + 1;
+    r.value[1] = ~r.value[1];
+    r.value[2] = ~r.value[2];
+    if (r.value[0] == 0) {
+      r.value[1] += 1;
+      if (r.value[1] == 0) {
+        r.value[2] += 1;
+      }
+    }
+  }
+  return r;
+}
 
 extern "C" {
 SEXP nanoparquet_create_dict(SEXP x, SEXP rlen);
@@ -30,10 +75,17 @@ public:
                    uint64_t until);
   void write_int64(std::ostream &file, uint32_t idx, uint64_t from,
                    uint64_t until);
+  void write_int96(std::ostream &file, uint32_t idx, uint64_t from,
+                   uint64_t until);
+  void write_float(std::ostream &file, uint32_t idx, uint64_t from,
+                   uint64_t until);
   void write_double(std::ostream &file, uint32_t idx, uint64_t from,
                     uint64_t until);
   void write_byte_array(std::ostream &file, uint32_t id, uint64_t from,
                         uint64_t until);
+  void write_fixed_len_byte_array(std::ostream &file, uint32_t id,
+                                  uint64_t from, uint64_t until,
+                                  uint32_t type_length);
   uint32_t get_size_byte_array(uint32_t idx, uint32_t num_present,
                                uint64_t from, uint64_t until);
   void write_boolean(std::ostream &file, uint32_t idx, uint64_t from,
@@ -62,7 +114,7 @@ public:
 
   // for dictionaries
   uint32_t get_num_values_dictionary(uint32_t idx);
-  uint32_t get_size_dictionary(uint32_t idx);
+  uint32_t get_size_dictionary(uint32_t idx, parquet::Type::type type);
   void write_dictionary(std::ostream &file, uint32_t idx,
                         parquet::Type::type type);
   void write_dictionary_indices(std::ostream &file, uint32_t idx,
@@ -207,34 +259,93 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
                                   uint64_t from, uint64_t until) {
   // This is double in R, so we need to convert
   SEXP col = VECTOR_ELT(df, idx);
-  if (TYPEOF(col) != REALSXP) {
+  if (until > Rf_xlength(col)) {
+    Rf_error("Internal nanoparquet error, row index too large");
+  }
+  switch (TYPEOF(col)) {
+  case INTSXP: {
+    for (uint64_t i = from; i < until; i++) {
+      int64_t el = INTEGER(col)[i];
+      file.write((const char*) &el, sizeof(int64_t));
+    }
+    break;
+  }
+  case REALSXP: {
+    if (Rf_inherits(col, "POSIXct")) {
+      // TODO: check logical type
+      // need to convert seconds to microseconds
+      for (uint64_t i = from; i < until; i++) {
+        int64_t el = REAL(col)[i] * 1000 * 1000;
+        file.write((const char*) &el, sizeof(int64_t));
+      }
+    } else if (Rf_inherits(col, "difftime")) {
+      // TODO: check logical type
+      // need to convert seconds to nanoseconds
+      for (uint64_t i = from; i < until; i++) {
+        int64_t el = REAL(col)[i] * 1000 * 1000 * 1000;
+        file.write((const char*) &el, sizeof(int64_t));
+      }
+    } else {
+      for (uint64_t i = from; i < until; i++) {
+        int64_t el = REAL(col)[i];
+        file.write((const char*) &el, sizeof(int64_t));
+      }
+    }
+    break;
+  }
+  default:
     Rf_error(
       "Cannot write %s as a Parquet INT64 type.",
+      type_names[TYPEOF(col)]
+    );
+  }
+}
+
+void RParquetOutFile::write_int96(std::ostream &file, uint32_t idx,
+                                  uint64_t from, uint64_t until) {
+  // This is double in R, so we need to convert
+  SEXP col = VECTOR_ELT(df, idx);
+  if (until > Rf_xlength(col)) {
+    Rf_error("Internal nanoparquet error, row index too large");
+  }
+  switch (TYPEOF(col)) {
+  case INTSXP: {
+    for (uint64_t i = from; i < until; i++) {
+      Int96 el = int32_to_int96(INTEGER(col)[i]);
+      file.write((const char*) &el, sizeof(Int96));
+    }
+    break;
+  }
+  case REALSXP: {
+    for (uint64_t i = from; i < until; i++) {
+      Int96 el = double_to_int96(REAL(col)[i]);
+      file.write((const char*) &el, sizeof(Int96));
+    }
+    break;
+  }
+  default:
+    Rf_error(
+      "Cannot write %s as a Parquet INT64 type.",
+      type_names[TYPEOF(col)]
+    );
+  }
+}
+
+void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
+                                  uint64_t from, uint64_t until) {
+  SEXP col = VECTOR_ELT(df, idx);
+  if (TYPEOF(col) != REALSXP) {
+    Rf_error(
+      "Cannot write %s as a Parquet FLOAT type.",
       type_names[TYPEOF(col)]
     );
   }
   if (until > Rf_xlength(col)) {
     Rf_error("Internal nanoparquet error, row index too large");
   }
-  if (Rf_inherits(col, "POSIXct")) {
-    // need to convert seconds to microseconds
-    for (uint64_t i = from; i < until; i++) {
-      int64_t el = REAL(col)[i] * 1000 * 1000;
-      file.write((const char*) &el, sizeof(int64_t));
-    }
-
-  } else if (Rf_inherits(col, "difftime")) {
-    // need to convert seconds to nanoseconds
-    for (uint64_t i = from; i < until; i++) {
-      int64_t el = REAL(col)[i] * 1000 * 1000 * 1000;
-      file.write((const char*) &el, sizeof(int64_t));
-    }
-
-  } else {
-    for (uint64_t i = from; i < until; i++) {
-      int64_t el = REAL(col)[i];
-      file.write((const char*) &el, sizeof(int64_t));
-    }
+  for (uint64_t i = from; i < until; i++) {
+    float el = REAL(col)[i];
+    file.write((const char*) &el, sizeof(float));
   }
 }
 
@@ -299,6 +410,35 @@ uint32_t RParquetOutFile::get_size_byte_array(
     }
   }
   return size;
+}
+
+void RParquetOutFile::write_fixed_len_byte_array(
+  std::ostream &file,
+  uint32_t idx,
+  uint64_t from, uint64_t until,
+  uint32_t type_length) {
+
+  SEXP col = VECTOR_ELT(df, idx);
+  if (TYPEOF(col) != STRSXP) {
+    Rf_error(
+      "Cannot write %s as a Parquet BYTE_ARRAY type.",
+      type_names[TYPEOF(col)]
+    );
+  }
+  if (until > Rf_xlength(col)) {
+    Rf_error("Internal nanoparquet error, row index too large");
+  }
+  for (uint64_t i = from; i < until; i++) {
+    const char *c = CHAR(STRING_ELT(col, i));
+    uint32_t len1 = strlen(c);
+    if (len1 != type_length) {
+      Rf_error(
+        "Invalid string length: %d, expenting %d for FIXED_LEN_TYPE_ARRAY",
+        len1, type_length
+      );
+    }
+    file.write(c, type_length);
+  }
 }
 
 void write_boolean_impl(std::ostream &file, SEXP col,
@@ -593,7 +733,10 @@ uint32_t RParquetOutFile::get_num_values_dictionary(
   }
 }
 
-uint32_t RParquetOutFile::get_size_dictionary(uint32_t idx) {
+uint32_t RParquetOutFile::get_size_dictionary(
+  uint32_t idx,
+  parquet::Type::type type) {
+
   SEXP col = VECTOR_ELT(df, idx);
   switch (TYPEOF(col)) {
   case INTSXP: {
@@ -610,14 +753,38 @@ uint32_t RParquetOutFile::get_size_dictionary(uint32_t idx) {
     } else {
       create_dictionary(idx);
       SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
-      return Rf_xlength(dictidx) * sizeof(int);
+      if (type == parquet::Type::INT32) {
+        return Rf_xlength(dictidx) * sizeof(int);
+      } else if (type == parquet::Type::INT64) {
+        return Rf_xlength(dictidx) * sizeof(int64_t);
+      } else if (type == parquet::Type::INT96) {
+        return Rf_xlength(dictidx) * sizeof(Int96);
+      } else {
+        Rf_error(
+          "Cannot convert an integer vector to Parquet type %s.",
+         parquet::_Type_VALUES_TO_NAMES.at(type)
+        );
+      }
     }
     break;
   }
   case REALSXP: {
     create_dictionary(idx);
     SEXP dict = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
-    return Rf_xlength(dict) * sizeof(double);
+    if (type == parquet::Type::DOUBLE) {
+      return Rf_xlength(dict) * sizeof(double);
+    } else if (type == parquet::Type::INT64) {
+      return Rf_xlength(dict) * sizeof(int64_t);
+    } else if (type == parquet::Type::INT96) {
+      return Rf_xlength(dict) * sizeof(Int96);
+    } else if (type == parquet::Type::FLOAT) {
+      return Rf_xlength(dict) * sizeof(float);
+    } else {
+        Rf_error(
+          "Cannot convert a double vector to Parquet type %s.",
+         parquet::_Type_VALUES_TO_NAMES.at(type)
+        );
+    }
     break;
   }
   case STRSXP: {
@@ -671,23 +838,47 @@ void RParquetOutFile::write_dictionary(
       }
       UNPROTECT(1);
     } else {
-      if (type != parquet::Type::INT32) {
-        Rf_error(
-          "Cannot convert an integer vector to Parquet type %s.",
-         parquet:: _Type_VALUES_TO_NAMES.at(type)
-        );
-      }
       SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
       R_xlen_t len = Rf_xlength(dictidx);
-      SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
       int *icol = INTEGER(col);
       int *iidx = INTEGER(dictidx);
-      int *idict = INTEGER(dict);
-      for (auto i = 0; i < len; i++) {
-        idict[i] = icol[iidx[i]];
+      switch (type) {
+      case parquet::Type::INT32: {
+        SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
+        int *idict = INTEGER(dict);
+        for (auto i = 0; i < len; i++) {
+          idict[i] = icol[iidx[i]];
+        }
+        file.write((const char*) idict, sizeof(int) * len);
+        UNPROTECT(1);
+        break;
       }
-      file.write((const char*) idict, sizeof(int) * len);
-      UNPROTECT(1);
+      case parquet::Type::INT64: {
+        SEXP dict = PROTECT(Rf_allocVector(REALSXP, len));
+        int64_t *idict = (int64_t*) REAL(dict);
+        for (auto i = 0; i < len; i++) {
+          idict[i] = icol[iidx[i]];
+        }
+        file.write((const char*) idict, sizeof(int64_t) * len);
+        UNPROTECT(1);
+        break;
+      }
+      case parquet::Type::INT96: {
+        SEXP dict = PROTECT(Rf_allocVector(INTSXP, len * 3));
+        Int96 *idict = (Int96*) INTEGER(dict);
+        for (auto i = 0; i < len; i++) {
+          idict[i] = int32_to_int96(icol[iidx[i]]);
+        }
+        file.write((const char*) idict, sizeof(Int96) * len);
+        UNPROTECT(1);
+        break;
+      }
+      default:
+        Rf_error(
+          "Cannot convert an integer vector to Parquet type %s.",
+         parquet::_Type_VALUES_TO_NAMES.at(type)
+        );
+      }
     }
     break;
   }
@@ -719,19 +910,53 @@ void RParquetOutFile::write_dictionary(
         file.write((const char*) &el, sizeof(int64_t));
       }
     } else {
-      if (type != parquet::Type::DOUBLE) {
+      switch (type) {
+      case parquet::Type::DOUBLE: {
+        SEXP dict = PROTECT(Rf_allocVector(REALSXP, len));
+        double *idict = REAL(dict);
+        for (auto i = 0; i < len; i++) {
+          idict[i] = icol[iidx[i]];
+        }
+        file.write((const char*) idict, sizeof(double) * len);
+        UNPROTECT(1);
+        break;
+      }
+      case parquet::Type::INT64: {
+        SEXP dict = PROTECT(Rf_allocVector(REALSXP, len));
+        int64_t *idict = (int64_t*) REAL(dict);
+        for (auto i = 0; i < len; i++) {
+          idict[i] = icol[iidx[i]];
+        }
+        file.write((const char*) idict, sizeof(int64_t) * len);
+        UNPROTECT(1);
+        break;
+      }
+      case parquet::Type::INT96: {
+        SEXP dict = PROTECT(Rf_allocVector(INTSXP, len * 3));
+        Int96 *idict = (Int96*) INTEGER(dict);
+        for (auto i = 0; i < len; i++) {
+          idict[i] = double_to_int96(icol[iidx[i]]);
+        }
+        file.write((const char*) idict, sizeof(Int96) * len);
+        UNPROTECT(1);
+        break;
+      }
+      case parquet::Type::FLOAT: {
+        SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
+        float *idict = (float*) INTEGER(dict);
+        for (auto i = 0; i < len; i++) {
+          idict[i] = icol[iidx[i]];
+        }
+        file.write((const char*) idict, sizeof(float) * len);
+        UNPROTECT(1);
+        break;
+      }
+      default:
         Rf_error(
           "Cannot convert a double vector to Parquet type %s.",
-         parquet:: _Type_VALUES_TO_NAMES.at(type)
+          parquet:: _Type_VALUES_TO_NAMES.at(type)
         );
       }
-      SEXP dict = PROTECT(Rf_allocVector(REALSXP, len));
-      double *idict = REAL(dict);
-      for (auto i = 0; i < len; i++) {
-        idict[i] = icol[iidx[i]];
-      }
-      file.write((const char*) idict, sizeof(double) * len);
-      UNPROTECT(1);
     }
     break;
   }

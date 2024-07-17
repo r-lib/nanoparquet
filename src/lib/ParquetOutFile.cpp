@@ -238,7 +238,8 @@ void ParquetOutFile::write_data_(
   uint64_t until) {
 
   streampos cb_start = file.tellp();
-  parquet::Type::type type = schemas[idx + 1].type;
+  parquet::SchemaElement &se = schemas[idx + 1];
+  parquet::Type::type type = se.type;
   switch (type) {
   case Type::INT32:
     write_int32(file, idx, from, until);
@@ -246,11 +247,20 @@ void ParquetOutFile::write_data_(
   case Type::INT64:
     write_int64(file, idx, from, until);
     break;
+  case Type::INT96:
+    write_int96(file, idx, from, until);
+    break;
+  case Type::FLOAT:
+    write_float(file, idx, from, until);
+    break;
   case Type::DOUBLE:
     write_double(file, idx, from, until);
     break;
   case Type::BYTE_ARRAY:
     write_byte_array(file, idx, from, until);
+    break;
+  case Type::FIXED_LEN_BYTE_ARRAY:
+    write_fixed_len_byte_array(file, idx, from, until, se.type_length);
     break;
   case Type::BOOLEAN:
     write_boolean(file, idx, from, until);
@@ -492,7 +502,7 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1];
   // Uncompresed size of the dictionary in bytes
-  uint32_t dict_size = get_size_dictionary(idx);
+  uint32_t dict_size = get_size_dictionary(idx, se.type);
   // Number of entries in the dicitonary
   uint32_t num_dict_values = get_num_values_dictionary(idx);
 
@@ -1040,7 +1050,8 @@ uint64_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
                                                     uint64_t from,
                                                     uint64_t until) {
   // +1 is to skip the root schema
-  parquet::Type::type type = schemas[idx + 1].type;
+  parquet::SchemaElement &se = schemas[idx + 1];
+  parquet::Type::type type = se.type;
   switch (type) {
   case Type::BOOLEAN: {
     return num_present / 8 + (num_present % 8 > 0);
@@ -1051,8 +1062,17 @@ uint64_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
   case Type::INT64: {
     return num_present * sizeof(int64_t);
   }
+  case Type::INT96: {
+    return num_present * sizeof(Int96);
+  }
+  case Type::FLOAT: {
+    return num_present * sizeof(float);
+  }
   case Type::DOUBLE: {
     return num_present * sizeof(double);
+  }
+  case Type::FIXED_LEN_BYTE_ARRAY: {
+    return num_present * se.type_length;
   }
   case Type::BYTE_ARRAY: {
     // not known yet
