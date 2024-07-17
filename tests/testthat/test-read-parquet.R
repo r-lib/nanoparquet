@@ -403,3 +403,13 @@ test_that("More BYTE_STREAM_SPLIT", {
     expect_equal(bss[[2*i-1]], bss[[2*i]])
   }
 })
+
+test_that("DECIMAL in INT32, INT64", {
+  pf <- test_path("data/int32_decimal.parquet")
+  expect_equal(typeof(read_parquet(pf)[[1]]), "double")
+  expect_snapshot(as.data.frame(read_parquet(pf)))
+
+  pf <- test_path("data/int64_decimal.parquet")
+  expect_equal(typeof(read_parquet(pf)[[1]]), "double")
+  expect_snapshot(as.data.frame(read_parquet(pf)))
+})

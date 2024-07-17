@@ -1,5 +1,11 @@
 # nanoparquet (development version)
 
+* `write_parquet(file = ":raw:")` now works correctly for larger data
+  frames (#77).
+
+* `read_parquet()` now reads `DECIMAL` values correctly from `INT32`
+  and `INT64` columns if their `scale` is not zero.
+
 # nanoparquet 0.3.1
 
 * This version fixes a `write_parquet()` crash (#73).

@@ -118,6 +118,24 @@ test_that("write_parquet() to memory", {
   expect_equal(pm, pm2)
 })
 
+test_that("write_parquet() to memory 2", {
+  # https://github.com/r-lib/nanoparquet/issues/77
+  data <- data.frame(
+    TEST_1 = seq(as.Date("2000/1/1"), by = "day", length.out = 100000),
+    TEST_2 = seq(1:100000),
+    TEST_3 = seq(as.Date("1990/1/1"), by = "day", length.out = 100000),
+    TEST_2 = seq(100000:1)
+  )
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  r1 <- write_parquet(data, ":raw:")
+  write_parquet(data, tmp)
+  r2 <- readBin(tmp, what = "raw", file.size(tmp))
+  expect_equal(r1, r2)
+})
+
 test_that("gzip compression", {
   d <- test_df(missing = TRUE)
   tmp <- tempfile(fileext = ".parquet")

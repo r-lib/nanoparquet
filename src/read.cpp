@@ -74,27 +74,31 @@ SEXP nanoparquet_read(SEXP filesxp) {
       varvalue = PROTECT(safe_allocvector_lgl(nrows, &uwtoken));
       break;
     case parquet::Type::INT32: {
-      varvalue = PROTECT(safe_allocvector_int(nrows, &uwtoken));
       auto &s_ele = f.columns[col_idx]->schema_element;
-      if ((s_ele->__isset.logicalType &&
-           s_ele->logicalType.__isset.DATE) ||
-          (s_ele->__isset.converted_type &&
-           s_ele->converted_type == parquet::ConvertedType::DATE)) {
-        SEXP cl = PROTECT(safe_mkstring("Date", &uwtoken));
-        SET_CLASS(varvalue, cl);
-        UNPROTECT(1);
-      } else if ((s_ele->__isset.logicalType &&
-                  s_ele->logicalType.__isset.TIME &&
-                  s_ele->logicalType.TIME.unit.__isset.MILLIS) ||
-                 (s_ele->__isset.converted_type &&
-                  s_ele->converted_type == parquet::ConvertedType::TIME_MILLIS)) {
-        // note: if not MILLIS and INT32, we'll read it as plain INT32
-        SEXP cl = PROTECT(safe_allocvector_str(2, &uwtoken));
-        SET_STRING_ELT(cl, 0, safe_mkchar("hms", &uwtoken));
-        SET_STRING_ELT(cl, 1, safe_mkchar("difftime", &uwtoken));
-        SET_CLASS(varvalue, cl);
-        safe_setattrib(varvalue, Rf_install("units"), safe_mkstring("secs", &uwtoken), &uwtoken);
-        UNPROTECT(1);
+      if (s_ele->__isset.scale) {
+	varvalue = PROTECT(safe_allocvector_real(nrows, &uwtoken));
+      } else {
+        varvalue = PROTECT(safe_allocvector_int(nrows, &uwtoken));
+        if ((s_ele->__isset.logicalType &&
+             s_ele->logicalType.__isset.DATE) ||
+            (s_ele->__isset.converted_type &&
+             s_ele->converted_type == parquet::ConvertedType::DATE)) {
+          SEXP cl = PROTECT(safe_mkstring("Date", &uwtoken));
+          SET_CLASS(varvalue, cl);
+          UNPROTECT(1);
+        } else if ((s_ele->__isset.logicalType &&
+                    s_ele->logicalType.__isset.TIME &&
+                    s_ele->logicalType.TIME.unit.__isset.MILLIS) ||
+                   (s_ele->__isset.converted_type &&
+                   s_ele->converted_type == parquet::ConvertedType::TIME_MILLIS)) {
+          // note: if not MILLIS and INT32, we'll read it as plain INT32
+          SEXP cl = PROTECT(safe_allocvector_str(2, &uwtoken));
+          SET_STRING_ELT(cl, 0, safe_mkchar("hms", &uwtoken));
+          SET_STRING_ELT(cl, 1, safe_mkchar("difftime", &uwtoken));
+          SET_CLASS(varvalue, cl);
+          safe_setattrib(varvalue, Rf_install("units"), safe_mkstring("secs", &uwtoken), &uwtoken);
+          UNPROTECT(1);
+        }
       }
       break;
     }
@@ -242,7 +246,11 @@ SEXP nanoparquet_read(SEXP filesxp) {
             LOGICAL_POINTER(dest)[row_idx + dest_offset] = NA_LOGICAL;
             break;
           case parquet::Type::INT32:
-            INTEGER_POINTER(dest)[row_idx + dest_offset] = NA_INTEGER;
+	    if (TYPEOF(dest) == INTSXP) {
+	      INTEGER_POINTER(dest)[row_idx + dest_offset] = NA_INTEGER;
+	    } else {
+	      NUMERIC_POINTER(dest)[row_idx + dest_offset] = NA_REAL;
+	    }
             break;
           case parquet::Type::INT64:
           case parquet::Type::DOUBLE:
@@ -287,15 +295,28 @@ SEXP nanoparquet_read(SEXP filesxp) {
           LOGICAL_POINTER(dest)
           [row_idx + dest_offset] = ((bool *)col.data.ptr)[row_idx];
           break;
-        case parquet::Type::INT32:
-          INTEGER_POINTER(dest)
-          [row_idx + dest_offset] = ((int32_t *)col.data.ptr)[row_idx];
+        case parquet::Type::INT32: {
+	  if (TYPEOF(dest) == INTSXP) {
+            INTEGER_POINTER(dest)[row_idx + dest_offset] = ((int32_t *)col.data.ptr)[row_idx];
+	  } else {
+	    // must be real
+            NUMERIC_POINTER(dest)[row_idx + dest_offset] = ((int32_t *)col.data.ptr)[row_idx];
+            auto &s_ele = f.columns[col_idx]->schema_element;
+	    if (s_ele->__isset.scale) {
+              NUMERIC_POINTER(dest)[row_idx + dest_offset] /= pow(10.0, s_ele->scale);
+	    }
+	  }
           break;
-        case parquet::Type::INT64:
-          NUMERIC_POINTER(dest)
-          [row_idx + dest_offset] =
+	}
+        case parquet::Type::INT64: {
+          NUMERIC_POINTER(dest)[row_idx + dest_offset] =
               (double)((int64_t *)col.data.ptr)[row_idx] / time_factor;
-        break;
+          auto &s_ele = f.columns[col_idx]->schema_element;
+	  if (s_ele->__isset.scale) {
+	    NUMERIC_POINTER(dest)[row_idx + dest_offset] /= pow(10.0, s_ele->scale);
+	  }
+	  break;
+	}
         case parquet::Type::DOUBLE:
           NUMERIC_POINTER(dest)
           [row_idx + dest_offset] = ((double *)col.data.ptr)[row_idx];
