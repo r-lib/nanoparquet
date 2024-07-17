@@ -72,6 +72,24 @@ supports the \code{scale} parameter, it defaults to zero if not specified.
 }
 
 Logical types \code{MAP}, \code{LIST} and \code{UNKNOWN} are not supported currently.
+
+Converted types are deprecated in the Parquet specification in favor of
+logical types, but \code{parquet_schema()} accepts some converted types as a
+syntactic shortcut for the corresponding logical types:
+\itemize{
+\item \code{INT_8} mean \code{list("INT", bit_width = 8, is_signed = TRUE)}.
+\item \code{INT_16} mean \code{list("INT", bit_width = 16, is_signed = TRUE)}.
+\item \code{INT_32} mean \code{list("INT", bit_width = 32, is_signed = TRUE)}.
+\item \code{INT_64} mean \code{list("INT", bit_width = 64, is_signed = TRUE)}.
+\item \code{TIME_MICROS} means \code{list("TIME", is_adjusted_utc = TRUE, unit = "MICROS")}.
+\item \code{TIME_MILLIS} means \code{list("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")}.
+\item \code{TIMESTAMP_MICROS} means \code{list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")}.
+\item \code{TIMESTAMP_MILLIS} means \code{list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")}.
+\item \code{UINT_8} means \code{list("INT", bit_width = 8, is_signed = FALSE)}.
+\item \code{UINT_16} means \code{list("INT", bit_width = 16, is_signed = FALSE)}.
+\item \code{UINT_32} means \code{list("INT", bit_width = 32, is_signed = FALSE)}.
+\item \code{UINT_64} means \code{list("INT", bit_width = 64, is_signed = FALSE)}.
+}
 \subsection{Missing values}{
 
 Each type might also have a \code{repetition_type} parameter, with possible

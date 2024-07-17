@@ -18,11 +18,13 @@
 #' # Possible types:
 #'
 #' Special type:
+#'
 #' * `"AUTO"`: this is not a Parquet type, but it tells [write_parquet()]
 #'   to map the R type to Parquet automatically, using the default mapping
 #'   rules.
 #'
 #' Primitive Parquet types:
+#'
 #' * `"BOOLEAN"`
 #' * `"INT32"`
 #' * `"INT64"`
@@ -34,6 +36,7 @@
 #'   `type_length` parameter, an integer between 0 and 2^31-1.
 #'
 #' Parquet logical types:
+#'
 #' * `"STRING"`
 #' * `"ENUM"`
 #' * `"UUID"`
@@ -56,6 +59,23 @@
 #' * `"BSON"`
 #'
 #' Logical types `MAP`, `LIST` and `UNKNOWN` are not supported currently.
+#'
+#' Converted types are deprecated in the Parquet specification in favor of
+#' logical types, but `parquet_schema()` accepts some converted types as a
+#' syntactic shortcut for the corresponding logical types:
+#'
+#' * `INT_8` mean `list("INT", bit_width = 8, is_signed = TRUE)`.
+#' * `INT_16` mean `list("INT", bit_width = 16, is_signed = TRUE)`.
+#' * `INT_32` mean `list("INT", bit_width = 32, is_signed = TRUE)`.
+#' * `INT_64` mean `list("INT", bit_width = 64, is_signed = TRUE)`.
+#' * `TIME_MICROS` means `list("TIME", is_adjusted_utc = TRUE, unit = "MICROS")`.
+#' * `TIME_MILLIS` means `list("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")`.
+#' * `TIMESTAMP_MICROS` means `list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")`.
+#' * `TIMESTAMP_MILLIS` means `list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")`.
+#' * `UINT_8` means `list("INT", bit_width = 8, is_signed = FALSE)`.
+#' * `UINT_16` means `list("INT", bit_width = 16, is_signed = FALSE)`.
+#' * `UINT_32` means `list("INT", bit_width = 32, is_signed = FALSE)`.
+#' * `UINT_64` means `list("INT", bit_width = 64, is_signed = FALSE)`.
 #'
 #' ## Missing values
 #'
@@ -310,6 +330,22 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
     LIST = err("LIST"),
     MAP = err("MAP"),
     UNKNOWN = err("UNKNOWN"),
+
+    # some converted types as shortcuts
+    "INT_8" = { bit_width <- 8; is_signed <- TRUE; int() },
+    "INT_16" = { bit_width <- 16; is_signed <- TRUE; int() },
+    "INT_32" = { bit_width <- 32; is_signed <- TRUE; int() },
+    "INT_64" = { bit_width <- 64; is_signed <- TRUE; int() },
+
+    "TIME_MICROS" = { is_adjusted_utc <- TRUE; unit <- "MICROS"; time() },
+    "TIME_MILLIS" = { is_adjusted_utc <- TRUE; unit <- "MILLIS"; time() },
+    "TIMESTAMP_MICROS" = { is_adjusted_utc <- TRUE; unit <- "MICROS"; timestamp() },
+    "TIMESTAMP_MILLIS" = { is_adjusted_utc <- TRUE; unit <- "MILLIS"; timestamp() },
+
+    "UINT_8" = { bit_width <- 8; is_signed <- FALSE; int() },
+    "UINT_16" = { bit_width <- 16; is_signed <- FALSE; int() },
+    "UINT_32" = { bit_width <- 32; is_signed <- FALSE; int() },
+    "UINT_64" = { bit_width <- 64; is_signed <- FALSE; int() },
 
     # bail
     err(type)

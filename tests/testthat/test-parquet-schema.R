@@ -93,6 +93,60 @@ test_that("parquet_type", {
   expect_error(parquet_type("UNKNOWN"), "not supported by nanoparquet")
 })
 
+test_that("parquet_type converted type shortcuts", {
+  expect_equal(
+    parquet_type("INT_8"),
+    parquet_type("INT", bit_width = 8, is_signed = TRUE)
+  )
+  expect_equal(
+    parquet_type("INT_16"),
+    parquet_type("INT", bit_width = 16, is_signed = TRUE)
+  )
+  expect_equal(
+    parquet_type("INT_32"),
+    parquet_type("INT", bit_width = 32, is_signed = TRUE)
+  )
+  expect_equal(
+    parquet_type("INT_64"),
+    parquet_type("INT", bit_width = 64, is_signed = TRUE)
+  )
+
+  expect_equal(
+    parquet_type("UINT_8"),
+    parquet_type("INT", bit_width = 8, is_signed = FALSE)
+  )
+  expect_equal(
+    parquet_type("UINT_16"),
+    parquet_type("INT", bit_width = 16, is_signed = FALSE)
+  )
+  expect_equal(
+    parquet_type("UINT_32"),
+    parquet_type("INT", bit_width = 32, is_signed = FALSE)
+  )
+  expect_equal(
+    parquet_type("UINT_64"),
+    parquet_type("INT", bit_width = 64, is_signed = FALSE)
+  )
+
+  expect_equal(
+    parquet_type("TIME_MICROS"),
+    parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MICROS")
+  )
+  expect_equal(
+    parquet_type("TIME_MILLIS"),
+    parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")
+  )
+
+  expect_equal(
+    parquet_type("TIMESTAMP_MICROS"),
+    parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")
+  )
+  expect_equal(
+    parquet_type("TIMESTAMP_MILLIS"),
+    parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")
+  )
+})
+
 test_that("parquet_schema", {
   sch <- parquet_schema(
     "INT32",
