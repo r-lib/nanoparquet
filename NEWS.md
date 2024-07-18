@@ -31,6 +31,10 @@
     - `character` to `FIXED_LEN_BYTE_ARRAY`,
     - `character` to `ENUM`,
     - `factor` to `ENUM`.
+    - `integer` to `DECIMAL`, `INT32`,
+    - `integer` to `DECIMAL`, `INT64`,
+    - `double` to `DECIMAL`, `INT32`,
+    - `double` to `DECIMAL`, `INT64`.
 
 * `write_parquet(file = ":raw:")` now works correctly for larger data
   frames (#77).
