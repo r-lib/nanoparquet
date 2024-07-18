@@ -1,5 +1,37 @@
 # nanoparquet (development version)
 
+* API changes:
+
+  - `parquet_schema()` is now called `read_parquet_schema()`. The new
+    `parquet_schema()` function falls back to `read_parquet_schema()` if
+    it is called with a single string argument, with a warning.
+
+  - `parquet_info()` is now called `read_parquet_info()`. `parquet_info(`
+    still works for now, with a warning.
+
+  - `parquet_metadata()` is now called `read_parquet_metadata()`.
+    `parquet_metadata()` still works, with a warning.
+
+  - `parquet_column_types()` is now deprecated, and issues a warning. Use
+    `read_parquet_schema()` or the new `infer_parquet_schema()` function
+    instead.
+
+  - The new `parquet_schema()` function creates a Parquet schema from
+    scratch. You can use this schema as the new `schema` argument of
+    `write_parquet()`, to specify how the columns of a data frame should
+    be mapped to Parquet types.
+
+  - Newly supported type conversions in `write_parquet()` via the
+    schema argument:
+
+    - `integer` to `INT64`,
+    - `integer` to `INT96`,
+    - `double` to `INT96`,
+    - `double` to `FLOAT`,
+    - `character` to `FIXED_LEN_BYTE_ARRAY`,
+    - `character` to `ENUM`,
+    - `factor` to `ENUM`.
+
 * `write_parquet(file = ":raw:")` now works correctly for larger data
   frames (#77).
 
