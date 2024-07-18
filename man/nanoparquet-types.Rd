@@ -52,7 +52,9 @@ non-default mappings are:
 - `double` to `FLOAT`,
 - `character` to `FIXED_LEN_BYTE_ARRAY`,
 - `character` to `ENUM`,
-- `factor` to `ENUM`.
+- `factor` to `ENUM`,
+- `integer` to `DECIAML` & `INT32`,
+- `integer` to `DECIMAL` & `INT64`.
 }\if{html}{\out{</div>}}
 }
 

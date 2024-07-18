@@ -195,3 +195,97 @@ test_that("write_parquet -> ENUM", {
     as.data.frame(read_parquet(tmp))
   })
 })
+
+test_that("write_parquet -> DECIMAL INT32", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  # integer -> DECIMAL INT32
+  d <- data.frame(d = -5:5)
+  schema <- parquet_schema(list(
+    "DECIMAL",
+    primitive_type = "INT32",
+    scale = 0,
+    precision = 3
+  ))
+  write_parquet(d, tmp, schema = schema)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d2 <- data.frame(d = c(999L, 1000L))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d2, tmp, schema = schema)
+  })
+  d2 <- data.frame(d = -c(999L, 1000L))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d2, tmp, schema = schema)
+  })
+
+  schema <- parquet_schema(list(
+    "DECIMAL",
+    primitive_type = "INT32",
+    scale = 2,
+    precision = 3
+  ))
+  write_parquet(d, tmp, schema = schema)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d2 <- data.frame(d = c(9L, 10L))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d2, tmp, schema = schema)
+  })
+  d2 <- data.frame(d = -c(9L, 10L))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d2, tmp, schema = schema)
+  })
+})
+
+test_that("write_parquet -> DECIMAL INT64", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  # integer -> DECIMAL INT64
+  d <- data.frame(d = -5:5)
+  schema <- parquet_schema(list(
+    "DECIMAL",
+    primitive_type = "INT64",
+    scale = 0,
+    precision = 3
+  ))
+  write_parquet(d, tmp, schema = schema)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d2 <- data.frame(d = c(999L, 1000L))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d2, tmp, schema = schema)
+  })
+  d2 <- data.frame(d = -c(999L, 1000L))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d2, tmp, schema = schema)
+  })
+
+  schema <- parquet_schema(list(
+    "DECIMAL",
+    primitive_type = "INT64",
+    scale = 2,
+    precision = 3
+  ))
+  write_parquet(d, tmp, schema = schema)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d2 <- data.frame(d = c(9L, 10L))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d2, tmp, schema = schema)
+  })
+  d2 <- data.frame(d = -c(9L, 10L))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d2, tmp, schema = schema)
+  })
+})

@@ -1,4 +1,5 @@
 #include <cmath>
+#include <inttypes.h>
 
 #include "lib/nanoparquet.h"
 #include "lib/bitpacker.h"
@@ -72,9 +73,9 @@ public:
     parquet::CompressionCodec::type codec
   );
   void write_int32(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until);
+                   uint64_t until, parquet::SchemaElement &sel);
   void write_int64(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until);
+                   uint64_t until, parquet::SchemaElement &sel);
   void write_int96(std::ostream &file, uint32_t idx, uint64_t from,
                    uint64_t until);
   void write_float(std::ostream &file, uint32_t idx, uint64_t from,
@@ -82,10 +83,10 @@ public:
   void write_double(std::ostream &file, uint32_t idx, uint64_t from,
                     uint64_t until);
   void write_byte_array(std::ostream &file, uint32_t id, uint64_t from,
-                        uint64_t until);
+                        uint64_t until, parquet::SchemaElement &sel);
   void write_fixed_len_byte_array(std::ostream &file, uint32_t id,
                                   uint64_t from, uint64_t until,
-                                  uint32_t type_length);
+                                  parquet::SchemaElement &sel);
   uint32_t get_size_byte_array(uint32_t idx, uint32_t num_present,
                                uint64_t from, uint64_t until);
   void write_boolean(std::ostream &file, uint32_t idx, uint64_t from,
@@ -239,8 +240,31 @@ static const char *type_names[] = {
   "an S4 object"
 };
 
+static bool is_decimal(parquet::SchemaElement &sel, int32_t &precision,
+                       int32_t &scale) {
+  if (sel.__isset.logicalType && sel.logicalType.__isset.DECIMAL) {
+    precision = sel.logicalType.DECIMAL.precision;
+    scale = sel.logicalType.DECIMAL.scale;
+    return true;
+  } else if (sel.__isset.converted_type &&
+             sel.converted_type == parquet::ConvertedType::DECIMAL) {
+    if (!sel.__isset.precision) {
+      Rf_error("Invalid Parquet file: precision is not set for DECIMAL converted type");
+    }
+    if (!sel.__isset.scale) {
+      Rf_error("Invalid Parquet file: scale is not set for DECIMAL converted type");
+    }
+    precision = sel.precision;
+    scale = sel. scale;
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
-                                  uint64_t from, uint64_t until) {
+                                  uint64_t from, uint64_t until,
+                                  parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != INTSXP) {
     Rf_error(
@@ -251,12 +275,40 @@ void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
   if (until > Rf_xlength(col)) {
     Rf_error("Internal nanoparquet error, row index too large");
   }
-  uint64_t len = until - from;
-  file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
+  int32_t precision, scale;
+  if (is_decimal(sel, precision, scale)) {
+    if (precision > 9) {
+      Rf_error("Internal nanoparquet error, precision to high for INT32 DECIMAL");
+    }
+    int32_t fact = pow(10, scale);
+    int32_t max = ((int32_t) pow(10, precision)) / fact;
+    int32_t min = -max;
+    for (uint64_t i = from; i < until; i++) {
+      int32_t val = INTEGER(col)[i];
+      if (val <= min) {
+        Rf_error(
+          "Value too small for INT32 DECIMAL with precision %d, scale %d: %d",
+          precision, scale, val
+        );
+      }
+      if (val >= max) {
+        Rf_error(
+          "Value too large for INT32 DECIMAL with precision %d, scale %d: %d",
+          precision, scale, val
+        );
+      }
+      val *= fact;
+      file.write((const char*) &val, sizeof(int32_t));
+    }
+  } else {
+    uint64_t len = until - from;
+    file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
+  }
 }
 
 void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
-                                  uint64_t from, uint64_t until) {
+                                  uint64_t from, uint64_t until,
+                                  parquet::SchemaElement &sel) {
   // This is double in R, so we need to convert
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
@@ -264,9 +316,38 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
   }
   switch (TYPEOF(col)) {
   case INTSXP: {
-    for (uint64_t i = from; i < until; i++) {
-      int64_t el = INTEGER(col)[i];
-      file.write((const char*) &el, sizeof(int64_t));
+    int32_t precision, scale;
+    if (is_decimal(sel, precision, scale)) {
+      if (precision > 18) {
+        Rf_error("Internal nanoparquet error, precision to high for INT64 DECIMAL");
+      }
+      int64_t fact = pow(10, scale);
+      int64_t max = ((int64_t)pow(10, precision)) / fact;
+      int64_t min = -max;
+      for (uint64_t i = from; i < until; i++) {
+        int64_t val = INTEGER(col)[i];
+        if (val <= min) {
+          Rf_error(
+            "Value too small for INT64 DECIMAL with precision %d, scale "
+            "%d: %" PRId64,
+            precision, scale, val
+          );
+        }
+        if (val >= max) {
+          Rf_error(
+            "Value too large for INT64 DECIMAL with precision %d, scale "
+            "%d: %" PRId64,
+            precision, scale, val
+          );
+        }
+        val *= fact;
+        file.write((const char *)&val, sizeof(int64_t));
+      }
+    } else {
+      for (uint64_t i = from; i < until; i++) {
+        int64_t el = INTEGER(col)[i];
+        file.write((const char*) &el, sizeof(int64_t));
+      }
     }
     break;
   }
@@ -366,7 +447,8 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
-                                       uint64_t from, uint64_t until) {
+                                       uint64_t from, uint64_t until,
+                                       parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != STRSXP) {
     Rf_error(
@@ -416,8 +498,9 @@ void RParquetOutFile::write_fixed_len_byte_array(
   std::ostream &file,
   uint32_t idx,
   uint64_t from, uint64_t until,
-  uint32_t type_length) {
+  parquet::SchemaElement &sel) {
 
+  uint32_t type_length = sel.type_length;
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != STRSXP) {
     Rf_error(
