@@ -1,5 +1,8 @@
+src/fastpforlib
+src/flatbuffers
+src/miniz
 src/parquet
+src/simdutf
 src/snappy
 src/thrift
-src/simdutf
-src/flatbuffers
+src/zstd

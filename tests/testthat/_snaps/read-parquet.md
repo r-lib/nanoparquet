@@ -215,7 +215,7 @@
 # DELTA_BIANRY_PACKED encoding
 
     Code
-      parquet_metadata(pf)$column_chunks$encodings
+      read_parquet_metadata(pf)$column_chunks$encodings
     Output
       [[1]]
       [1] "RLE"                 "DELTA_BINARY_PACKED"
@@ -253,7 +253,7 @@
 ---
 
     Code
-      parquet_metadata(pf2)$column_chunks$encodings
+      read_parquet_metadata(pf2)$column_chunks$encodings
     Output
       [[1]]
       [1] "RLE"                 "DELTA_BINARY_PACKED"
@@ -291,7 +291,7 @@
 ---
 
     Code
-      parquet_metadata(pf3)$column_chunks$encodings
+      read_parquet_metadata(pf3)$column_chunks$encodings
     Output
       [[1]]
       [1] "RLE"                 "DELTA_BINARY_PACKED"

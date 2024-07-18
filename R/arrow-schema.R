@@ -1,6 +1,6 @@
 # read Arrow metadata from a file
 parquet_arrow_metadata <- function(file) {
-  fmd <- parquet_metadata(file)$file_meta_data
+  fmd <- read_parquet_metadata(file)$file_meta_data
   kv <- fmd$key_value_metadata[[1]]
   if (! "ARROW:schema" %in% kv$key) {
     stop("No Arrow metadata in file")
@@ -10,7 +10,7 @@ parquet_arrow_metadata <- function(file) {
 }
 
 apply_arrow_schema <- function(tab, file, dicts, types) {
-  mtd <- parquet_metadata(file)
+  mtd <- read_parquet_metadata(file)
   kv <- mtd$file_meta_data$key_value_metadata[[1]]
   if ("ARROW:schema" %in% kv$key) {
     spec <- arrow_find_special(

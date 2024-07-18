@@ -12,13 +12,14 @@ development:
   mode: auto
 
 reference:
-- title: Type mappings
+- title: Parquet scehams and type mappings
   desc: |
     How nanoparquet maps R data types to Parquet data types
     and vice versa.
   contents:
+  - infer_parquet_schema
   - nanoparquet-types
-  - parquet_column_types
+  - parquet_schema
 
 - title: Read Parquet files
   contents:
@@ -30,9 +31,9 @@ reference:
 
 - title: Extract Parquet metadata
   contents:
-  - parquet_info
-  - parquet_metadata
-  - parquet_schema
+  - read_parquet_info
+  - read_parquet_metadata
+  - read_parquet_schema
 
 - title: Nanoparquet options
   contents:
@@ -43,10 +44,11 @@ reference:
     These functions are useful for debugging possibly broken
     Parquet files and for nanoparquet developers.
   contents:
-  - parquet_pages
+  - read_parquet_pages
   - read_parquet_page
 
 - title: internal
   contents:
   - nanoparquet-package
   - nanoparquet
+  - parquet_column_types

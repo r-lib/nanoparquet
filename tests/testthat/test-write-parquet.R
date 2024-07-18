@@ -5,7 +5,7 @@ test_that("factors are written as strings", {
 
   write_parquet(mt, tmp)
   expect_snapshot(
-    as.data.frame(parquet_schema(tmp))[
+    as.data.frame(read_parquet_schema(tmp))[
       c("name", "type", "converted_type", "logical_type")
     ]
   )
@@ -129,7 +129,7 @@ test_that("writing metadata", {
   on.exit(unlink(tmp), add = TRUE)
 
   write_parquet(mt, tmp, metadata = c("foo" = "bar"))
-  kvm <- parquet_metadata(tmp)$file_meta_data$key_value_metadata[[1]]
+  kvm <- read_parquet_metadata(tmp)$file_meta_data$key_value_metadata[[1]]
   expect_snapshot(as.data.frame(kvm)[1,])
 })
 
@@ -174,7 +174,7 @@ test_that("REQ PLAIN", {
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
     read_parquet_page(tmp, pgs$page_header_offset[2])$data
@@ -183,7 +183,7 @@ test_that("REQ PLAIN", {
   })
 
   write_parquet(d, tmp, compression = "snappy")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
     read_parquet_page(tmp, pgs$page_header_offset[2])$data
@@ -207,7 +207,7 @@ test_that("OPT PLAIN", {
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
     readBin(data[-(1:6)], "integer", sum(!is.na(d$i)))
@@ -218,7 +218,7 @@ test_that("OPT PLAIN", {
   })
 
   write_parquet(d, tmp, compression = "snappy")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
     readBin(data[-(1:6)], "integer", sum(!is.na(d$i)))
@@ -239,7 +239,7 @@ test_that("REQ RLE_DICT", {
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
     data <- print(read_parquet_page(tmp, pgs$page_header_offset[2])$data)
@@ -247,7 +247,7 @@ test_that("REQ RLE_DICT", {
   })
 
   write_parquet(d, tmp, compression = "snappy")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
     read_parquet_page(tmp, pgs$page_header_offset[2])$data
@@ -264,7 +264,7 @@ test_that("OPT RLE_DICT", {
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
     data <- print(read_parquet_page(tmp, pgs$page_header_offset[2])$data)
@@ -276,7 +276,7 @@ test_that("OPT RLE_DICT", {
   })
 
   write_parquet(d, tmp, compression = "snappy")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
     read_parquet_page(tmp, pgs$page_header_offset[2])$data
@@ -292,9 +292,9 @@ test_that("REQ RLE", {
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
-    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_metadata(tmp)$column_chunks$encodings
     data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
   })
   expect_equal(
@@ -303,9 +303,9 @@ test_that("REQ RLE", {
   )
 
   write_parquet(d, tmp, compression = "snappy")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
-    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_metadata(tmp)$column_chunks$encodings
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
   })
 })
@@ -319,9 +319,9 @@ test_that("OPT RLE", {
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
-    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_metadata(tmp)$column_chunks$encodings
     data <- print(read_parquet_page(tmp, pgs$page_header_offset[1])$data)
   })
   expect_equal(
@@ -340,9 +340,9 @@ test_that("OPT RLE", {
   )
 
   write_parquet(d, tmp, compression = "snappy")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
-    parquet_metadata(tmp)$column_chunks$encodings
+    read_parquet_metadata(tmp)$column_chunks$encodings
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
   })
 })
@@ -359,7 +359,7 @@ test_that("Factor levels not in the data", {
   d2 <- read_parquet(tmp)
   expect_s3_class(d2$f, "factor")
   expect_equal(levels(d2$f), letters)
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     read_parquet_page(tmp, pgs$page_header_offset[1])$data
   })

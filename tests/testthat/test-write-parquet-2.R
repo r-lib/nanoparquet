@@ -14,15 +14,15 @@ test_that("REQ PLAIN", {
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     tapply(pgs$num_values, pgs$column + 1, sum)
   })
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   write_parquet(d, tmp, compression = "snappy")
-  pgs <- parquet_pages(tmp)
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     tapply(pgs$num_values, pgs$column + 1, sum)
   })
@@ -45,7 +45,7 @@ test_that("OPT PLAIN", {
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     tapply(pgs$num_values, pgs$column + 1, sum)
   })
@@ -53,7 +53,7 @@ test_that("OPT PLAIN", {
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   write_parquet(d, tmp, compression = "snappy")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_snapshot({
     tapply(pgs$num_values, pgs$column + 1, sum)
   })
@@ -73,12 +73,12 @@ test_that("REQ RLE_DICT", {
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   write_parquet(d, tmp, compression = "snappy")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
@@ -96,12 +96,12 @@ test_that("OPT RLE_DICT", {
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   write_parquet(d, tmp, compression = "snappy")
-  pgs <- parquet_pages(tmp)
+  pgs <- read_parquet_pages(tmp)
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
