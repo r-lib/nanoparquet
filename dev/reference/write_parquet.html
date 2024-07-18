@@ -29,7 +29,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Write a data frame to a Parquet file</h1>
-      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/main/R/nanoparquet.R" class="external-link"><code>R/nanoparquet.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/main/R/write-parquet.R" class="external-link"><code>R/write-parquet.R</code></a></small>
       <div class="d-none name"><code>write_parquet.Rd</code></div>
     </div>
 
@@ -42,6 +42,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">write_parquet</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">file</span>,</span>
+<span>  schema <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  compression <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"snappy"</span>, <span class="st">"gzip"</span>, <span class="st">"zstd"</span>, <span class="st">"uncompressed"</span><span class="op">)</span>,</span>
 <span>  metadata <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  options <span class="op">=</span> <span class="fu"><a href="parquet_options.html">parquet_options</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -60,6 +61,13 @@
 <dd><p>Path to the output file. If this is the string <code>":raw:"</code>,
 then the data frame is written to a memory buffer, and the memory
 buffer is returned as a raw vector.</p></dd>
+
+
+<dt id="arg-schema">schema<a class="anchor" aria-label="anchor" href="#arg-schema"></a></dt>
+<dd><p>Parquet schema. Specify a schema to tweak the default
+nanoparquet R -&gt; Parquet type mappings. Use <code><a href="parquet_schema.html">parquet_schema()</a></code> to
+create a schema that you can use here, or <code><a href="read_parquet_schema.html">read_parquet_schema()</a></code> to
+use the schema of a Parquet file.</p></dd>
 
 
 <dt id="arg-compression">compression<a class="anchor" aria-label="anchor" href="#arg-compression"></a></dt>
@@ -89,7 +97,7 @@ file is returned as a raw vector.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="parquet_metadata.html">parquet_metadata()</a></code>, <code><a href="read_parquet.html">read_parquet()</a></code>.</p></div>
+    <div class="dont-index"><p><code><a href="read_parquet_metadata.html">read_parquet_metadata()</a></code>, <code><a href="read_parquet.html">read_parquet()</a></code>.</p></div>
     </div>
 
     <div class="section level2">

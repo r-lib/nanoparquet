@@ -95,9 +95,9 @@
 <p>Call <code><a href="reference/read_parquet.html">read_parquet()</a></code> to read a Parquet file:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/read_parquet.html">read_parquet</a></span><span class="op">(</span><span class="st">"example.parquet"</span><span class="op">)</span></span></code></pre></div>
-<p>To see the columns of a Parquet file and how their types are mapped to R types by <code><a href="reference/read_parquet.html">read_parquet()</a></code>, call <code><a href="reference/parquet_column_types.html">parquet_column_types()</a></code> first:</p>
+<p>To see the columns of a Parquet file and how their types are mapped to R types by <code><a href="reference/read_parquet.html">read_parquet()</a></code>, call <code><a href="reference/read_parquet_schema.html">read_parquet_schema()</a></code> first:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_column_types.html">parquet_column_types</a></span><span class="op">(</span><span class="st">"example.parquet"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/read_parquet_schema.html">read_parquet_schema</a></span><span class="op">(</span><span class="st">"example.parquet"</span><span class="op">)</span></span></code></pre></div>
 <p>Folders of similar-structured Parquet files (e.g. produced by Spark) can be read like this:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu">rbindlist</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
@@ -111,29 +111,26 @@
 <p>Call <code><a href="reference/write_parquet.html">write_parquet()</a></code> to write a data frame to a Parquet file:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/write_parquet.html">write_parquet</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="st">"mtcars.parquet"</span><span class="op">)</span></span></code></pre></div>
-<p>To see how the columns of the data frame will be mapped to Parquet types by <code><a href="reference/write_parquet.html">write_parquet()</a></code>, call <code><a href="reference/parquet_column_types.html">parquet_column_types()</a></code> first:</p>
+<p>To see how the columns of the data frame will be mapped to Parquet types by <code><a href="reference/write_parquet.html">write_parquet()</a></code>, call <code><a href="reference/infer_parquet_schema.html">infer_parquet_schema()</a></code> first:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_column_types.html">parquet_column_types</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/infer_parquet_schema.html">infer_parquet_schema</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="inspect">Inspect<a class="anchor" aria-label="anchor" href="#inspect"></a>
 </h3>
-<p>Call <code><a href="reference/parquet_info.html">parquet_info()</a></code>, <code><a href="reference/parquet_column_types.html">parquet_column_types()</a></code>, <code><a href="reference/parquet_schema.html">parquet_schema()</a></code> or <code><a href="reference/parquet_metadata.html">parquet_metadata()</a></code> to see various kinds of metadata from a Parquet file:</p>
+<p>Call <code><a href="reference/read_parquet_info.html">read_parquet_info()</a></code>, <code><a href="reference/read_parquet_schema.html">read_parquet_schema()</a></code>, or <code><a href="reference/read_parquet_metadata.html">read_parquet_metadata()</a></code> to see various kinds of metadata from a Parquet file:</p>
 <ul>
 <li>
-<code><a href="reference/parquet_info.html">parquet_info()</a></code> shows a basic summary of the file.</li>
+<code><a href="reference/read_parquet_info.html">read_parquet_info()</a></code> shows a basic summary of the file.</li>
 <li>
-<code><a href="reference/parquet_column_types.html">parquet_column_types()</a></code> shows the leaf columns, these are are the ones that <code><a href="reference/read_parquet.html">read_parquet()</a></code> reads into R.</li>
+<code><a href="reference/read_parquet_schema.html">read_parquet_schema()</a></code> shows all columns, including non-leaf columns, and how they are mapped to R types by <code><a href="reference/read_parquet.html">read_parquet()</a></code>.</li>
 <li>
-<code><a href="reference/parquet_schema.html">parquet_schema()</a></code> shows all columns, including non-leaf columns.</li>
-<li>
-<code><a href="reference/parquet_metadata.html">parquet_metadata()</a></code> shows the most complete metadata information: file meta data, the schema, the row groups and column chunks of the file.</li>
+<code><a href="reference/read_parquet_metadata.html">read_parquet_metadata()</a></code> shows the most complete metadata information: file meta data, the schema, the row groups and column chunks of the file.</li>
 </ul>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_info.html">parquet_info</a></span><span class="op">(</span><span class="st">"mtcars.parquet"</span><span class="op">)</span></span>
-<span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_column_types.html">parquet_column_types</a></span><span class="op">(</span><span class="st">"mtcars.parquet"</span><span class="op">)</span></span>
-<span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_schema.html">parquet_schema</a></span><span class="op">(</span><span class="st">"mtcars.parquet"</span><span class="op">)</span></span>
-<span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/parquet_metadata.html">parquet_metadata</a></span><span class="op">(</span><span class="st">"mtcars.parquet"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/read_parquet_info.html">read_parquet_info</a></span><span class="op">(</span><span class="st">"mtcars.parquet"</span><span class="op">)</span></span>
+<span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/read_parquet_schema.html">read_parquet_schema</a></span><span class="op">(</span><span class="st">"mtcars.parquet"</span><span class="op">)</span></span>
+<span><span class="fu">nanoparquet</span><span class="fu">::</span><span class="fu"><a href="reference/read_parquet_metadata.html">read_parquet_metadata</a></span><span class="op">(</span><span class="st">"mtcars.parquet"</span><span class="op">)</span></span></code></pre></div>
 <p>If you find a file that should be supported but isn’t, please open an issue here with a link to the file.</p>
 </div>
 </div>

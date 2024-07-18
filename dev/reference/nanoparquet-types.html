@@ -67,8 +67,18 @@ which has the <code>BYTE_ARRAY</code> type. They are always converted to UTF-8
 before writing.</p></li>
 <li><p>Logical vectors (<code>LGLSXP</code>) are written as the <code>BOOLEAN</code> type.</p></li>
 <li><p>Other vectors error currently.</p></li>
-</ol><p>You can use <code><a href="parquet_column_types.html">parquet_column_types()</a></code> on a data frame to map R data types
+</ol><p>You can use <code><a href="infer_parquet_schema.html">infer_parquet_schema()</a></code> on a data frame to map R data types
 to Parquet data types.</p>
+<p>To change the default R to Parquet mapping, use <code><a href="parquet_schema.html">parquet_schema()</a></code> and
+the <code>schema</code> argument of <code><a href="write_parquet.html">write_parquet()</a></code>. Currently supported
+non-default mappings are:</p>
+<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">integer</span><span class="st">`</span> to <span class="st">`</span><span class="at">INT64</span><span class="st">`</span>,</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">integer</span><span class="st">`</span> to <span class="st">`</span><span class="at">INT96</span><span class="st">`</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">double</span><span class="st">`</span> to <span class="st">`</span><span class="at">INT96</span><span class="st">`</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">double</span><span class="st">`</span> to <span class="st">`</span><span class="at">FLOAT</span><span class="st">`</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">character</span><span class="st">`</span> to <span class="st">`</span><span class="at">FIXED_LEN_BYTE_ARRAY</span><span class="st">`</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">character</span><span class="st">`</span> to <span class="st">`</span><span class="at">ENUM</span><span class="st">`</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">factor</span><span class="st">`</span> to <span class="st">`</span><span class="at">ENUM</span><span class="st">`</span>.</span></code></pre><p></p></div>
     </div>
     <div class="section level2">
     <h2 id="parquet-s-data-types">Parquet's data types<a class="anchor" aria-label="anchor" href="#parquet-s-data-types"></a></h2>
@@ -120,7 +130,7 @@ a list of raw vectors. Missing values are denoted by <code>NULL</code>.</p></li>
 <li><p><code>JSON</code> and <code>BSON</code> are read as character vectors (<code>STRSXP</code>).</p></li>
 </ol><p>These types are not yet supported:</p><ol><li><p>Nested types (<code>LIST</code>, <code>MAP</code>) are not supported.</p></li>
 <li><p>The <code>UNKNOWN</code> logical type is not supported.</p></li>
-</ol><p>You can use the <code><a href="parquet_column_types.html">parquet_column_types()</a></code> function to see how R would read
+</ol><p>You can use the <code><a href="read_parquet_schema.html">read_parquet_schema()</a></code> function to see how R would read
 the columns of a Parquet file. Look at the <code>r_type</code> column.</p>
     </div>
     <div class="section level2">

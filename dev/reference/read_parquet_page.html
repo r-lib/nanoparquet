@@ -52,13 +52,13 @@
 
 <dt id="arg-offset">offset<a class="anchor" aria-label="anchor" href="#arg-offset"></a></dt>
 <dd><p>Integer offset of the start of the page in the file.
-See <code><a href="parquet_pages.html">parquet_pages()</a></code> for a list of all pages and their offsets.</p></dd>
+See <code><a href="read_parquet_pages.html">read_parquet_pages()</a></code> for a list of all pages and their offsets.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Named list. Many entries correspond to the columns of
-the result of <code><a href="parquet_pages.html">parquet_pages()</a></code>. Additional entries are:</p><ul><li><p><code>codec</code>: compression codec. Possible values:</p></li>
+the result of <code><a href="read_parquet_pages.html">read_parquet_pages()</a></code>. Additional entries are:</p><ul><li><p><code>codec</code>: compression codec. Possible values:</p></li>
 <li><p><code>has_repetition_levels</code>: whether the page has repetition levels.</p></li>
 <li><p><code>has_definition_levels</code>: whether the page has definition levels.</p></li>
 <li><p><code>schema_column</code>: which schema column the page corresponds to. Note
@@ -80,13 +80,13 @@ is the same as <code>compressed_data</code>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="parquet_pages.html">parquet_pages()</a></code> for a summary of all pages.</p></div>
+    <div class="dont-index"><p><code><a href="read_parquet_pages.html">read_parquet_pages()</a></code> for a summary of all pages.</p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">file_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/userdata1.parquet"</span>, package <span class="op">=</span> <span class="st">"nanoparquet"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">nanoparquet</span><span class="fu">:::</span><span class="fu"><a href="parquet_pages.html">parquet_pages</a></span><span class="op">(</span><span class="va">file_name</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">nanoparquet</span><span class="fu">:::</span><span class="fu"><a href="read_parquet_pages.html">read_parquet_pages</a></span><span class="op">(</span><span class="va">file_name</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 19 × 14</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    file_name                 row_group column page_type page_header_offset</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>

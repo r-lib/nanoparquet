@@ -34,7 +34,32 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="nanoparquet-development-version">nanoparquet (development version)<a class="anchor" aria-label="anchor" href="#nanoparquet-development-version"></a></h2>
-<ul><li><p><code>write_parquet(file = ":raw:")</code> now works correctly for larger data frames (<a href="https://github.com/r-lib/nanoparquet/issues/77" class="external-link">#77</a>).</p></li>
+<ul><li>
+<p>API changes:</p>
+<ul><li><p><code><a href="../reference/parquet_schema.html">parquet_schema()</a></code> is now called <code><a href="../reference/read_parquet_schema.html">read_parquet_schema()</a></code>. The new <code><a href="../reference/parquet_schema.html">parquet_schema()</a></code> function falls back to <code><a href="../reference/read_parquet_schema.html">read_parquet_schema()</a></code> if it is called with a single string argument, with a warning.</p></li>
+<li><p><code><a href="../reference/read_parquet_info.html">parquet_info()</a></code> is now called <code><a href="../reference/read_parquet_info.html">read_parquet_info()</a></code>. <code>parquet_info(</code> still works for now, with a warning.</p></li>
+<li><p><code><a href="../reference/read_parquet_metadata.html">parquet_metadata()</a></code> is now called <code><a href="../reference/read_parquet_metadata.html">read_parquet_metadata()</a></code>. <code><a href="../reference/read_parquet_metadata.html">parquet_metadata()</a></code> still works, with a warning.</p></li>
+<li><p><code><a href="../reference/parquet_column_types.html">parquet_column_types()</a></code> is now deprecated, and issues a warning. Use <code><a href="../reference/read_parquet_schema.html">read_parquet_schema()</a></code> or the new <code><a href="../reference/infer_parquet_schema.html">infer_parquet_schema()</a></code> function instead.</p></li>
+<li><p>The new <code><a href="../reference/parquet_schema.html">parquet_schema()</a></code> function creates a Parquet schema from scratch. You can use this schema as the new <code>schema</code> argument of <code><a href="../reference/write_parquet.html">write_parquet()</a></code>, to specify how the columns of a data frame should be mapped to Parquet types.</p></li>
+<li>
+<p>Newly supported type conversions in <code><a href="../reference/write_parquet.html">write_parquet()</a></code> via the schema argument:</p>
+<ul><li>
+<code>integer</code> to <code>INT64</code>,</li>
+<li>
+<code>integer</code> to <code>INT96</code>,</li>
+<li>
+<code>double</code> to <code>INT96</code>,</li>
+<li>
+<code>double</code> to <code>FLOAT</code>,</li>
+<li>
+<code>character</code> to <code>FIXED_LEN_BYTE_ARRAY</code>,</li>
+<li>
+<code>character</code> to <code>ENUM</code>,</li>
+<li>
+<code>factor</code> to <code>ENUM</code>.</li>
+</ul></li>
+</ul></li>
+<li><p><code>write_parquet(file = ":raw:")</code> now works correctly for larger data frames (<a href="https://github.com/r-lib/nanoparquet/issues/77" class="external-link">#77</a>).</p></li>
 <li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> now reads <code>DECIMAL</code> values correctly from <code>INT32</code> and <code>INT64</code> columns if their <code>scale</code> is not zero.</p></li>
 </ul></div>
     <div class="section level2">
@@ -57,7 +82,7 @@
 <li><p>Both <code><a href="../reference/read_parquet.html">read_parquet()</a></code> and <code><a href="../reference/write_parquet.html">write_parquet()</a></code> now support GZIP and ZSTD compressed Parquet files.</p></li>
 <li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> now supports the <code>RLE</code> encoding for <code>BOOLEAN</code> columns and also supports the <code>DELTA_BINARY_PACKED</code>, <code>DELTA_LENGTH_BYTE_ARRAY</code>, <code>DELTA_BYTE_ARRAY</code> and <code>BYTE_STREAM_SPLIT</code> encodings.</p></li>
 <li><p>The <code>parquet_columns()</code> function is now called <code><a href="../reference/parquet_column_types.html">parquet_column_types()</a></code> and it can now map the column types of a data frame to Parquet types.</p></li>
-<li><p><code><a href="../reference/parquet_info.html">parquet_info()</a></code>, <code><a href="../reference/parquet_metadata.html">parquet_metadata()</a></code> and <code><a href="../reference/parquet_column_types.html">parquet_column_types()</a></code> now work if the <code>created_by</code> metadata field is unset.</p></li>
+<li><p><code><a href="../reference/read_parquet_info.html">parquet_info()</a></code>, <code><a href="../reference/read_parquet_metadata.html">parquet_metadata()</a></code> and <code><a href="../reference/parquet_column_types.html">parquet_column_types()</a></code> now work if the <code>created_by</code> metadata field is unset.</p></li>
 <li><p>New <code><a href="../reference/parquet_options.html">parquet_options()</a></code> function that you can use to set nanoparquet options for a single <code><a href="../reference/read_parquet.html">read_parquet()</a></code> or <code><a href="../reference/write_parquet.html">write_parquet()</a></code> call.</p></li>
 </ul></div>
     <div class="section level2">
