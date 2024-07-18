@@ -39,8 +39,21 @@ before writing.
 \item Other vectors error currently.
 }
 
-You can use \code{\link[=parquet_column_types]{parquet_column_types()}} on a data frame to map R data types
+You can use \code{\link[=infer_parquet_schema]{infer_parquet_schema()}} on a data frame to map R data types
 to Parquet data types.
+
+To change the default R to Parquet mapping, use \code{\link[=parquet_schema]{parquet_schema()}} and
+the \code{schema} argument of \code{\link[=write_parquet]{write_parquet()}}. Currently supported
+non-default mappings are:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{- `integer` to `INT64`,
+- `integer` to `INT96`,
+- `double` to `INT96`,
+- `double` to `FLOAT`,
+- `character` to `FIXED_LEN_BYTE_ARRAY`,
+- `character` to `ENUM`,
+- `factor` to `ENUM`.
+}\if{html}{\out{</div>}}
 }
 
 \section{Parquet's data types}{
@@ -105,7 +118,7 @@ These types are not yet supported:
 \item The \code{UNKNOWN} logical type is not supported.
 }
 
-You can use the \code{\link[=parquet_column_types]{parquet_column_types()}} function to see how R would read
+You can use the \code{\link[=read_parquet_schema]{read_parquet_schema()}} function to see how R would read
 the columns of a Parquet file. Look at the \code{r_type} column.
 }
 

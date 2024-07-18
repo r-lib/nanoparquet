@@ -215,7 +215,7 @@
 # DELTA_BIANRY_PACKED encoding
 
     Code
-      parquet_metadata(pf)$column_chunks$encodings
+      read_parquet_metadata(pf)$column_chunks$encodings
     Output
       [[1]]
       [1] "RLE"                 "DELTA_BINARY_PACKED"
@@ -253,7 +253,7 @@
 ---
 
     Code
-      parquet_metadata(pf2)$column_chunks$encodings
+      read_parquet_metadata(pf2)$column_chunks$encodings
     Output
       [[1]]
       [1] "RLE"                 "DELTA_BINARY_PACKED"
@@ -291,7 +291,7 @@
 ---
 
     Code
-      parquet_metadata(pf3)$column_chunks$encodings
+      read_parquet_metadata(pf3)$column_chunks$encodings
     Output
       [[1]]
       [1] "RLE"                 "DELTA_BINARY_PACKED"
@@ -432,4 +432,66 @@
       3      30, 31, 30, 33, 38      268491.8                  268491.8
       4      31, 31, 39, 31, 34      234895.9                  234895.9
       5      30, 33, 31, 32, 35      218165.6                  218165.6
+
+# DECIMAL in INT32, INT64
+
+    Code
+      as.data.frame(read_parquet(pf))
+    Output
+         value
+      1      1
+      2      2
+      3      3
+      4      4
+      5      5
+      6      6
+      7      7
+      8      8
+      9      9
+      10    10
+      11    11
+      12    12
+      13    13
+      14    14
+      15    15
+      16    16
+      17    17
+      18    18
+      19    19
+      20    20
+      21    21
+      22    22
+      23    23
+      24    24
+
+---
+
+    Code
+      as.data.frame(read_parquet(pf))
+    Output
+         value
+      1      1
+      2      2
+      3      3
+      4      4
+      5      5
+      6      6
+      7      7
+      8      8
+      9      9
+      10    10
+      11    11
+      12    12
+      13    13
+      14    14
+      15    15
+      16    16
+      17    17
+      18    18
+      19    19
+      20    20
+      21    21
+      22    22
+      23    23
+      24    24
 

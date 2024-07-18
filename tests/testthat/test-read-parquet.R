@@ -254,7 +254,7 @@ test_that("RLE BOOLEAN", {
 
   write_parquet(d, tmp)
   expect_equal(
-    unclass(parquet_metadata(tmp)$column_chunks$encodings),
+    unclass(read_parquet_metadata(tmp)$column_chunks$encodings),
     list("RLE")
   )
 
@@ -273,7 +273,7 @@ test_that("RLE BOOLEAN", {
 
   write_parquet(d, tmp)
   expect_equal(
-    unclass(parquet_metadata(tmp)$column_chunks$encodings),
+    unclass(read_parquet_metadata(tmp)$column_chunks$encodings),
     list("RLE")
   )
 
@@ -314,16 +314,16 @@ test_that("Tricky V2 data page", {
 
 test_that("zstd", {
   pf <- test_path("data/zstd.parquet")
-  expect_true(all(parquet_metadata(pf)$column_chunks$codec == "ZSTD"))
+  expect_true(all(read_parquet_metadata(pf)$column_chunks$codec == "ZSTD"))
   pf2 <- test_path("data/gzip.parquet")
   expect_equal(read_parquet(pf), read_parquet(pf2))
 })
 
 test_that("zstd with data page v2", {
   pf <- test_path("data/zstd-v2.parquet")
-  expect_true(all(parquet_metadata(pf)$column_chunks$codec == "ZSTD"))
+  expect_true(all(read_parquet_metadata(pf)$column_chunks$codec == "ZSTD"))
   expect_true(
-    all(parquet_pages(pf)$page_type %in% c("DICTIONARY_PAGE", "DATA_PAGE_V2"))
+    all(read_parquet_pages(pf)$page_type %in% c("DICTIONARY_PAGE", "DATA_PAGE_V2"))
   )
   pf2 <- test_path("data/gzip.parquet")
   expect_equal(read_parquet(pf), read_parquet(pf2))
@@ -333,19 +333,19 @@ test_that("DELTA_BIANRY_PACKED encoding", {
   suppressPackageStartupMessages(library(bit64))
   pf <- test_path("data/dbp-int32.parquet")
   expect_snapshot({
-    parquet_metadata(pf)$column_chunks$encodings
+    read_parquet_metadata(pf)$column_chunks$encodings
     read_parquet(pf)
   })
 
   pf2 <- test_path("data/dbp-int32-missing.parquet")
   expect_snapshot({
-    parquet_metadata(pf2)$column_chunks$encodings
+    read_parquet_metadata(pf2)$column_chunks$encodings
     read_parquet(pf2)
   })
 
   pf3 <- test_path("data/dbp-int64.parquet")
   expect_snapshot({
-    parquet_metadata(pf3)$column_chunks$encodings
+    read_parquet_metadata(pf3)$column_chunks$encodings
     read_parquet(pf3)
   })
 })
@@ -402,4 +402,14 @@ test_that("More BYTE_STREAM_SPLIT", {
   for (i in 1:7) {
     expect_equal(bss[[2*i-1]], bss[[2*i]])
   }
+})
+
+test_that("DECIMAL in INT32, INT64", {
+  pf <- test_path("data/int32_decimal.parquet")
+  expect_equal(typeof(read_parquet(pf)[[1]]), "double")
+  expect_snapshot(as.data.frame(read_parquet(pf)))
+
+  pf <- test_path("data/int64_decimal.parquet")
+  expect_equal(typeof(read_parquet(pf)[[1]]), "double")
+  expect_snapshot(as.data.frame(read_parquet(pf)))
 })

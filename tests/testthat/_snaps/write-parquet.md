@@ -1,7 +1,7 @@
 # factors are written as strings
 
     Code
-      as.data.frame(parquet_schema(tmp))[c("name", "type", "converted_type",
+      as.data.frame(read_parquet_schema(tmp))[c("name", "type", "converted_type",
         "logical_type")]
     Output
            name       type converted_type logical_type
@@ -308,7 +308,7 @@
 # REQ RLE
 
     Code
-      parquet_metadata(tmp)$column_chunks$encodings
+      read_parquet_metadata(tmp)$column_chunks$encodings
     Output
       [[1]]
       [1] "RLE"
@@ -321,7 +321,7 @@
 ---
 
     Code
-      parquet_metadata(tmp)$column_chunks$encodings
+      read_parquet_metadata(tmp)$column_chunks$encodings
     Output
       [[1]]
       [1] "RLE"
@@ -334,7 +334,7 @@
 # OPT RLE
 
     Code
-      parquet_metadata(tmp)$column_chunks$encodings
+      read_parquet_metadata(tmp)$column_chunks$encodings
     Output
       [[1]]
       [1] "RLE"
@@ -347,7 +347,7 @@
 ---
 
     Code
-      parquet_metadata(tmp)$column_chunks$encodings
+      read_parquet_metadata(tmp)$column_chunks$encodings
     Output
       [[1]]
       [1] "RLE"

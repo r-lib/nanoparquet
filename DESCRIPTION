@@ -1,6 +1,6 @@
 Package: nanoparquet
 Title: Read and Write 'Parquet' Files
-Version: 0.3.0.9000
+Version: 0.3.1.9000
 Authors@R: c(
     person("Gábor", "Csárdi", role = c("aut", "cre"), email = "csardi.gabor@gmail.com"),
     person("Hannes", "Mühleisen", role = c("aut", "cph"), comment = c(ORCID = "0000-0001-8552-0029")),
@@ -35,7 +35,7 @@ Suggests:
     testthat,
     withr
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2.9000
 Config/testthat/edition: 3
 Config/Needs/website: tidyverse/tidytemplate
 Language: en-US

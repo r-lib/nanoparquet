@@ -24,6 +24,7 @@
   `UNKNOWN`.
 * Only Snappy, Gzip and Zstd compression is supported.
 * Encryption is not supported.
+* Reading files from URLs is not supported.
 * Being single-threaded and not fully optimized, nanoparquet is probably
   not suited well for large data sets. It should be fine for a couple of
   gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro.
@@ -47,9 +48,9 @@ df <- nanoparquet::read_parquet("example.parquet")
 ```
 
 To see the columns of a Parquet file and how their types are mapped to
-R types by `read_parquet()`, call `parquet_column_types()` first:
+R types by `read_parquet()`, call `read_parquet_schema()` first:
 ```r
-nanoparquet::parquet_column_types("example.parquet")
+nanoparquet::read_parquet_schema("example.parquet")
 ```
 
 Folders of similar-structured Parquet files (e.g. produced by Spark)
@@ -70,30 +71,28 @@ nanoparquet::write_parquet(mtcars, "mtcars.parquet")
 ```
 
 To see how the columns of the data frame will be mapped to Parquet types
-by `write_parquet()`, call `parquet_column_types()` first:
+by `write_parquet()`, call `infer_parquet_schema()` first:
 ```r
-nanoparquet::parquet_column_types(mtcars)
+nanoparquet::infer_parquet_schema(mtcars)
 ```
 
 ### Inspect
 
-Call `parquet_info()`, `parquet_column_types()`, `parquet_schema()` or
-`parquet_metadata()` to see various kinds of metadata from a Parquet
+Call `read_parquet_info()`, `read_parquet_schema()`, or
+`read_parquet_metadata()` to see various kinds of metadata from a Parquet
 file:
 
-* `parquet_info()` shows a basic summary of the file.
-* `parquet_column_types()` shows the leaf columns, these are are the ones
-  that `read_parquet()` reads into R.
-* `parquet_schema()` shows all columns, including non-leaf columns.
-* `parquet_metadata()` shows the most complete metadata information:
+* `read_parquet_info()` shows a basic summary of the file.
+* `read_parquet_schema()` shows all columns, including non-leaf columns,
+  and how they are mapped to R types by `read_parquet()`.
+* `read_parquet_metadata()` shows the most complete metadata information:
   file meta data, the schema, the row groups and column chunks of the
   file.
 
 ```r
-nanoparquet::parquet_info("mtcars.parquet")
-nanoparquet::parquet_column_types("mtcars.parquet")
-nanoparquet::parquet_schema("mtcars.parquet")
-nanoparquet::parquet_metadata("mtcars.parquet")
+nanoparquet::read_parquet_info("mtcars.parquet")
+nanoparquet::read_parquet_schema("mtcars.parquet")
+nanoparquet::read_parquet_metadata("mtcars.parquet")
 ```
 
 If you find a file that should be supported but isn't, please open an

@@ -68,26 +68,16 @@ void ParquetOutFile::set_num_rows(uint32_t nr) {
   num_rows_set = true;
 }
 
-void ParquetOutFile::schema_add_column(std::string name,
-                                       parquet::Type::type type,
-                                       bool required, bool dict) {
-
-  SchemaElement sch;
-  sch.__set_name(name);
-  sch.__set_type(type);
-  if (required) {
-    sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
-  } else {
-    sch.__set_repetition_type(FieldRepetitionType::OPTIONAL);
-  }
-  schemas.push_back(sch);
+void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
+                                       bool dict) {
+  schemas.push_back(sel);
   schemas[0].__set_num_children(schemas[0].num_children + 1);
 
   ColumnMetaData cmd;
-  cmd.__set_type(type);
+  cmd.__set_type(sel.type);
   vector<Encoding::type> encs;
   if (dict) {
-    if (type == Type::BOOLEAN) {
+    if (sel.type == Type::BOOLEAN) {
       encs.push_back(Encoding::RLE);              // def levels + BOOLEAN
       encodings.push_back(Encoding::RLE);
     } else {
@@ -100,9 +90,10 @@ void ParquetOutFile::schema_add_column(std::string name,
     encs.push_back(Encoding::PLAIN);
     encodings.push_back(Encoding::PLAIN);
   }
+
   cmd.__set_encodings(encs);
   vector<string> paths;
-  paths.push_back(name);
+  paths.push_back(sel.name);
   cmd.__set_path_in_schema(paths);
   cmd.__set_codec(codec);
   // num_values set later
@@ -110,60 +101,6 @@ void ParquetOutFile::schema_add_column(std::string name,
   // total_compressed_size set later
   // data_page_offset  set later
   // dictionary_page_offset set later when we have dictionaries
-  column_meta_data.push_back(cmd);
-
-  num_cols++;
-}
-
-void ParquetOutFile::schema_add_column(
-    std::string name,
-    parquet::LogicalType logical_type,
-    bool required,
-    bool dict) {
-
-  SchemaElement sch;
-  sch.__set_name(name);
-  Type::type type = get_type_from_logical_type(logical_type);
-  sch.__set_type(type);
-  sch.__set_logicalType(logical_type);
-  if (required) {
-    sch.__set_repetition_type(FieldRepetitionType::REQUIRED);
-  } else {
-    sch.__set_repetition_type(FieldRepetitionType::OPTIONAL);
-  }
-  ConvertedType::type converted_type =
-      get_converted_type_from_logical_type(logical_type);
-  sch.__set_converted_type(converted_type);
-  schemas.push_back(sch);
-  schemas[0].__set_num_children(schemas[0].num_children + 1);
-
-  ColumnMetaData cmd;
-  cmd.__set_type(type);
-  vector<Encoding::type> encs;
-  if (dict) {
-    if (type == Type::BOOLEAN) {
-      encs.push_back(Encoding::RLE);              // def levels + BOOLEAN
-      encodings.push_back(Encoding::RLE);
-    } else {
-      encs.push_back(Encoding::PLAIN);            // the dict itself
-      encs.push_back(Encoding::RLE);              // definition levels
-      encs.push_back(Encoding::RLE_DICTIONARY);   // dictionary page
-      encodings.push_back(Encoding::RLE_DICTIONARY);
-    }
-  } else {
-    encs.push_back(Encoding::PLAIN);
-    encodings.push_back(Encoding::PLAIN);
-  }
-  cmd.__set_encodings(encs);
-  vector<string> paths;
-  paths.push_back(name);
-  cmd.__set_path_in_schema(paths);
-  cmd.__set_codec(codec);
-  // num_values set later
-  // total_uncompressed_size set later
-  // total_compressed_size set later
-  // data_page_offset  set later
-  // dictionary_page_offset set later
   column_meta_data.push_back(cmd);
 
   num_cols++;
@@ -177,8 +114,10 @@ void ParquetOutFile::add_key_value_metadata(
   kv.push_back(kv0);
 }
 
-parquet::Type::type ParquetOutFile::get_type_from_logical_type(
-    parquet::LogicalType logical_type) {
+namespace nanoparquet {
+
+parquet::Type::type get_type_from_logical_type(
+  parquet::LogicalType &logical_type) {
 
   if (logical_type.__isset.STRING) {
     return Type::BYTE_ARRAY;
@@ -211,43 +150,84 @@ parquet::Type::type ParquetOutFile::get_type_from_logical_type(
   }
 }
 
-parquet::ConvertedType::type
-ParquetOutFile::get_converted_type_from_logical_type(
-    parquet::LogicalType logical_type) {
+void fill_converted_type_for_logical_type(
+    parquet::SchemaElement &sel) {
+
+  if (!sel.__isset.logicalType) {
+    return;
+  }
+  parquet::LogicalType &logical_type = sel.logicalType;
 
   if (logical_type.__isset.STRING) {
-    return ConvertedType::UTF8;
+    sel.__set_converted_type(ConvertedType::UTF8);
+
+  } else if (logical_type.__isset.ENUM) {
+    sel.__set_converted_type(ConvertedType::ENUM);
+
+  } else if (logical_type.__isset.DECIMAL) {
+    sel.__set_converted_type(ConvertedType::DECIMAL);
+    parquet::DecimalType &dt = logical_type.DECIMAL;
+    sel.__set_scale(dt.scale);
+    sel.__set_precision(dt.precision);
+
+  } else if (logical_type.__isset.DATE) {
+    sel.__set_converted_type(ConvertedType::DATE);
+
+  } else if (logical_type.__isset.TIME) {
+    if (logical_type.TIME.unit.__isset.MILLIS) {
+      // we do this even if not adjusted to UTC, according to the spec
+      // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-time-convertedtype
+      sel.__set_converted_type(ConvertedType::TIME_MILLIS);
+    } else if (logical_type.TIME.unit.__isset.MICROS) {
+      sel.__set_converted_type(ConvertedType::TIME_MICROS);
+    }
+
+  } else if (logical_type.__isset.TIMESTAMP) {
+    if (logical_type.TIMESTAMP.unit.__isset.MILLIS) {
+      // we do this even if not adjusted to UTC, according to the spec
+      // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-timestamp-convertedtype
+      sel.__set_converted_type(ConvertedType::TIMESTAMP_MILLIS);
+    } else if (logical_type.TIMESTAMP.unit.__isset.MICROS) {
+      sel.__set_converted_type(ConvertedType::TIMESTAMP_MICROS);
+    }
 
   } else if (logical_type.__isset.INTEGER) {
     IntType it = logical_type.INTEGER;
-    if (!it.isSigned) {
-      throw runtime_error("Unsigned integers are not implemented"); // # nocov
+    if (it.isSigned) {
+      if (it.bitWidth == 8) {
+        sel.__set_converted_type(ConvertedType::INT_8);
+      } else if (it.bitWidth == 16) {
+        sel.__set_converted_type(ConvertedType::INT_16);
+      } else if (it.bitWidth == 32) {
+        sel.__set_converted_type(ConvertedType::INT_32);
+      } else if (it.bitWidth == 64) {
+        sel.__set_converted_type(ConvertedType::INT_64);
+      }
+    } else {
+      if (it.bitWidth == 8) {
+        sel.__set_converted_type(ConvertedType::UINT_8);
+      } else if (it.bitWidth == 16) {
+        sel.__set_converted_type(ConvertedType::UINT_16);
+      } else if (it.bitWidth == 32) {
+        sel.__set_converted_type(ConvertedType::UINT_32);
+      } else if (it.bitWidth == 64) {
+        sel.__set_converted_type(ConvertedType::UINT_64);
+      }
     }
-    if (it.bitWidth != 32) {
-      throw runtime_error("Only 32 bit integers are implemented");  // # nocov
-    }
-    return ConvertedType::INT_32;
 
-  } else if (logical_type.__isset.DATE) {
-    return ConvertedType::DATE;
+  } else if (logical_type.__isset.JSON) {
+    sel.__set_converted_type(ConvertedType::JSON);
 
-  } else if (logical_type.__isset.TIME &&
-             logical_type.TIME.unit.__isset.MILLIS) {
-    // we do this even if not adjusted to UTC, according to the spec
-    // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-time-convertedtype
-    // (Although we only create UTC TIME right now)
-    return ConvertedType::TIME_MILLIS;
-
-  } else if (logical_type.__isset.TIMESTAMP &&
-             logical_type.TIMESTAMP.unit.__isset.MICROS) {
-    // we do this even if not adjusted to UTC, according to the spec
-    // https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#deprecated-timestamp-convertedtype
-    // (Although we only create UTC TIMESTAMP right now)
-    return ConvertedType::TIMESTAMP_MICROS;
-
-  } else {
-    throw runtime_error("Unimplemented logical type");              // # nocov
+  } else if (logical_type.__isset.BSON) {
+    sel.__set_converted_type(ConvertedType::BSON);
   }
+
+  // There is no INTERVAL logical type? What's going on here?
+  // For the other logical types (e.g. UNKNOWN, FLOAT16) we don't fill in
+  // a converted type because there isn't one.
+  // We also skip types we don't know about.
+}
+
 }
 
 void ParquetOutFile::write_data_(
@@ -258,7 +238,8 @@ void ParquetOutFile::write_data_(
   uint64_t until) {
 
   streampos cb_start = file.tellp();
-  parquet::Type::type type = schemas[idx + 1].type;
+  parquet::SchemaElement &se = schemas[idx + 1];
+  parquet::Type::type type = se.type;
   switch (type) {
   case Type::INT32:
     write_int32(file, idx, from, until);
@@ -266,11 +247,20 @@ void ParquetOutFile::write_data_(
   case Type::INT64:
     write_int64(file, idx, from, until);
     break;
+  case Type::INT96:
+    write_int96(file, idx, from, until);
+    break;
+  case Type::FLOAT:
+    write_float(file, idx, from, until);
+    break;
   case Type::DOUBLE:
     write_double(file, idx, from, until);
     break;
   case Type::BYTE_ARRAY:
     write_byte_array(file, idx, from, until);
+    break;
+  case Type::FIXED_LEN_BYTE_ARRAY:
+    write_fixed_len_byte_array(file, idx, from, until, se.type_length);
     break;
   case Type::BOOLEAN:
     write_boolean(file, idx, from, until);
@@ -337,11 +327,12 @@ void ParquetOutFile::write_present_data_(
 void ParquetOutFile::write_dictionary_(
   std::ostream &file,
   uint32_t idx,
-  uint32_t size) {
+  uint32_t size,
+  parquet::Type::type type) {
 
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   uint32_t start = file.tellp();
-  write_dictionary(file, idx);
+  write_dictionary(file, idx, type);
   uint32_t end = file.tellp();
   if (end - start != size) {
     throw runtime_error(
@@ -511,7 +502,7 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1];
   // Uncompresed size of the dictionary in bytes
-  uint32_t dict_size = get_size_dictionary(idx);
+  uint32_t dict_size = get_size_dictionary(idx, se.type);
   // Number of entries in the dicitonary
   uint32_t num_dict_values = get_num_values_dictionary(idx);
 
@@ -530,7 +521,7 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
     // then the data directly to the file
     ph.__set_compressed_page_size(dict_size);
     write_page_header(idx, ph);
-    write_dictionary_(pfile, idx, dict_size);
+    write_dictionary_(pfile, idx, dict_size, se.type);
 
   } else {
     // With compression we need two temporary buffers
@@ -538,7 +529,7 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
     buf_unc.reset(dict_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_(*os0, idx, dict_size);
+    write_dictionary_(*os0, idx, dict_size, se.type);
 
     // 2. compress buf_unc to buf_com
     size_t cdict_size = compress(cmd->codec, buf_unc, dict_size, buf_com);
@@ -1059,7 +1050,8 @@ uint64_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
                                                     uint64_t from,
                                                     uint64_t until) {
   // +1 is to skip the root schema
-  parquet::Type::type type = schemas[idx + 1].type;
+  parquet::SchemaElement &se = schemas[idx + 1];
+  parquet::Type::type type = se.type;
   switch (type) {
   case Type::BOOLEAN: {
     return num_present / 8 + (num_present % 8 > 0);
@@ -1070,8 +1062,17 @@ uint64_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
   case Type::INT64: {
     return num_present * sizeof(int64_t);
   }
+  case Type::INT96: {
+    return num_present * sizeof(Int96);
+  }
+  case Type::FLOAT: {
+    return num_present * sizeof(float);
+  }
   case Type::DOUBLE: {
     return num_present * sizeof(double);
+  }
+  case Type::FIXED_LEN_BYTE_ARRAY: {
+    return num_present * se.type_length;
   }
   case Type::BYTE_ARRAY: {
     // not known yet
