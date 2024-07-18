@@ -262,49 +262,189 @@ static bool is_decimal(parquet::SchemaElement &sel, int32_t &precision,
   }
 }
 
+void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
+                             uint64_t until, int32_t precision,
+                             int32_t scale) {
+
+  if (precision > 9) {
+    Rf_error("Internal nanoparquet error, precision to high for INT32 DECIMAL");
+  }
+  int32_t fact = pow(10, scale);
+  int32_t max = ((int32_t)pow(10, precision)) / fact;
+  int32_t min = -max;
+  for (uint64_t i = from; i < until; i++) {
+    int32_t val = INTEGER(col)[i];
+    if (val <= min) {
+      Rf_error(
+        "Value too small for INT32 DECIMAL with precision %d, scale %d: %d",
+        precision, scale, val);
+    }
+    if (val >= max) {
+      Rf_error(
+        "Value too large for INT32 DECIMAL with precision %d, scale %d: %d",
+        precision, scale, val);
+    }
+    val *= fact;
+    file.write((const char *)&val, sizeof(int32_t));
+  }
+}
+
+void write_integer_int32(std::ostream &file, SEXP col, uint64_t from,
+                         uint64_t until) {
+  uint64_t len = until - from;
+  file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
+}
+
+void write_double_int32_dec(std::ostream & file, SEXP col, uint64_t from,
+                            uint64_t until, int32_t precision,
+                            int32_t scale) {
+
+  if (precision > 9) {
+    Rf_error("Internal nanoparquet error, precision to high for INT32 DECIMAL");
+  }
+  int32_t fact = pow(10, scale);
+  double max = (pow(10, precision)) / fact;
+  double min = -max;
+  for (uint64_t i = from; i < until; i++) {
+    double val = REAL(col)[i];
+    if (val <= min) {
+      Rf_error(
+        "Value too small for INT32 DECIMAL with precision %d, scale %d: %f",
+        precision, scale, round(val * fact) / fact);
+    }
+    if (val >= max) {
+      Rf_error(
+        "Value too large for INT32 DECIMAL with precision %d, scale %d: %f",
+        precision, scale, round(val * fact)/ fact);
+    }
+    int32_t ival = val * fact;
+    file.write((const char *)&ival, sizeof(int32_t));
+  }
+}
+
 void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
                                   uint64_t from, uint64_t until,
                                   parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
-  if (TYPEOF(col) != INTSXP) {
+  if (until > Rf_xlength(col)) {
+    Rf_error("Internal nanoparquet error, row index too large");
+  }
+  int32_t precision, scale;
+  bool isdec = is_decimal(sel, precision, scale);
+  switch (TYPEOF(col)) {
+  case INTSXP:
+    if (isdec) {
+      write_integer_int32_dec(file, col, from, until, precision, scale);
+    } else {
+      write_integer_int32(file, col, from, until);
+    }
+    break;
+  case REALSXP:
+    if (isdec) {
+      write_double_int32_dec(file, col, from, until, precision, scale);
+    } else {
+      Rf_error(
+        "Cannot write %s as a Parquet INT32 type.",
+        type_names[TYPEOF(col)]
+      );
+    }
+    break;
+  default:
     Rf_error(
       "Cannot write %s as a Parquet INT32 type.",
       type_names[TYPEOF(col)]
     );
   }
-  if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+}
+
+void write_integer_int64_dec(std::ostream &file, SEXP col, uint64_t from,
+                             uint64_t until, int32_t precision,
+                             int32_t scale) {
+  if (precision > 18) {
+    Rf_error("Internal nanoparquet error, precision to high for INT64 DECIMAL");
   }
-  int32_t precision, scale;
-  if (is_decimal(sel, precision, scale)) {
-    if (precision > 9) {
-      Rf_error("Internal nanoparquet error, precision to high for INT32 DECIMAL");
+  int64_t fact = pow(10, scale);
+  int64_t max = ((int64_t)pow(10, precision)) / fact;
+  int64_t min = -max;
+  for (uint64_t i = from; i < until; i++) {
+    int64_t val = INTEGER(col)[i];
+    if (val <= min) {
+      Rf_error(
+        "Value too small for INT64 DECIMAL with precision %d, scale "
+        "%d: %" PRId64,
+        precision, scale, val
+      );
     }
-    int32_t fact = pow(10, scale);
-    int32_t max = ((int32_t) pow(10, precision)) / fact;
-    int32_t min = -max;
-    for (uint64_t i = from; i < until; i++) {
-      int32_t val = INTEGER(col)[i];
-      if (val <= min) {
-        Rf_error(
-          "Value too small for INT32 DECIMAL with precision %d, scale %d: %d",
-          precision, scale, val
-        );
-      }
-      if (val >= max) {
-        Rf_error(
-          "Value too large for INT32 DECIMAL with precision %d, scale %d: %d",
-          precision, scale, val
-        );
-      }
-      val *= fact;
-      file.write((const char*) &val, sizeof(int32_t));
+    if (val >= max) {
+      Rf_error(
+        "Value too large for INT64 DECIMAL with precision %d, scale "
+        "%d: %" PRId64,
+        precision, scale, val
+      );
     }
-  } else {
-    uint64_t len = until - from;
-    file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
+    val *= fact;
+    file.write((const char *)&val, sizeof(int64_t));
   }
 }
+
+void write_integer_int64(std::ostream &file, SEXP col, uint64_t from,
+                         uint64_t until) {
+
+  for (uint64_t i = from; i < until; i++) {
+    int64_t el = INTEGER(col)[i];
+    file.write((const char*) &el, sizeof(int64_t));
+   }
+ }
+
+ void write_double_int64_dec(std::ostream &file, SEXP col, uint64_t from,
+                             uint64_t until, int32_t precision,
+                             int32_t scale) {
+  if (precision > 18) {
+    Rf_error("Internal nanoparquet error, precision to high for INT64 DECIMAL");
+  }
+  int64_t fact = pow(10, scale);
+  double max = (pow(10, precision)) / fact;
+  double min = -max;
+  for (uint64_t i = from; i < until; i++) {
+    double val = REAL(col)[i];
+    if (val <= min) {
+      Rf_error(
+        "Value too small for INT64 DECIMAL with precision %d, scale %d: %f",
+        precision, scale, round(val * fact) / fact);
+    }
+    if (val >= max) {
+      Rf_error(
+        "Value too large for INT64 DECIMAL with precision %d, scale %d: %f",
+        precision, scale, round(val * fact)/ fact);
+    }
+    int64_t ival = val * fact;
+    file.write((const char *)&ival, sizeof(int64_t));
+  }
+}
+
+ void write_double_int64(std::ostream &file, SEXP col, uint64_t from,
+                         uint64_t until) {
+   if (Rf_inherits(col, "POSIXct")) {
+    // TODO: check logical type
+    // need to convert seconds to microseconds
+    for (uint64_t i = from; i < until; i++) {
+      int64_t el = REAL(col)[i] * 1000 * 1000;
+      file.write((const char *)&el, sizeof(int64_t));
+    }
+   } else if (Rf_inherits(col, "difftime")) {
+    // TODO: check logical type
+    // need to convert seconds to nanoseconds
+    for (uint64_t i = from; i < until; i++) {
+      int64_t el = REAL(col)[i] * 1000 * 1000 * 1000;
+      file.write((const char *)&el, sizeof(int64_t));
+    }
+   } else {
+    for (uint64_t i = from; i < until; i++) {
+      int64_t el = REAL(col)[i];
+      file.write((const char *)&el, sizeof(int64_t));
+    }
+   }
+ }
 
 void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
                                   uint64_t from, uint64_t until,
@@ -314,66 +454,23 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
   if (until > Rf_xlength(col)) {
     Rf_error("Internal nanoparquet error, row index too large");
   }
+  int32_t precision, scale;
+  bool isdec = is_decimal(sel, precision, scale);
   switch (TYPEOF(col)) {
-  case INTSXP: {
-    int32_t precision, scale;
-    if (is_decimal(sel, precision, scale)) {
-      if (precision > 18) {
-        Rf_error("Internal nanoparquet error, precision to high for INT64 DECIMAL");
-      }
-      int64_t fact = pow(10, scale);
-      int64_t max = ((int64_t)pow(10, precision)) / fact;
-      int64_t min = -max;
-      for (uint64_t i = from; i < until; i++) {
-        int64_t val = INTEGER(col)[i];
-        if (val <= min) {
-          Rf_error(
-            "Value too small for INT64 DECIMAL with precision %d, scale "
-            "%d: %" PRId64,
-            precision, scale, val
-          );
-        }
-        if (val >= max) {
-          Rf_error(
-            "Value too large for INT64 DECIMAL with precision %d, scale "
-            "%d: %" PRId64,
-            precision, scale, val
-          );
-        }
-        val *= fact;
-        file.write((const char *)&val, sizeof(int64_t));
-      }
+  case INTSXP:
+    if (isdec) {
+      write_integer_int64_dec(file, col, from, until, precision, scale);
     } else {
-      for (uint64_t i = from; i < until; i++) {
-        int64_t el = INTEGER(col)[i];
-        file.write((const char*) &el, sizeof(int64_t));
-      }
+      write_integer_int64(file, col, from, until);
     }
     break;
-  }
-  case REALSXP: {
-    if (Rf_inherits(col, "POSIXct")) {
-      // TODO: check logical type
-      // need to convert seconds to microseconds
-      for (uint64_t i = from; i < until; i++) {
-        int64_t el = REAL(col)[i] * 1000 * 1000;
-        file.write((const char*) &el, sizeof(int64_t));
-      }
-    } else if (Rf_inherits(col, "difftime")) {
-      // TODO: check logical type
-      // need to convert seconds to nanoseconds
-      for (uint64_t i = from; i < until; i++) {
-        int64_t el = REAL(col)[i] * 1000 * 1000 * 1000;
-        file.write((const char*) &el, sizeof(int64_t));
-      }
+  case REALSXP:
+    if (isdec) {
+      write_double_int64_dec(file, col, from, until, precision, scale);
     } else {
-      for (uint64_t i = from; i < until; i++) {
-        int64_t el = REAL(col)[i];
-        file.write((const char*) &el, sizeof(int64_t));
-      }
+      write_double_int64(file, col, from, until);
     }
     break;
-  }
   default:
     Rf_error(
       "Cannot write %s as a Parquet INT64 type.",

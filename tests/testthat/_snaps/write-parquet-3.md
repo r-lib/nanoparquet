@@ -856,6 +856,92 @@
       Error in `write_parquet()`:
       ! Value too small for INT32 DECIMAL with precision 3, scale 2: -10
 
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name  r_type  type type_length repetition_type converted_type logical_type
+      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
+      2      d integer INT32          NA        REQUIRED        DECIMAL DECIMAL,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA     1         3       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+            d
+      1  -2.5
+      2  -2.0
+      3  -1.5
+      4  -1.0
+      5  -0.5
+      6   0.0
+      7   0.5
+      8   1.0
+      9   1.5
+      10  2.0
+      11  2.5
+
+---
+
+    Code
+      write_parquet(d2, tmp, schema = schema)
+    Condition
+      Error in `write_parquet()`:
+      ! Value too large for INT32 DECIMAL with precision 3, scale 1: 100.000000
+
+---
+
+    Code
+      write_parquet(d2, tmp, schema = schema)
+    Condition
+      Error in `write_parquet()`:
+      ! Value too small for INT32 DECIMAL with precision 3, scale 1: -100.000000
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name  r_type  type type_length repetition_type converted_type logical_type
+      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
+      2      d integer INT32          NA        REQUIRED        DECIMAL DECIMAL,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA     2         3       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+            d
+      1  -2.5
+      2  -2.0
+      3  -1.5
+      4  -1.0
+      5  -0.5
+      6   0.0
+      7   0.5
+      8   1.0
+      9   1.5
+      10  2.0
+      11  2.5
+
+---
+
+    Code
+      write_parquet(d2, tmp, schema = schema)
+    Condition
+      Error in `write_parquet()`:
+      ! Value too large for INT32 DECIMAL with precision 3, scale 2: 10.000000
+
+---
+
+    Code
+      write_parquet(d2, tmp, schema = schema)
+    Condition
+      Error in `write_parquet()`:
+      ! Value too small for INT32 DECIMAL with precision 3, scale 2: -10.000000
+
 # write_parquet -> DECIMAL INT64
 
     Code
@@ -941,4 +1027,90 @@
     Condition
       Error in `write_parquet()`:
       ! Value too small for INT64 DECIMAL with precision 3, scale 2: -10
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type  type type_length repetition_type converted_type logical_type
+      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
+      2      d double INT64          NA        REQUIRED        DECIMAL DECIMAL,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA     1         3       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+            d
+      1  -2.5
+      2  -2.0
+      3  -1.5
+      4  -1.0
+      5  -0.5
+      6   0.0
+      7   0.5
+      8   1.0
+      9   1.5
+      10  2.0
+      11  2.5
+
+---
+
+    Code
+      write_parquet(d2, tmp, schema = schema)
+    Condition
+      Error in `write_parquet()`:
+      ! Value too large for INT64 DECIMAL with precision 3, scale 1: 100.000000
+
+---
+
+    Code
+      write_parquet(d2, tmp, schema = schema)
+    Condition
+      Error in `write_parquet()`:
+      ! Value too small for INT64 DECIMAL with precision 3, scale 1: -100.000000
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type  type type_length repetition_type converted_type logical_type
+      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
+      2      d double INT64          NA        REQUIRED        DECIMAL DECIMAL,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA     2         3       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+            d
+      1  -2.5
+      2  -2.0
+      3  -1.5
+      4  -1.0
+      5  -0.5
+      6   0.0
+      7   0.5
+      8   1.0
+      9   1.5
+      10  2.0
+      11  2.5
+
+---
+
+    Code
+      write_parquet(d2, tmp, schema = schema)
+    Condition
+      Error in `write_parquet()`:
+      ! Value too large for INT64 DECIMAL with precision 3, scale 2: 10.000000
+
+---
+
+    Code
+      write_parquet(d2, tmp, schema = schema)
+    Condition
+      Error in `write_parquet()`:
+      ! Value too small for INT64 DECIMAL with precision 3, scale 2: -10.000000
 

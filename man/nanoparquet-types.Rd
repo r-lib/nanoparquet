@@ -54,7 +54,9 @@ non-default mappings are:
 - `character` to `ENUM`,
 - `factor` to `ENUM`,
 - `integer` to `DECIAML` & `INT32`,
-- `integer` to `DECIMAL` & `INT64`.
+- `integer` to `DECIMAL` & `INT64`,
+- `double` to `DECIAML` & `INT32`,
+- `double` to `DECIMAL` & `INT64`.
 }\if{html}{\out{</div>}}
 }
 
