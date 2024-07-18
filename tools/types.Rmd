@@ -31,7 +31,7 @@ These rules will likely change until nanoparquet reaches version 1.0.0.
 1. Logical vectors (`LGLSXP`) are written as the `BOOLEAN` type.
 1. Other vectors error currently.
 
-You can use [infer_parquet_types()] on a data frame to map R data types
+You can use [infer_parquet_schema()] on a data frame to map R data types
 to Parquet data types.
 
 To change the default R to Parquet mapping, use [parquet_schema()] and

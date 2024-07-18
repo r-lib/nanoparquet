@@ -39,7 +39,7 @@ before writing.
 \item Other vectors error currently.
 }
 
-You can use \code{\link[=infer_parquet_types]{infer_parquet_types()}} on a data frame to map R data types
+You can use \code{\link[=infer_parquet_schema]{infer_parquet_schema()}} on a data frame to map R data types
 to Parquet data types.
 
 To change the default R to Parquet mapping, use \code{\link[=parquet_schema]{parquet_schema()}} and
