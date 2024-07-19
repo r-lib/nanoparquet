@@ -304,6 +304,9 @@ void ParquetOutFile::write_present_data_(
   case Type::INT96:
     write_int96(file, idx, from, until);
     break;
+  case Type::FLOAT:
+    write_float(file, idx, from, until);
+    break;
   case Type::DOUBLE:
     write_present_double(file, idx, num_present, from, until);
     break;

@@ -104,7 +104,7 @@ test_that("write_parquet -> INT96", {
     read_parquet_page(tmp, 4L)$data
   })
 
-  # double -> INT64
+  # double -> INT96
   d <- data.frame(d = as.double(c(-5:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("INT96"))
   expect_snapshot({
@@ -124,13 +124,13 @@ test_that("write_parquet -> FLOAT", {
   on.exit(unlink(tmp), add = TRUE)
 
   # double -> FLOAT
-  d <- data.frame(d = as.double(-5:5))
+  d <- data.frame(d = c(as.double(-5:5), NA))
   write_parquet(d, tmp, schema = parquet_schema("FLOAT"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
-  d <- data.frame(d = as.double(rep(-1:1, 30)))
+  d <- data.frame(d = c(as.double(rep(-1:1, 30)), NA))
   write_parquet(d, tmp, schema = parquet_schema("FLOAT"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])

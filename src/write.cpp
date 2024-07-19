@@ -699,7 +699,9 @@ void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
     Rf_error("Internal nanoparquet error, row index too large");
   }
   for (uint64_t i = from; i < until; i++) {
-    float el = REAL(col)[i];
+    double val = REAL(col)[i];
+    if (R_IsNA(val)) continue;
+    float el = val;
     file.write((const char*) &el, sizeof(float));
   }
 }

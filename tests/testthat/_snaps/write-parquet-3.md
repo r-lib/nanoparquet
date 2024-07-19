@@ -561,7 +561,7 @@
     Output
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2      d double FLOAT          NA        REQUIRED           <NA>             
+      2      d double FLOAT          NA        OPTIONAL           <NA>             
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
@@ -580,6 +580,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -588,7 +589,7 @@
     Output
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2      d double FLOAT          NA        REQUIRED           <NA>             
+      2      d double FLOAT          NA        OPTIONAL           <NA>             
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
@@ -686,6 +687,7 @@
       88 -1
       89  0
       90  1
+      91 NA
 
 # write_parquet -> FIXED_LEN_BYTE_ARRAY
 
