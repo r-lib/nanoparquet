@@ -37,7 +37,8 @@
     - `double` to `DECIMAL`, `INT64`,
     - `integer` to `INT(8, *)`, `INT(16, *)`, INT(32, signed)`,
     - `double` to `INT(*, *)`,
-    - `character` to `UUID`.
+    - `character` to `UUID`,
+    - `double` to `FLOAT16`.
 
 * `write_parquet(file = ":raw:")` now works correctly for larger data
   frames (#77).

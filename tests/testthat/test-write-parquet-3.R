@@ -601,3 +601,15 @@ test_that("UUID", {
     write_parquet(d, tmp, schema = parquet_schema("UUID"))
   })
 })
+
+test_that("FLOAT16", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(c = c(0, 1, 2, -1, -2, -Inf, Inf, 1/2))
+  write_parquet(d, tmp, schema = parquet_schema("FLOAT16"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+})

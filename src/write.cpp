@@ -56,6 +56,32 @@ inline Int96 double_to_int96(double x) {
   return r;
 }
 
+static uint16_t double_to_float16(double x) {
+  if (x == R_PosInf) {
+    return 0x7c00;
+  } else if (x == R_NegInf) {
+    return 0xfc00;
+  } else if (x == R_NaN) {
+    return 0x7fff;
+  } else if (x > 65504) {
+    return 0x7c00;
+  } else if (x < -65504) {
+    return 0xfc00;
+  } else if (x >= 0 && x < 0.000000059604645) {
+    return 0x0000;
+  } else if (x <= 0 && x > -0.000000059604645) {
+    return 0x0000;
+  }
+  float f = x;
+  uint32_t fi32 = *((uint32_t*) &f);
+  uint16_t fi16 = (fi32 >> 31) << 5;
+  uint16_t tmp = (fi32 >> 23) & 0xff;
+  tmp = (tmp - 0x70) & ((uint32_t)((int32_t)(0x70 - tmp) >> 4) >> 27);
+  fi16 = (fi16 | tmp) << 10;
+  fi16 |= (fi32 >> 13) & 0x3ff;
+  return fi16;
+}
+
 extern "C" {
 SEXP nanoparquet_create_dict(SEXP x, SEXP rlen);
 SEXP nanoparquet_create_dict_idx(SEXP x);
@@ -766,17 +792,18 @@ void RParquetOutFile::write_fixed_len_byte_array(
 
   uint32_t type_length = sel.type_length;
   SEXP col = VECTOR_ELT(df, idx);
-  if (TYPEOF(col) != STRSXP) {
-    Rf_error(
-      "Cannot write %s as a Parquet BYTE_ARRAY type.",
-      type_names[TYPEOF(col)]
-    );
-  }
   if (until > Rf_xlength(col)) {
     Rf_error("Internal nanoparquet error, row index too large");
   }
   bool is_uuid = sel.__isset.logicalType && sel.logicalType.__isset.UUID;
+  bool is_f16 = sel.__isset.logicalType && sel.logicalType.__isset.FLOAT16;
   if (is_uuid) {
+    if (TYPEOF(col) != STRSXP) {
+      Rf_error(
+        "Cannot write %s as a Parquet FIXED_LEN_BYTE_ARRAY type.",
+        type_names[TYPEOF(col)]
+      );
+    }
     char u[16], tmp[18];  // need to be longer, for easier conversion
     for (uint64_t i = from; i < until; i++) {
       const char *c = CHAR(STRING_ELT(col, i));
@@ -786,7 +813,27 @@ void RParquetOutFile::write_fixed_len_byte_array(
       }
       file.write(u, 16);
     }
+
+  } else if (is_f16) {
+    if (TYPEOF(col) != REALSXP) {
+      Rf_error(
+        "Cannot write %s as a Parquet FLOAT16 type.",
+        type_names[TYPEOF(col)]
+      );
+    }
+    for (uint64_t i = from; i < until; i++) {
+      double val = REAL(col)[i];
+      uint16_t f16val = double_to_float16(val);
+      file.write((const char*) &f16val, sizeof(uint16_t));
+    }
+
   } else {
+    if (TYPEOF(col) != STRSXP) {
+      Rf_error(
+        "Cannot write %s as a Parquet FIXED_LEN_BYTE_ARRAY type.",
+        type_names[TYPEOF(col)]
+      );
+    }
     for (uint64_t i = from; i < until; i++) {
       const char *c = CHAR(STRING_ELT(col, i));
       uint32_t len1 = strlen(c);

@@ -1633,3 +1633,27 @@
       Error in `write_parquet()`:
       ! Invalid UUID value in column 1, row 2
 
+# FLOAT16
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type                 type type_length repetition_type converted_type
+      1 schema   <NA>                 <NA>          NA            <NA>           <NA>
+      2      c    raw FIXED_LEN_BYTE_ARRAY           2        REQUIRED           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2      FLOAT16           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+           c
+      1  0.0
+      2  1.0
+      3  2.0
+      4 -1.0
+      5 -2.0
+      6 -Inf
+      7  Inf
+      8  0.5
+
