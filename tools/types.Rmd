@@ -83,6 +83,7 @@ These rules will likely change until nanoparquet reaches version 1.0.0.
 1. The `ENUM` logical type is read as a character vector.
 1. The `UUID` logical type is read as a character vector that uses the
    `00112233-4455-6677-8899-aabbccddeeff` form.
+1. The `FLOAT16` logical type is read as a real vector (`READLSXP`).
 1. `BYTE_ARRAY` is read as a *factor* object if the file was written
    by Arrow and the original data type of the column was a factor.
    (See 'The Arrow metadata below.)
@@ -102,8 +103,6 @@ types:
 1. `INT(64, false)` is read as a real vector (`REALSXP`). Large
    positive values may overflow into negative values, this is a known
    issue that we will fix.
-1. `FLOAT16` is a fixed length byte array, and nanoparquet reads it as
-   a list of raw vectors. Missing values are denoted by `NULL`.
 1. `INTERVAL` is a fixed length byte array, and nanoparquet reads it as
    a list of raw vectors. Missing values are denoted by `NULL`.
 1. `JSON` columns are read as character vectors (`STRSXP`).

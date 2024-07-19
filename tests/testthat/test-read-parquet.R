@@ -413,3 +413,11 @@ test_that("DECIMAL in INT32, INT64", {
   expect_equal(typeof(read_parquet(pf)[[1]]), "double")
   expect_snapshot(as.data.frame(read_parquet(pf)))
 })
+
+test_that("FLOAT16", {
+  pf <- test_path("data/float16_nonzeros_and_nans.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(pf))
+    as.data.frame(read_parquet(pf))
+  })
+})

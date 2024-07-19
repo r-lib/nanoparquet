@@ -22,6 +22,38 @@ static int64_t impala_timestamp_to_nanoseconds(const Int96 &impala_timestamp) {
   return days_since_epoch * kNanosecondsInADay + nanoseconds;
 }
 
+static uint32_t as_uint(const float x) {
+  return *(uint32_t*) &x;
+}
+
+static float as_float(const uint x) {
+  return *(float*) &x;
+}
+
+static double float16_to_double(uint16_t x) {
+  bool neg = (x & 0x8000) != 0;
+  if ((x & 0x7fff) == 0x7c00) {
+    return neg ? R_NegInf : R_PosInf;
+  } else if ((x & 0x7fff) > 0x7c00) {
+    return R_NaN;
+  } else {
+    // Accuracy and performance of the lattice Boltzmann method with
+    // 64-bit, 32-bit, and customized 16-bit number formats
+    // Moritz Lehmann, Mathias J. Krause, Giorgio Amati, Marcello Sega,
+    // Jens Harting, and Stephan Gekle
+    // Phys. Rev. E 106, 015308
+    // https://journals.aps.org/pre/abstract/10.1103/PhysRevE.106.015308
+    const uint32_t e = (x & 0x7C00) >> 10;
+    const uint32_t m = (x & 0x03FF) << 13;
+    const uint32_t v = as_uint((float) m) >> 23;
+    float f = as_float((x & 0x8000) << 16 |
+      (e != 0) * ((e + 112) << 23 | m) |
+      ((e == 0) & (m != 0)) * ((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)));
+    return f;
+  }
+  return 0;
+}
+
 extern "C" {
 
 SEXP nanoparquet_read(SEXP filesxp) {
@@ -195,6 +227,10 @@ SEXP nanoparquet_read(SEXP filesxp) {
                  s_ele->converted_type == parquet::ConvertedType::DECIMAL) {
         // DECIMAL converted type as REAL, for now
         varvalue = PROTECT(safe_allocvector_real(nrows, &uwtoken));
+      } else if (s_ele->__isset.logicalType &&
+                 s_ele->logicalType.__isset.FLOAT16) {
+        // FLOAT16 converted to REAL
+        varvalue = PROTECT(safe_allocvector_real(nrows, &uwtoken));
       } else {
         // list of RAW vectors
         varvalue = PROTECT(safe_allocvector_vec(nrows, &uwtoken));
@@ -342,13 +378,23 @@ SEXP nanoparquet_read(SEXP filesxp) {
           case REALSXP: {
             auto type_len = ((pair<uint32_t, char*>*) col.data.ptr)[row_idx].first;
             auto bytes = ((pair<uint32_t, char*>*) col.data.ptr)[row_idx].second;
-            int64_t val = 0;
-            for (auto i = 0; i < type_len; i++) {
-              val = val << ((type_len - i) * 8) | (uint8_t)bytes[i];
-            }
+            if (s_ele->__isset.logicalType &&
+                s_ele->logicalType.__isset.FLOAT16) {
+              if (type_len != 2) {
+                Rf_error("Invalid type_length for FLOAT16 type, invalid Parquet ifle");
+              }
+              NUMERIC_POINTER(dest)[row_idx + dest_offset] =
+                float16_to_double(*((uint16_t *) bytes));
 
-            NUMERIC_POINTER(dest)
-              [row_idx + dest_offset] = val / pow(10.0, s_ele->scale);
+            } else {
+              int64_t val = 0;
+              for (auto i = 0; i < type_len; i++) {
+                val = val << ((type_len - i) * 8) | (uint8_t)bytes[i];
+              }
+
+              NUMERIC_POINTER(dest)[row_idx + dest_offset] =
+                val / pow(10.0, s_ele->scale);
+            }
             break;
           }
           case STRSXP: {

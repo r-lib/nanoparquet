@@ -92,6 +92,7 @@ precision.
 \item The \code{ENUM} logical type is read as a character vector.
 \item The \code{UUID} logical type is read as a character vector that uses the
 \code{00112233-4455-6677-8899-aabbccddeeff} form.
+\item The \code{FLOAT16} logical type is read as a real vector (\code{READLSXP}).
 \item \code{BYTE_ARRAY} is read as a \emph{factor} object if the file was written
 by Arrow and the original data type of the column was a factor.
 (See 'The Arrow metadata below.)
@@ -112,8 +113,6 @@ issue that we will fix.
 \item \code{INT(64, false)} is read as a real vector (\code{REALSXP}). Large
 positive values may overflow into negative values, this is a known
 issue that we will fix.
-\item \code{FLOAT16} is a fixed length byte array, and nanoparquet reads it as
-a list of raw vectors. Missing values are denoted by \code{NULL}.
 \item \code{INTERVAL} is a fixed length byte array, and nanoparquet reads it as
 a list of raw vectors. Missing values are denoted by \code{NULL}.
 \item \code{JSON} columns are read as character vectors (\code{STRSXP}).

@@ -48,6 +48,9 @@
 * `read_parquet()` now reads `JSON` columns as character vectors, as
   documented.
 
+* `read_parquet()` now reads the `FLOAT16` logical type as a real (double)
+  vector.
+
 # nanoparquet 0.3.1
 
 * This version fixes a `write_parquet()` crash (#73).
