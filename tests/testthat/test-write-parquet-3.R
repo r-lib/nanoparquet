@@ -373,3 +373,72 @@ test_that("write_parquet -> DECIMAL INT64", {
     write_parquet(d2, tmp, schema = schema)
   })
 })
+
+test_that("smaller integers", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(d = -5:5)
+  write_parquet(d, tmp, schema = parquet_schema("INT_8"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = 127:128)
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_8"))
+  })
+  d <- data.frame(d = -(127:129))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_8"))
+  })
+
+  d <- data.frame(d = -5:5)
+  write_parquet(d, tmp, schema = parquet_schema("INT_16"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = 32767:32768)
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_16"))
+  })
+  d <- data.frame(d = -(32767:32769))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_16"))
+  })
+
+  d <- data.frame(d = 0:5)
+  write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = 255:256)
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
+  })
+  d <- data.frame(d = c(0L, -1L))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
+  })
+
+  d <- data.frame(d = 0:5)
+  write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = 65536:65536)
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
+  })
+  d <- data.frame(d = c(0L, -1L))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
+  })
+})

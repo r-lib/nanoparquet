@@ -289,10 +289,41 @@ void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
   }
 }
 
-void write_integer_int32(std::ostream &file, SEXP col, uint64_t from,
-                         uint64_t until) {
-  uint64_t len = until - from;
-  file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
+void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
+                         uint64_t from, uint64_t until,
+                         parquet::SchemaElement &sel) {
+  bool is_signed = TRUE;
+  int bit_width = 32;
+  if (sel.__isset.logicalType && sel.logicalType.__isset.INTEGER) {
+    is_signed = sel.logicalType.INTEGER.isSigned;
+    bit_width = sel.logicalType.INTEGER.bitWidth;
+  }
+  if (bit_width == 32) {
+    uint64_t len = until - from;
+    file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
+  } else {
+    int min, max;
+    if (bit_width == 8) {
+      max = is_signed ? 127 : 255;
+    } else if (bit_width == 16) {
+      max = is_signed ? 256 * 128 - 1 : 256 * 256 - 1;
+    } else {
+      Rf_error("Invalid bit width for INT32: %d", bit_width);
+    }
+    min = is_signed ? -max-1 : 0;
+    for (uint64_t i = from; i < until; i++) {
+      int32_t val = INTEGER(col)[i];
+      const char *w = val < min ? "small" : (val > max ? "large" : "");
+      if (w[0]) {
+        Rf_error(
+          "Integer value too %s for %sINT with bit width %d: %d"
+          " at column %u, row %" PRIu64 ":",
+          w, (is_signed ? "" : "U"), bit_width, val, idx + 1, i + 1
+        );
+      }
+      file.write((const char *) &val, sizeof(int32_t));
+    }
+  }
 }
 
 void write_double_int32_dec(std::ostream & file, SEXP col, uint64_t from,
@@ -336,7 +367,7 @@ void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
     if (isdec) {
       write_integer_int32_dec(file, col, from, until, precision, scale);
     } else {
-      write_integer_int32(file, col, from, until);
+      write_integer_int32(file, col, idx, from, until, sel);
     }
     break;
   case REALSXP:
