@@ -61,8 +61,8 @@ static uint16_t double_to_float16(double x) {
     return 0x7c00;
   } else if (x == R_NegInf) {
     return 0xfc00;
-  } else if (x == R_NaN) {
-    return 0x7fff;
+  } else if (R_IsNaN(x)) {
+    return 0x7C80;
   } else if (x > 65504) {
     return 0x7c00;
   } else if (x < -65504) {
@@ -853,6 +853,7 @@ void RParquetOutFile::write_fixed_len_byte_array(
     }
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
+      if (R_IsNA(val)) continue;
       uint16_t f16val = double_to_float16(val);
       file.write((const char*) &f16val, sizeof(uint16_t));
     }

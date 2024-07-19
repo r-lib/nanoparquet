@@ -1128,7 +1128,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED          INT_8 INT, 8, TRUE
+      2      d integer INT32          NA        OPTIONAL          INT_8 INT, 8, TRUE
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
@@ -1147,6 +1147,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -1171,7 +1172,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED         INT_16 INT, 16,....
+      2      d integer INT32          NA        OPTIONAL         INT_16 INT, 16,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
@@ -1190,6 +1191,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -1214,20 +1216,21 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED         UINT_8 INT, 8, ....
+      2      d integer INT32          NA        OPTIONAL         UINT_8 INT, 8, ....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
     Code
       as.data.frame(read_parquet(tmp))
     Output
-        d
-      1 0
-      2 1
-      3 2
-      4 3
-      5 4
-      6 5
+         d
+      1  0
+      2  1
+      3  2
+      4  3
+      5  4
+      6  5
+      7 NA
 
 ---
 
@@ -1252,20 +1255,21 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED        UINT_16 INT, 16,....
+      2      d integer INT32          NA        OPTIONAL        UINT_16 INT, 16,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
     Code
       as.data.frame(read_parquet(tmp))
     Output
-        d
-      1 0
-      2 1
-      3 2
-      4 3
-      5 4
-      6 5
+         d
+      1  0
+      2  1
+      3  2
+      4  3
+      5  4
+      6  5
+      7 NA
 
 ---
 
@@ -1290,7 +1294,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED          INT_8 INT, 8, TRUE
+      2      d integer INT32          NA        OPTIONAL          INT_8 INT, 8, TRUE
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
@@ -1309,6 +1313,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -1333,7 +1338,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED         INT_16 INT, 16,....
+      2      d integer INT32          NA        OPTIONAL         INT_16 INT, 16,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
@@ -1352,6 +1357,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -1376,7 +1382,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED         INT_32 INT, 32,....
+      2      d integer INT32          NA        OPTIONAL         INT_32 INT, 32,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
@@ -1395,6 +1401,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -1419,20 +1426,21 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED         UINT_8 INT, 8, ....
+      2      d integer INT32          NA        OPTIONAL         UINT_8 INT, 8, ....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
     Code
       as.data.frame(read_parquet(tmp))
     Output
-        d
-      1 0
-      2 1
-      3 2
-      4 3
-      5 4
-      6 5
+         d
+      1  0
+      2  1
+      3  2
+      4  3
+      5  4
+      6  5
+      7 NA
 
 ---
 
@@ -1457,20 +1465,21 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED        UINT_16 INT, 16,....
+      2      d integer INT32          NA        OPTIONAL        UINT_16 INT, 16,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
     Code
       as.data.frame(read_parquet(tmp))
     Output
-        d
-      1 0
-      2 1
-      3 2
-      4 3
-      5 4
-      6 5
+         d
+      1  0
+      2  1
+      3  2
+      4  3
+      5  4
+      6  5
+      7 NA
 
 ---
 
@@ -1495,20 +1504,21 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED        UINT_32 INT, 32,....
+      2      d integer INT32          NA        OPTIONAL        UINT_32 INT, 32,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
     Code
       as.data.frame(read_parquet(tmp))
     Output
-        d
-      1 0
-      2 1
-      3 2
-      4 3
-      5 4
-      6 5
+         d
+      1  0
+      2  1
+      3  2
+      4  3
+      5  4
+      6  5
+      7 NA
 
 ---
 
@@ -1533,7 +1543,7 @@
     Output
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2      d double INT64          NA        REQUIRED         INT_64 INT, 64,....
+      2      d double INT64          NA        OPTIONAL         INT_64 INT, 64,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
@@ -1552,6 +1562,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -1576,20 +1587,21 @@
     Output
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2      d double INT64          NA        REQUIRED        UINT_64 INT, 64,....
+      2      d double INT64          NA        OPTIONAL        UINT_64 INT, 64,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
     Code
       as.data.frame(read_parquet(tmp))
     Output
-        d
-      1 0
-      2 1
-      3 2
-      4 3
-      5 4
-      6 5
+         d
+      1  0
+      2  1
+      3  2
+      4  3
+      5  4
+      6  5
+      7 NA
 
 ---
 
@@ -1614,7 +1626,7 @@
     Output
           name r_type       type type_length repetition_type converted_type
       1 schema   <NA>       <NA>          NA            <NA>           <NA>
-      2      d    raw BYTE_ARRAY          NA        REQUIRED           JSON
+      2      d    raw BYTE_ARRAY          NA        OPTIONAL           JSON
         logical_type num_children scale precision field_id
       1                         1    NA        NA       NA
       2         JSON           NA    NA        NA       NA
@@ -1625,6 +1637,7 @@
       1    foo
       2    bar
       3 foobar
+      4   <NA>
 
 # UUID
 
@@ -1633,7 +1646,7 @@
     Output
           name    r_type                 type type_length repetition_type
       1 schema      <NA>                 <NA>          NA            <NA>
-      2      d character FIXED_LEN_BYTE_ARRAY          16        REQUIRED
+      2      d character FIXED_LEN_BYTE_ARRAY          16        OPTIONAL
         converted_type logical_type num_children scale precision field_id
       1           <NA>                         1    NA        NA       NA
       2           <NA>         UUID           NA    NA        NA       NA
@@ -1644,6 +1657,7 @@
       1 00112233-4455-6677-8899-aabbccddeeff
       2 00112233-4455-6677-8899-aabbccddeeff
       3 00112233-4455-6677-8899-aabbccddeeff
+      4                                 <NA>
 
 ---
 
@@ -1660,20 +1674,22 @@
     Output
           name r_type                 type type_length repetition_type converted_type
       1 schema   <NA>                 <NA>          NA            <NA>           <NA>
-      2      c    raw FIXED_LEN_BYTE_ARRAY           2        REQUIRED           <NA>
+      2      c    raw FIXED_LEN_BYTE_ARRAY           2        OPTIONAL           <NA>
         logical_type num_children scale precision field_id
       1                         1    NA        NA       NA
       2      FLOAT16           NA    NA        NA       NA
     Code
       as.data.frame(read_parquet(tmp))
     Output
-           c
-      1  0.0
-      2  1.0
-      3  2.0
-      4 -1.0
-      5 -2.0
-      6 -Inf
-      7  Inf
-      8  0.5
+            c
+      1   0.0
+      2   1.0
+      3   2.0
+      4    NA
+      5  -1.0
+      6   NaN
+      7  -2.0
+      8  -Inf
+      9   Inf
+      10  0.5
 

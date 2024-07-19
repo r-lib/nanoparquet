@@ -370,7 +370,7 @@ test_that("smaller integers", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(d = -5:5)
+  d <- data.frame(d = c(-5:5, NA))
   write_parquet(d, tmp, schema = parquet_schema("INT_8"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -386,7 +386,7 @@ test_that("smaller integers", {
     write_parquet(d, tmp, schema = parquet_schema("INT_8"))
   })
 
-  d <- data.frame(d = -5:5)
+  d <- data.frame(d = c(-5:5, NA))
   write_parquet(d, tmp, schema = parquet_schema("INT_16"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -402,7 +402,7 @@ test_that("smaller integers", {
     write_parquet(d, tmp, schema = parquet_schema("INT_16"))
   })
 
-  d <- data.frame(d = 0:5)
+  d <- data.frame(d = c(0:5, NA))
   write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -418,7 +418,7 @@ test_that("smaller integers", {
     write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
   })
 
-  d <- data.frame(d = 0:5)
+  d <- data.frame(d = c(0:5, NA))
   write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -439,7 +439,7 @@ test_that("double to smaller integers", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(d = as.double(-5:5))
+  d <- data.frame(d = as.double(c(-5:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("INT_8"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -455,7 +455,7 @@ test_that("double to smaller integers", {
     write_parquet(d, tmp, schema = parquet_schema("INT_8"))
   })
 
-  d <- data.frame(d = as.double(-5:5))
+  d <- data.frame(d = as.double(c(-5:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("INT_16"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -471,7 +471,7 @@ test_that("double to smaller integers", {
     write_parquet(d, tmp, schema = parquet_schema("INT_16"))
   })
 
-  d <- data.frame(d = as.double(-5:5))
+  d <- data.frame(d = as.double(c(-5:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("INT_32"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -487,7 +487,7 @@ test_that("double to smaller integers", {
     write_parquet(d, tmp, schema = parquet_schema("INT_32"))
   })
 
-  d <- data.frame(d = as.double(0:5))
+  d <- data.frame(d = as.double(c(0:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -503,7 +503,7 @@ test_that("double to smaller integers", {
     write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
   })
 
-  d <- data.frame(d = as.double(0:5))
+  d <- data.frame(d = as.double(c(0:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -519,7 +519,7 @@ test_that("double to smaller integers", {
     write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
   })
 
-  d <- data.frame(d = as.double(0:5))
+  d <- data.frame(d = as.double(c(0:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("UINT_32"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -540,7 +540,7 @@ test_that("double to INT(64, *)", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(d = as.double(-5:5))
+  d <- data.frame(d = as.double(c(-5:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("INT_64"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -556,7 +556,7 @@ test_that("double to INT(64, *)", {
     write_parquet(d, tmp, schema = parquet_schema("INT_64"))
   })
 
-  d <- data.frame(d = as.double(0:5))
+  d <- data.frame(d = as.double(c(0:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -577,7 +577,7 @@ test_that("JSON", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(d = c("foo", "bar", "foobar"))
+  d <- data.frame(d = c("foo", "bar", "foobar", NA))
   write_parquet(d, tmp, schema = parquet_schema("JSON"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -589,7 +589,7 @@ test_that("UUID", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(d = rep("00112233-4455-6677-8899-aabbccddeeff", 3))
+  d <- data.frame(d = c(rep("00112233-4455-6677-8899-aabbccddeeff", 3), NA))
   write_parquet(d, tmp, schema = parquet_schema("UUID"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -606,7 +606,7 @@ test_that("FLOAT16", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(c = c(0, 1, 2, -1, -2, -Inf, Inf, 1/2))
+  d <- data.frame(c = c(0, 1, 2, NA, -1, NaN, -2, -Inf, Inf, 1/2))
   write_parquet(d, tmp, schema = parquet_schema("FLOAT16"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
