@@ -114,6 +114,7 @@ precision.</p></li>
 <li><p>The <code>ENUM</code> logical type is read as a character vector.</p></li>
 <li><p>The <code>UUID</code> logical type is read as a character vector that uses the
 <code>00112233-4455-6677-8899-aabbccddeeff</code> form.</p></li>
+<li><p>The <code>FLOAT16</code> logical type is read as a real vector (<code>READLSXP</code>).</p></li>
 <li><p><code>BYTE_ARRAY</code> is read as a <em>factor</em> object if the file was written
 by Arrow and the original data type of the column was a factor.
 (See 'The Arrow metadata below.)</p></li>
@@ -130,8 +131,6 @@ issue that we will fix.</p></li>
 <li><p><code>INT(64, false)</code> is read as a real vector (<code>REALSXP</code>). Large
 positive values may overflow into negative values, this is a known
 issue that we will fix.</p></li>
-<li><p><code>FLOAT16</code> is a fixed length byte array, and nanoparquet reads it as
-a list of raw vectors. Missing values are denoted by <code>NULL</code>.</p></li>
 <li><p><code>INTERVAL</code> is a fixed length byte array, and nanoparquet reads it as
 a list of raw vectors. Missing values are denoted by <code>NULL</code>.</p></li>
 <li><p><code>JSON</code> columns are read as character vectors (<code>STRSXP</code>).</p></li>
