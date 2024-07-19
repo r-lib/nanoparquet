@@ -91,13 +91,13 @@ test_that("write_parquet -> INT96", {
   on.exit(unlink(tmp), add = TRUE)
 
   # integer -> INT96
-  d <- data.frame(d = -5:5)
+  d <- data.frame(d = c(-5:5, NA))
   write_parquet(d, tmp, schema = parquet_schema("INT96"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     read_parquet_page(tmp, 4L)$data
   })
-  d <- data.frame(d = rep(-1:1, 30))
+  d <- data.frame(d = c(rep(-1:1, 30), NA))
   write_parquet(d, tmp, schema = parquet_schema("INT96"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -105,13 +105,13 @@ test_that("write_parquet -> INT96", {
   })
 
   # double -> INT64
-  d <- data.frame(d = as.double(-5:5))
+  d <- data.frame(d = as.double(c(-5:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("INT96"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     read_parquet_page(tmp, 4L)$data
   })
-  d <- data.frame(d = as.double(rep(-1:1, 30)))
+  d <- data.frame(d = as.double(c(rep(-1:1, 30), NA)))
   write_parquet(d, tmp, schema = parquet_schema("INT96"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])

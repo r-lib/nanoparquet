@@ -662,14 +662,18 @@ void RParquetOutFile::write_int96(std::ostream &file, uint32_t idx,
   switch (TYPEOF(col)) {
   case INTSXP: {
     for (uint64_t i = from; i < until; i++) {
-      Int96 el = int32_to_int96(INTEGER(col)[i]);
+      int32_t val = INTEGER(col)[i];
+      if (val == NA_INTEGER) continue;
+      Int96 el = int32_to_int96(val);
       file.write((const char*) &el, sizeof(Int96));
     }
     break;
   }
   case REALSXP: {
     for (uint64_t i = from; i < until; i++) {
-      Int96 el = double_to_int96(REAL(col)[i]);
+      double val = REAL(col)[i];
+      if (R_IsNA(val)) continue;
+      Int96 el = double_to_int96(val);
       file.write((const char*) &el, sizeof(Int96));
     }
     break;

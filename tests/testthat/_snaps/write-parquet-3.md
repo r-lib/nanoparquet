@@ -485,19 +485,19 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d POSIXct INT96          NA        REQUIRED           <NA>             
+      2      d POSIXct INT96          NA        OPTIONAL           <NA>             
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
     Code
       read_parquet_page(tmp, 4L)$data
     Output
-        [1] fb ff ff ff ff ff ff ff ff ff ff ff fc ff ff ff ff ff ff ff ff ff ff ff fd
-       [26] ff ff ff ff ff ff ff ff ff ff ff fe ff ff ff ff ff ff ff ff ff ff ff ff ff
-       [51] ff ff ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00
-       [76] 00 00 00 00 00 00 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 03 00 00 00
-      [101] 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 05 00 00 00 00
-      [126] 00 00 00 00 00 00 00
+        [1] 04 00 00 00 16 01 03 00 fb ff ff ff ff ff ff ff ff ff ff ff fc ff ff ff ff
+       [26] ff ff ff ff ff ff ff fd ff ff ff ff ff ff ff ff ff ff ff fe ff ff ff ff ff
+       [51] ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00
+       [76] 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 02 00 00 00 00 00 00 00
+      [101] 00 00 00 00 03 00 00 00 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00
+      [126] 00 00 00 05 00 00 00 00 00 00 00 00 00 00 00
 
 ---
 
@@ -506,7 +506,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d POSIXct INT96          NA        REQUIRED           <NA>             
+      2      d POSIXct INT96          NA        OPTIONAL           <NA>             
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
@@ -523,19 +523,19 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d POSIXct INT96          NA        REQUIRED           <NA>             
+      2      d POSIXct INT96          NA        OPTIONAL           <NA>             
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
     Code
       read_parquet_page(tmp, 4L)$data
     Output
-        [1] fb ff ff ff ff ff ff ff ff ff ff ff fc ff ff ff ff ff ff ff ff ff ff ff fd
-       [26] ff ff ff ff ff ff ff ff ff ff ff fe ff ff ff ff ff ff ff ff ff ff ff ff ff
-       [51] ff ff ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00
-       [76] 00 00 00 00 00 00 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 03 00 00 00
-      [101] 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 05 00 00 00 00
-      [126] 00 00 00 00 00 00 00
+        [1] 04 00 00 00 16 01 03 00 fb ff ff ff ff ff ff ff ff ff ff ff fc ff ff ff ff
+       [26] ff ff ff ff ff ff ff fd ff ff ff ff ff ff ff ff ff ff ff fe ff ff ff ff ff
+       [51] ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 00 00 00 00 00 00 00
+       [76] 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 02 00 00 00 00 00 00 00
+      [101] 00 00 00 00 03 00 00 00 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00
+      [126] 00 00 00 05 00 00 00 00 00 00 00 00 00 00 00
 
 ---
 
@@ -544,7 +544,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d POSIXct INT96          NA        REQUIRED           <NA>             
+      2      d POSIXct INT96          NA        OPTIONAL           <NA>             
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
