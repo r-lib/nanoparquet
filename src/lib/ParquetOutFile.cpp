@@ -292,10 +292,14 @@ void ParquetOutFile::write_present_data_(
   uint64_t until) {
 
   streampos cb_start = file.tellp();
-  parquet::Type::type type = schemas[idx + 1].type;
+  parquet::SchemaElement &sel = schemas[idx + 1];
+  parquet::Type::type type = sel.type;
   switch (type) {
   case Type::INT32:
     write_present_int32(file, idx, num_present, from, until);
+    break;
+  case Type::INT64:
+    write_int64(file, idx, from, until, sel);
     break;
   case Type::DOUBLE:
     write_present_double(file, idx, num_present, from, until);

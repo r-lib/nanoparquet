@@ -124,8 +124,6 @@ public:
                          uint64_t until);
   void write_present_int32(std::ostream &file, uint32_t idx,
                            uint32_t num_present, uint64_t from, uint64_t until);
-  void write_present_int64(std::ostream &file, uint32_t idx,
-                           uint32_t num_present, uint64_t from, uint64_t until);
   void write_present_double(std::ostream &file, uint32_t idx,
                             uint32_t num_present, uint64_t from,
                             uint64_t until);
@@ -490,23 +488,25 @@ void write_integer_int64_dec(std::ostream &file, SEXP col, uint64_t from,
   int64_t max = ((int64_t)pow(10, precision)) / fact;
   int64_t min = -max;
   for (uint64_t i = from; i < until; i++) {
-    int64_t val = INTEGER(col)[i];
-    if (val <= min) {
+    int32_t val = INTEGER(col)[i];
+    if (val == NA_INTEGER) continue;
+    int64_t ival = val;
+    if (ival <= min) {
       Rf_error(
         "Value too small for INT64 DECIMAL with precision %d, scale "
         "%d: %" PRId64,
-        precision, scale, val
+        precision, scale, ival
       );
     }
-    if (val >= max) {
+    if (ival >= max) {
       Rf_error(
         "Value too large for INT64 DECIMAL with precision %d, scale "
         "%d: %" PRId64,
-        precision, scale, val
+        precision, scale, ival
       );
     }
-    val *= fact;
-    file.write((const char *)&val, sizeof(int64_t));
+    ival *= fact;
+    file.write((const char *)&ival, sizeof(int64_t));
   }
 }
 
@@ -514,7 +514,9 @@ void write_integer_int64(std::ostream &file, SEXP col, uint64_t from,
                          uint64_t until) {
 
   for (uint64_t i = from; i < until; i++) {
-    int64_t el = INTEGER(col)[i];
+    int32_t val = INTEGER(col)[i];
+    if (val == NA_INTEGER) continue;
+    int64_t el = val;
     file.write((const char*) &el, sizeof(int64_t));
    }
  }
@@ -530,6 +532,7 @@ void write_integer_int64(std::ostream &file, SEXP col, uint64_t from,
   double min = -max;
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
+    if (R_IsNA(val)) continue;
     if (val <= min) {
       Rf_error(
         "Value too small for INT64 DECIMAL with precision %d, scale %d: %f",
@@ -552,14 +555,18 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
     // TODO: check logical type
     // need to convert seconds to microseconds
     for (uint64_t i = from; i < until; i++) {
-      int64_t el = REAL(col)[i] * 1000 * 1000;
+      double val = REAL(col)[i];
+      if (R_IsNA(val)) continue;
+      int64_t el = val * 1000 * 1000;
       file.write((const char *)&el, sizeof(int64_t));
     }
   } else if (Rf_inherits(col, "difftime")) {
     // TODO: check logical type
     // need to convert seconds to nanoseconds
     for (uint64_t i = from; i < until; i++) {
-      int64_t el = REAL(col)[i] * 1000 * 1000 * 1000;
+      double val = REAL(col)[i];
+      if (R_IsNA(val)) continue;
+      int64_t el = val * 1000 * 1000 * 1000;
       file.write((const char *)&el, sizeof(int64_t));
     }
   } else {
@@ -576,6 +583,7 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
       double min = -pow(2, 63), max = -(min+1);
       for (uint64_t i = from; i < until; i++) {
         double val = REAL(col)[i];
+        if (R_IsNA(val)) continue;
         const char *w = val < min ? "small" : (val > max ? "large" : "");
         if (w[0]) {
           Rf_error(
@@ -591,6 +599,7 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
       double max = pow(2, 64) - 1;
       for (uint64_t i = from; i < until; i++) {
         double val = REAL(col)[i];
+        if (R_IsNA(val)) continue;
         if (val > max) {
           Rf_error(
             "Integer value too large for unsigned INT with bit width %d: %f"
@@ -975,49 +984,6 @@ void RParquetOutFile::write_present_int32(
     int el = INTEGER(col)[i];
     if (el != NA_INTEGER) {
       file.write((const char*) &el, sizeof(int));
-    }
-  }
-}
-
-void RParquetOutFile::write_present_int64(
-  std::ostream &file,
-  uint32_t idx,
-  uint32_t num_present,
-  uint64_t from,
-  uint64_t until) {
-
-  SEXP col = VECTOR_ELT(df, idx);
-  if (TYPEOF(col) != REALSXP) {
-    Rf_error(
-      "Cannot write %s as a Parquet INT64 type.",
-      type_names[TYPEOF(col)]
-    );
-  }
-  if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
-  }
-  if (Rf_inherits(col, "POSIXct")) {
-    for (uint64_t i = from; i < until; i++) {
-      double el = REAL(col)[i];
-      if (R_IsNA(el)) continue;
-      int64_t el2 = el * 1000 * 1000;
-      file.write((const char*) &el2, sizeof(int64_t));
-    }
-  } else if (Rf_inherits(col, "difftime")) {
-    // need to convert seconds to nanoseconds
-    for (uint64_t i = from; i < until; i++) {
-      double el = REAL(col)[i];
-      if (R_IsNA(el)) continue;
-      int64_t el2 = el * 1000 * 1000 * 1000;
-      file.write((const char*) &el2, sizeof(int64_t));
-    }
-
-  } else {
-    for (uint64_t i = from; i < until; i++) {
-      double el = REAL(col)[i];
-      if (R_IsNA(el)) continue;
-      int64_t el2 = el;
-      file.write((const char*) &el2, sizeof(int64_t));
     }
   }
 }

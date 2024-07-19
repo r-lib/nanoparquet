@@ -3,13 +3,13 @@ test_that("write_parquet -> INT32", {
   on.exit(unlink(tmp), add = TRUE)
 
   # integer -> INT32
-  d <- data.frame(d = 1:10)
+  d <- data.frame(d = c(1:10, NA))
   write_parquet(d, tmp, schema = parquet_schema("INT32"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
-  d <- data.frame(d = rep(1:2, 50))
+  d <- data.frame(d = c(NA, rep(1:2, 50)))
   write_parquet(d, tmp, schema = parquet_schema("INT32"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -17,13 +17,13 @@ test_that("write_parquet -> INT32", {
   })
 
   # logical -> INT32
-  d <- data.frame(d = (1:10 %% 2 == 0))
+  d <- data.frame(d = c(NA, (1:10 %% 2 == 0)))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("INT32"))
   })
 
   # string -> INT32
-  d <- data.frame(d = paste(1:10))
+  d <- data.frame(d = c(NA, paste(1:10)))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("INT32"))
   })
@@ -40,13 +40,13 @@ test_that("write_parquet -> INT64", {
   on.exit(unlink(tmp), add = TRUE)
 
   # integer -> INT64
-  d <- data.frame(d = 1:10)
+  d <- data.frame(d = c(NA, 1:10))
   write_parquet(d, tmp, schema = parquet_schema("INT64"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
-  d <- data.frame(d = rep(1:2, 50))
+  d <- data.frame(d = c(NA, rep(1:2, 50)))
   write_parquet(d, tmp, schema = parquet_schema("INT64"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -54,13 +54,13 @@ test_that("write_parquet -> INT64", {
   })
 
   # double -> INT64
-  d <- data.frame(d = as.double(1:10))
+  d <- data.frame(d = c(NA, as.double(1:10)))
   write_parquet(d, tmp, schema = parquet_schema("INT64"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
-  d <- data.frame(d = as.double(rep(1:2, 50)))
+  d <- data.frame(d = c(NA, as.double(rep(1:2, 50))))
   write_parquet(d, tmp, schema = parquet_schema("INT64"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
