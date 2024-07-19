@@ -729,6 +729,35 @@ uint32_t RParquetOutFile::get_size_byte_array(
   return size;
 }
 
+static bool parse_uuid(const char *c, char *u, char *t) {
+  if (strlen(c) != 36) {
+    return false;
+  }
+
+  uint32_t *p1 = (uint32_t*) t;
+  uint16_t *p2 = (uint16_t*) (t + 4);
+  uint16_t *p3 = (uint16_t*) (t + 6);
+  uint16_t *p4 = (uint16_t*) (t + 8);
+  uint64_t *p5 = (uint64_t*) (t + 10);
+
+  *p1 = strtol(c, NULL, 16);
+  *p2 = strtol(c + 9, NULL, 16);
+  *p3 = strtol(c + 14, NULL, 16);
+  *p4 = strtol(c + 19, NULL, 16);
+  *p5 = strtol(c + 24, NULL, 16);
+
+  // TODO: fix for big endian, this is little endian swap
+  u[0] = t[3]; u[1] = t[2]; u[2] = t[1]; u[3] = t[0];
+  u[4] = t[5]; u[5] = t[4];
+  u[6] = t[7]; u[7] = t[6];
+  u[8] = t[9]; u[9] = t[8];
+  u[10] = t[15]; u[11] = t[14];
+  u[12] = t[13]; u[13] = t[12];
+  u[14] = t[11]; u[15] = t[10];
+
+  return true;
+}
+
 void RParquetOutFile::write_fixed_len_byte_array(
   std::ostream &file,
   uint32_t idx,
@@ -746,16 +775,28 @@ void RParquetOutFile::write_fixed_len_byte_array(
   if (until > Rf_xlength(col)) {
     Rf_error("Internal nanoparquet error, row index too large");
   }
-  for (uint64_t i = from; i < until; i++) {
-    const char *c = CHAR(STRING_ELT(col, i));
-    uint32_t len1 = strlen(c);
-    if (len1 != type_length) {
-      Rf_error(
-        "Invalid string length: %d, expenting %d for FIXED_LEN_TYPE_ARRAY",
-        len1, type_length
-      );
+  bool is_uuid = sel.__isset.logicalType && sel.logicalType.__isset.UUID;
+  if (is_uuid) {
+    char u[16], tmp[18];  // need to be longer, for easier conversion
+    for (uint64_t i = from; i < until; i++) {
+      const char *c = CHAR(STRING_ELT(col, i));
+      if (!parse_uuid(c, u, tmp)) {
+        Rf_error("Invalid UUID value in column %d, row %" PRIu64,
+        idx + 1, i + 1);
+      }
+      file.write(u, 16);
     }
-    file.write(c, type_length);
+  } else {
+    for (uint64_t i = from; i < until; i++) {
+      const char *c = CHAR(STRING_ELT(col, i));
+      uint32_t len1 = strlen(c);
+      if (len1 != type_length) {
+        Rf_error(
+            "Invalid string length: %d, expenting %d for FIXED_LEN_TYPE_ARRAY",
+            len1, type_length);
+      }
+      file.write(c, type_length);
+    }
   }
 }
 

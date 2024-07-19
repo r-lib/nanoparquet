@@ -584,3 +584,20 @@ test_that("JSON", {
     as.data.frame(read_parquet(tmp))
   })
 })
+
+test_that("UUID", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(d = rep("00112233-4455-6677-8899-aabbccddeeff", 3))
+  write_parquet(d, tmp, schema = parquet_schema("UUID"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = c("00112233-4455-6677-8899-aabbccddeeff", "foo"))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UUID"))
+  })
+})

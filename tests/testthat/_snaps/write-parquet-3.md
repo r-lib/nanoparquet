@@ -1606,3 +1606,30 @@
       2    bar
       3 foobar
 
+# UUID
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name    r_type                 type type_length repetition_type
+      1 schema      <NA>                 <NA>          NA            <NA>
+      2      d character FIXED_LEN_BYTE_ARRAY          16        REQUIRED
+        converted_type logical_type num_children scale precision field_id
+      1           <NA>                         1    NA        NA       NA
+      2           <NA>         UUID           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                                           d
+      1 00112233-4455-6677-8899-aabbccddeeff
+      2 00112233-4455-6677-8899-aabbccddeeff
+      3 00112233-4455-6677-8899-aabbccddeeff
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("UUID"))
+    Condition
+      Error in `write_parquet()`:
+      ! Invalid UUID value in column 1, row 2
+

@@ -50,7 +50,8 @@ non-default mappings are:
     - `double` to `DECIAML` & `INT32`,
     - `double` to `DECIMAL` & `INT64`,
     - `integer` to `INT(8, *)`, `INT(16, *)`, INT(32, signed)`,
-    - `double` to `INT(*, *)`.
+    - `double` to `INT(*, *)`,
+    - `character` to `UUID`.
 
 # Parquet's data types
 
