@@ -38,17 +38,12 @@ To change the default R to Parquet mapping, use [parquet_schema()] and
 the `schema` argument of [write_parquet()]. Currently supported
 non-default mappings are:
 
-    - `integer` to `INT64`,
-    - `integer` to `INT96`,
-    - `double` to `INT96`,
     - `double` to `FLOAT`,
     - `character` to `FIXED_LEN_BYTE_ARRAY`,
     - `character` to `ENUM`,
     - `factor` to `ENUM`,
     - `integer` to `DECIAML` & `INT32`,
-    - `integer` to `DECIMAL` & `INT64`,
     - `double` to `DECIAML` & `INT32`,
-    - `double` to `DECIMAL` & `INT64`,
     - `integer` to `INT(8, *)`, `INT(16, *)`, INT(32, signed)`,
     - `double` to `INT(*, *)`,
     - `character` to `UUID`,

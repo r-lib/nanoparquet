@@ -296,7 +296,7 @@ void ParquetOutFile::write_present_data_(
   parquet::Type::type type = sel.type;
   switch (type) {
   case Type::INT32:
-    write_present_int32(file, idx, num_present, from, until);
+    write_int32(file, idx, from, until, sel);
     break;
   case Type::INT64:
     write_int64(file, idx, from, until, sel);
@@ -312,6 +312,9 @@ void ParquetOutFile::write_present_data_(
     break;
   case Type::BYTE_ARRAY:
     write_present_byte_array(file, idx, num_present, from, until);
+    break;
+  case Type::FIXED_LEN_BYTE_ARRAY:
+    write_fixed_len_byte_array(file, idx, from, until, sel);
     break;
   case Type::BOOLEAN:
     write_present_boolean(file, idx, num_present, from, until);

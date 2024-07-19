@@ -298,6 +298,7 @@ void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
   int32_t min = -max;
   for (uint64_t i = from; i < until; i++) {
     int32_t val = INTEGER(col)[i];
+    if (val == NA_INTEGER) continue;
     if (val <= min) {
       Rf_error(
         "Value too small for INT32 DECIMAL with precision %d, scale %d: %d",
@@ -323,8 +324,16 @@ void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
     bit_width = sel.logicalType.INTEGER.bitWidth;
   }
   if (bit_width == 32) {
-    uint64_t len = until - from;
-    file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
+    if (sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
+      uint64_t len = until - from;
+      file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
+    } else {
+      for (uint64_t i = from; i < until; i++) {
+        int32_t val = INTEGER(col)[i];
+        if (val == NA_INTEGER) continue;
+        file.write((const char*) &val, sizeof(int32_t));
+      }
+    }
   } else {
     int min, max;
     if (bit_width == 8) {
@@ -337,6 +346,7 @@ void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
     min = is_signed ? -max-1 : 0;
     for (uint64_t i = from; i < until; i++) {
       int32_t val = INTEGER(col)[i];
+      if (val == NA_INTEGER) continue;
       const char *w = val < min ? "small" : (val > max ? "large" : "");
       if (w[0]) {
         Rf_error(
@@ -362,6 +372,7 @@ void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
   double min = -max;
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
+    if (R_IsNA(val)) continue;
     if (val <= min) {
       Rf_error(
         "Value too small for INT32 DECIMAL with precision %d, scale %d: %f",
@@ -404,6 +415,7 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
     min = -max - 1;
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
+      if (R_IsNA(val)) continue;
       const char *w = val < min ? "small" : (val > max ? "large" : "");
       if (w[0]) {
         Rf_error("Integer value too %s for INT with bit width %d: %f"
@@ -430,6 +442,7 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
     }
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
+      if (R_IsNA(val)) continue;
       if (val > max) {
         Rf_error("Integer value too large for INT with bit width %d: %f"
                  " at column %u, row %" PRIu64 ".",
@@ -821,7 +834,9 @@ void RParquetOutFile::write_fixed_len_byte_array(
     }
     char u[16], tmp[18];  // need to be longer, for easier conversion
     for (uint64_t i = from; i < until; i++) {
-      const char *c = CHAR(STRING_ELT(col, i));
+      SEXP s = STRING_ELT(col, i);
+      if (s == NA_STRING) continue;
+      const char *c = CHAR(s);
       if (!parse_uuid(c, u, tmp)) {
         Rf_error("Invalid UUID value in column %d, row %" PRIu64,
         idx + 1, i + 1);
@@ -850,7 +865,9 @@ void RParquetOutFile::write_fixed_len_byte_array(
       );
     }
     for (uint64_t i = from; i < until; i++) {
-      const char *c = CHAR(STRING_ELT(col, i));
+      SEXP s = STRING_ELT(col, i);
+      if (s == NA_STRING) continue;
+      const char *c = CHAR(s);
       uint32_t len1 = strlen(c);
       if (len1 != type_length) {
         Rf_error(

@@ -696,7 +696,7 @@
     Output
           name r_type                 type type_length repetition_type converted_type
       1 schema   <NA>                 <NA>          NA            <NA>           <NA>
-      2      d    raw FIXED_LEN_BYTE_ARRAY           3        REQUIRED           <NA>
+      2      d    raw FIXED_LEN_BYTE_ARRAY           3        OPTIONAL           <NA>
         logical_type num_children scale precision field_id
       1                         1    NA        NA       NA
       2                        NA    NA        NA       NA
@@ -707,6 +707,7 @@
       1 66, 6f, 6f
       2 62, 61, 72
       3 61, 61, 61
+      4       NULL
 
 # write_parquet -> STRING
 
@@ -715,7 +716,7 @@
     Output
           name    r_type       type type_length repetition_type converted_type
       1 schema      <NA>       <NA>          NA            <NA>           <NA>
-      2      d character BYTE_ARRAY          NA        REQUIRED           UTF8
+      2      d character BYTE_ARRAY          NA        OPTIONAL           UTF8
         logical_type num_children scale precision field_id
       1                         1    NA        NA       NA
       2       STRING           NA    NA        NA       NA
@@ -726,6 +727,7 @@
       1    foo
       2    bar
       3 foobar
+      4   <NA>
 
 # write_parquet -> ENUM
 
@@ -734,7 +736,7 @@
     Output
           name    r_type       type type_length repetition_type converted_type
       1 schema      <NA>       <NA>          NA            <NA>           <NA>
-      2      d character BYTE_ARRAY          NA        REQUIRED           ENUM
+      2      d character BYTE_ARRAY          NA        OPTIONAL           ENUM
         logical_type num_children scale precision field_id
       1                         1    NA        NA       NA
       2         ENUM           NA    NA        NA       NA
@@ -745,6 +747,7 @@
       1    foo
       2    bar
       3 foobar
+      4   <NA>
 
 ---
 
@@ -753,7 +756,7 @@
     Output
           name    r_type       type type_length repetition_type converted_type
       1 schema    factor       <NA>          NA            <NA>           <NA>
-      2      d character BYTE_ARRAY          NA        REQUIRED           ENUM
+      2      d character BYTE_ARRAY          NA        OPTIONAL           ENUM
         logical_type num_children scale precision field_id
       1                         1    NA        NA       NA
       2         ENUM           NA    NA        NA       NA
@@ -764,6 +767,7 @@
       1    foo
       2    bar
       3 foobar
+      4   <NA>
 
 # write_parquet -> DECIMAL INT32
 
@@ -772,7 +776,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED        DECIMAL DECIMAL,....
+      2      d integer INT32          NA        OPTIONAL        DECIMAL DECIMAL,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA     0         3       NA
@@ -791,6 +795,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -815,7 +820,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED        DECIMAL DECIMAL,....
+      2      d integer INT32          NA        OPTIONAL        DECIMAL DECIMAL,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA     2         3       NA
@@ -834,6 +839,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -858,7 +864,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED        DECIMAL DECIMAL,....
+      2      d integer INT32          NA        OPTIONAL        DECIMAL DECIMAL,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA     1         3       NA
@@ -877,6 +883,7 @@
       9   1.5
       10  2.0
       11  2.5
+      12   NA
 
 ---
 
@@ -901,7 +908,7 @@
     Output
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2      d integer INT32          NA        REQUIRED        DECIMAL DECIMAL,....
+      2      d integer INT32          NA        OPTIONAL        DECIMAL DECIMAL,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA     2         3       NA
@@ -920,6 +927,7 @@
       9   1.5
       10  2.0
       11  2.5
+      12   NA
 
 ---
 
@@ -944,7 +952,7 @@
     Output
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2      d double INT64          NA        REQUIRED        DECIMAL DECIMAL,....
+      2      d double INT64          NA        OPTIONAL        DECIMAL DECIMAL,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA     0         3       NA
@@ -963,6 +971,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -987,7 +996,7 @@
     Output
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2      d double INT64          NA        REQUIRED        DECIMAL DECIMAL,....
+      2      d double INT64          NA        OPTIONAL        DECIMAL DECIMAL,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA     2         3       NA
@@ -1006,6 +1015,7 @@
       9   3
       10  4
       11  5
+      12 NA
 
 ---
 
@@ -1030,7 +1040,7 @@
     Output
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2      d double INT64          NA        REQUIRED        DECIMAL DECIMAL,....
+      2      d double INT64          NA        OPTIONAL        DECIMAL DECIMAL,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA     1         3       NA
@@ -1049,6 +1059,7 @@
       9   1.5
       10  2.0
       11  2.5
+      12   NA
 
 ---
 
@@ -1073,7 +1084,7 @@
     Output
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2      d double INT64          NA        REQUIRED        DECIMAL DECIMAL,....
+      2      d double INT64          NA        OPTIONAL        DECIMAL DECIMAL,....
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA     2         3       NA
@@ -1092,6 +1103,7 @@
       9   1.5
       10  2.0
       11  2.5
+      12   NA
 
 ---
 

@@ -143,7 +143,7 @@ test_that("write_parquet -> FIXED_LEN_BYTE_ARRAY", {
   on.exit(unlink(tmp), add = TRUE)
 
   # character -> FIXED_LEN_BYTE_ARRAY
-  d <- data.frame(d = c("foo", "bar", "aaa"))
+  d <- data.frame(d = c("foo", "bar", "aaa", NA))
   write_parquet(
     d, tmp,
     schema = parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
@@ -159,7 +159,7 @@ test_that("write_parquet -> STRING", {
   on.exit(unlink(tmp), add = TRUE)
 
   # character -> STRING
-  d <- data.frame(d = c("foo", "bar", "foobar"))
+  d <- data.frame(d = c("foo", "bar", "foobar", NA))
   write_parquet(d, tmp, schema = parquet_schema("STRING"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -172,7 +172,7 @@ test_that("write_parquet -> ENUM", {
   on.exit(unlink(tmp), add = TRUE)
 
   # character -> ENUM
-  d <- data.frame(d = c("foo", "bar", "foobar"))
+  d <- data.frame(d = c("foo", "bar", "foobar", NA))
   write_parquet(d, tmp, schema = parquet_schema("ENUM"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -180,7 +180,7 @@ test_that("write_parquet -> ENUM", {
   })
 
   # factor -> ENUM
-  d <- data.frame(d = as.factor(c("foo", "bar", "foobar")))
+  d <- data.frame(d = as.factor(c("foo", "bar", "foobar", NA)))
   write_parquet(d, tmp, schema = parquet_schema("ENUM"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -193,7 +193,7 @@ test_that("write_parquet -> DECIMAL INT32", {
   on.exit(unlink(tmp), add = TRUE)
 
   # integer -> DECIMAL INT32
-  d <- data.frame(d = -5:5)
+  d <- data.frame(d = c(-5:5, NA))
   schema <- parquet_schema(list(
     "DECIMAL",
     primitive_type = "INT32",
@@ -235,7 +235,7 @@ test_that("write_parquet -> DECIMAL INT32", {
   })
 
   # double -> DECIMAL INT32
-  d <- data.frame(d = -5:5 / 2)
+  d <- data.frame(d = c(-5:5 / 2, NA))
   schema <- parquet_schema(list(
     "DECIMAL",
     primitive_type = "INT32",
@@ -282,7 +282,7 @@ test_that("write_parquet -> DECIMAL INT64", {
   on.exit(unlink(tmp), add = TRUE)
 
   # integer -> DECIMAL INT64
-  d <- data.frame(d = -5:5)
+  d <- data.frame(d = c(-5:5, NA))
   schema <- parquet_schema(list(
     "DECIMAL",
     primitive_type = "INT64",
@@ -324,7 +324,7 @@ test_that("write_parquet -> DECIMAL INT64", {
   })
 
   # double -> DECIMAL INT64
-  d <- data.frame(d = -5:5 / 2)
+  d <- data.frame(d = c(-5:5 / 2, NA))
   schema <- parquet_schema(list(
     "DECIMAL",
     primitive_type = "INT64",
