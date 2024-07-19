@@ -186,6 +186,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
       if ((s_ele->__isset.logicalType &&
            (s_ele->logicalType.__isset.STRING ||
             s_ele->logicalType.__isset.ENUM ||
+            s_ele->logicalType.__isset.JSON ||
             s_ele->logicalType.__isset.UUID)) ||
           (s_ele->__isset.converted_type &&
            s_ele->converted_type == parquet::ConvertedType::UTF8)) {

@@ -572,3 +572,15 @@ test_that("double to INT(64, *)", {
     write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
   })
 })
+
+test_that("JSON", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(d = c("foo", "bar", "foobar"))
+  write_parquet(d, tmp, schema = parquet_schema("JSON"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+})

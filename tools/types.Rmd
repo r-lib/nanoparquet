@@ -105,7 +105,8 @@ types:
    a list of raw vectors. Missing values are denoted by `NULL`.
 1. `INTERVAL` is a fixed length byte array, and nanoparquet reads it as
    a list of raw vectors. Missing values are denoted by `NULL`.
-1. `JSON` and `BSON` are read as character vectors (`STRSXP`).
+1. `JSON` columns are read as character vectors (`STRSXP`).
+1. `BSON` columns are read as raw vectors (`RAWSXP`).
 
 These types are not yet supported:
 

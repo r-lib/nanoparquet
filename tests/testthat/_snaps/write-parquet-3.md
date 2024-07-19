@@ -1587,3 +1587,22 @@
       Error in `write_parquet()`:
       ! Negative values are not allowed in unsigned INT column:-1.000000 at column 1, row 2.
 
+# JSON
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type       type type_length repetition_type converted_type
+      1 schema   <NA>       <NA>          NA            <NA>           <NA>
+      2      d    raw BYTE_ARRAY          NA        REQUIRED           JSON
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2         JSON           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+             d
+      1    foo
+      2    bar
+      3 foobar
+

@@ -115,7 +115,8 @@ issue that we will fix.
 a list of raw vectors. Missing values are denoted by \code{NULL}.
 \item \code{INTERVAL} is a fixed length byte array, and nanoparquet reads it as
 a list of raw vectors. Missing values are denoted by \code{NULL}.
-\item \code{JSON} and \code{BSON} are read as character vectors (\code{STRSXP}).
+\item \code{JSON} columns are read as character vectors (\code{STRSXP}).
+\item \code{BSON} columns are read as raw vectors (\code{RAWSXP}).
 }
 
 These types are not yet supported:

@@ -44,6 +44,9 @@
 * `read_parquet()` now reads `DECIMAL` values correctly from `INT32`
   and `INT64` columns if their `scale` is not zero.
 
+* `read_parquet()` now reads `JSON` columns as character vectors, as
+  documented.
+
 # nanoparquet 0.3.1
 
 * This version fixes a `write_parquet()` crash (#73).
