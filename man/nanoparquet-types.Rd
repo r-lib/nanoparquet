@@ -56,7 +56,9 @@ non-default mappings are:
 - `integer` to `DECIAML` & `INT32`,
 - `integer` to `DECIMAL` & `INT64`,
 - `double` to `DECIAML` & `INT32`,
-- `double` to `DECIMAL` & `INT64`.
+- `double` to `DECIMAL` & `INT64`,
+- `integer` to `INT(8, *)`, `INT(16, *)`, INT(32, signed)`,
+- `double` to `INT(*, *)`.
 }\if{html}{\out{</div>}}
 }
 

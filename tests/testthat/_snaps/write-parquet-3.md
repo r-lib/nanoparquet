@@ -146,19 +146,6 @@
       write_parquet(d, tmp, schema = parquet_schema("INT32"))
     Condition
       Error in `write_parquet()`:
-      ! Cannot write a double vector as a Parquet INT32 type.
-    Code
-      write_parquet(d2, tmp, schema = parquet_schema("INT32"))
-    Condition
-      Error in `write_parquet()`:
-      ! Cannot convert a double vector to Parquet type INT32.
-
----
-
-    Code
-      write_parquet(d, tmp, schema = parquet_schema("INT32"))
-    Condition
-      Error in `write_parquet()`:
       ! Cannot write a logical vector as a Parquet INT32 type.
 
 ---
@@ -1275,4 +1262,328 @@
     Condition
       Error in `write_parquet()`:
       ! Integer value too small for UINT with bit width 16: -1 at column 1, row 2:
+
+# double to smaller integers
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name  r_type  type type_length repetition_type converted_type logical_type
+      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
+      2      d integer INT32          NA        REQUIRED          INT_8 INT, 8, TRUE
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+          d
+      1  -5
+      2  -4
+      3  -3
+      4  -2
+      5  -1
+      6   0
+      7   1
+      8   2
+      9   3
+      10  4
+      11  5
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("INT_8"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too large for INT with bit width 8: 128.000000 at column 1, row 2:
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("INT_8"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too small for INT with bit width 8: -129.000000 at column 1, row 3:
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name  r_type  type type_length repetition_type converted_type logical_type
+      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
+      2      d integer INT32          NA        REQUIRED         INT_16 INT, 16,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+          d
+      1  -5
+      2  -4
+      3  -3
+      4  -2
+      5  -1
+      6   0
+      7   1
+      8   2
+      9   3
+      10  4
+      11  5
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("INT_16"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too large for INT with bit width 16: 32768.000000 at column 1, row 2:
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("INT_16"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too small for INT with bit width 16: -32769.000000 at column 1, row 3:
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name  r_type  type type_length repetition_type converted_type logical_type
+      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
+      2      d integer INT32          NA        REQUIRED         INT_32 INT, 32,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+          d
+      1  -5
+      2  -4
+      3  -3
+      4  -2
+      5  -1
+      6   0
+      7   1
+      8   2
+      9   3
+      10  4
+      11  5
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("INT_32"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too large for INT with bit width 32: 2147483648.000000 at column 1, row 2:
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("INT_32"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too small for INT with bit width 32: -2147483649.000000 at column 1, row 2:
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name  r_type  type type_length repetition_type converted_type logical_type
+      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
+      2      d integer INT32          NA        REQUIRED         UINT_8 INT, 8, ....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+        d
+      1 0
+      2 1
+      3 2
+      4 3
+      5 4
+      6 5
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too large for INT with bit width 8: 256.000000 at column 1, row 2.
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
+    Condition
+      Error in `write_parquet()`:
+      ! Negative values are not allowed in unsigned INT column:-1.000000 at column 1, row 2.
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name  r_type  type type_length repetition_type converted_type logical_type
+      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
+      2      d integer INT32          NA        REQUIRED        UINT_16 INT, 16,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+        d
+      1 0
+      2 1
+      3 2
+      4 3
+      5 4
+      6 5
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too large for INT with bit width 16: 65536.000000 at column 1, row 2.
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
+    Condition
+      Error in `write_parquet()`:
+      ! Negative values are not allowed in unsigned INT column:-1.000000 at column 1, row 2.
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name  r_type  type type_length repetition_type converted_type logical_type
+      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
+      2      d integer INT32          NA        REQUIRED        UINT_32 INT, 32,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+        d
+      1 0
+      2 1
+      3 2
+      4 3
+      5 4
+      6 5
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("UINT_32"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too large for INT with bit width 32: 4294967296.000000 at column 1, row 2.
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("UINT_32"))
+    Condition
+      Error in `write_parquet()`:
+      ! Negative values are not allowed in unsigned INT column:-1.000000 at column 1, row 2.
+
+# double to INT(64, *)
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type  type type_length repetition_type converted_type logical_type
+      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
+      2      d double INT64          NA        REQUIRED         INT_64 INT, 64,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+          d
+      1  -5
+      2  -4
+      3  -3
+      4  -2
+      5  -1
+      6   0
+      7   1
+      8   2
+      9   3
+      10  4
+      11  5
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("INT_64"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too large for INT with bit width 64: 18446744073709551616.000000 at column 1, row 2.
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("INT_64"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too small for INT with bit width 64: -18446744073709551616.000000 at column 1, row 2.
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type  type type_length repetition_type converted_type logical_type
+      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
+      2      d double INT64          NA        REQUIRED        UINT_64 INT, 64,....
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+        d
+      1 0
+      2 1
+      3 2
+      4 3
+      5 4
+      6 5
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
+    Condition
+      Error in `write_parquet()`:
+      ! Integer value too large for unsigned INT with bit width 64: 36893488147419103232.000000 at column 1, row 2.
+
+---
+
+    Code
+      write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
+    Condition
+      Error in `write_parquet()`:
+      ! Negative values are not allowed in unsigned INT column:-1.000000 at column 1, row 2.
 

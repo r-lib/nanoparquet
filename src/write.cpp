@@ -326,7 +326,7 @@ void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
   }
 }
 
-void write_double_int32_dec(std::ostream & file, SEXP col, uint64_t from,
+void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
                             uint64_t until, int32_t precision,
                             int32_t scale) {
 
@@ -353,6 +353,75 @@ void write_double_int32_dec(std::ostream & file, SEXP col, uint64_t from,
   }
 }
 
+void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
+                        uint64_t from, uint64_t until,
+                        parquet::SchemaElement &sel) {
+  bool is_signed = TRUE;
+  int bit_width = 32;
+  if (sel.__isset.logicalType && sel.logicalType.__isset.INTEGER) {
+    is_signed = sel.logicalType.INTEGER.isSigned;
+    bit_width = sel.logicalType.INTEGER.bitWidth;
+  }
+  if (is_signed) {
+    int32_t min, max;
+    switch (bit_width) {
+    case 8:
+      max = 0x7f;
+      break;
+    case 16:
+      max = 0x7fff;
+      break;
+    case 32:
+      max = 0x7fffffff;
+      break;
+    default:
+      Rf_error("Invalid bit width for INT32: %d", bit_width);
+    }
+    min = -max - 1;
+    for (uint64_t i = from; i < until; i++) {
+      double val = REAL(col)[i];
+      const char *w = val < min ? "small" : (val > max ? "large" : "");
+      if (w[0]) {
+        Rf_error("Integer value too %s for INT with bit width %d: %f"
+                 " at column %u, row %" PRIu64 ":",
+                 w, bit_width, val, idx + 1, i + 1);
+      }
+      int32_t ival = val;
+      file.write((const char *)&ival, sizeof(int32_t));
+    }
+  } else {
+    uint32_t max;
+    switch (bit_width) {
+    case 8:
+      max = 0xff;
+      break;
+    case 16:
+      max = 0xffff;
+      break;
+    case 32:
+      max = 0xffffffff;
+      break;
+    default:
+      Rf_error("Invalid bit width for INT32: %d", bit_width);
+    }
+    for (uint64_t i = from; i < until; i++) {
+      double val = REAL(col)[i];
+      if (val > max) {
+        Rf_error("Integer value too large for INT with bit width %d: %f"
+                 " at column %u, row %" PRIu64 ".",
+                 bit_width, val, idx + 1, i + 1);
+      }
+      if (val < 0 ) {
+        Rf_error("Negative values are not allowed in unsigned INT column:"
+                 "%f at column %u, row %"  PRIu64 ".",
+                 val, idx + 1, i + 1);
+      }
+      int32_t ival = val;
+      file.write((const char *)&ival, sizeof(int32_t));
+    }
+  }
+}
+
 void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
                                   uint64_t from, uint64_t until,
                                   parquet::SchemaElement &sel) {
@@ -374,10 +443,7 @@ void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
     if (isdec) {
       write_double_int32_dec(file, col, from, until, precision, scale);
     } else {
-      Rf_error(
-        "Cannot write %s as a Parquet INT32 type.",
-        type_names[TYPEOF(col)]
-      );
+      write_double_int32(file, col, idx, from, until, sel);
     }
     break;
   default:
@@ -453,29 +519,70 @@ void write_integer_int64(std::ostream &file, SEXP col, uint64_t from,
   }
 }
 
- void write_double_int64(std::ostream &file, SEXP col, uint64_t from,
-                         uint64_t until) {
-   if (Rf_inherits(col, "POSIXct")) {
+void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
+                        uint64_t from, uint64_t until,
+                        parquet::SchemaElement &sel) {
+  if (Rf_inherits(col, "POSIXct")) {
     // TODO: check logical type
     // need to convert seconds to microseconds
     for (uint64_t i = from; i < until; i++) {
       int64_t el = REAL(col)[i] * 1000 * 1000;
       file.write((const char *)&el, sizeof(int64_t));
     }
-   } else if (Rf_inherits(col, "difftime")) {
+  } else if (Rf_inherits(col, "difftime")) {
     // TODO: check logical type
     // need to convert seconds to nanoseconds
     for (uint64_t i = from; i < until; i++) {
       int64_t el = REAL(col)[i] * 1000 * 1000 * 1000;
       file.write((const char *)&el, sizeof(int64_t));
     }
-   } else {
-    for (uint64_t i = from; i < until; i++) {
-      int64_t el = REAL(col)[i];
-      file.write((const char *)&el, sizeof(int64_t));
+  } else {
+    bool is_signed = TRUE;
+    int bit_width = 64;
+    if (sel.__isset.logicalType && sel.logicalType.__isset.INTEGER) {
+      is_signed = sel.logicalType.INTEGER.isSigned;
+      bit_width = sel.logicalType.INTEGER.bitWidth;
     }
-   }
- }
+    if (bit_width != 64) {
+      Rf_error("Invalid bit width for INT64 INT type: %d", bit_width);
+    }
+    if (is_signed) {
+      double min = -pow(2, 63), max = -(min+1);
+      for (uint64_t i = from; i < until; i++) {
+        double val = REAL(col)[i];
+        const char *w = val < min ? "small" : (val > max ? "large" : "");
+        if (w[0]) {
+          Rf_error(
+            "Integer value too %s for %sINT with bit width %d: %f"
+            " at column %u, row %" PRIu64 ".",
+            w, (is_signed ? "" : "U"), bit_width, val, idx + 1, i + 1
+          );
+        }
+        int64_t el = val;
+        file.write((const char *)&el, sizeof(int64_t));
+      }
+    } else {
+      double max = pow(2, 64) - 1;
+      for (uint64_t i = from; i < until; i++) {
+        double val = REAL(col)[i];
+        if (val > max) {
+          Rf_error(
+            "Integer value too large for unsigned INT with bit width %d: %f"
+            " at column %u, row %" PRIu64 ".",
+            bit_width, val, idx + 1, i + 1
+          );
+        }
+        if (val < 0) {
+          Rf_error("Negative values are not allowed in unsigned INT column:"
+                   "%f at column %u, row %"  PRIu64 ".",
+                   val, idx + 1, i + 1);
+        }
+        uint64_t el = val;
+        file.write((const char *)&el, sizeof(uint64_t));
+      }
+    }
+  }
+}
 
 void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
                                   uint64_t from, uint64_t until,
@@ -499,7 +606,7 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
     if (isdec) {
       write_double_int64_dec(file, col, from, until, precision, scale);
     } else {
-      write_double_int64(file, col, from, until);
+      write_double_int64(file, col, idx, from, until, sel);
     }
     break;
   default:

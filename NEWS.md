@@ -34,7 +34,9 @@
     - `integer` to `DECIMAL`, `INT32`,
     - `integer` to `DECIMAL`, `INT64`,
     - `double` to `DECIMAL`, `INT32`,
-    - `double` to `DECIMAL`, `INT64`.
+    - `double` to `DECIMAL`, `INT64`,
+    - `integer` to `INT(8, *)`, `INT(16, *)`, INT(32, signed)`,
+    - `double` to `INT(*, *)`.
 
 * `write_parquet(file = ":raw:")` now works correctly for larger data
   frames (#77).

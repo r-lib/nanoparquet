@@ -16,14 +16,6 @@ test_that("write_parquet -> INT32", {
     as.data.frame(read_parquet(tmp))
   })
 
-  # double -> INT32
-  d <- data.frame(d = 1:10/2)
-  d2 <- data.frame(d = rep(1:2, 50)/ 2)
-  expect_snapshot(error = TRUE, {
-    write_parquet(d, tmp, schema = parquet_schema("INT32"))
-    write_parquet(d2, tmp, schema = parquet_schema("INT32"))
-  })
-
   # logical -> INT32
   d <- data.frame(d = (1:10 %% 2 == 0))
   expect_snapshot(error = TRUE, {
@@ -440,5 +432,143 @@ test_that("smaller integers", {
   d <- data.frame(d = c(0L, -1L))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
+  })
+})
+
+test_that("double to smaller integers", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(d = as.double(-5:5))
+  write_parquet(d, tmp, schema = parquet_schema("INT_8"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = as.double(127:128))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_8"))
+  })
+  d <- data.frame(d = -as.double((127:129)))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_8"))
+  })
+
+  d <- data.frame(d = as.double(-5:5))
+  write_parquet(d, tmp, schema = parquet_schema("INT_16"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = as.double(32767:32768))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_16"))
+  })
+  d <- data.frame(d = -as.double(32767:32769))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_16"))
+  })
+
+  d <- data.frame(d = as.double(-5:5))
+  write_parquet(d, tmp, schema = parquet_schema("INT_32"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = c(2^31-1, 2^31))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_32"))
+  })
+  d <- data.frame(d = c(-2^31, -2^31 - 1))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_32"))
+  })
+
+  d <- data.frame(d = as.double(0:5))
+  write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = as.double(255:256))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
+  })
+  d <- data.frame(d = c(0, -1))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_8"))
+  })
+
+  d <- data.frame(d = as.double(0:5))
+  write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = as.double(65535:65536))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
+  })
+  d <- data.frame(d = c(0, -1))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_16"))
+  })
+
+  d <- data.frame(d = as.double(0:5))
+  write_parquet(d, tmp, schema = parquet_schema("UINT_32"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = c(2^32-1, 2^32))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_32"))
+  })
+  d <- data.frame(d = c(0, -1))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_32"))
+  })
+})
+
+test_that("double to INT(64, *)", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(d = as.double(-5:5))
+  write_parquet(d, tmp, schema = parquet_schema("INT_64"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = c(2^63-1, 2^64))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_64"))
+  })
+  d <- data.frame(d = c(-2^63, -2^64 - 1))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("INT_64"))
+  })
+
+  d <- data.frame(d = as.double(0:5))
+  write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = c(2^64-1, 2^65))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
+  })
+  d <- data.frame(d = c(0, -1))
+  expect_snapshot(error = TRUE, {
+    write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
   })
 })
