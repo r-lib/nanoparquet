@@ -103,11 +103,11 @@ public:
   void write_int64(std::ostream &file, uint32_t idx, uint64_t from,
                    uint64_t until, parquet::SchemaElement &sel);
   void write_int96(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until);
+                   uint64_t until, parquet::SchemaElement &sel);
   void write_float(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until);
+                   uint64_t until, parquet::SchemaElement &sel);
   void write_double(std::ostream &file, uint32_t idx, uint64_t from,
-                    uint64_t until);
+                    uint64_t until, parquet::SchemaElement &sel);
   void write_byte_array(std::ostream &file, uint32_t id, uint64_t from,
                         uint64_t until, parquet::SchemaElement &sel);
   void write_fixed_len_byte_array(std::ostream &file, uint32_t id,
@@ -122,11 +122,6 @@ public:
 
   uint32_t write_present(std::ostream &file, uint32_t idx, uint64_t from,
                          uint64_t until);
-  void write_present_int32(std::ostream &file, uint32_t idx,
-                           uint32_t num_present, uint64_t from, uint64_t until);
-  void write_present_double(std::ostream &file, uint32_t idx,
-                            uint32_t num_present, uint64_t from,
-                            uint64_t until);
   void write_present_byte_array(std::ostream &file, uint32_t idx,
                                 uint32_t num_present, uint64_t from,
                                 uint64_t until);
@@ -666,7 +661,8 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_int96(std::ostream &file, uint32_t idx,
-                                  uint64_t from, uint64_t until) {
+                                  uint64_t from, uint64_t until,
+                                  parquet::SchemaElement &sel) {
   // This is double in R, so we need to convert
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
@@ -700,7 +696,8 @@ void RParquetOutFile::write_int96(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
-                                  uint64_t from, uint64_t until) {
+                                  uint64_t from, uint64_t until,
+                                  parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != REALSXP) {
     Rf_error(
@@ -720,7 +717,8 @@ void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
-                                   uint64_t from, uint64_t until) {
+                                   uint64_t from, uint64_t until,
+                                   parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != REALSXP) {
     Rf_error(
@@ -731,8 +729,16 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
   if (until > Rf_xlength(col)) {
     Rf_error("Internal nanoparquet error, row index too large");
   }
-  uint64_t len = until - from;
-  file.write((const char *) (REAL(col) + from), sizeof(double) * len);
+  if (sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
+    uint64_t len = until - from;
+    file.write((const char *) (REAL(col) + from), sizeof(double) * len);
+  } else {
+    for (uint64_t i = from; i < until; i++) {
+      double val = REAL(col)[i];
+      if (R_IsNA(val)) continue;
+      file.write((const char*) &val, sizeof(double));
+    }
+  }
 }
 
 void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
@@ -985,56 +991,6 @@ uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
   file.write(present.ptr, len * sizeof(int));
 
   return num_pres;
-}
-
-void RParquetOutFile::write_present_int32(
-  std::ostream &file,
-  uint32_t idx,
-  uint32_t num_present,
-  uint64_t from,
-  uint64_t until) {
-
-  SEXP col = VECTOR_ELT(df, idx);
-  if (TYPEOF(col) != INTSXP) {
-    Rf_error(
-      "Cannot write %s as a Parquet INT32 type.",
-      type_names[TYPEOF(col)]
-    );
-  }
-  if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
-  }
-  for (uint64_t i = from; i < until; i++) {
-    int el = INTEGER(col)[i];
-    if (el != NA_INTEGER) {
-      file.write((const char*) &el, sizeof(int));
-    }
-  }
-}
-
-void RParquetOutFile::write_present_double(
-  std::ostream &file,
-  uint32_t idx,
-  uint32_t num_present,
-  uint64_t from,
-  uint64_t until) {
-
-  SEXP col = VECTOR_ELT(df, idx);
-  if (TYPEOF(col) != REALSXP) {
-    Rf_error(
-      "Cannot write %s as a Parquet DOUBLE type.",
-      type_names[TYPEOF(col)]
-    );
-  }
-  if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
-  }
-  for (uint64_t i = from; i < until; i++) {
-    double el = REAL(col)[i];
-    if (!R_IsNA(el)) {
-      file.write((const char*) &el, sizeof(double));
-    }
-  }
 }
 
 void RParquetOutFile::write_present_boolean_as_int(std::ostream &file,

@@ -248,13 +248,13 @@ void ParquetOutFile::write_data_(
     write_int64(file, idx, from, until, se);
     break;
   case Type::INT96:
-    write_int96(file, idx, from, until);
+    write_int96(file, idx, from, until, se);
     break;
   case Type::FLOAT:
-    write_float(file, idx, from, until);
+    write_float(file, idx, from, until, se);
     break;
   case Type::DOUBLE:
-    write_double(file, idx, from, until);
+    write_double(file, idx, from, until, se);
     break;
   case Type::BYTE_ARRAY:
     write_byte_array(file, idx, from, until, se);
@@ -292,29 +292,29 @@ void ParquetOutFile::write_present_data_(
   uint64_t until) {
 
   streampos cb_start = file.tellp();
-  parquet::SchemaElement &sel = schemas[idx + 1];
-  parquet::Type::type type = sel.type;
+  parquet::SchemaElement &se = schemas[idx + 1];
+  parquet::Type::type type = se.type;
   switch (type) {
   case Type::INT32:
-    write_int32(file, idx, from, until, sel);
+    write_int32(file, idx, from, until, se);
     break;
   case Type::INT64:
-    write_int64(file, idx, from, until, sel);
+    write_int64(file, idx, from, until, se);
     break;
   case Type::INT96:
-    write_int96(file, idx, from, until);
+    write_int96(file, idx, from, until, se);
     break;
   case Type::FLOAT:
-    write_float(file, idx, from, until);
+    write_float(file, idx, from, until, se);
     break;
   case Type::DOUBLE:
-    write_present_double(file, idx, num_present, from, until);
+    write_double(file, idx, from, until, se);
     break;
   case Type::BYTE_ARRAY:
     write_present_byte_array(file, idx, num_present, from, until);
     break;
   case Type::FIXED_LEN_BYTE_ARRAY:
-    write_fixed_len_byte_array(file, idx, from, until, sel);
+    write_fixed_len_byte_array(file, idx, from, until, se);
     break;
   case Type::BOOLEAN:
     write_present_boolean(file, idx, num_present, from, until);
