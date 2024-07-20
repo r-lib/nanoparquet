@@ -52,7 +52,15 @@ non-default mappings are:
 - `double` to `FLOAT`,
 - `character` to `FIXED_LEN_BYTE_ARRAY`,
 - `character` to `ENUM`,
-- `factor` to `ENUM`.
+- `factor` to `ENUM`,
+- `integer` to `DECIAML` & `INT32`,
+- `integer` to `DECIMAL` & `INT64`,
+- `double` to `DECIAML` & `INT32`,
+- `double` to `DECIMAL` & `INT64`,
+- `integer` to `INT(8, *)`, `INT(16, *)`, INT(32, signed)`,
+- `double` to `INT(*, *)`,
+- `character` to `UUID`,
+- `double` to `FLOAT16`.
 }\if{html}{\out{</div>}}
 }
 
@@ -85,6 +93,7 @@ precision.
 \item The \code{ENUM} logical type is read as a character vector.
 \item The \code{UUID} logical type is read as a character vector that uses the
 \code{00112233-4455-6677-8899-aabbccddeeff} form.
+\item The \code{FLOAT16} logical type is read as a real vector (\code{READLSXP}).
 \item \code{BYTE_ARRAY} is read as a \emph{factor} object if the file was written
 by Arrow and the original data type of the column was a factor.
 (See 'The Arrow metadata below.)
@@ -105,11 +114,10 @@ issue that we will fix.
 \item \code{INT(64, false)} is read as a real vector (\code{REALSXP}). Large
 positive values may overflow into negative values, this is a known
 issue that we will fix.
-\item \code{FLOAT16} is a fixed length byte array, and nanoparquet reads it as
-a list of raw vectors. Missing values are denoted by \code{NULL}.
 \item \code{INTERVAL} is a fixed length byte array, and nanoparquet reads it as
 a list of raw vectors. Missing values are denoted by \code{NULL}.
-\item \code{JSON} and \code{BSON} are read as character vectors (\code{STRSXP}).
+\item \code{JSON} columns are read as character vectors (\code{STRSXP}).
+\item \code{BSON} columns are read as raw vectors (\code{RAWSXP}).
 }
 
 These types are not yet supported:

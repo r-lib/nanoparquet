@@ -409,11 +409,11 @@
       as.data.frame(bss)[1:5, ]
     Output
         float16_plain float16_byte_stream_split float_plain float_byte_stream_split
-      1        27, 49                    27, 49   10.337575               10.337575
-      2        7b, 48                    7b, 48   11.407482               11.407482
-      3        60, 49                    60, 49   10.090585               10.090585
-      4        78, 49                    78, 49   10.643939               10.643939
-      5        06, 48                    06, 48    7.949828                7.949828
+      1     10.304688                 10.304688   10.337575               10.337575
+      2      8.960938                  8.960938   11.407482               11.407482
+      3     10.750000                 10.750000   10.090585               10.090585
+      4     10.937500                 10.937500   10.643939               10.643939
+      5      8.046875                  8.046875    7.949828                7.949828
         double_plain double_byte_stream_split int32_plain int32_byte_stream_split
       1     9.820389                 9.820389       24191                   24191
       2    10.196776                10.196776       41157                   41157
@@ -494,4 +494,31 @@
       22    22
       23    23
       24    24
+
+# FLOAT16
+
+    Code
+      as.data.frame(read_parquet_schema(pf))
+    Output
+                                     file_name   name r_type                 type
+      1 data/float16_nonzeros_and_nans.parquet schema   <NA>                 <NA>
+      2 data/float16_nonzeros_and_nans.parquet      x    raw FIXED_LEN_BYTE_ARRAY
+        type_length repetition_type converted_type logical_type num_children scale
+      1          NA        REQUIRED           <NA>                         1    NA
+      2           2        OPTIONAL           <NA>      FLOAT16           NA    NA
+        precision field_id
+      1        NA       NA
+      2        NA       NA
+    Code
+      as.data.frame(read_parquet(pf))
+    Output
+          x
+      1  NA
+      2   1
+      3  -2
+      4 NaN
+      5   0
+      6  -1
+      7   0
+      8   2
 

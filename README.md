@@ -20,7 +20,7 @@
 ## Limitations:
 
 * Nested Parquet types are not supported.
-* Some Parquet logical types are not supported: `FLOAT16`, `INTERVAL`,
+* Some Parquet logical types are not supported: `INTERVAL`,
   `UNKNOWN`.
 * Only Snappy, Gzip and Zstd compression is supported.
 * Encryption is not supported.

@@ -31,12 +31,26 @@
     - `character` to `FIXED_LEN_BYTE_ARRAY`,
     - `character` to `ENUM`,
     - `factor` to `ENUM`.
+    - `integer` to `DECIMAL`, `INT32`,
+    - `integer` to `DECIMAL`, `INT64`,
+    - `double` to `DECIMAL`, `INT32`,
+    - `double` to `DECIMAL`, `INT64`,
+    - `integer` to `INT(8, *)`, `INT(16, *)`, INT(32, signed)`,
+    - `double` to `INT(*, *)`,
+    - `character` to `UUID`,
+    - `double` to `FLOAT16`.
 
 * `write_parquet(file = ":raw:")` now works correctly for larger data
   frames (#77).
 
 * `read_parquet()` now reads `DECIMAL` values correctly from `INT32`
   and `INT64` columns if their `scale` is not zero.
+
+* `read_parquet()` now reads `JSON` columns as character vectors, as
+  documented.
+
+* `read_parquet()` now reads the `FLOAT16` logical type as a real (double)
+  vector.
 
 # nanoparquet 0.3.1
 

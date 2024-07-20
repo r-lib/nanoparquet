@@ -95,6 +95,11 @@ SEXP convert_logical_type_(parquet::LogicalType ltype) {
     rtype = PROTECT(Rf_mkNamed(VECSXP, nms)); prot++;
     SET_VECTOR_ELT(rtype, 0, Rf_mkString("MAP"));
 
+  } else if (ltype.__isset.FLOAT16) {
+    const char *nms[] = { "type", "" };
+    rtype = PROTECT(Rf_mkNamed(VECSXP, nms)); prot++;
+    SET_VECTOR_ELT(rtype, 0, Rf_mkString("FLOAT16"));
+
   } else {
     const char *nms[] = { "type", "" };
     rtype = PROTECT(Rf_mkNamed(VECSXP, nms)); prot++;

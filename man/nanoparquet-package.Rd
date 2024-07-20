@@ -24,7 +24,7 @@ to Parquet.
 \subsection{Limitations:}{
 \itemize{
 \item Nested Parquet types are not supported.
-\item Some Parquet logical types are not supported: \code{FLOAT16}, \code{INTERVAL},
+\item Some Parquet logical types are not supported: \code{INTERVAL},
 \code{UNKNOWN}.
 \item Only Snappy, Gzip and Zstd compression is supported.
 \item Encryption is not supported.
