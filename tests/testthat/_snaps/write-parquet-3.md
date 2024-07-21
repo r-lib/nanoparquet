@@ -1693,3 +1693,24 @@
       9   Inf
       10  0.5
 
+# NaN
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type   type type_length repetition_type converted_type logical_type
+      1 schema   <NA>   <NA>          NA            <NA>           <NA>             
+      2      d double DOUBLE          NA        OPTIONAL           <NA>             
+        num_children scale precision field_id
+      1            1    NA        NA       NA
+      2           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+          d
+      1   1
+      2   2
+      3 NaN
+      4   4
+      5   5
+
