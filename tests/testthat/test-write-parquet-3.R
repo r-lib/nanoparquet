@@ -613,3 +613,22 @@ test_that("FLOAT16", {
     as.data.frame(read_parquet(tmp))
   })
 })
+
+test_that("NaN", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(d = c(1, 2, NaN, 4, 5))
+  write_parquet(d, tmp)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+})
+
+test_that("list of RAW to BYTE_ARRAY", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+
+})
