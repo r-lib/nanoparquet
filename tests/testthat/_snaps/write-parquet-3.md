@@ -689,6 +689,26 @@
       90  1
       91 NA
 
+# write_parquet -> BYTE_ARRAY
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type       type type_length repetition_type converted_type
+      1 schema   <NA>       <NA>          NA            <NA>           <NA>
+      2      d    raw BYTE_ARRAY          NA        OPTIONAL           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                             d
+      1             66, 6f, 6f
+      2             62, 61, 72
+      3 66, 6f, 6f, 62, 61, 72
+      4                   NULL
+
 # write_parquet -> FIXED_LEN_BYTE_ARRAY
 
     Code

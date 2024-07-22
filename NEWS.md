@@ -28,6 +28,7 @@
     - `integer` to `INT96`,
     - `double` to `INT96`,
     - `double` to `FLOAT`,
+    - `character` to `BYTE_ARRAY`,
     - `character` to `FIXED_LEN_BYTE_ARRAY`,
     - `character` to `ENUM`,
     - `factor` to `ENUM`.
@@ -35,7 +36,7 @@
     - `integer` to `DECIMAL`, `INT64`,
     - `double` to `DECIMAL`, `INT32`,
     - `double` to `DECIMAL`, `INT64`,
-    - `integer` to `INT(8, *)`, `INT(16, *)`, INT(32, signed)`,
+    - `integer` to `INT(8, *)`, `INT(16, *)`, `INT(32, signed)`,
     - `double` to `INT(*, *)`,
     - `character` to `UUID`,
     - `double` to `FLOAT16`.
