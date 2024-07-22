@@ -138,6 +138,23 @@ test_that("write_parquet -> FLOAT", {
   })
 })
 
+test_that("write_parquet -> BYTE_ARRAY", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  # character -> BYTE_ARRAY
+  d <- data.frame(d = c("foo", "bar", "foobar", NA))
+  write_parquet(
+    d, tmp,
+    schema = parquet_schema("BYTE_ARRAY")
+  )
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+})
+
 test_that("write_parquet -> FIXED_LEN_BYTE_ARRAY", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

@@ -12,7 +12,7 @@ development:
   mode: auto
 
 reference:
-- title: Parquet scehams and type mappings
+- title: Parquet schemas and type mappings
   desc: |
     How nanoparquet maps R data types to Parquet data types
     and vice versa.

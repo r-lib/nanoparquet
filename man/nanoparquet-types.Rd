@@ -45,23 +45,24 @@ to Parquet data types.
 To change the default R to Parquet mapping, use \code{\link[=parquet_schema]{parquet_schema()}} and
 the \code{schema} argument of \code{\link[=write_parquet]{write_parquet()}}. Currently supported
 non-default mappings are:
-
-\if{html}{\out{<div class="sourceCode">}}\preformatted{- `integer` to `INT64`,
-- `integer` to `INT96`,
-- `double` to `INT96`,
-- `double` to `FLOAT`,
-- `character` to `FIXED_LEN_BYTE_ARRAY`,
-- `character` to `ENUM`,
-- `factor` to `ENUM`,
-- `integer` to `DECIAML` & `INT32`,
-- `integer` to `DECIAML` & `INT64`,
-- `double` to `DECIAML` & `INT32`,
-- `double` to `DECIAML` & `INT64`,
-- `integer` to `INT(8, *)`, `INT(16, *)`, INT(32, signed)`,
-- `double` to `INT(*, *)`,
-- `character` to `UUID`,
-- `double` to `FLOAT16`.
-}\if{html}{\out{</div>}}
+\itemize{
+\item \code{integer} to \code{INT64},
+\item \code{integer} to \code{INT96},
+\item \code{double} to \code{INT96},
+\item \code{double} to \code{FLOAT},
+\item \code{character} to \code{BYTE_ARRAY},
+\item \code{character} to \code{FIXED_LEN_BYTE_ARRAY},
+\item \code{character} to \code{ENUM},
+\item \code{factor} to \code{ENUM},
+\item \code{integer} to \code{DECIAML} & \code{INT32},
+\item \code{integer} to \code{DECIAML} & \code{INT64},
+\item \code{double} to \code{DECIAML} & \code{INT32},
+\item \code{double} to \code{DECIAML} & \code{INT64},
+\item \code{integer} to \verb{INT(8, *)}, \verb{INT(16, *)}, \code{INT(32, signed)},
+\item \code{double} to \verb{INT(*, *)},
+\item \code{character} to \code{UUID},
+\item \code{double} to \code{FLOAT16}.
+}
 }
 
 \section{Parquet's data types}{
