@@ -97,13 +97,14 @@ void ParquetReader::init_file_on_disk() {
                 &file_meta_data_, filename_);
   has_file_meta_data_ = true;
 
+  num_leaf_cols = 0;
   leaf_cols.resize(file_meta_data_.schema.size());
-  for (int i = 0, idx = 0; i < file_meta_data_.schema.size(); i++) {
+  for (int i = 0; i < file_meta_data_.schema.size(); i++) {
     parquet::SchemaElement sel = file_meta_data_.schema[i];
     if (sel.__isset.num_children && sel.num_children > 0) {
       leaf_cols[i] = -1;
     } else {
-      leaf_cols[i] = idx++;
+      leaf_cols[i] = num_leaf_cols++;
     }
   }
 }

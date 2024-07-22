@@ -1,4 +1,5 @@
 #include "RParquetReader.h"
+#include "protect.h"
 
 constexpr int64_t kJulianToUnixEpochDays = 2440588LL;
 constexpr int64_t kMillisecondsInADay = 86400000LL;
@@ -21,7 +22,7 @@ RParquetReader::RParquetReader(std::string filename)
   create_metadata();
 
   // columns
-  columns = Rf_allocVector(VECSXP, metadata.num_cols);
+  columns = Rf_allocVector(VECSXP, metadata.num_leaf_cols);
   R_PreserveObject(columns);
 
   tmpdata.resize(metadata.num_cols);
@@ -29,16 +30,17 @@ RParquetReader::RParquetReader(std::string filename)
   byte_arrays.resize(metadata.num_cols);
   present.resize(metadata.num_cols);
 
-  for (auto i = 0; i < metadata.num_cols; i++) {
+  for (auto i = 0, idx = 0; i < metadata.num_cols; i++) {
     // skip non-leaf columns
     if (file_meta_data_.schema[i].__isset.num_children) continue;
 
     rtype rt = metadata.r_types[i];
-    SET_VECTOR_ELT(columns, i, Rf_allocVector(rt.type, metadata.num_rows));
-    metadata.dataptr[i] = (uint8_t*) DATAPTR(VECTOR_ELT(columns, i));
+    SET_VECTOR_ELT(columns, idx, Rf_allocVector(rt.type, metadata.num_rows));
+    metadata.dataptr[i] = (uint8_t*) DATAPTR(VECTOR_ELT(columns, idx));
     if (rt.type != rt.tmptype && rt.tmptype != NILSXP) {
       tmpdata[i].resize(metadata.num_rows * rt.elsize);
     }
+    idx++;
   }
 }
 
@@ -54,6 +56,7 @@ void RParquetReader::create_metadata() {
   parquet::FileMetaData fmt = get_file_meta_data();
   metadata.num_rows = fmt.num_rows;
   metadata.num_cols = fmt.schema.size();
+  metadata.num_leaf_cols = num_leaf_cols;
   metadata.num_row_groups = fmt.row_groups.size();
   metadata.row_group_num_rows.resize(metadata.num_row_groups);
   metadata.row_group_offsets.resize(metadata.num_row_groups);
@@ -309,6 +312,7 @@ struct postprocess {
 public:
   SEXP columns;
   rmetadata &metadata;
+  std::vector<int> &leaf_cols;
   std::vector<std::vector<uint8_t>> &tmpdata;
   std::vector<std::vector<tmpdict>> &dicts;
   std::vector<std::vector<std::vector<tmpbytes>>> &byte_arrays;
@@ -324,7 +328,7 @@ void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
     }
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     int64_t from = pp->metadata.row_group_offsets[cl];
-    SEXP x = VECTOR_ELT(pp->columns, cl);
+    SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
     switch (TYPEOF(x)) {
     case INTSXP: {
       int *beg = INTEGER(x) + from;
@@ -373,7 +377,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
     } else if (!hasdict && hasmiss) {
       // missing values in place
       int64_t from = pp->metadata.row_group_offsets[cl];
-      SEXP x = VECTOR_ELT(pp->columns, cl);
+      SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
       switch (TYPEOF(x)) {
       case INTSXP: {
         int *beg = INTEGER(x) + from;
@@ -435,7 +439,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
     } else if (hasdict && !hasmiss) {
       // only dict
       int64_t from = pp->metadata.row_group_offsets[rg];
-      SEXP x = VECTOR_ELT(pp->columns, cl);
+      SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
       switch (TYPEOF(x)) {
       case INTSXP: {
         int *beg = INTEGER(x) + from;
@@ -475,7 +479,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
     } else if (hasdict && hasmiss) {
       // dict + missing values
       int64_t from = pp->metadata.row_group_offsets[rg];
-      SEXP x = VECTOR_ELT(pp->columns, cl);
+      SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
       switch (TYPEOF(x)) {
       case INTSXP: {
         int *beg = INTEGER(x) + from;
@@ -542,7 +546,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
 // ------------------------------------------------------------------------
 
 void convert_column_to_r_int64_nodict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   double *beg = REAL(x);
   double *end = beg + pp->metadata.num_rows;
   int64_t *ibeg = (int64_t*) beg;
@@ -552,7 +556,7 @@ void convert_column_to_r_int64_nodict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_int64_dict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     int64_t from = pp->metadata.row_group_offsets[rg];
@@ -585,7 +589,7 @@ void convert_column_to_r_int64_dict_nomiss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_int64_nodict_miss(postprocess *pp, uint32_t cl) {
   // Need to process this by row group, because the present values are
   // stored at the beginning of each row group.
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
@@ -615,7 +619,7 @@ void convert_column_to_r_int64_nodict_miss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_int64_dict_miss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
@@ -700,7 +704,7 @@ void convert_column_to_r_int64(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_float_nodict_nomiss(postprocess *pp, uint32_t cl) {
   // Need to do this by row group because the values are at the beginning
   // of the memory area of the row group
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     int64_t off = pp->metadata.row_group_offsets[rg];
@@ -714,7 +718,7 @@ void convert_column_to_r_float_nodict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_float_dict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     int64_t off = pp->metadata.row_group_offsets[rg];
@@ -751,7 +755,7 @@ void convert_column_to_r_float_dict_nomiss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_float_nodict_miss(postprocess *pp, uint32_t cl) {
   // Need to process this by row group, because the present values are
   // stored at the beginning of each row group.
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
@@ -779,7 +783,7 @@ void convert_column_to_r_float_nodict_miss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_float_dict_miss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
@@ -864,7 +868,7 @@ void convert_column_to_r_float(postprocess *pp, uint32_t cl) {
 // ------------------------------------------------------------------------
 
 void convert_column_to_r_int96_nodict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   int96_t *src = (int96_t*) pp->tmpdata[cl].data();
   double *beg = REAL(x);
   double *end = beg + pp->metadata.num_rows;
@@ -874,7 +878,7 @@ void convert_column_to_r_int96_nodict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_int96_dict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   int96_t *src0 = (int96_t*) pp->tmpdata[cl].data();
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
@@ -909,7 +913,7 @@ void convert_column_to_r_int96_dict_nomiss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_int96_nodict_miss(postprocess *pp, uint32_t cl) {
   // Need to process this by row group, because the present values are
   // stored at the beginning of each row group.
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   int96_t *src0 = (int96_t*) pp->tmpdata[cl].data();
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
@@ -942,7 +946,7 @@ void convert_column_to_r_int96_nodict_miss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_int96_dict_miss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   int96_t *src0 = (int96_t*) pp->tmpdata[cl].data();
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
@@ -1027,7 +1031,7 @@ void convert_column_to_r_int96(postprocess *pp, uint32_t cl) {
 // ------------------------------------------------------------------------
 
 void convert_column_to_r_ba_string_nodict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
     for (auto it = rgba.begin(); it != rgba.end(); ++it) {
@@ -1046,7 +1050,7 @@ void convert_column_to_r_ba_string_nodict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_ba_string_dict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     bool hasdict = pp->dicts[cl][rg].dict_len > 0;
     if (!hasdict) {
@@ -1092,7 +1096,7 @@ void convert_column_to_r_ba_string_dict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_ba_string_miss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     uint32_t num_present = pp->present[cl][rg].num_present;
@@ -1143,7 +1147,7 @@ void convert_column_to_r_ba_string(postprocess *pp, uint32_t cl) {
 // ------------------------------------------------------------------------
 
 void convert_column_to_r_ba_decimal_nodict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   int32_t scale = pp->metadata.r_types[cl].scale;
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
@@ -1164,7 +1168,7 @@ void convert_column_to_r_ba_decimal_nodict_nomiss(postprocess *pp, uint32_t cl) 
 }
 
 void convert_column_to_r_ba_decimal_miss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     uint32_t num_present = pp->present[cl][rg].num_present;
@@ -1189,7 +1193,7 @@ void convert_column_to_r_ba_decimal_miss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   int32_t scale = pp->metadata.r_types[cl].scale;
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     bool hasdict = pp->dicts[cl][rg].dict_len > 0;
@@ -1262,7 +1266,7 @@ void convert_column_to_r_ba_decimal(postprocess *pp, uint32_t cl) {
 // ------------------------------------------------------------------------
 
 void convert_column_to_r_ba_raw_nodict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
     for (auto it = rgba.begin(); it != rgba.end(); ++it) {
@@ -1278,7 +1282,7 @@ void convert_column_to_r_ba_raw_nodict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_ba_raw_dict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     bool hasdict = pp->dicts[cl][rg].dict_len > 0;
     if (!hasdict) {
@@ -1318,7 +1322,7 @@ void convert_column_to_r_ba_raw_dict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_ba_raw_miss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     uint32_t num_present = pp->present[cl][rg].num_present;
@@ -1369,7 +1373,7 @@ void convert_column_to_r_ba_raw(postprocess *pp, uint32_t cl) {
 // ------------------------------------------------------------------------
 
 void convert_column_to_r_ba_uuid_nodict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   char uuid[37];
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
@@ -1391,7 +1395,7 @@ void convert_column_to_r_ba_uuid_nodict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_ba_uuid_dict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   char uuid[37];
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     bool hasdict = pp->dicts[cl][rg].dict_len > 0;
@@ -1515,10 +1519,41 @@ void RParquetReader::convert_columns_to_r() {
   postprocess pp = {
     columns,
     metadata,
+    leaf_cols,
     tmpdata,
     dicts,
     byte_arrays,
     present
   };
   convert_columns_to_r_(&pp);
+}
+
+// ------------------------------------------------------------------------
+
+void RParquetReader::create_df() {
+  SEXP nms = PROTECT(Rf_allocVector(STRSXP, metadata.num_leaf_cols));
+
+  for (R_xlen_t i = 0, idx = 0; i < metadata.num_cols; i++) {
+    if (leaf_cols[i] == -1) {
+      continue;
+    }
+    SET_STRING_ELT(
+      nms, idx++,
+      Rf_mkCharCE(file_meta_data_.schema[i].name.c_str(), CE_UTF8)
+    );
+  }
+  Rf_setAttrib(columns, R_NamesSymbol, nms);
+  UNPROTECT(1);
+
+  SEXP rnms = PROTECT(Rf_allocVector(INTSXP, 2));
+  INTEGER(rnms)[0] = NA_INTEGER;
+  INTEGER(rnms)[1] = - metadata.num_rows;
+  Rf_setAttrib(columns, R_RowNamesSymbol, rnms);
+  UNPROTECT(1);
+
+  SEXP cls = PROTECT(Rf_allocVector(STRSXP, 2));
+  SET_STRING_ELT(cls, 0, Rf_mkCharCE("tbl", CE_UTF8));
+  SET_STRING_ELT(cls, 1, Rf_mkCharCE("data.frame", CE_UTF8));
+  Rf_setAttrib(columns, R_ClassSymbol, cls);
+  UNPROTECT(1);
 }

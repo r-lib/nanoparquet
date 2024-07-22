@@ -44,6 +44,7 @@ struct rmetadata {
 public:
   int64_t num_rows;
   size_t num_cols;
+  size_t num_leaf_cols;
   size_t num_row_groups;
   std::vector<int64_t> row_group_num_rows;
   std::vector<int64_t> row_group_offsets;
@@ -82,6 +83,8 @@ public:
 
   void create_metadata();
   void convert_columns_to_r();
+  void create_df();
+
   void decode_dicts();
   void handle_missing();
   void rbind_row_groups();

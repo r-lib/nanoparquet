@@ -9,6 +9,7 @@ SEXP nanoparquet_read2(SEXP filesxp) {
 
   reader.read_all_columns();
   reader.convert_columns_to_r();
+  reader.create_df();
 
   return reader.columns;
 }

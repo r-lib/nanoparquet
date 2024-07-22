@@ -138,6 +138,7 @@ protected:
   parquet::FileMetaData file_meta_data_;
   bool has_file_meta_data_;
   std::vector<int> leaf_cols; // map schema columns to leaf columns in chunks
+  uint32_t num_leaf_cols;
 
   ByteBuffer tmp_buf;
   ByteBuffer def_levels;
