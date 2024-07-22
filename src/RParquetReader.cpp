@@ -390,7 +390,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
             *endm1-- = *pendm1--;
             presm1--;
           } else {
-            *endm1 = NA_INTEGER;
+            *endm1-- = NA_INTEGER;
             presm1--;
             num_miss--;
           }
@@ -408,7 +408,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
             *endm1-- = *pendm1--;
             presm1--;
           } else {
-            *endm1 = NA_REAL;
+            *endm1-- = NA_REAL;
             presm1--;
             num_miss--;
           }
@@ -426,7 +426,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
             *endm1-- = *pendm1--;
             presm1--;
           } else {
-            *endm1 = NA_LOGICAL;
+            *endm1-- = NA_LOGICAL;
             presm1--;
             num_miss--;
           }
@@ -511,7 +511,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
             *endm1-- = dict[*idxm1--];
             presm1--;
           } else {
-            *endm1 = NA_INTEGER;
+            *endm1-- = NA_REAL;
             presm1--;
           }
         }
@@ -610,7 +610,7 @@ void convert_column_to_r_int64_nodict_miss(postprocess *pp, uint32_t cl) {
           *endm1-- = static_cast<double>(*pendm1--);
           presm1--;
         } else {
-          *endm1 = NA_REAL;
+          *endm1-- = NA_REAL;
           presm1--;
         }
       }
@@ -643,7 +643,7 @@ void convert_column_to_r_int64_dict_miss(postprocess *pp, uint32_t cl) {
             *endm1-- = static_cast<double>(*pendm1--);
             presm1--;
           } else {
-            *endm1 = NA_REAL;
+            *endm1-- = NA_REAL;
             presm1--;
           }
         }
@@ -760,8 +760,8 @@ void convert_column_to_r_float_nodict_miss(postprocess *pp, uint32_t cl) {
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
     double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
     double *endm1 = beg + num_values - 1;
-    float *fendm1 = ((float*) beg) + num_values - 1;
     uint32_t num_present = pp->present[cl][rg].num_present;
+    float *fendm1 = ((float*) beg) + num_present - 1;
     bool hasmiss = num_present != num_values;
     if (!hasmiss) {
       while (beg <= endm1) {
@@ -774,7 +774,7 @@ void convert_column_to_r_float_nodict_miss(postprocess *pp, uint32_t cl) {
           *endm1-- = static_cast<double>(*fendm1--);
           presm1--;
         } else {
-          *endm1 = NA_REAL;
+          *endm1-- = NA_REAL;
           presm1--;
         }
       }
@@ -808,7 +808,7 @@ void convert_column_to_r_float_dict_miss(postprocess *pp, uint32_t cl) {
             *endm1-- = static_cast<double>(*fendm1--);
             presm1--;
           } else {
-            *endm1 = NA_REAL;
+            *endm1-- = NA_REAL;
             presm1--;
           }
         }
@@ -936,7 +936,7 @@ void convert_column_to_r_int96_nodict_miss(postprocess *pp, uint32_t cl) {
           *endm1-- = impala_timestamp_to_milliseconds(*pendm1--);
           presm1--;
         } else {
-          *endm1 = NA_REAL;
+          *endm1-- = NA_REAL;
           presm1--;
         }
       }
@@ -972,7 +972,7 @@ void convert_column_to_r_int96_dict_miss(postprocess *pp, uint32_t cl) {
             *endm1-- = impala_timestamp_to_milliseconds(*pendm1--);
             presm1--;
           } else {
-            *endm1 = NA_REAL;
+            *endm1-- = NA_REAL;
             presm1--;
           }
         }
@@ -1184,7 +1184,7 @@ void convert_column_to_r_ba_decimal_miss(postprocess *pp, uint32_t cl) {
           *endm1-- = *pendm1--;
           presm1--;
         } else {
-          *endm1 = NA_REAL;
+          *endm1-- = NA_REAL;
           presm1--;
         }
       }
