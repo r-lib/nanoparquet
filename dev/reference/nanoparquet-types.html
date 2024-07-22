@@ -71,23 +71,23 @@ before writing.</p></li>
 to Parquet data types.</p>
 <p>To change the default R to Parquet mapping, use <code><a href="parquet_schema.html">parquet_schema()</a></code> and
 the <code>schema</code> argument of <code><a href="write_parquet.html">write_parquet()</a></code>. Currently supported
-non-default mappings are:</p>
-<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">integer</span><span class="st">`</span> to <span class="st">`</span><span class="at">INT64</span><span class="st">`</span>,</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">integer</span><span class="st">`</span> to <span class="st">`</span><span class="at">INT96</span><span class="st">`</span>,</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">double</span><span class="st">`</span> to <span class="st">`</span><span class="at">INT96</span><span class="st">`</span>,</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">double</span><span class="st">`</span> to <span class="st">`</span><span class="at">FLOAT</span><span class="st">`</span>,</span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">character</span><span class="st">`</span> to <span class="st">`</span><span class="at">FIXED_LEN_BYTE_ARRAY</span><span class="st">`</span>,</span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">character</span><span class="st">`</span> to <span class="st">`</span><span class="at">ENUM</span><span class="st">`</span>,</span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">factor</span><span class="st">`</span> to <span class="st">`</span><span class="at">ENUM</span><span class="st">`</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">integer</span><span class="st">`</span> to <span class="st">`</span><span class="at">DECIAML</span><span class="st">`</span> <span class="sc">&amp;</span> <span class="st">`</span><span class="at">INT32</span><span class="st">`</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">integer</span><span class="st">`</span> to <span class="st">`</span><span class="at">DECIAML</span><span class="st">`</span> <span class="sc">&amp;</span> <span class="st">`</span><span class="at">INT64</span><span class="st">`</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">double</span><span class="st">`</span> to <span class="st">`</span><span class="at">DECIAML</span><span class="st">`</span> <span class="sc">&amp;</span> <span class="st">`</span><span class="at">INT32</span><span class="st">`</span>,</span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">double</span><span class="st">`</span> to <span class="st">`</span><span class="at">DECIAML</span><span class="st">`</span> <span class="sc">&amp;</span> <span class="st">`</span><span class="at">INT64</span><span class="st">`</span>,</span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">integer</span><span class="st">`</span> to <span class="st">`</span><span class="at">INT(8, *)</span><span class="st">`</span>, <span class="st">`</span><span class="at">INT(16, *)</span><span class="st">`</span>, <span class="fu">INT</span>(<span class="dv">32</span>, signed)<span class="st">`</span><span class="at">,</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="at">- </span><span class="st">`</span>double<span class="st">`</span><span class="at"> to </span><span class="st">`</span><span class="fu">INT</span>(<span class="sc">*</span>, <span class="sc">*</span>)<span class="st">`</span><span class="at">,</span></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="at">- </span><span class="st">`</span>character<span class="st">`</span><span class="at"> to </span><span class="st">`</span>UUID<span class="st">`</span><span class="at">,</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="at">- </span><span class="st">`</span>double<span class="st">`</span><span class="at"> to </span><span class="st">`</span>FLOAT16<span class="st">`</span><span class="at">.</span></span></code></pre><p></p></div>
-    </div>
+non-default mappings are:</p><ul><li><p><code>integer</code> to <code>INT64</code>,</p></li>
+<li><p><code>integer</code> to <code>INT96</code>,</p></li>
+<li><p><code>double</code> to <code>INT96</code>,</p></li>
+<li><p><code>double</code> to <code>FLOAT</code>,</p></li>
+<li><p><code>character</code> to <code>BYTE_ARRAY</code>,</p></li>
+<li><p><code>character</code> to <code>FIXED_LEN_BYTE_ARRAY</code>,</p></li>
+<li><p><code>character</code> to <code>ENUM</code>,</p></li>
+<li><p><code>factor</code> to <code>ENUM</code>,</p></li>
+<li><p><code>integer</code> to <code>DECIAML</code> &amp; <code>INT32</code>,</p></li>
+<li><p><code>integer</code> to <code>DECIAML</code> &amp; <code>INT64</code>,</p></li>
+<li><p><code>double</code> to <code>DECIAML</code> &amp; <code>INT32</code>,</p></li>
+<li><p><code>double</code> to <code>DECIAML</code> &amp; <code>INT64</code>,</p></li>
+<li><p><code>integer</code> to <code>INT(8, *)</code>, <code>INT(16, *)</code>, <code>INT(32, signed)</code>,</p></li>
+<li><p><code>double</code> to <code>INT(*, *)</code>,</p></li>
+<li><p><code>character</code> to <code>UUID</code>,</p></li>
+<li><p><code>double</code> to <code>FLOAT16</code>.</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="parquet-s-data-types">Parquet's data types<a class="anchor" aria-label="anchor" href="#parquet-s-data-types"></a></h2>
     <p>When reading a Parquet file nanoparquet also relies on logical types and
