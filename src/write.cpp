@@ -913,23 +913,49 @@ void RParquetOutFile::write_fixed_len_byte_array(
     }
 
   } else {
-    if (TYPEOF(col) != STRSXP) {
-      Rf_error(
-        "Cannot write %s as a Parquet FIXED_LEN_BYTE_ARRAY type.",
-        type_names[TYPEOF(col)]
-      );
-    }
-    for (uint64_t i = from; i < until; i++) {
-      SEXP s = STRING_ELT(col, i);
-      if (s == NA_STRING) continue;
-      const char *c = CHAR(s);
-      uint32_t len1 = strlen(c);
-      if (len1 != type_length) {
-        Rf_error(
-            "Invalid string length: %d, expenting %d for FIXED_LEN_TYPE_ARRAY",
-            len1, type_length);
+    switch (TYPEOF(col)) {
+    case STRSXP: {
+      for (uint64_t i = from; i < until; i++) {
+        SEXP s = STRING_ELT(col, i);
+        if (s == NA_STRING) {
+          continue;
+        }
+        const char *c = CHAR(s);
+        uint32_t len1 = strlen(c);
+        if (len1 != type_length) {
+          Rf_error("Invalid string length: %d, expenting %d for "
+                   "FIXED_LEN_TYPE_ARRAY",
+                   len1, type_length);
+        }
+        file.write(c, type_length);
       }
-      file.write(c, type_length);
+      break;
+    }
+    case VECSXP: {
+      for (uint64_t i = from; i < until; i++) {
+        SEXP el = VECTOR_ELT(col, i);
+        if (Rf_isNull(el)) {
+          continue;
+        }
+        if (TYPEOF(el) != RAWSXP) {
+          Rf_error(
+              "Cannot write %s as a Parquet BYTE_ARRAY element when writing a"
+              "list column of RAW vectors.",
+              type_names[TYPEOF(el)]);
+        }
+        uint32_t len1 = Rf_xlength(el);
+        if (len1 != type_length) {
+          Rf_error("Invalid string length: %d, expenting %d for "
+                   "FIXED_LEN_TYPE_ARRAY",
+                   len1, type_length);
+        }
+        file.write((const char *)RAW(el), len1);
+      }
+      break;
+    }
+    default:
+      Rf_error("Cannot write %s as a Parquet FIXED_LEN_BYTE_ARRAY type.",
+               type_names[TYPEOF(col)]);
     }
   }
 }

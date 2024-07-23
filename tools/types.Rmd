@@ -54,7 +54,8 @@ non-default mappings are:
 - `double` to `INT(*, *)`,
 - `character` to `UUID`,
 - `double` to `FLOAT16`,
-- `list` of `raw` vectors to `BYTE_ARRAY`.
+- `list` of `raw` vectors to `BYTE_ARRAY`,
+- `list` of `raw` vectors to `FIXED_LEN_BYTE_ARRAY`.
 
 # Parquet's data types
 

@@ -62,7 +62,8 @@ non-default mappings are:
 \item \code{double} to \verb{INT(*, *)},
 \item \code{character} to \code{UUID},
 \item \code{double} to \code{FLOAT16},
-\item \code{list} of \code{raw} vectors to \code{BYTE_ARRAY}.
+\item \code{list} of \code{raw} vectors to \code{BYTE_ARRAY},
+\item \code{list} of \code{raw} vectors to \code{FIXED_LEN_BYTE_ARRAY}.
 }
 }
 

@@ -40,7 +40,8 @@
     - `double` to `INT(*, *)`,
     - `character` to `UUID`,
     - `double` to `FLOAT16`,
-    - `list` of `raw` vectors to `BYTE_ARRAY`.
+    - `list` of `raw` vectors to `BYTE_ARRAY`,
+    - `list` of `raw` vectors to `FIXED_LEN_BYTE_ARRAY`.
 
 * `write_parquet(file = ":raw:")` now works correctly for larger data
   frames (#77).

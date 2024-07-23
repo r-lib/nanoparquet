@@ -1774,3 +1774,43 @@
       4 66, 6f, 6f, 62, 61, 72
       5                   NULL
 
+# list of RAW to FIXED_LEN_BYTE_ARRAY
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type                 type type_length repetition_type converted_type
+      1 schema   <NA>                 <NA>          NA            <NA>           <NA>
+      2      d    raw FIXED_LEN_BYTE_ARRAY           3        REQUIRED           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                 d
+      1 66, 6f, 6f
+      2 62, 61, 72
+      3 61, 61, 61
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type                 type type_length repetition_type converted_type
+      1 schema   <NA>                 <NA>          NA            <NA>           <NA>
+      2      d    raw FIXED_LEN_BYTE_ARRAY           3        OPTIONAL           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                 d
+      1 66, 6f, 6f
+      2       NULL
+      3 62, 61, 72
+      4 61, 61, 61
+      5       NULL
+
