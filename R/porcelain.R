@@ -243,7 +243,7 @@ dict_encode <- function(x, n = length(x)) {
 }
 
 dict_encode_idx <- function(x) {
-	.Call(nanoparquet_create_dict_idx, x)
+	.Call(nanoparquet_create_dict_idx, x, sys.call())
 }
 
 lgl_avg_run_length <- function(x, n = length(x)) {
