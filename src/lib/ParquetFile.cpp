@@ -255,9 +255,10 @@ public:
       // no dict here we use the result set string heap directly
       {
         // never going to have more string data than this uncompressed_page_size
-        // (lengths use bytes)
+        // (lengths use bytes), but for FIXED_LEN_BYTE_ARRAY we need space
+        // for the terminating \0 bytes as well.
         auto string_heap_chunk = std::unique_ptr<char[]>(
-            new char[page_header.uncompressed_page_size]);
+            new char[page_header.uncompressed_page_size + dict_size]);
         result_col.string_heap_chunks.push_back(std::move(string_heap_chunk));
         auto str_ptr =
             result_col
