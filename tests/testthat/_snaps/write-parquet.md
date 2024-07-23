@@ -80,8 +80,8 @@
     Code
       write_parquet(mt, tmp)
     Condition
-      Error in `encode_arrow_schema_r()`:
-      ! Unsuppoted types when writing Parquet file: list
+      Error in `write_parquet()`:
+      ! Cannot write an integer vector as a Parquet BYTE_ARRAY element when writing alist column of RAW vectors.
 
 ---
 

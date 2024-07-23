@@ -122,9 +122,6 @@ public:
 
   uint32_t write_present(std::ostream &file, uint32_t idx, uint64_t from,
                          uint64_t until);
-  void write_present_byte_array(std::ostream &file, uint32_t idx,
-                                uint32_t num_present, uint64_t from,
-                                uint64_t until);
   void write_present_boolean(std::ostream &file, uint32_t idx,
                              uint32_t num_present, uint64_t from,
                              uint64_t until);
@@ -745,20 +742,49 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
                                        uint64_t from, uint64_t until,
                                        parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
-  if (TYPEOF(col) != STRSXP) {
+  if (until > Rf_xlength(col)) {
+    Rf_error("Internal nanoparquet error, row index too large");
+  }
+
+  switch (TYPEOF(col)) {
+  case STRSXP: {
+    for (uint64_t i = from; i < until; i++) {
+      SEXP el = STRING_ELT(col, i);
+      if (el == NA_STRING) {
+        continue;
+      }
+      const char *c = CHAR(el);
+      uint32_t len1 = strlen(c);
+      file.write((const char *)&len1, 4);
+      file.write(c, len1);
+    }
+    break;
+  }
+  case VECSXP: {
+    for (uint64_t i = from; i < until; i++) {
+      SEXP el = VECTOR_ELT(col, i);
+      if (Rf_isNull(el)) {
+        continue;
+      }
+      if (TYPEOF(el) != RAWSXP) {
+        Rf_error(
+          "Cannot write %s as a Parquet BYTE_ARRAY element when writing a"
+          "list column of RAW vectors.",
+          type_names[TYPEOF(el)]
+        );
+      }
+      uint32_t len1 = Rf_xlength(el);
+      file.write((const char*) &len1, sizeof(uint32_t));
+      file.write((const char*) RAW(el), len1);
+    }
+    break;
+  }
+  default:
     Rf_error(
       "Cannot write %s as a Parquet BYTE_ARRAY type.",
       type_names[TYPEOF(col)]
     );
-  }
-  if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
-  }
-  for (uint64_t i = from; i < until; i++) {
-    const char *c = CHAR(STRING_ELT(col, i));
-    uint32_t len1 = strlen(c);
-    file.write((const char *)&len1, 4);
-    file.write(c, len1);
+    break;
   }
 }
 
@@ -769,23 +795,45 @@ uint32_t RParquetOutFile::get_size_byte_array(
   uint64_t until) {
 
   SEXP col = VECTOR_ELT(df, idx);
-  if (TYPEOF(col) != STRSXP) {
+  if (until > Rf_xlength(col)) {
+    Rf_error("Internal nanoparquet error, row index too large");
+  }
+  uint32_t size = 0;
+  switch (TYPEOF(col)) {
+  case STRSXP: {
+    for (uint64_t i = from; i < until; i++) {
+      SEXP csxp = STRING_ELT(col, i);
+      if (csxp != NA_STRING) {
+        const char *c = CHAR(csxp);
+        size += strlen(c) + 4;
+      }
+    }
+    break;
+  }
+  case VECSXP: {
+    for (uint64_t i = from; i < until; i++) {
+      SEXP el = VECTOR_ELT(col, i);
+      if (Rf_isNull(el)) {
+        continue;
+      }
+      if (TYPEOF(el) != RAWSXP) {
+        Rf_error(
+          "Cannot write %s as a Parquet BYTE_ARRAY element when writing a"
+          "list column of RAW vectors.",
+          type_names[TYPEOF(el)]
+        );
+      }
+      size += Rf_xlength(el) + 4;
+    }
+    break;
+  }
+  default:
     Rf_error(
       "Cannot write %s as a Parquet BYTE_ARRAY type.",
       type_names[TYPEOF(col)]
     );
   }
-  if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
-  }
-  uint32_t size = 0;
-  for (uint64_t i = from; i < until; i++) {
-    SEXP csxp = STRING_ELT(col, i);
-    if (csxp != NA_STRING) {
-      const char *c = CHAR(csxp);
-      size += strlen(c) + 4;
-    }
-  }
+
   return size;
 }
 
@@ -984,6 +1032,13 @@ uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
     }
     break;
   }
+  case VECSXP: {
+    for (auto i = from; i < until; i++, presptr++) {
+      *presptr = ! Rf_isNull(VECTOR_ELT(col, i));
+      num_pres += *presptr;
+    }
+    break;
+  }
   default:
     throw runtime_error("Uninmplemented R type");
   }
@@ -1012,35 +1067,6 @@ void RParquetOutFile::write_present_boolean_as_int(std::ostream &file,
     int el = LOGICAL(col)[i];
     if (el != NA_LOGICAL) {
       file.write((const char*) &el, sizeof(int));
-    }
-  }
-}
-
-
-void RParquetOutFile::write_present_byte_array(
-  std::ostream &file,
-  uint32_t idx,
-  uint32_t num_present,
-  uint64_t from,
-  uint64_t until) {
-
-  SEXP col = VECTOR_ELT(df, idx);
-  if (TYPEOF(col) != STRSXP) {
-    Rf_error(
-      "Cannot write %s as a Parquet BYTE_ARRAY type.",
-      type_names[TYPEOF(col)]
-    );
-  }
-  if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
-  }
-  for (uint64_t i = from; i < until; i++) {
-    SEXP csxp = STRING_ELT(col, i);
-    if (csxp != R_NaString) {
-      const char *c = CHAR(csxp);
-      uint32_t len1 = strlen(c);
-      file.write((const char *)&len1, 4);
-      file.write(c, len1);
     }
   }
 }
@@ -1467,6 +1493,12 @@ bool nanoparquet_map_to_parquet_type(
     sel.__set_type(parquet::Type::BOOLEAN);
     break;
   }
+  case VECSXP: {
+    // assume a list of RAW vectors, for now
+    rtype = "raw";
+    sel.__set_type(parquet::Type::BYTE_ARRAY);
+    break;
+  }
   default:
     return false;
   }
@@ -1798,6 +1830,30 @@ SEXP nanoparquet_logical_to_converted(SEXP logical_type) {
 
   UNPROTECT(1);
   return res;
+}
+
+SEXP nanoparquet_any_null(SEXP x) {
+  R_xlen_t l = Rf_xlength(x);
+  for (R_xlen_t i = 0; i < l; i++) {
+    if (Rf_isNull(VECTOR_ELT(x, i))) {
+      return Rf_ScalarLogical(1);
+    }
+  }
+
+  return Rf_ScalarLogical(0);
+}
+
+SEXP nanoparquet_any_na(SEXP x) {
+  R_xlen_t l = Rf_xlength(x);
+  double *ptr = REAL(x);
+  double *end = ptr + l;
+  for (; ptr < end; ptr++) {
+    if (R_IsNA(*ptr)) {
+      return Rf_ScalarLogical(1);
+    }
+  }
+
+  return Rf_ScalarLogical(0);
 }
 
 } // extern "C"

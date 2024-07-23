@@ -311,7 +311,7 @@ void ParquetOutFile::write_present_data_(
     write_double(file, idx, from, until, se);
     break;
   case Type::BYTE_ARRAY:
-    write_present_byte_array(file, idx, num_present, from, until);
+    write_byte_array(file, idx, from, until, se);
     break;
   case Type::FIXED_LEN_BYTE_ARRAY:
     write_fixed_len_byte_array(file, idx, from, until, se);

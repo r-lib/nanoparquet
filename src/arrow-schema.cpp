@@ -472,6 +472,19 @@ SEXP nanoparquet_encode_arrow_schema(SEXP rschema) {
         field_vector.push_back(field);
         break;
       }
+      case Type_Binary:
+      {
+        BinaryBuilder bin_builder(builder);
+        auto bool_ = bin_builder.Finish();
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(bool_.Union());
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
       default:
       {
         Rf_error(
