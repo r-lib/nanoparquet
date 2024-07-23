@@ -13,6 +13,8 @@
 using namespace nanoparquet;
 using namespace std;
 
+extern SEXP nanoparquet_call;
+
 inline Int96 int32_to_int96(int32_t x) {
   if (x >= 0) {
     Int96 r = { 0, 0, 0 };
@@ -84,7 +86,7 @@ static uint16_t double_to_float16(double x) {
 
 extern "C" {
 SEXP nanoparquet_create_dict(SEXP x, SEXP rlen);
-SEXP nanoparquet_create_dict_idx(SEXP x);
+SEXP nanoparquet_create_dict_idx_(SEXP x);
 SEXP nanoparquet_avg_run_length(SEXP x, SEXP rlen);
 }
 
@@ -176,7 +178,7 @@ void RParquetOutFile::create_dictionary(uint32_t idx) {
   }
 
   SEXP col = VECTOR_ELT(df, idx);
-  SEXP d = PROTECT(nanoparquet_create_dict_idx(col));
+  SEXP d = PROTECT(nanoparquet_create_dict_idx_(col));
   SET_VECTOR_ELT(dicts, idx, d);
   UNPROTECT(1);
 }
@@ -265,10 +267,16 @@ static bool is_decimal(parquet::SchemaElement &sel, int32_t &precision,
   } else if (sel.__isset.converted_type &&
              sel.converted_type == parquet::ConvertedType::DECIMAL) {
     if (!sel.__isset.precision) {
-      Rf_error("Invalid Parquet file: precision is not set for DECIMAL converted type");
+      Rf_errorcall(
+        nanoparquet_call,
+        "Invalid Parquet file: precision is not set for DECIMAL converted type"
+      );
     }
     if (!sel.__isset.scale) {
-      Rf_error("Invalid Parquet file: scale is not set for DECIMAL converted type");
+      Rf_errorcall(
+        nanoparquet_call,
+        "Invalid Parquet file: scale is not set for DECIMAL converted type"
+      );
     }
     precision = sel.precision;
     scale = sel. scale;
@@ -283,7 +291,10 @@ void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
                              int32_t scale) {
 
   if (precision > 9) {
-    Rf_error("Internal nanoparquet error, precision to high for INT32 DECIMAL");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, precision to high for INT32 DECIMAL"
+    );
   }
   int32_t fact = pow(10, scale);
   int32_t max = ((int32_t)pow(10, precision)) / fact;
@@ -292,12 +303,14 @@ void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
     int32_t val = INTEGER(col)[i];
     if (val == NA_INTEGER) continue;
     if (val <= min) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Value too small for INT32 DECIMAL with precision %d, scale %d: %d",
         precision, scale, val);
     }
     if (val >= max) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Value too large for INT32 DECIMAL with precision %d, scale %d: %d",
         precision, scale, val);
     }
@@ -333,7 +346,10 @@ void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
     } else if (bit_width == 16) {
       max = is_signed ? 256 * 128 - 1 : 256 * 256 - 1;
     } else {
-      Rf_error("Invalid bit width for INT32: %d", bit_width);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Invalid bit width for INT32: %d", bit_width
+      );
     }
     min = is_signed ? -max-1 : 0;
     for (uint64_t i = from; i < until; i++) {
@@ -341,7 +357,8 @@ void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
       if (val == NA_INTEGER) continue;
       const char *w = val < min ? "small" : (val > max ? "large" : "");
       if (w[0]) {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Integer value too %s for %sINT with bit width %d: %d"
           " at column %u, row %" PRIu64 ":",
           w, (is_signed ? "" : "U"), bit_width, val, idx + 1, i + 1
@@ -357,7 +374,10 @@ void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
                             int32_t scale) {
 
   if (precision > 9) {
-    Rf_error("Internal nanoparquet error, precision to high for INT32 DECIMAL");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, precision to high for INT32 DECIMAL"
+    );
   }
   int32_t fact = pow(10, scale);
   double max = (pow(10, precision)) / fact;
@@ -366,12 +386,14 @@ void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
     double val = REAL(col)[i];
     if (R_IsNA(val)) continue;
     if (val <= min) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Value too small for INT32 DECIMAL with precision %d, scale %d: %f",
         precision, scale, round(val * fact) / fact);
     }
     if (val >= max) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Value too large for INT32 DECIMAL with precision %d, scale %d: %f",
         precision, scale, round(val * fact)/ fact);
     }
@@ -402,7 +424,7 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
       max = 0x7fffffff;
       break;
     default:
-      Rf_error("Invalid bit width for INT32: %d", bit_width);
+      Rf_errorcall(nanoparquet_call, "Invalid bit width for INT32: %d", bit_width);
     }
     min = -max - 1;
     for (uint64_t i = from; i < until; i++) {
@@ -410,9 +432,12 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
       if (R_IsNA(val)) continue;
       const char *w = val < min ? "small" : (val > max ? "large" : "");
       if (w[0]) {
-        Rf_error("Integer value too %s for INT with bit width %d: %f"
-                 " at column %u, row %" PRIu64 ":",
-                 w, bit_width, val, idx + 1, i + 1);
+        Rf_errorcall(
+          nanoparquet_call,
+          "Integer value too %s for INT with bit width %d: %f"
+          " at column %u, row %" PRIu64 ":",
+          w, bit_width, val, idx + 1, i + 1
+        );
       }
       int32_t ival = val;
       file.write((const char *)&ival, sizeof(int32_t));
@@ -430,20 +455,29 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
       max = 0xffffffff;
       break;
     default:
-      Rf_error("Invalid bit width for INT32: %d", bit_width);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Invalid bit width for INT32: %d", bit_width
+      );
     }
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
       if (val > max) {
-        Rf_error("Integer value too large for INT with bit width %d: %f"
-                 " at column %u, row %" PRIu64 ".",
-                 bit_width, val, idx + 1, i + 1);
+        Rf_errorcall(
+          nanoparquet_call,
+          "Integer value too large for INT with bit width %d: %f"
+          " at column %u, row %" PRIu64 ".",
+          bit_width, val, idx + 1, i + 1
+        );
       }
       if (val < 0 ) {
-        Rf_error("Negative values are not allowed in unsigned INT column:"
-                 "%f at column %u, row %"  PRIu64 ".",
-                 val, idx + 1, i + 1);
+        Rf_errorcall(
+          nanoparquet_call,
+          "Negative values are not allowed in unsigned INT column:"
+          "%f at column %u, row %"  PRIu64 ".",
+          val, idx + 1, i + 1
+        );
       }
       int32_t ival = val;
       file.write((const char *)&ival, sizeof(int32_t));
@@ -456,7 +490,10 @@ void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
                                   parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   int32_t precision, scale;
   bool isdec = is_decimal(sel, precision, scale);
@@ -476,7 +513,8 @@ void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
     }
     break;
   default:
-    Rf_error(
+    Rf_errorcall(
+      nanoparquet_call,
       "Cannot write %s as a Parquet INT32 type.",
       type_names[TYPEOF(col)]
     );
@@ -487,7 +525,10 @@ void write_integer_int64_dec(std::ostream &file, SEXP col, uint64_t from,
                              uint64_t until, int32_t precision,
                              int32_t scale) {
   if (precision > 18) {
-    Rf_error("Internal nanoparquet error, precision to high for INT64 DECIMAL");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, precision to high for INT64 DECIMAL"
+    );
   }
   int64_t fact = pow(10, scale);
   int64_t max = ((int64_t)pow(10, precision)) / fact;
@@ -497,14 +538,16 @@ void write_integer_int64_dec(std::ostream &file, SEXP col, uint64_t from,
     if (val == NA_INTEGER) continue;
     int64_t ival = val;
     if (ival <= min) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Value too small for INT64 DECIMAL with precision %d, scale "
         "%d: %" PRId64,
         precision, scale, ival
       );
     }
     if (ival >= max) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Value too large for INT64 DECIMAL with precision %d, scale "
         "%d: %" PRId64,
         precision, scale, ival
@@ -530,7 +573,10 @@ void write_integer_int64(std::ostream &file, SEXP col, uint64_t from,
                              uint64_t until, int32_t precision,
                              int32_t scale) {
   if (precision > 18) {
-    Rf_error("Internal nanoparquet error, precision to high for INT64 DECIMAL");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, precision to high for INT64 DECIMAL"
+    );
   }
   int64_t fact = pow(10, scale);
   double max = (pow(10, precision)) / fact;
@@ -539,12 +585,14 @@ void write_integer_int64(std::ostream &file, SEXP col, uint64_t from,
     double val = REAL(col)[i];
     if (R_IsNA(val)) continue;
     if (val <= min) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Value too small for INT64 DECIMAL with precision %d, scale %d: %f",
         precision, scale, round(val * fact) / fact);
     }
     if (val >= max) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Value too large for INT64 DECIMAL with precision %d, scale %d: %f",
         precision, scale, round(val * fact)/ fact);
     }
@@ -582,7 +630,10 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
       bit_width = sel.logicalType.INTEGER.bitWidth;
     }
     if (bit_width != 64) {
-      Rf_error("Invalid bit width for INT64 INT type: %d", bit_width);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Invalid bit width for INT64 INT type: %d", bit_width
+      );
     }
     if (is_signed) {
       double min = -pow(2, 63), max = -(min+1);
@@ -591,7 +642,8 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
         if (R_IsNA(val)) continue;
         const char *w = val < min ? "small" : (val > max ? "large" : "");
         if (w[0]) {
-          Rf_error(
+          Rf_errorcall(
+            nanoparquet_call,
             "Integer value too %s for %sINT with bit width %d: %f"
             " at column %u, row %" PRIu64 ".",
             w, (is_signed ? "" : "U"), bit_width, val, idx + 1, i + 1
@@ -606,16 +658,20 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
         double val = REAL(col)[i];
         if (R_IsNA(val)) continue;
         if (val > max) {
-          Rf_error(
+          Rf_errorcall(
+            nanoparquet_call,
             "Integer value too large for unsigned INT with bit width %d: %f"
             " at column %u, row %" PRIu64 ".",
             bit_width, val, idx + 1, i + 1
           );
         }
         if (val < 0) {
-          Rf_error("Negative values are not allowed in unsigned INT column:"
-                   "%f at column %u, row %"  PRIu64 ".",
-                   val, idx + 1, i + 1);
+          Rf_errorcall(
+            nanoparquet_call,
+            "Negative values are not allowed in unsigned INT column:"
+            "%f at column %u, row %"  PRIu64 ".",
+            val, idx + 1, i + 1
+          );
         }
         uint64_t el = val;
         file.write((const char *)&el, sizeof(uint64_t));
@@ -630,7 +686,10 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
   // This is double in R, so we need to convert
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   int32_t precision, scale;
   bool isdec = is_decimal(sel, precision, scale);
@@ -650,7 +709,8 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
     }
     break;
   default:
-    Rf_error(
+    Rf_errorcall(
+      nanoparquet_call,
       "Cannot write %s as a Parquet INT64 type.",
       type_names[TYPEOF(col)]
     );
@@ -663,7 +723,10 @@ void RParquetOutFile::write_int96(std::ostream &file, uint32_t idx,
   // This is double in R, so we need to convert
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   switch (TYPEOF(col)) {
   case INTSXP: {
@@ -685,7 +748,8 @@ void RParquetOutFile::write_int96(std::ostream &file, uint32_t idx,
     break;
   }
   default:
-    Rf_error(
+    Rf_errorcall(
+      nanoparquet_call,
       "Cannot write %s as a Parquet INT64 type.",
       type_names[TYPEOF(col)]
     );
@@ -697,13 +761,17 @@ void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
                                   parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != REALSXP) {
-    Rf_error(
+    Rf_errorcall(
+      nanoparquet_call,
       "Cannot write %s as a Parquet FLOAT type.",
       type_names[TYPEOF(col)]
     );
   }
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
@@ -718,13 +786,17 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
                                    parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != REALSXP) {
-    Rf_error(
+    Rf_errorcall(
+      nanoparquet_call,
       "Cannot write %s as a Parquet DOUBLE type.",
       type_names[TYPEOF(col)]
     );
   }
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   if (sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
     uint64_t len = until - from;
@@ -743,7 +815,10 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
                                        parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
 
   switch (TYPEOF(col)) {
@@ -767,10 +842,10 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
         continue;
       }
       if (TYPEOF(el) != RAWSXP) {
-        Rf_error(
-          "Cannot write %s as a Parquet BYTE_ARRAY element when writing a"
-          "list column of RAW vectors.",
-          type_names[TYPEOF(el)]
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot write %s as a Parquet BYTE_ARRAY element when writing a "
+          "list column of RAW vectors.", type_names[TYPEOF(el)]
         );
       }
       uint32_t len1 = Rf_xlength(el);
@@ -780,7 +855,8 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
     break;
   }
   default:
-    Rf_error(
+    Rf_errorcall(
+      nanoparquet_call,
       "Cannot write %s as a Parquet BYTE_ARRAY type.",
       type_names[TYPEOF(col)]
     );
@@ -796,7 +872,10 @@ uint32_t RParquetOutFile::get_size_byte_array(
 
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   uint32_t size = 0;
   switch (TYPEOF(col)) {
@@ -817,10 +896,10 @@ uint32_t RParquetOutFile::get_size_byte_array(
         continue;
       }
       if (TYPEOF(el) != RAWSXP) {
-        Rf_error(
-          "Cannot write %s as a Parquet BYTE_ARRAY element when writing a"
-          "list column of RAW vectors.",
-          type_names[TYPEOF(el)]
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot write %s as a Parquet BYTE_ARRAY element when writing a "
+          "list column of RAW vectors.", type_names[TYPEOF(el)]
         );
       }
       size += Rf_xlength(el) + 4;
@@ -828,7 +907,8 @@ uint32_t RParquetOutFile::get_size_byte_array(
     break;
   }
   default:
-    Rf_error(
+    Rf_errorcall(
+      nanoparquet_call,
       "Cannot write %s as a Parquet BYTE_ARRAY type.",
       type_names[TYPEOF(col)]
     );
@@ -875,13 +955,17 @@ void RParquetOutFile::write_fixed_len_byte_array(
   uint32_t type_length = sel.type_length;
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   bool is_uuid = sel.__isset.logicalType && sel.logicalType.__isset.UUID;
   bool is_f16 = sel.__isset.logicalType && sel.logicalType.__isset.FLOAT16;
   if (is_uuid) {
     if (TYPEOF(col) != STRSXP) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Cannot write %s as a Parquet FIXED_LEN_BYTE_ARRAY type.",
         type_names[TYPEOF(col)]
       );
@@ -892,15 +976,19 @@ void RParquetOutFile::write_fixed_len_byte_array(
       if (s == NA_STRING) continue;
       const char *c = CHAR(s);
       if (!parse_uuid(c, u, tmp)) {
-        Rf_error("Invalid UUID value in column %d, row %" PRIu64,
-        idx + 1, i + 1);
+        Rf_errorcall(
+          nanoparquet_call,
+          "Invalid UUID value in column %d, row %" PRIu64,
+          idx + 1, i + 1
+        );
       }
       file.write(u, 16);
     }
 
   } else if (is_f16) {
     if (TYPEOF(col) != REALSXP) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Cannot write %s as a Parquet FLOAT16 type.",
         type_names[TYPEOF(col)]
       );
@@ -923,9 +1011,11 @@ void RParquetOutFile::write_fixed_len_byte_array(
         const char *c = CHAR(s);
         uint32_t len1 = strlen(c);
         if (len1 != type_length) {
-          Rf_error("Invalid string length: %d, expenting %d for "
-                   "FIXED_LEN_TYPE_ARRAY",
-                   len1, type_length);
+          Rf_errorcall(
+            nanoparquet_call,
+            "Invalid string length: %d, expenting %d for "
+            "FIXED_LEN_TYPE_ARRAY", len1, type_length
+          );
         }
         file.write(c, type_length);
       }
@@ -938,24 +1028,30 @@ void RParquetOutFile::write_fixed_len_byte_array(
           continue;
         }
         if (TYPEOF(el) != RAWSXP) {
-          Rf_error(
-              "Cannot write %s as a Parquet BYTE_ARRAY element when writing a"
-              "list column of RAW vectors.",
-              type_names[TYPEOF(el)]);
+          Rf_errorcall(
+            nanoparquet_call,
+            "Cannot write %s as a Parquet BYTE_ARRAY element when writing a "
+            "list column of RAW vectors.", type_names[TYPEOF(el)]
+          );
         }
         uint32_t len1 = Rf_xlength(el);
         if (len1 != type_length) {
-          Rf_error("Invalid string length: %d, expenting %d for "
-                   "FIXED_LEN_TYPE_ARRAY",
-                   len1, type_length);
+          Rf_errorcall(
+            nanoparquet_call,
+            "Invalid string length: %d, expenting %d for "
+            "FIXED_LEN_TYPE_ARRAY", len1, type_length
+          );
         }
         file.write((const char *)RAW(el), len1);
       }
       break;
     }
     default:
-      Rf_error("Cannot write %s as a Parquet FIXED_LEN_BYTE_ARRAY type.",
-               type_names[TYPEOF(col)]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Cannot write %s as a Parquet FIXED_LEN_BYTE_ARRAY type.",
+        type_names[TYPEOF(col)]
+      );
     }
   }
 }
@@ -963,7 +1059,10 @@ void RParquetOutFile::write_fixed_len_byte_array(
 void write_boolean_impl(std::ostream &file, SEXP col,
                         uint64_t from, uint64_t until) {
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   uint64_t len = until - from;
   int *p = LOGICAL(col) + from;
@@ -993,7 +1092,8 @@ void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx,
                                     uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != LGLSXP) {
-    Rf_error(
+    Rf_errorcall(
+      nanoparquet_call,
       "Cannot write %s as a Parquet BOOLEAN type.",
       type_names[TYPEOF(col)]
     );
@@ -1007,7 +1107,10 @@ void RParquetOutFile::write_boolean_as_int(std::ostream &file,
                                            uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   uint64_t len = until - from;
   file.write((const char *) (LOGICAL(col) + from), sizeof(int) * len);
@@ -1017,7 +1120,10 @@ uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
                                          uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   uint64_t len = until - from;
   uint64_t num_pres = 0;
@@ -1066,7 +1172,7 @@ uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
     break;
   }
   default:
-    throw runtime_error("Uninmplemented R type");
+    Rf_errorcall(nanoparquet_call, "Uninmplemented R type");
   }
 
   file.write(present.ptr, len * sizeof(int));
@@ -1081,13 +1187,17 @@ void RParquetOutFile::write_present_boolean_as_int(std::ostream &file,
                                                    uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != LGLSXP) {
-    Rf_error(
+    Rf_errorcall(
+      nanoparquet_call,
       "Cannot write %s as a Parquet BOOLEAN type.",
       type_names[TYPEOF(col)]
     );
   }
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   for (uint64_t i = from; i < until; i++) {
     int el = LOGICAL(col)[i];
@@ -1106,15 +1216,18 @@ void RParquetOutFile::write_present_boolean(
 
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != LGLSXP) {
-    Rf_error(
-      "Cannot write %s as a Parquet BOOLEAN type.",
-      type_names[TYPEOF(col)]
+    Rf_errorcall(
+      nanoparquet_call,
+      "Cannot write %s as a Parquet BOOLEAN type.", type_names[TYPEOF(col)]
     );
   }
   SEXP col2 = PROTECT(Rf_allocVector(LGLSXP, num_present));
   uint64_t i, o;
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   for (i = from, o = 0; i < until; i++) {
     if (LOGICAL(col)[i] != NA_LOGICAL) {
@@ -1164,7 +1277,8 @@ uint32_t RParquetOutFile::get_size_dictionary(
       } else if (type == parquet::Type::INT96) {
         return Rf_xlength(dictidx) * sizeof(Int96);
       } else {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Cannot convert an integer vector to Parquet type %s.",
          parquet::_Type_VALUES_TO_NAMES.at(type)
         );
@@ -1184,7 +1298,8 @@ uint32_t RParquetOutFile::get_size_dictionary(
     } else if (type == parquet::Type::FLOAT) {
       return Rf_xlength(dict) * sizeof(float);
     } else {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Cannot convert a double vector to Parquet type %s.",
          parquet::_Type_VALUES_TO_NAMES.at(type)
         );
@@ -1227,7 +1342,8 @@ void RParquetOutFile::write_dictionary(
   case INTSXP: {
     if (Rf_inherits(col, "factor")) {
       if (type != parquet::Type::BYTE_ARRAY) {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Cannot convert an integer vector to Parquet type %s.",
          parquet:: _Type_VALUES_TO_NAMES.at(type)
         );
@@ -1278,7 +1394,8 @@ void RParquetOutFile::write_dictionary(
         break;
       }
       default:
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Cannot convert an integer vector to Parquet type %s.",
          parquet::_Type_VALUES_TO_NAMES.at(type)
         );
@@ -1293,7 +1410,8 @@ void RParquetOutFile::write_dictionary(
     int *iidx = INTEGER(dictidx);
     if (Rf_inherits(col, "POSIXct")) {
       if (type != parquet::Type::INT64) {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Cannot convert a double vector to Parquet type %s.",
          parquet:: _Type_VALUES_TO_NAMES.at(type)
         );
@@ -1304,7 +1422,8 @@ void RParquetOutFile::write_dictionary(
       }
     } else if (Rf_inherits(col, "difftime")) {
       if (type != parquet::Type::INT64) {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Cannot convert a double vector to Parquet type %s.",
          parquet:: _Type_VALUES_TO_NAMES.at(type)
         );
@@ -1356,7 +1475,8 @@ void RParquetOutFile::write_dictionary(
         break;
       }
       default:
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Cannot convert a double vector to Parquet type %s.",
           parquet:: _Type_VALUES_TO_NAMES.at(type)
         );
@@ -1366,7 +1486,8 @@ void RParquetOutFile::write_dictionary(
   }
   case STRSXP: {
     if (type != parquet::Type::BYTE_ARRAY) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Cannot convert a double vector to Parquet type %s.",
        parquet:: _Type_VALUES_TO_NAMES.at(type)
       );
@@ -1385,7 +1506,8 @@ void RParquetOutFile::write_dictionary(
   case LGLSXP: {
     // can Parquet have dicitonary encoded BOOLEANS? There isn't much point.
     if (type != parquet::Type::BOOLEAN) {
-      Rf_error(
+      Rf_errorcall(
+        nanoparquet_call,
         "Cannot convert a double vector to Parquet type %s.",
        parquet:: _Type_VALUES_TO_NAMES.at(type)
       );
@@ -1416,7 +1538,10 @@ void RParquetOutFile::write_dictionary_indices(
 
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
-    Rf_error("Internal nanoparquet error, row index too large");
+    Rf_errorcall(
+      nanoparquet_call,
+      "Internal nanoparquet error, row index too large"
+    );
   }
   if (TYPEOF(col) == INTSXP && Rf_inherits(col, "factor")) {
     for (uint64_t i = from; i < until; i++) {
@@ -1550,7 +1675,10 @@ bool r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
   } else if (!strcmp(ctype, "DECIMAL")) {
     parquet::DecimalType dt;
     if (Rf_length(logical_type) != 3) {
-      Rf_error("Parquet decimal logical type needs scale and precision");
+      Rf_errorcall(
+        nanoparquet_call,
+        "Parquet decimal logical type needs scale and precision"
+      );
     }
     if (!Rf_isNull(VECTOR_ELT(logical_type, 1))) {
       dt.__set_scale(NUMERIC_SCALAR(VECTOR_ELT(logical_type, 1)));
@@ -1577,7 +1705,7 @@ bool r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
     } else if (!strcmp(unit, "NANOS")) {
       tu.__set_NANOS(parquet::NanoSeconds());
     } else {
-      Rf_error("Unknown TIME time unit: %s", unit);
+      Rf_errorcall(nanoparquet_call, "Unknown TIME time unit: %s", unit);
     }
     tt.__set_unit(tu);
     lt.__set_TIME(tt);
@@ -1595,7 +1723,7 @@ bool r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
     } else if (!strcmp(unit, "NANOS")) {
       tu.__set_NANOS(parquet::NanoSeconds());
     } else {
-      Rf_error("Unknown TIME time unit: %s", unit);
+      Rf_errorcall(nanoparquet_call, "Unknown TIME time unit: %s", unit);
     }
     tt.__set_unit(tu);
     lt.__set_TIMESTAMP(tt);
@@ -1604,7 +1732,10 @@ bool r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
   } else if (!strcmp(ctype, "INT") || !strcmp(ctype, "INTEGER")) {
     parquet::IntType it;
     if (Rf_xlength(logical_type) != 3) {
-      Rf_error("Parquet integer logical type needs bit width and signedness");
+      Rf_errorcall(
+        nanoparquet_call,
+        "Parquet integer logical type needs bit width and signedness"
+      );
     }
     it.__set_bitWidth(NUMERIC_SCALAR(VECTOR_ELT(logical_type, 1)));
     it.__set_isSigned(LOGICAL(VECTOR_ELT(logical_type, 2))[0]);
@@ -1628,7 +1759,10 @@ bool r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
     sel.__set_logicalType(lt);
 
   } else {
-    Rf_error("Unknown Parquet logical type: %s", ctype);
+    Rf_errorcall(
+      nanoparquet_call,
+      "Unknown Parquet logical type: %s", ctype
+    );
   }
 
   return true;
@@ -1721,6 +1855,80 @@ void RParquetOutFile::write(
 
 extern "C" {
 
+SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
+                        SEXP metadata, SEXP required, SEXP options,
+                        SEXP schema) {
+
+  if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
+    Rf_errorcall(nanoparquet_call,
+                 "nanoparquet_write: filename must be a string");
+  }
+
+  int c_compression = INTEGER(compression)[0];
+  parquet::CompressionCodec::type codec;
+  switch (c_compression) {
+  case 0:
+    codec = parquet::CompressionCodec::UNCOMPRESSED;
+    break;
+  case 1:
+    codec = parquet::CompressionCodec::SNAPPY;
+    break;
+  case 2:
+    codec = parquet::CompressionCodec::GZIP;
+    break;
+  case 6:
+    codec = parquet::CompressionCodec::ZSTD;
+    break;
+  default:
+    Rf_errorcall(nanoparquet_call, "Invalid compression type code: %d",
+                 c_compression);
+    break;
+  }
+
+  std::string fname = (char *)CHAR(STRING_ELT(filesxp, 0));
+  if (fname == ":raw:") {
+    MemStream ms;
+    std::ostream &os = ms.stream();
+    RParquetOutFile of(os, codec);
+    of.write(dfsxp, dim, metadata, required, options, schema);
+    R_xlen_t bufsize = ms.size();
+    SEXP res = Rf_allocVector(RAWSXP, bufsize);
+    ms.copy(RAW(res), bufsize);
+    return res;
+  } else {
+    RParquetOutFile of(fname, codec);
+    of.write(dfsxp, dim, metadata, required, options, schema);
+    return R_NilValue;
+  }
+}
+
+struct nanoparquet_write_data {
+  SEXP dfsxp;
+  SEXP filesxp;
+  SEXP dim;
+  SEXP compression;
+  SEXP metadata;
+  SEXP required;
+  SEXP options;
+  SEXP schema;
+};
+
+SEXP nanoparquet_write_wrapped(void *data) {
+
+  nanoparquet_write_data *rdata = (struct nanoparquet_write_data*) data;
+  SEXP dfsxp = rdata->dfsxp;
+  SEXP filesxp = rdata->filesxp;
+  SEXP dim = rdata->dim;
+  SEXP compression = rdata->compression;
+  SEXP metadata = rdata->metadata;
+  SEXP required = rdata->required;
+  SEXP options = rdata->options;
+  SEXP schema = rdata->schema;
+
+  return nanoparquet_write_(dfsxp, filesxp, dim, compression, metadata,
+                            required, options, schema);
+}
+
 SEXP nanoparquet_write(
   SEXP dfsxp,
   SEXP filesxp,
@@ -1729,68 +1937,35 @@ SEXP nanoparquet_write(
   SEXP metadata,
   SEXP required,
   SEXP options,
-  SEXP schema) {
+  SEXP schema,
+  SEXP call) {
 
-  if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_error("nanoparquet_write: filename must be a string"); // # nocov
-  }
+  struct nanoparquet_write_data data = {
+    dfsxp, filesxp, dim, compression, metadata, required, options, schema
+  };
 
-  int c_compression = INTEGER(compression)[0];
-  parquet::CompressionCodec::type codec;
-  switch(c_compression) {
-    case 0:
-      codec = parquet::CompressionCodec::UNCOMPRESSED;
-      break;
-    case 1:
-      codec = parquet::CompressionCodec::SNAPPY;
-      break;
-    case 2:
-      codec = parquet::CompressionCodec::GZIP;
-      break;
-    case 6:
-      codec = parquet::CompressionCodec::ZSTD;
-      break;
-    default:
-      Rf_error("Invalid compression type code: %d", c_compression); // # nocov
-      break;
-  }
+  SEXP uwt = PROTECT(R_MakeUnwindCont());
+  R_API_START(call);
 
-  char error_buffer[8192];
-  error_buffer[0] = '\0';
+  SEXP ret = R_UnwindProtect(
+    nanoparquet_write_wrapped,
+    &data,
+    throw_error,
+    &uwt,
+    uwt
+  );
 
-  try {
-    std::string fname = (char *) CHAR(STRING_ELT(filesxp, 0));
-    if (fname == ":raw:") {
-      MemStream ms;
-      std::ostream &os = ms.stream();
-      RParquetOutFile of(os, codec);
-      of.write(dfsxp, dim, metadata, required, options, schema);
-      R_xlen_t bufsize = ms.size();
-      SEXP res = Rf_allocVector(RAWSXP, bufsize);
-      ms.copy(RAW(res), bufsize);
-      return res;
-    } else {
-      RParquetOutFile of(fname, codec);
-      of.write(dfsxp, dim, metadata, required, options, schema);
-      return R_NilValue;
-    }
-  } catch (std::exception &ex) {
-    strncpy(error_buffer, ex.what(), sizeof(error_buffer) - 1); // # nocov
-  }
+  UNPROTECT(1);
+  return ret;
 
-  if (error_buffer[0] != '\0') {         // # nocov
-    Rf_error("%s", error_buffer);        // # nocov
-  }                                      // # nocov
-
-  // never reached
-  return R_NilValue; // # nocov
+  R_API_END();
 }
 
 extern SEXP convert_logical_type(parquet::LogicalType ltype, SEXP *uwt);
 
 SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options) {
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
+  R_API_START(R_NilValue);
   R_xlen_t nc = Rf_xlength(df);
   SEXP res = PROTECT(Rf_allocVector(VECSXP, nc));
   for (R_xlen_t cl = 0; cl < nc; cl++) {

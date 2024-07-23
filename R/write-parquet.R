@@ -121,7 +121,7 @@ write_parquet <- function(
     ifelse(hasna[is.na(rt)], "OPITONAL", "REQUIRED")
   required <- schema[["repetition_type"]] == "REQUIRED"
 
-  res <- .Call(
+res <- .Call(
     nanoparquet_write,
     x,
     file,
@@ -130,7 +130,8 @@ write_parquet <- function(
     metadata,
     required,
     options,
-    schema
+    schema,
+    sys.call()
   )
 
   if (is.null(res)) {

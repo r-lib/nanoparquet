@@ -2,6 +2,8 @@
 
 extern "C" {
 
+SEXP nanoparquet_call = R_NilValue;
+
 SEXP nanoparquet_read(SEXP filesxp);
 SEXP nanoparquet_write(
   SEXP dfsxp,
@@ -11,7 +13,8 @@ SEXP nanoparquet_write(
   SEXP metadata,
   SEXP required,
   SEXP options,
-  SEXP schema
+  SEXP schema,
+  SEXP mycall
 );
 SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options);
 SEXP nanoparquet_logical_to_converted(SEXP logical_type);
@@ -36,7 +39,7 @@ SEXP nanoparquet_unpack_bits_int32(SEXP x, SEXP bit_width, SEXP n);
 SEXP nanoparquet_pack_bits_int32(SEXP x, SEXP bit_width);
 
 SEXP nanoparquet_create_dict(SEXP x, SEXP l);
-SEXP nanoparquet_create_dict_idx(SEXP x);
+SEXP nanoparquet_create_dict_idx(SEXP x, SEXP call);
 SEXP nanoparquet_avg_run_length(SEXP x, SEXP len);
 
 SEXP nanoparquet_base64_decode(SEXP x);
@@ -85,7 +88,7 @@ SEXP is_ubsan_() {
 
 static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_read, 1),
-  CALLDEF(nanoparquet_write, 8),
+  CALLDEF(nanoparquet_write, 9),
   CALLDEF(nanoparquet_map_to_parquet_types, 2),
   CALLDEF(nanoparquet_logical_to_converted, 1),
   CALLDEF(nanoparquet_read_metadata, 1),
@@ -105,7 +108,7 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_unpack_bits_int32, 3),
   CALLDEF(nanoparquet_pack_bits_int32, 2),
   CALLDEF(nanoparquet_create_dict, 2),
-  CALLDEF(nanoparquet_create_dict_idx, 1),
+  CALLDEF(nanoparquet_create_dict_idx, 2),
   CALLDEF(nanoparquet_avg_run_length, 2),
   CALLDEF(nanoparquet_base64_decode, 1),
   CALLDEF(nanoparquet_base64_encode, 1),

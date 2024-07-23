@@ -7,6 +7,8 @@
 #include <Rdefines.h>
 #include "protect.h"
 
+extern SEXP nanoparquet_call;
+
 struct void_ptr_hash {
   inline size_t operator()(const void* p) const {
     static const size_t shift = (size_t)log2(1 + sizeof(SEXP));
@@ -173,13 +175,11 @@ SEXP nanoparquet_create_dict(SEXP x, SEXP rlen) {
   return Rf_ScalarInteger(dictlen);
 }
 
-SEXP nanoparquet_create_dict_idx(SEXP x) {
+SEXP nanoparquet_create_dict_idx_(SEXP x) {
   R_xlen_t dictlen, len = Rf_xlength(x);
-  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
 
-  SEXP idx = PROTECT(safe_allocvector_int(len, &uwtoken));
-  SEXP dict = PROTECT(safe_allocvector_int(len, &uwtoken));
+  SEXP idx = PROTECT(Rf_allocVector(INTSXP, len));
+  SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
   int *idict = INTEGER(dict);
   int *iidx = INTEGER(idx);
   switch (TYPEOF(x)) {
@@ -201,16 +201,39 @@ SEXP nanoparquet_create_dict_idx(SEXP x) {
       break;
   }
 
-  SEXP res = PROTECT(safe_allocvector_vec(2, &uwtoken));
+  SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
   SET_VECTOR_ELT(res, 0, dict);
   SET_VECTOR_ELT(res, 1, idx);
 
   if (dictlen < len) {
-    SET_VECTOR_ELT(res, 0, safe_xlengthgets(dict, dictlen, &uwtoken));
+    SET_VECTOR_ELT(res, 0, Rf_xlengthgets(dict, dictlen));
   }
 
-  UNPROTECT(4);
+  UNPROTECT(3);
   return res;
+}
+
+inline SEXP nanoparquet_create_dict_idx_wrapper(void *data) {
+  SEXP x = (SEXP) data;
+  return nanoparquet_create_dict_idx_(x);
+}
+
+SEXP nanoparquet_create_dict_idx(SEXP x, SEXP call) {
+
+  SEXP uwt = PROTECT(R_MakeUnwindCont());
+  R_API_START(call);
+
+  SEXP ret = R_UnwindProtect(
+    nanoparquet_create_dict_idx_wrapper,
+    (void*) x,
+    throw_error,
+    &uwt,
+    uwt
+  );
+
+  UNPROTECT(1);
+  return ret;
+
   R_API_END();
 }
 

@@ -6,7 +6,8 @@
 #define STR(x) STR2(x)
 #define STR2(x) #x
 
-#define R_API_START()                                                    \
+#define R_API_START(call)                                                \
+  nanoparquet_call = call;                                               \
   SEXP err_ = R_NilValue;                                                \
   char error_buffer_[8192];                                              \
   error_buffer_[0] = '\0';                                               \
@@ -20,12 +21,20 @@
   } catch(std::string& ex) {                                             \
     strncpy(error_buffer_, ex.c_str(), sizeof(error_buffer_) - 1);       \
   } catch(...) {                                                         \
-    Rf_error("nanoparquet error @ " __FILE__ ":" STR(__LINE__));         \
+    SEXP nc = nanoparquet_call;                                          \
+    nanoparquet_call = R_NilValue;                                       \
+    Rf_errorcall(                                                        \
+      nc,                                                                \
+      "nanoparquet error @ " __FILE__ ":" STR(__LINE__)                  \
+    );                                                                   \
   }                                                                      \
   if (!Rf_isNull(err_)) {                                                \
+    nanoparquet_call = R_NilValue;                                       \
     R_ContinueUnwind(err_);                                              \
   } else {                                                               \
-    Rf_error("%s", error_buffer_);                                       \
+    SEXP nc = nanoparquet_call;                                          \
+    nanoparquet_call = R_NilValue;                                       \
+    Rf_errorcall(nc, "%s", error_buffer_);                               \
   }                                                                      \
   return R_NilValue;
 

@@ -7,13 +7,15 @@ using namespace std;
 
 extern "C" {
 
+extern SEXP nanoparquet_call;
+
 SEXP nanoparquet_read_pages(SEXP filesxp) {
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_error("nanoparquet_read: Need single filename parameter");
   }
 
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
+  R_API_START(R_NilValue);
   const char *fname = CHAR(STRING_ELT(filesxp, 0));
   ParquetFile f(fname);
 
@@ -292,7 +294,7 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
   int64_t page_header_offset = REAL(page)[0];
 
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
+  R_API_START(R_NilValue);
   const char *fname = CHAR(STRING_ELT(filesxp, 0));
   ParquetFile f(fname);
   // Find where it is in the file
