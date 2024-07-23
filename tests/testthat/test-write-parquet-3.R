@@ -647,5 +647,58 @@ test_that("list of RAW to BYTE_ARRAY", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
+  d <- data.frame(d = I(list(
+    charToRaw("foo"),
+    charToRaw("bar"),
+    charToRaw("foobar")
+  )))
+  write_parquet(d, tmp)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = I(list(
+    charToRaw("foo"),
+    NULL,
+    charToRaw("bar"),
+    charToRaw("foobar"),
+    NULL
+  )))
+  write_parquet(d, tmp)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+})
+
+test_that("list of RAW to FIXED_LEN_BYTE_ARRAY", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
+
+  d <- data.frame(d = I(list(
+    charToRaw("foo"),
+    charToRaw("bar"),
+    charToRaw("aaa")
+  )))
+  write_parquet(d, tmp, schema = schema)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+
+  d <- data.frame(d = I(list(
+    charToRaw("foo"),
+    NULL,
+    charToRaw("bar"),
+    charToRaw("aaa"),
+    NULL
+  )))
+  write_parquet(d, tmp, schema = schema)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
 
 })

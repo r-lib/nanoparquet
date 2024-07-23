@@ -109,7 +109,7 @@ write_parquet <- function(
   # if schema has REQUIRED, but the column has NAs, that's an error
   rt <- schema[["repetition_type"]]
   req <- !is.na(rt) & rt == "REQUIRED"
-  hasna <- vapply(x, anyNA, logical(1))
+  hasna <- vapply(x, any_na, logical(1))
   bad <- which(req & hasna)
   if (length(bad) > 0) {
     stop(

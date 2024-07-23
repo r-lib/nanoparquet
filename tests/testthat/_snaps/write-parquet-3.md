@@ -163,8 +163,8 @@
     Code
       write_parquet(d, tmp, schema = parquet_schema("INT32"))
     Condition
-      Error in `encode_arrow_schema_r()`:
-      ! Unsuppoted types when writing Parquet file: list
+      Error in `write_parquet()`:
+      ! Cannot write a list as a Parquet INT32 type.
 
 # write_parquet -> INT64
 
@@ -475,8 +475,8 @@
     Code
       write_parquet(d, tmp, schema = parquet_schema("INT64"))
     Condition
-      Error in `encode_arrow_schema_r()`:
-      ! Unsuppoted types when writing Parquet file: list
+      Error in `write_parquet()`:
+      ! Cannot write a list as a Parquet INT64 type.
 
 # write_parquet -> INT96
 
@@ -1720,7 +1720,7 @@
     Output
           name r_type   type type_length repetition_type converted_type logical_type
       1 schema   <NA>   <NA>          NA            <NA>           <NA>             
-      2      d double DOUBLE          NA        OPTIONAL           <NA>             
+      2      d double DOUBLE          NA        REQUIRED           <NA>             
         num_children scale precision field_id
       1            1    NA        NA       NA
       2           NA    NA        NA       NA
@@ -1733,4 +1733,84 @@
       3 NaN
       4   4
       5   5
+
+# list of RAW to BYTE_ARRAY
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type       type type_length repetition_type converted_type
+      1 schema   <NA>       <NA>          NA            <NA>           <NA>
+      2      d    raw BYTE_ARRAY          NA        REQUIRED           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                             d
+      1             66, 6f, 6f
+      2             62, 61, 72
+      3 66, 6f, 6f, 62, 61, 72
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type       type type_length repetition_type converted_type
+      1 schema   <NA>       <NA>          NA            <NA>           <NA>
+      2      d    raw BYTE_ARRAY          NA        OPTIONAL           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                             d
+      1             66, 6f, 6f
+      2                   NULL
+      3             62, 61, 72
+      4 66, 6f, 6f, 62, 61, 72
+      5                   NULL
+
+# list of RAW to FIXED_LEN_BYTE_ARRAY
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type                 type type_length repetition_type converted_type
+      1 schema   <NA>                 <NA>          NA            <NA>           <NA>
+      2      d    raw FIXED_LEN_BYTE_ARRAY           3        REQUIRED           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                 d
+      1 66, 6f, 6f
+      2 62, 61, 72
+      3 61, 61, 61
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp)[, -1])
+    Output
+          name r_type                 type type_length repetition_type converted_type
+      1 schema   <NA>                 <NA>          NA            <NA>           <NA>
+      2      d    raw FIXED_LEN_BYTE_ARRAY           3        OPTIONAL           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                 d
+      1 66, 6f, 6f
+      2       NULL
+      3 62, 61, 72
+      4 61, 61, 61
+      5       NULL
 

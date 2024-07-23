@@ -177,7 +177,8 @@ encode_arrow_schema_r <- function(df) {
     "integer" = "Int",
     "double" = "FloatingPoint",
     "character" = "Utf8",
-    "logical" = "Bool"
+    "logical" = "Bool",
+    "list" = "Binary"
   )
   dftypes <- vapply(df, typeof, character(1))
   artypes <- typemap[dftypes]

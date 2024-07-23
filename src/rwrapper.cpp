@@ -23,6 +23,9 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page);
 SEXP nanoparquet_parse_arrow_schema(SEXP rbuf);
 SEXP nanoparquet_encode_arrow_schema(SEXP schema);
 
+SEXP nanoparquet_any_null(SEXP x);
+SEXP nanoparquet_any_na(SEXP x);
+
 SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width, SEXP
                                 includes_length, SEXP length);
 SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width);
@@ -93,6 +96,8 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_read_page, 2),
   CALLDEF(nanoparquet_parse_arrow_schema, 1),
   CALLDEF(nanoparquet_encode_arrow_schema, 1),
+  CALLDEF(nanoparquet_any_null, 1),
+  CALLDEF(nanoparquet_any_na, 1),
   CALLDEF(nanoparquet_rle_decode_int, 4),
   CALLDEF(nanoparquet_rle_encode_int, 2),
   CALLDEF(nanoparquet_dbp_decode_int32, 1),
