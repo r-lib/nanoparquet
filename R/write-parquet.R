@@ -15,6 +15,32 @@
 #'   use the schema of a Parquet file.
 #' @param compression Compression algorithm to use. Currently `"snappy"`
 #'   (the default), `"gzip"`, `"zstd"`, and `"uncompressed"` are supported.
+#' @param encoding Encoding to use. Possible values:
+#'   * If `NULL`, the appropriate encoding is selected automatically:
+#'     `RLE` or `PLAIN` for `BOOLEAN` columns, `RLE_DICTIONARY` for other
+#'     columns with many repeated values, and `PLAIN` otherwise.
+#'   * If It is a single (unnamed) character string, then it'll be used
+#'     for all columns.
+#'   * If it is an unnamed character vector of encoding names of the same
+#'     length as the number of columns in the data frame, then those
+#'     encodings will be used for each column.
+#'   * If it is a named character vector, then the named must be unique
+#'     and each name must match a column name, to specify the encoding of
+#'     that column. The special empty name (`""`) applies to the rest of
+#'     the columns. If there is no empty name, the rest of the columns
+#'     will use the default encoding.
+#'
+#'   If `NA_character_` is specified for a column, the default encoding is
+#'   used for the column.
+#'
+#'   If a specified encoding is invalid for a certain column type,
+#'   or nanoparquet does not implement it, `write_parquet()` throws an
+#'   error.
+#'
+#'   This version of nanoparquet supports the following encodings:
+#'   `r paste("\u0060", names(nanoparquet:::encodings), "\u0060", collapse = ", ")`.
+#'
+#'   See [parquet-encodings] for more about encodings.
 #' @param metadata Additional key-value metadata to add to the file.
 #'   This must be a named character vector, or a data frame with columns
 #'   character columns called `key` and `value`.
@@ -34,6 +60,7 @@ write_parquet <- function(
   file,
   schema = NULL,
   compression = c("snappy", "gzip", "zstd", "uncompressed"),
+  encoding = NULL,
   metadata = NULL,
   options = parquet_options()) {
 
@@ -121,6 +148,8 @@ write_parquet <- function(
     ifelse(hasna[is.na(rt)], "OPITONAL", "REQUIRED")
   required <- schema[["repetition_type"]] == "REQUIRED"
 
+encoding <- parse_encoding(encoding, x)
+
 res <- .Call(
     nanoparquet_write,
     x,
@@ -131,6 +160,7 @@ res <- .Call(
     required,
     options,
     schema,
+    encoding,
     sys.call()
   )
 
@@ -138,5 +168,38 @@ res <- .Call(
     invisible()
   } else {
     res
+  }
+}
+
+parse_encoding <- function(encoding, x) {
+  stopifnot(
+    "`encoding` must be `NULL` or a character vector" =
+      is.null(encoding) || is.character(encoding),
+    "`encoding` contains at least one unknown encoding" =
+      all(is.na(encoding) | encoding %in% names(encodings))
+  )
+
+  if (is.null(encoding)) {
+    structure(rep(NA_character_, length(x)), names = names(x))
+
+  } else if (is_named(encoding)) {
+    stopifnot(
+      "names of `encoding` must be unique" =
+        !anyDuplicated(names(encoding)),
+      "names of `encoding` must match names of `x`" =
+        all(names(encoding) %in% c(names(x), ""))
+    )
+    def <- c(encoding[names(encoding) == ""], NA_character_)[1]
+    encoding <- encoding[names(encoding) != ""]
+    res <- structure(rep(def, length(x)), names = names(x))
+    res[names(encoding)] <- encoding
+    res
+
+  } else if (length(encoding) == 1) {
+    structure(rep(encoding, length(x)), names = names(x))
+
+  } else {
+    stopifnot(length(encoding) == length(x))
+    structure(encoding, names = names(x))
   }
 }

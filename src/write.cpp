@@ -145,7 +145,8 @@ public:
     SEXP metadata,
     SEXP rrequired,
     SEXP options,
-    SEXP schema
+    SEXP schema,
+    SEXP encoding
   );
 
 private:
@@ -1774,7 +1775,8 @@ void RParquetOutFile::write(
   SEXP metadata,
   SEXP rrequired,
   SEXP options,
-  SEXP schema) {
+  SEXP schema,
+  SEXP encoding) {
 
   df = dfsxp;
   required = rrequired;
@@ -1857,7 +1859,7 @@ extern "C" {
 
 SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
                         SEXP metadata, SEXP required, SEXP options,
-                        SEXP schema) {
+                        SEXP schema, SEXP encoding) {
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_errorcall(nanoparquet_call,
@@ -1890,14 +1892,14 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
     MemStream ms;
     std::ostream &os = ms.stream();
     RParquetOutFile of(os, codec);
-    of.write(dfsxp, dim, metadata, required, options, schema);
+    of.write(dfsxp, dim, metadata, required, options, schema, encoding);
     R_xlen_t bufsize = ms.size();
     SEXP res = Rf_allocVector(RAWSXP, bufsize);
     ms.copy(RAW(res), bufsize);
     return res;
   } else {
     RParquetOutFile of(fname, codec);
-    of.write(dfsxp, dim, metadata, required, options, schema);
+    of.write(dfsxp, dim, metadata, required, options, schema, encoding);
     return R_NilValue;
   }
 }
@@ -1911,6 +1913,7 @@ struct nanoparquet_write_data {
   SEXP required;
   SEXP options;
   SEXP schema;
+  SEXP encoding;
 };
 
 SEXP nanoparquet_write_wrapped(void *data) {
@@ -1924,9 +1927,10 @@ SEXP nanoparquet_write_wrapped(void *data) {
   SEXP required = rdata->required;
   SEXP options = rdata->options;
   SEXP schema = rdata->schema;
+  SEXP encoding = rdata->encoding;
 
   return nanoparquet_write_(dfsxp, filesxp, dim, compression, metadata,
-                            required, options, schema);
+                            required, options, schema, encoding);
 }
 
 SEXP nanoparquet_write(
@@ -1938,10 +1942,12 @@ SEXP nanoparquet_write(
   SEXP required,
   SEXP options,
   SEXP schema,
+  SEXP encoding,
   SEXP call) {
 
   struct nanoparquet_write_data data = {
-    dfsxp, filesxp, dim, compression, metadata, required, options, schema
+    dfsxp, filesxp, dim, compression, metadata, required, options, schema,
+    encoding
   };
 
   SEXP uwt = PROTECT(R_MakeUnwindCont());

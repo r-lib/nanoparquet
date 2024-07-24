@@ -149,7 +149,8 @@ parquet_schema_create <- function(types) {
 parquet_type <- function(type, type_length = NULL, bit_width = NULL,
                          is_signed = NULL, precision = NULL, scale = NULL,
                          is_adjusted_utc = NULL, unit = NULL,
-                         primitive_type = NULL, repetition_type = NULL) {
+                         primitive_type = NULL, repetition_type = NULL,
+                         encoding = NULL) {
 
   fixed_len_byte_array <- function() {
     stopifnot(
