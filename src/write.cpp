@@ -158,6 +158,8 @@ private:
   void create_dictionary(uint32_t idx);
   // for LGLSXP this mean RLE encoding
   bool should_use_dict_encoding(uint32_t idx);
+  parquet::Encoding::type
+  detect_encoding(uint32_t idx, parquet::SchemaElement &sel, int32_t renc);
 };
 
 RParquetOutFile::RParquetOutFile(
@@ -182,6 +184,174 @@ void RParquetOutFile::create_dictionary(uint32_t idx) {
   SEXP d = PROTECT(nanoparquet_create_dict_idx_(col));
   SET_VECTOR_ELT(dicts, idx, d);
   UNPROTECT(1);
+}
+
+static const char *enc_[] = {
+  "PLAIN",
+  "GROUP_VAR_INT",
+  "PLAIN_DICTIONARY",
+  "RLE",
+  "BIT_PACKED",
+  "DELTA_BINARY_PACKED",
+  "DELTA_LENGTH_BYTE_ARRAY",
+  "DELTA_BYTE_ARRAY",
+  "RLE_DICTIONARY",
+  "BYTE_STREAM_SPLIT"
+};
+
+parquet::Encoding::type
+RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
+                                 int32_t renc) {
+  if (renc == NA_INTEGER) {
+    bool dict = should_use_dict_encoding(idx);
+    if (dict) {
+      if (sel.type == parquet::Type::BOOLEAN) {
+        return parquet::Encoding::RLE;
+      } else {
+        return parquet::Encoding::RLE_DICTIONARY;
+      }
+    } else {
+      return parquet::Encoding::PLAIN;
+    }
+  }
+
+  if (renc >= 10) {
+    Rf_error("Unknown Praquet encoding code: %d", renc);
+  }
+
+  // otherwise we need to check if the encoding is allowed and implemented
+  switch (sel.type) {
+  case parquet::Type::BOOLEAN:
+    if (renc == parquet::Encoding::RLE_DICTIONARY ||
+        renc == parquet::Encoding::BIT_PACKED) {
+      Rf_error("Unimplemented encoding for BOOLEAN column: %s", enc_[renc]);
+    }
+    if (renc != parquet::Encoding::RLE && renc != parquet::Encoding::PLAIN) {
+      Rf_error("Unsupported encoding for BOOLEAN column: %s", enc_[renc]);
+    }
+    break;
+  case parquet::Type::INT32:
+    if (renc == parquet::Encoding::DELTA_BINARY_PACKED ||
+        renc == parquet::Encoding::BYTE_STREAM_SPLIT) {
+      Rf_error("Unimplemented encoding for INT32 column: %s", enc_[renc]);
+    }
+    if (renc != parquet::Encoding::RLE_DICTIONARY &&
+        renc != parquet::Encoding::PLAIN_DICTIONARY &&
+        renc != parquet::Encoding::PLAIN) {
+      Rf_error("Unsupported encoding for INT32 column: %s", enc_[renc]);
+    }
+    break;
+  case parquet::Type::INT64:
+    if (renc == parquet::Encoding::DELTA_BINARY_PACKED ||
+        renc == parquet::Encoding::BYTE_STREAM_SPLIT) {
+      Rf_error("Unimplemented encoding for INT64 column: %s", enc_[renc]);
+    }
+    if (renc != parquet::Encoding::RLE_DICTIONARY &&
+        renc != parquet::Encoding::PLAIN_DICTIONARY &&
+        renc != parquet::Encoding::PLAIN) {
+      Rf_error("Unsupported encoding for INT64 column: %s", enc_[renc]);
+    }
+    break;
+  case parquet::Type::INT96:
+    if (renc != parquet::Encoding::RLE_DICTIONARY &&
+        renc != parquet::Encoding::PLAIN_DICTIONARY &&
+        renc != parquet::Encoding::PLAIN) {
+      Rf_error("Unsupported encoding for INT96 column: %s", enc_[renc]);
+    }
+    break;
+  case parquet::Type::FLOAT:
+    if (renc == parquet::Encoding::BYTE_STREAM_SPLIT) {
+      Rf_error("Unimplemented encoding for FLOAT column: %s", enc_[renc]);
+    }
+    if (renc != parquet::Encoding::RLE_DICTIONARY &&
+        renc != parquet::Encoding::PLAIN_DICTIONARY &&
+        renc != parquet::Encoding::PLAIN) {
+      Rf_error("Unsupported encoding for FLOAT column: %s", enc_[renc]);
+    }
+    break;
+  case parquet::Type::DOUBLE:
+    if (renc == parquet::Encoding::BYTE_STREAM_SPLIT) {
+      Rf_error("Unimplemented encoding for DOUBLE column: %s", enc_[renc]);
+    }
+    if (renc != parquet::Encoding::RLE_DICTIONARY &&
+        renc != parquet::Encoding::PLAIN_DICTIONARY &&
+        renc != parquet::Encoding::PLAIN) {
+      Rf_error("Unsupported encoding for DOUBLE column: %s", enc_[renc]);
+    }
+    break;
+  case parquet::Type::BYTE_ARRAY: {
+    SEXP col = VECTOR_ELT(df, idx);
+    if (TYPEOF(col) == VECSXP) {
+      if (renc == parquet::Encoding::DELTA_LENGTH_BYTE_ARRAY||
+          renc == parquet::Encoding::DELTA_BYTE_ARRAY ||
+          renc == parquet::Encoding::RLE_DICTIONARY ||
+          renc == parquet::Encoding::PLAIN_DICTIONARY) {
+        Rf_error(
+          "Unimplemented encoding for BYTE_ARRAY column: %s",
+          enc_[renc]
+        );
+      }
+      if (renc != parquet::Encoding::PLAIN) {
+        Rf_error("Unsupported encoding for BYTE_ARRAY column: %s", enc_[renc]);
+      }
+    } else {
+      if (renc == parquet::Encoding::DELTA_LENGTH_BYTE_ARRAY||
+          renc == parquet::Encoding::DELTA_BYTE_ARRAY) {
+        Rf_error(
+          "Unimplemented encoding for BYTE_ARRAY column: %s",
+          enc_[renc]
+        );
+      }
+      if (renc != parquet::Encoding::RLE_DICTIONARY &&
+          renc != parquet::Encoding::PLAIN_DICTIONARY &&
+          renc != parquet::Encoding::PLAIN) {
+        Rf_error("Unsupported encoding for BYTE_ARRAY column: %s", enc_[renc]);
+      }
+    }
+    break;
+  }
+  case parquet::Type::FIXED_LEN_BYTE_ARRAY: {
+    SEXP col = VECTOR_ELT(df, idx);
+    if (TYPEOF(col) == VECSXP) {
+      if (renc == parquet::Encoding::DELTA_BYTE_ARRAY ||
+          renc == parquet::Encoding::BYTE_STREAM_SPLIT ||
+          renc == parquet::Encoding::RLE_DICTIONARY ||
+          renc == parquet::Encoding::PLAIN_DICTIONARY) {
+        Rf_error(
+          "Unimplemented encoding for list(raw) FIXED_LEN_BYTE_ARRAY column: %s",
+          enc_[renc]
+        );
+      }
+      if (renc != parquet::Encoding::PLAIN) {
+        Rf_error(
+          "Unsupported encoding for list(raw) FIXED_LEN_BYTE_ARRAY column: %s",
+          enc_[renc]
+        );
+      }
+    } else {
+      if (renc == parquet::Encoding::DELTA_LENGTH_BYTE_ARRAY||
+          renc == parquet::Encoding::DELTA_BYTE_ARRAY) {
+        Rf_error(
+          "Unimplemented encoding for FIXED_LEN_BYTE_ARRAY column: %s",
+          enc_[renc]
+        );
+      }
+      if (renc != parquet::Encoding::RLE_DICTIONARY &&
+          renc != parquet::Encoding::PLAIN_DICTIONARY &&
+          renc != parquet::Encoding::PLAIN) {
+        Rf_error(
+          "Unsupported encoding for FIXED_LEN_BYTE_ARRAY column: %s",
+          enc_[renc]
+        );
+      }
+    }
+    break;
+  }
+  default:
+    Rf_errorcall(nanoparquet_call, "Unsupported Parquet type");
+  }
+
+  return (parquet::Encoding::type) renc;
 }
 
 bool RParquetOutFile::should_use_dict_encoding(uint32_t idx) {
@@ -1834,8 +2004,9 @@ void RParquetOutFile::write(
       }
     }
 
-    bool dict = should_use_dict_encoding(idx);
-    schema_add_column(sel, dict);
+    int32_t ienc = INTEGER(encoding)[idx];
+    parquet::Encoding::type enc = detect_encoding(idx, sel, ienc);
+    schema_add_column(sel, enc);
   }
 
   if (!Rf_isNull(metadata)) {

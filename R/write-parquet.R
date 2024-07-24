@@ -160,7 +160,7 @@ res <- .Call(
     required,
     options,
     schema,
-    encoding,
+    encodings[encoding],
     sys.call()
   )
 

@@ -69,27 +69,25 @@ void ParquetOutFile::set_num_rows(uint32_t nr) {
 }
 
 void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
-                                       bool dict) {
+                                       parquet::Encoding::type encoding) {
   schemas.push_back(sel);
   schemas[0].__set_num_children(schemas[0].num_children + 1);
 
   ColumnMetaData cmd;
   cmd.__set_type(sel.type);
   vector<Encoding::type> encs;
-  if (dict) {
-    if (sel.type == Type::BOOLEAN) {
-      encs.push_back(Encoding::RLE);              // def levels + BOOLEAN
-      encodings.push_back(Encoding::RLE);
-    } else {
-      encs.push_back(Encoding::PLAIN);            // the dict itself
-      encs.push_back(Encoding::RLE);              // definition levels
-      encs.push_back(Encoding::RLE_DICTIONARY);   // dictionary page
-      encodings.push_back(Encoding::RLE_DICTIONARY);
-    }
-  } else {
-    encs.push_back(Encoding::PLAIN);
-    encodings.push_back(Encoding::PLAIN);
+  if (sel.repetition_type != parquet::FieldRepetitionType::REQUIRED &&
+      encoding != Encoding::RLE) {
+    // def levels, but do not duplicate
+    encs.push_back(Encoding::RLE);
   }
+  if (encoding == Encoding::RLE_DICTIONARY ||
+      encoding == Encoding::PLAIN_DICTIONARY) {
+    // dictionary values
+    encs.push_back(Encoding::PLAIN);
+  }
+  encs.push_back(encoding);
+  encodings.push_back(encoding);
 
   cmd.__set_encodings(encs);
   vector<string> paths;
