@@ -14,6 +14,7 @@ SEXP nanoparquet_write(
   SEXP required,
   SEXP options,
   SEXP schema,
+  SEXP encoding,
   SEXP mycall
 );
 SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options);
@@ -88,7 +89,7 @@ SEXP is_ubsan_() {
 
 static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_read, 1),
-  CALLDEF(nanoparquet_write, 9),
+  CALLDEF(nanoparquet_write, 10),
   CALLDEF(nanoparquet_map_to_parquet_types, 2),
   CALLDEF(nanoparquet_logical_to_converted, 1),
   CALLDEF(nanoparquet_read_metadata, 1),
