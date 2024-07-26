@@ -19,6 +19,7 @@ reference:
   contents:
   - infer_parquet_schema
   - nanoparquet-types
+  - parquet-encodings
   - parquet_schema
 
 - title: Read Parquet files
