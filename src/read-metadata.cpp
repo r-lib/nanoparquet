@@ -8,6 +8,8 @@ using namespace std;
 
 extern "C" {
 
+extern SEXP nanoparquet_call;
+
 // Does not throw C++ exceptions, so we can wrap it
 SEXP convert_logical_type_(parquet::LogicalType ltype) {
   SEXP rtype = R_NilValue;
@@ -132,7 +134,7 @@ SEXP convert_logical_type(parquet::LogicalType ltype, SEXP *uwt) {
 
 SEXP convert_key_value_metadata(const parquet::FileMetaData &fmd) {
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
+  R_API_START(R_NilValue);
   auto kvsize =
     fmd.__isset.key_value_metadata ? fmd.key_value_metadata.size() : 0;
   const char *kv_nms[] = { "key", "value", "" };
@@ -173,7 +175,7 @@ SEXP convert_schema(const char *cfile_name,
   };
 
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
+  R_API_START(R_NilValue);
 
   uint64_t nc = schema.size();
   SEXP columns = PROTECT(safe_mknamed_vec(col_nms, &uwtoken));
@@ -242,7 +244,7 @@ SEXP convert_row_groups(const char *cfile_name,
   };
 
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
+  R_API_START(R_NilValue);
 
   auto nrgs = rgs.size();
   SEXP rrgs = PROTECT(safe_mknamed_vec(nms, &uwtoken));
@@ -303,7 +305,7 @@ SEXP convert_column_chunks(const char *file_name,
   };
 
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
+  R_API_START(R_NilValue);
 
   int nccs = 0;
   for (auto i = 0; i < rgs.size(); i++) {
@@ -387,7 +389,7 @@ SEXP nanoparquet_read_metadata(SEXP filesxp) {
   }
 
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
+  R_API_START(R_NilValue);
 
   const char *fname = CHAR(STRING_ELT(filesxp, 0));
   ParquetFile f(fname);
@@ -439,7 +441,7 @@ SEXP nanoparquet_read_schema(SEXP filesxp) {
     Rf_error("nanoparquet_read: Need single filename parameter");
   }
 
-  R_API_START();
+  R_API_START(R_NilValue);
   SEXP cfname = PROTECT(STRING_ELT(filesxp, 0));
   const char *fname = CHAR(cfname);
   ParquetFile f(fname);

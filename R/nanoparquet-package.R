@@ -22,3 +22,15 @@
 #' @seealso [nanoparquet-package] for options that modify the type
 #' mappings.
 NULL
+
+#' @name parquet-encodings
+#' @title Parquet encodings
+#' @description
+#' Various Parquet encodings
+#'
+#' @details
+#' ```{r, child = "tools/encodings.Rmd"}
+#' ```
+#' @seealso [write_parquet()] on how to select a non-default encoding when
+#' writing Parquet files.
+NULL

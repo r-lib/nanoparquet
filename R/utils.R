@@ -60,3 +60,8 @@ any_na <- function(x) {
     anyNA(x)
   }
 }
+
+is_named <- function(x) {
+  nm <- names(x)
+  !is.null(nm) && !anyNA(nm)
+}

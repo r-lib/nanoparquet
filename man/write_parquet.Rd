@@ -9,6 +9,7 @@ write_parquet(
   file,
   schema = NULL,
   compression = c("snappy", "gzip", "zstd", "uncompressed"),
+  encoding = NULL,
   metadata = NULL,
   options = parquet_options()
 )
@@ -27,6 +28,35 @@ use the schema of a Parquet file.}
 
 \item{compression}{Compression algorithm to use. Currently \code{"snappy"}
 (the default), \code{"gzip"}, \code{"zstd"}, and \code{"uncompressed"} are supported.}
+
+\item{encoding}{Encoding to use. Possible values:
+\itemize{
+\item If \code{NULL}, the appropriate encoding is selected automatically:
+\code{RLE} or \code{PLAIN} for \code{BOOLEAN} columns, \code{RLE_DICTIONARY} for other
+columns with many repeated values, and \code{PLAIN} otherwise.
+\item If It is a single (unnamed) character string, then it'll be used
+for all columns.
+\item If it is an unnamed character vector of encoding names of the same
+length as the number of columns in the data frame, then those
+encodings will be used for each column.
+\item If it is a named character vector, then the named must be unique
+and each name must match a column name, to specify the encoding of
+that column. The special empty name (\code{""}) applies to the rest of
+the columns. If there is no empty name, the rest of the columns
+will use the default encoding.
+}
+
+If \code{NA_character_} is specified for a column, the default encoding is
+used for the column.
+
+If a specified encoding is invalid for a certain column type,
+or nanoparquet does not implement it, \code{write_parquet()} throws an
+error.
+
+This version of nanoparquet supports the following encodings:
+\code{PLAIN}, \code{GROUP_VAR_INT}, \code{PLAIN_DICTIONARY}, \code{RLE}, \code{BIT_PACKED}, \code{DELTA_BINARY_PACKED}, \code{DELTA_LENGTH_BYTE_ARRAY}, \code{DELTA_BYTE_ARRAY}, \code{RLE_DICTIONARY}, \code{BYTE_STREAM_SPLIT}.
+
+See \link{parquet-encodings} for more about encodings.}
 
 \item{metadata}{Additional key-value metadata to add to the file.
 This must be a named character vector, or a data frame with columns

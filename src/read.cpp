@@ -14,6 +14,8 @@ constexpr int64_t kJulianToUnixEpochDays = 2440588LL;
 constexpr int64_t kMillisecondsInADay = 86400000LL;
 constexpr int64_t kNanosecondsInADay = kMillisecondsInADay * 1000LL * 1000LL;
 
+extern SEXP nanoparquet_call;
+
 static int64_t impala_timestamp_to_nanoseconds(const Int96 &impala_timestamp) {
   int64_t days_since_epoch = impala_timestamp.value[2] - kJulianToUnixEpochDays;
 
@@ -62,7 +64,7 @@ SEXP nanoparquet_read(SEXP filesxp) {
   }
 
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START();
+  R_API_START(R_NilValue);
 
   // parse the query and transform it into a set of statements
   char *fname = (char *)CHAR(STRING_ELT(filesxp, 0));

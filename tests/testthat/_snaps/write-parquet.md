@@ -81,7 +81,7 @@
       write_parquet(mt, tmp)
     Condition
       Error in `write_parquet()`:
-      ! Cannot write an integer vector as a Parquet BYTE_ARRAY element when writing alist column of RAW vectors.
+      ! Cannot write an integer vector as a Parquet BYTE_ARRAY element when writing a list column of RAW vectors.
 
 ---
 
