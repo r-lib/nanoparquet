@@ -133,9 +133,9 @@ public:
 
   // for dictionaries
   uint32_t get_num_values_dictionary(uint32_t idx);
-  uint32_t get_size_dictionary(uint32_t idx, parquet::Type::type type);
+  uint32_t get_size_dictionary(uint32_t idx, parquet::SchemaElement &type);
   void write_dictionary(std::ostream &file, uint32_t idx,
-                        parquet::Type::type type);
+                        parquet::SchemaElement &sel);
   void write_dictionary_indices(std::ostream &file, uint32_t idx,
                                 uint64_t from, uint64_t until);
 
@@ -224,59 +224,92 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
   case parquet::Type::BOOLEAN:
     if (renc == parquet::Encoding::RLE_DICTIONARY ||
         renc == parquet::Encoding::BIT_PACKED) {
-      Rf_error("Unimplemented encoding for BOOLEAN column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unimplemented encoding for BOOLEAN column: %s", enc_[renc]
+      );
     }
     if (renc != parquet::Encoding::RLE && renc != parquet::Encoding::PLAIN) {
-      Rf_error("Unsupported encoding for BOOLEAN column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unsupported encoding for BOOLEAN column: %s", enc_[renc]
+      );
     }
     break;
   case parquet::Type::INT32:
     if (renc == parquet::Encoding::DELTA_BINARY_PACKED ||
         renc == parquet::Encoding::BYTE_STREAM_SPLIT) {
-      Rf_error("Unimplemented encoding for INT32 column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unimplemented encoding for INT32 column: %s", enc_[renc]
+      );
     }
     if (renc != parquet::Encoding::RLE_DICTIONARY &&
         renc != parquet::Encoding::PLAIN_DICTIONARY &&
         renc != parquet::Encoding::PLAIN) {
-      Rf_error("Unsupported encoding for INT32 column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unsupported encoding for INT32 column: %s", enc_[renc]
+      );
     }
     break;
   case parquet::Type::INT64:
     if (renc == parquet::Encoding::DELTA_BINARY_PACKED ||
         renc == parquet::Encoding::BYTE_STREAM_SPLIT) {
-      Rf_error("Unimplemented encoding for INT64 column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unimplemented encoding for INT64 column: %s", enc_[renc]
+      );
     }
     if (renc != parquet::Encoding::RLE_DICTIONARY &&
         renc != parquet::Encoding::PLAIN_DICTIONARY &&
         renc != parquet::Encoding::PLAIN) {
-      Rf_error("Unsupported encoding for INT64 column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unsupported encoding for INT64 column: %s", enc_[renc]
+      );
     }
     break;
   case parquet::Type::INT96:
     if (renc != parquet::Encoding::RLE_DICTIONARY &&
         renc != parquet::Encoding::PLAIN_DICTIONARY &&
         renc != parquet::Encoding::PLAIN) {
-      Rf_error("Unsupported encoding for INT96 column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unsupported encoding for INT96 column: %s", enc_[renc]
+      );
     }
     break;
   case parquet::Type::FLOAT:
     if (renc == parquet::Encoding::BYTE_STREAM_SPLIT) {
-      Rf_error("Unimplemented encoding for FLOAT column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unimplemented encoding for FLOAT column: %s", enc_[renc]
+      );
     }
     if (renc != parquet::Encoding::RLE_DICTIONARY &&
         renc != parquet::Encoding::PLAIN_DICTIONARY &&
         renc != parquet::Encoding::PLAIN) {
-      Rf_error("Unsupported encoding for FLOAT column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unsupported encoding for FLOAT column: %s", enc_[renc]
+      );
     }
     break;
   case parquet::Type::DOUBLE:
     if (renc == parquet::Encoding::BYTE_STREAM_SPLIT) {
-      Rf_error("Unimplemented encoding for DOUBLE column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unimplemented encoding for DOUBLE column: %s", enc_[renc]
+      );
     }
     if (renc != parquet::Encoding::RLE_DICTIONARY &&
         renc != parquet::Encoding::PLAIN_DICTIONARY &&
         renc != parquet::Encoding::PLAIN) {
-      Rf_error("Unsupported encoding for DOUBLE column: %s", enc_[renc]);
+      Rf_errorcall(
+        nanoparquet_call,
+        "Unsupported encoding for DOUBLE column: %s", enc_[renc]
+      );
     }
     break;
   case parquet::Type::BYTE_ARRAY: {
@@ -286,18 +319,23 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
           renc == parquet::Encoding::DELTA_BYTE_ARRAY ||
           renc == parquet::Encoding::RLE_DICTIONARY ||
           renc == parquet::Encoding::PLAIN_DICTIONARY) {
-        Rf_error(
-          "Unimplemented encoding for BYTE_ARRAY column: %s",
+        Rf_errorcall(
+          nanoparquet_call,
+          "Unimplemented encoding for list(raw) BYTE_ARRAY column: %s",
           enc_[renc]
         );
       }
       if (renc != parquet::Encoding::PLAIN) {
-        Rf_error("Unsupported encoding for BYTE_ARRAY column: %s", enc_[renc]);
+        Rf_errorcall(
+          nanoparquet_call,
+          "Unsupported encoding for list(raw) BYTE_ARRAY column: %s", enc_[renc]
+        );
       }
     } else {
       if (renc == parquet::Encoding::DELTA_LENGTH_BYTE_ARRAY||
           renc == parquet::Encoding::DELTA_BYTE_ARRAY) {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Unimplemented encoding for BYTE_ARRAY column: %s",
           enc_[renc]
         );
@@ -305,7 +343,10 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
       if (renc != parquet::Encoding::RLE_DICTIONARY &&
           renc != parquet::Encoding::PLAIN_DICTIONARY &&
           renc != parquet::Encoding::PLAIN) {
-        Rf_error("Unsupported encoding for BYTE_ARRAY column: %s", enc_[renc]);
+        Rf_errorcall(
+          nanoparquet_call,
+          "Unsupported encoding for BYTE_ARRAY column: %s", enc_[renc]
+        );
       }
     }
     break;
@@ -317,13 +358,15 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
           renc == parquet::Encoding::BYTE_STREAM_SPLIT ||
           renc == parquet::Encoding::RLE_DICTIONARY ||
           renc == parquet::Encoding::PLAIN_DICTIONARY) {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Unimplemented encoding for list(raw) FIXED_LEN_BYTE_ARRAY column: %s",
           enc_[renc]
         );
       }
       if (renc != parquet::Encoding::PLAIN) {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Unsupported encoding for list(raw) FIXED_LEN_BYTE_ARRAY column: %s",
           enc_[renc]
         );
@@ -331,7 +374,8 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
     } else {
       if (renc == parquet::Encoding::DELTA_LENGTH_BYTE_ARRAY||
           renc == parquet::Encoding::DELTA_BYTE_ARRAY) {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Unimplemented encoding for FIXED_LEN_BYTE_ARRAY column: %s",
           enc_[renc]
         );
@@ -339,7 +383,8 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
       if (renc != parquet::Encoding::RLE_DICTIONARY &&
           renc != parquet::Encoding::PLAIN_DICTIONARY &&
           renc != parquet::Encoding::PLAIN) {
-        Rf_error(
+        Rf_errorcall(
+          nanoparquet_call,
           "Unsupported encoding for FIXED_LEN_BYTE_ARRAY column: %s",
           enc_[renc]
         );
@@ -1423,9 +1468,11 @@ uint32_t RParquetOutFile::get_num_values_dictionary(
 
 uint32_t RParquetOutFile::get_size_dictionary(
   uint32_t idx,
-  parquet::Type::type type) {
+  parquet::SchemaElement &sel) {
 
   SEXP col = VECTOR_ELT(df, idx);
+  parquet::Type::type type = sel.type;
+
   switch (TYPEOF(col)) {
   case INTSXP: {
     if (Rf_inherits(col, "factor")) {
@@ -1462,12 +1509,16 @@ uint32_t RParquetOutFile::get_size_dictionary(
     SEXP dict = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     if (type == parquet::Type::DOUBLE) {
       return Rf_xlength(dict) * sizeof(double);
+    } else if (type == parquet::Type::INT32) {
+      return Rf_xlength(dict) * sizeof(int32_t);
     } else if (type == parquet::Type::INT64) {
       return Rf_xlength(dict) * sizeof(int64_t);
     } else if (type == parquet::Type::INT96) {
       return Rf_xlength(dict) * sizeof(Int96);
     } else if (type == parquet::Type::FLOAT) {
       return Rf_xlength(dict) * sizeof(float);
+    } else if (type == parquet::Type::FIXED_LEN_BYTE_ARRAY) {
+      return Rf_xlength(dict) * sel.type_length;
     } else {
         Rf_errorcall(
           nanoparquet_call,
@@ -1482,7 +1533,13 @@ uint32_t RParquetOutFile::get_size_dictionary(
     create_dictionary(idx);
     SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     R_xlen_t len = Rf_xlength(dictidx);
-    uint32_t size = len * 4;
+    bool is_uuid = sel.__isset.logicalType && sel.logicalType.__isset.UUID;
+
+    if (is_uuid) {
+      return len * 16;
+    }
+
+    uint32_t size = type == parquet::Type::BYTE_ARRAY ? len * 4 : 0;
     int *beg = INTEGER(dictidx);
     int *end = beg + len;
     for (; beg < end; beg++) {
@@ -1507,7 +1564,12 @@ uint32_t RParquetOutFile::get_size_dictionary(
 void RParquetOutFile::write_dictionary(
     std::ostream &file,
     uint32_t idx,
-    parquet::Type::type type) {
+    parquet::SchemaElement &sel) {
+
+  parquet::Type::type type = sel.type;
+
+  int32_t precision = 0, scale = 0;
+  bool isdec = is_decimal(sel, precision, scale);
   SEXP col = VECTOR_ELT(df, idx);
   switch (TYPEOF(col)) {
   case INTSXP: {
@@ -1515,7 +1577,7 @@ void RParquetOutFile::write_dictionary(
       if (type != parquet::Type::BYTE_ARRAY) {
         Rf_errorcall(
           nanoparquet_call,
-          "Cannot convert an integer vector to Parquet type %s.",
+          "Cannot convert a factor to Parquet type %s.",
          parquet:: _Type_VALUES_TO_NAMES.at(type)
         );
       }
@@ -1535,23 +1597,79 @@ void RParquetOutFile::write_dictionary(
       int *iidx = INTEGER(dictidx);
       switch (type) {
       case parquet::Type::INT32: {
-        SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
-        int *idict = INTEGER(dict);
-        for (auto i = 0; i < len; i++) {
-          idict[i] = icol[iidx[i]];
+        if (isdec) {
+          int32_t fact = pow(10, scale);
+          int32_t max = ((int32_t)pow(10, precision)) / fact;
+          int32_t min = -max;
+          SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
+          int32_t *idict = INTEGER(dict);
+          for (auto i = 0; i < len; i++) {
+            int32_t val = icol[iidx[i]];
+            if (val <= min) {
+              Rf_errorcall(
+                nanoparquet_call,
+                "Value too small for INT32 DECIMAL with precision %d, scale %d: %d",
+                precision, scale, val
+              );
+            }
+            if (val >= max) {
+              Rf_errorcall(
+                nanoparquet_call,
+                "Value too large for INT32 DECIMAL with precision %d, scale %d: %d",
+                precision, scale, val
+              );
+            }
+            idict[i] = val * fact;
+          }
+          file.write((const char*) idict, sizeof(int32_t) * len);
+          UNPROTECT(1);
+        } else {
+          SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
+          int *idict = INTEGER(dict);
+          for (auto i = 0; i < len; i++) {
+            idict[i] = icol[iidx[i]];
+          }
+          file.write((const char*) idict, sizeof(int) * len);
+          UNPROTECT(1);
         }
-        file.write((const char*) idict, sizeof(int) * len);
-        UNPROTECT(1);
         break;
       }
       case parquet::Type::INT64: {
-        SEXP dict = PROTECT(Rf_allocVector(REALSXP, len));
-        int64_t *idict = (int64_t*) REAL(dict);
-        for (auto i = 0; i < len; i++) {
-          idict[i] = icol[iidx[i]];
+        if (isdec) {
+          int64_t fact = pow(10, scale);
+          int64_t max = ((int64_t)pow(10, precision)) / fact;
+          int64_t min = -max;
+          SEXP dict = PROTECT(Rf_allocVector(REALSXP, len));
+          int64_t *idict = (int64_t*) REAL(dict);
+          for (auto i = 0; i < len; i++) {
+            int64_t val = icol[iidx[i]];
+            if (val <= min) {
+              Rf_errorcall(
+                  nanoparquet_call,
+                  "Value too small for INT64 DECIMAL with precision %d, scale "
+                  "%d: %" PRId64,
+                  precision, scale, val);
+            }
+            if (val >= max) {
+              Rf_errorcall(
+                  nanoparquet_call,
+                  "Value too large for INT64 DECIMAL with precision %d, scale "
+                  "%d: %" PRId64,
+                  precision, scale, val);
+            }
+            idict[i] = val * fact;
+          }
+          file.write((const char*) idict, sizeof(int64_t) * len);
+          UNPROTECT(1);
+        } else {
+          SEXP dict = PROTECT(Rf_allocVector(REALSXP, len));
+          int64_t *idict = (int64_t*) REAL(dict);
+          for (auto i = 0; i < len; i++) {
+            idict[i] = icol[iidx[i]];
+          }
+          file.write((const char*) idict, sizeof(int64_t) * len);
+          UNPROTECT(1);
         }
-        file.write((const char*) idict, sizeof(int64_t) * len);
-        UNPROTECT(1);
         break;
       }
       case parquet::Type::INT96: {
@@ -1615,14 +1733,144 @@ void RParquetOutFile::write_dictionary(
         UNPROTECT(1);
         break;
       }
-      case parquet::Type::INT64: {
-        SEXP dict = PROTECT(Rf_allocVector(REALSXP, len));
-        int64_t *idict = (int64_t*) REAL(dict);
-        for (auto i = 0; i < len; i++) {
-          idict[i] = icol[iidx[i]];
+      case parquet::Type::INT32: {
+        if (isdec) {
+          int32_t fact = pow(10, scale);
+          double max = (pow(10, precision)) / fact;
+          double min = -max;
+          SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
+          int32_t *idict = (int32_t*) INTEGER(dict);
+          for (auto i = 0; i < len; i++) {
+            double val = icol[iidx[i]];
+            if (val <= min) {
+              Rf_errorcall(nanoparquet_call,
+                           "Value too small for INT32 DECIMAL with precision "
+                           "%d, scale %d: %f",
+                           precision, scale, round(val * fact) / fact);
+            }
+            if (val >= max) {
+              Rf_errorcall(nanoparquet_call,
+                           "Value too large for INT32 DECIMAL with precision "
+                           "%d, scale %d: %f",
+                           precision, scale, round(val * fact) / fact);
+            }
+            idict[i] = val * fact;
+          }
+          file.write((const char*) idict, sizeof(int32_t) * len);
+          UNPROTECT(1);
+        } else {
+          bool is_signed = TRUE;
+          int bit_width = 32;
+          if (sel.__isset.logicalType && sel.logicalType.__isset.INTEGER) {
+            is_signed = sel.logicalType.INTEGER.isSigned;
+            bit_width = sel.logicalType.INTEGER.bitWidth;
+          }
+          if (is_signed) {
+            int32_t min, max;
+            switch (bit_width) {
+            case 8:
+              max = 0x7f;
+              break;
+            case 16:
+              max = 0x7fff;
+              break;
+            case 32:
+              max = 0x7fffffff;
+              break;
+            default:
+              Rf_errorcall(nanoparquet_call, "Invalid bit width for INT32: %d",
+                           bit_width);
+            }
+            min = -max - 1;
+            SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
+            int32_t *idict = (int32_t *)INTEGER(dict);
+            for (auto i = 0; i < len; i++) {
+              double val = icol[iidx[i]];
+              const char *w = val < min ? "small" : (val > max ? "large" : "");
+              if (w[0]) {
+                Rf_errorcall(
+                    nanoparquet_call,
+                    "Integer value too %s for INT with bit width %d: %f"
+                    " at column %u", w, bit_width, val, idx + 1);
+              }
+              idict[i] = val;
+            }
+            file.write((const char*) idict, sizeof(int32_t) * len);
+            UNPROTECT(1);
+          } else {
+            uint32_t max;
+            switch (bit_width) {
+            case 8:
+              max = 0xff;
+              break;
+            case 16:
+              max = 0xffff;
+              break;
+            case 32:
+              max = 0xffffffff;
+              break;
+            default:
+              Rf_errorcall(nanoparquet_call, "Invalid bit width for INT32: %d",
+                           bit_width);
+            }
+            SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
+            int32_t *idict = (int32_t *)INTEGER(dict);
+            for (auto i = 0; i < len; i++) {
+              double val = icol[iidx[i]];
+              if (val > max) {
+                Rf_errorcall(
+                    nanoparquet_call,
+                    "Integer value too large for INT with bit width %d: %f"
+                    " at column %u.", bit_width, val, idx + 1);
+              }
+              if (val < 0) {
+                Rf_errorcall(
+                    nanoparquet_call,
+                    "Negative values are not allowed in unsigned INT column:"
+                    "%f at column %u.", val, idx + 1);
+              }
+              idict[i] = val;
+            }
+            file.write((const char*) idict, sizeof(int32_t) * len);
+            UNPROTECT(1);
+          }
         }
-        file.write((const char*) idict, sizeof(int64_t) * len);
-        UNPROTECT(1);
+        break;
+      }
+      case parquet::Type::INT64: {
+        if (isdec) {
+          int64_t fact = pow(10, scale);
+          double max = (pow(10, precision)) / fact;
+          double min = -max;
+          SEXP dict = PROTECT(Rf_allocVector(REALSXP, len));
+          int64_t *idict = (int64_t*) REAL(dict);
+          for (auto i = 0; i < len; i++) {
+            double val = icol[iidx[i]];
+            if (val <= min) {
+              Rf_errorcall(nanoparquet_call,
+                           "Value too small for INT64 DECIMAL with precision "
+                           "%d, scale %d: %f",
+                           precision, scale, round(val * fact) / fact);
+            }
+            if (val >= max) {
+              Rf_errorcall(nanoparquet_call,
+                           "Value too large for INT64 DECIMAL with precision "
+                           "%d, scale %d: %f",
+                           precision, scale, round(val * fact) / fact);
+            }
+            idict[i] = val * fact;
+          }
+          file.write((const char*) idict, sizeof(int64_t) * len);
+          UNPROTECT(1);
+        } else {
+          SEXP dict = PROTECT(Rf_allocVector(REALSXP, len));
+          int64_t *idict = (int64_t*) REAL(dict);
+          for (auto i = 0; i < len; i++) {
+            idict[i] = icol[iidx[i]];
+          }
+          file.write((const char*) idict, sizeof(int64_t) * len);
+          UNPROTECT(1);
+        }
         break;
       }
       case parquet::Type::INT96: {
@@ -1645,6 +1893,16 @@ void RParquetOutFile::write_dictionary(
         UNPROTECT(1);
         break;
       }
+      case parquet::Type::FIXED_LEN_BYTE_ARRAY: {
+        SEXP dict = PROTECT(Rf_allocVector(RAWSXP, len * sel.type_length));
+        uint16_t *idict = (uint16_t*) RAW(dict);
+        for (auto i = 0; i < len; i++) {
+          idict[i] = double_to_float16(icol[iidx[i]]);
+        }
+        file.write((const char*) idict, sel.type_length * len);
+        UNPROTECT(1);
+        break;
+      }
       default:
         Rf_errorcall(
           nanoparquet_call,
@@ -1656,21 +1914,61 @@ void RParquetOutFile::write_dictionary(
     break;
   }
   case STRSXP: {
-    if (type != parquet::Type::BYTE_ARRAY) {
+    switch (type) {
+    case parquet::Type::BYTE_ARRAY: {
+      SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
+      R_xlen_t len = Rf_xlength(dictidx);
+      int *iidx = INTEGER(dictidx);
+      for (uint64_t i = 0; i < len; i++) {
+        const char *c = CHAR(STRING_ELT(col, iidx[i]));
+        uint32_t len1 = strlen(c);
+        file.write((const char *)&len1, 4);
+        file.write(c, len1);
+      }
+      break;
+    }
+    case parquet::Type::FIXED_LEN_BYTE_ARRAY: {
+      bool is_uuid = sel.__isset.logicalType && sel.logicalType.__isset.UUID;
+      if (is_uuid) {
+        char u[16], tmp[18];  // need to be longer, for easier conversion
+        SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
+        R_xlen_t len = Rf_xlength(dictidx);
+        int *iidx = INTEGER(dictidx);
+        for (uint64_t i = 0; i < len; i++) {
+          const char *c = CHAR(STRING_ELT(col, iidx[i]));
+          if (!parse_uuid(c, u, tmp)) {
+            Rf_errorcall(
+              nanoparquet_call,
+              "Invalid UUID value in column %d", idx + 1
+            );
+          }
+          file.write(u, 16);
+        }
+      } else {
+        SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
+        R_xlen_t len = Rf_xlength(dictidx);
+        int *iidx = INTEGER(dictidx);
+        for (uint64_t i = 0; i < len; i++) {
+          const char *c = CHAR(STRING_ELT(col, iidx[i]));
+          uint32_t len1 = strlen(c);
+          if (len1 != sel.type_length) {
+            Rf_errorcall(
+                nanoparquet_call,
+                "Invalid string length in FIXED_LEN_BYTE_ARRAY column: %d, "
+                "should be %d.",
+                len1, sel.type_length);
+          }
+          file.write(c, len1);
+        }
+      }
+      break;
+    }
+    default:
       Rf_errorcall(
         nanoparquet_call,
         "Cannot convert a double vector to Parquet type %s.",
        parquet:: _Type_VALUES_TO_NAMES.at(type)
       );
-    }
-    SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
-    R_xlen_t len = Rf_xlength(dictidx);
-    int *iidx = INTEGER(dictidx);
-    for (uint64_t i = 0; i < len; i++) {
-      const char *c = CHAR(STRING_ELT(col, iidx[i]));
-      uint32_t len1 = strlen(c);
-      file.write((const char *)&len1, 4);
-      file.write(c, len1);
     }
     break;
   }

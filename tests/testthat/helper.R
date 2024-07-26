@@ -43,3 +43,18 @@ test_package_root <- function() {
 
   stop("Cannot find package root")
 }
+
+test_write <- function(d, schema = NULL, encoding = NULL) {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  schema1 <- if (!is.null(schema)) parquet_schema(schema)
+  write_parquet(d, tmp, schema = schema1, encoding = encoding)
+
+  expect_snapshot({
+    schema
+    encoding
+    read_parquet_metadata(tmp)[["column_chunks"]][["encodings"]]
+    as.data.frame(read_parquet_pages(tmp))[, c("page_type", "encoding")]
+    as.data.frame(read_parquet(tmp))
+  })
+}
