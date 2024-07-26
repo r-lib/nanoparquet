@@ -1,10 +1,10 @@
-url: https://r-lib.github.io/nanoparquet
+url: https://nanoparquet.r-lib.org/
 template:
   package: tidytemplate
   bootstrap: 5
   includes:
     in_header: |
-      <script defer data-domain="r-lib.github.io/nanoparquet,all.tidyverse.org" src="https://plausible.io/js/plausible.js"></script>
+      <script defer data-domain="nanoparquet.r-lib.org,all.tidyverse.org" src="https://plausible.io/js/plausible.js"></script>
 
 destination: docs
 
