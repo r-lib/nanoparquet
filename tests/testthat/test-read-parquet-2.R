@@ -180,13 +180,109 @@ test_that("BYTE_ARRAY", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
+  d <- data.frame(l = I(list(
+    as.raw(1:10),
+    as.raw(11:20),
+    as.raw(1:3),
+    as.raw(1:1)
+  )))
+  write_parquet(d, tmp, compression = "uncompressed")
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp))[, -1]
+    as.data.frame(read_parquet(tmp))
+  })
+
+  # missing
+  d[["l"]][3] <- list(NULL)
+  write_parquet(d, tmp, compression = "uncompressed")
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp))[, -1]
+    as.data.frame(read_parquet(tmp))
+  })
+
+  # dict
+  d <- data.frame(s = c("foo", "bar", "foobar"))
+  write_parquet(
+    d,
+    tmp,
+    compression = "uncompressed",
+    encoding = "RLE_DICTIONARY"
+  )
+  expect_snapshot({
+    as.data.frame(read_parquet_pages(tmp))[["page_type"]]
+    as.data.frame(read_parquet_schema(tmp))[, -1]
+    as.data.frame(read_parquet(tmp))
+  })
+
+  # missing
+  d <- data.frame(s = c("foo", "bar", NA, "foobar"))
+  write_parquet(
+    d,
+    tmp,
+    compression = "uncompressed",
+    encoding = "RLE_DICTIONARY"
+  )
+  expect_snapshot({
+    as.data.frame(read_parquet_pages(tmp))[["page_type"]]
+    as.data.frame(read_parquet_schema(tmp))[, -1]
+    as.data.frame(read_parquet(tmp))
+  })
 })
 
 test_that("FIXED_LEN_BYTE_ARRAY", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-})
+  d <- data.frame(l = I(list(
+    as.raw(1:10),
+    as.raw(11:20),
+    as.raw(1:10),
+    as.raw(21:30)
+  )))
+  schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 10))
+  write_parquet(d, tmp, schema = schema, compression = "uncompressed")
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp))[, -1]
+    as.data.frame(read_parquet(tmp))
+  })
 
-# -------------------------------------------------------------------------
-# Logicaltypes
+  # missing
+  d[["l"]][3] <- list(NULL)
+  write_parquet(d, tmp, schema = schema, compression = "uncompressed")
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp))[, -1]
+    as.data.frame(read_parquet(tmp))
+  })
+
+  # dict
+  d <- data.frame(s = c("foo", "bar", "aaa"))
+  schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
+  write_parquet(
+    d,
+    tmp,
+    schema = schema,
+    compression = "uncompressed",
+    encoding = "RLE_DICTIONARY"
+  )
+  expect_snapshot({
+    as.data.frame(read_parquet_pages(tmp))[["page_type"]]
+    as.data.frame(read_parquet_schema(tmp))[, -1]
+    as.data.frame(read_parquet(tmp))
+  })
+
+  # missing
+  d <- data.frame(s = c("foo", "bar", NA, "aaa"))
+  schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
+  write_parquet(
+    d,
+    tmp,
+    schema = schema,
+    compression = "uncompressed",
+    encoding = "RLE_DICTIONARY"
+  )
+  expect_snapshot({
+    as.data.frame(read_parquet_pages(tmp))[["page_type"]]
+    as.data.frame(read_parquet_schema(tmp))[, -1]
+    as.data.frame(read_parquet(tmp))
+  })
+})

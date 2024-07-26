@@ -694,3 +694,177 @@
       39  NA
       40 1.0
 
+# BYTE_ARRAY
+
+    Code
+      as.data.frame(read_parquet_schema(tmp))[, -1]
+    Output
+          name r_type       type type_length repetition_type converted_type
+      1 schema   <NA>       <NA>          NA            <NA>           <NA>
+      2      l    raw BYTE_ARRAY          NA        REQUIRED           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                                             l
+      1 01, 02, 03, 04, 05, 06, 07, 08, 09, 0a
+      2 0b, 0c, 0d, 0e, 0f, 10, 11, 12, 13, 14
+      3                             01, 02, 03
+      4                                     01
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp))[, -1]
+    Output
+          name r_type       type type_length repetition_type converted_type
+      1 schema   <NA>       <NA>          NA            <NA>           <NA>
+      2      l    raw BYTE_ARRAY          NA        OPTIONAL           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                                             l
+      1 01, 02, 03, 04, 05, 06, 07, 08, 09, 0a
+      2 0b, 0c, 0d, 0e, 0f, 10, 11, 12, 13, 14
+      3                                   NULL
+      4                                     01
+
+---
+
+    Code
+      as.data.frame(read_parquet_pages(tmp))[["page_type"]]
+    Output
+      [1] "DICTIONARY_PAGE" "DATA_PAGE"      
+    Code
+      as.data.frame(read_parquet_schema(tmp))[, -1]
+    Output
+          name    r_type       type type_length repetition_type converted_type
+      1 schema      <NA>       <NA>          NA            <NA>           <NA>
+      2      s character BYTE_ARRAY          NA        REQUIRED           UTF8
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2       STRING           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+             s
+      1    foo
+      2    bar
+      3 foobar
+
+---
+
+    Code
+      as.data.frame(read_parquet_pages(tmp))[["page_type"]]
+    Output
+      [1] "DICTIONARY_PAGE" "DATA_PAGE"      
+    Code
+      as.data.frame(read_parquet_schema(tmp))[, -1]
+    Output
+          name    r_type       type type_length repetition_type converted_type
+      1 schema      <NA>       <NA>          NA            <NA>           <NA>
+      2      s character BYTE_ARRAY          NA        OPTIONAL           UTF8
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2       STRING           NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+             s
+      1    foo
+      2    bar
+      3   <NA>
+      4 foobar
+
+# FIXED_LEN_BYTE_ARRAY
+
+    Code
+      as.data.frame(read_parquet_schema(tmp))[, -1]
+    Output
+          name r_type                 type type_length repetition_type converted_type
+      1 schema   <NA>                 <NA>          NA            <NA>           <NA>
+      2      l    raw FIXED_LEN_BYTE_ARRAY          10        REQUIRED           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                                             l
+      1 01, 02, 03, 04, 05, 06, 07, 08, 09, 0a
+      2 0b, 0c, 0d, 0e, 0f, 10, 11, 12, 13, 14
+      3 01, 02, 03, 04, 05, 06, 07, 08, 09, 0a
+      4 15, 16, 17, 18, 19, 1a, 1b, 1c, 1d, 1e
+
+---
+
+    Code
+      as.data.frame(read_parquet_schema(tmp))[, -1]
+    Output
+          name r_type                 type type_length repetition_type converted_type
+      1 schema   <NA>                 <NA>          NA            <NA>           <NA>
+      2      l    raw FIXED_LEN_BYTE_ARRAY          10        OPTIONAL           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                                             l
+      1 01, 02, 03, 04, 05, 06, 07, 08, 09, 0a
+      2 0b, 0c, 0d, 0e, 0f, 10, 11, 12, 13, 14
+      3                                   NULL
+      4 15, 16, 17, 18, 19, 1a, 1b, 1c, 1d, 1e
+
+---
+
+    Code
+      as.data.frame(read_parquet_pages(tmp))[["page_type"]]
+    Output
+      [1] "DICTIONARY_PAGE" "DATA_PAGE"      
+    Code
+      as.data.frame(read_parquet_schema(tmp))[, -1]
+    Output
+          name r_type                 type type_length repetition_type converted_type
+      1 schema   <NA>                 <NA>          NA            <NA>           <NA>
+      2      s    raw FIXED_LEN_BYTE_ARRAY           3        REQUIRED           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                 s
+      1 66, 6f, 6f
+      2 62, 61, 72
+      3 61, 61, 61
+
+---
+
+    Code
+      as.data.frame(read_parquet_pages(tmp))[["page_type"]]
+    Output
+      [1] "DICTIONARY_PAGE" "DATA_PAGE"      
+    Code
+      as.data.frame(read_parquet_schema(tmp))[, -1]
+    Output
+          name r_type                 type type_length repetition_type converted_type
+      1 schema   <NA>                 <NA>          NA            <NA>           <NA>
+      2      s    raw FIXED_LEN_BYTE_ARRAY           3        OPTIONAL           <NA>
+        logical_type num_children scale precision field_id
+      1                         1    NA        NA       NA
+      2                        NA    NA        NA       NA
+    Code
+      as.data.frame(read_parquet(tmp))
+    Output
+                 s
+      1 66, 6f, 6f
+      2 62, 61, 72
+      3       NULL
+      4 61, 61, 61
+
