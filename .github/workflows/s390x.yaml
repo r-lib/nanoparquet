@@ -20,7 +20,7 @@ jobs:
           R.version[["platform"]]
         shell: Rscript {0}
 
-      - uses: r-lib/actions/setup-r-dependencies@feature/container
+      - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           pak-version: none
           cache-version: s390x-1
