@@ -3,11 +3,13 @@
 #include <iostream>
 #include <memory>
 #include <cstring>
+#include <vector>
 
 class ByteBuffer : public std::streambuf {
 public:
   char *ptr = nullptr;
   uint64_t len = 0;
+  bool locked = false;
 
   ByteBuffer() {
     setp(0, 0);
@@ -80,4 +82,39 @@ public:
 private:
   std::unique_ptr<char[]> holder = nullptr;
   char *sptr = nullptr;
+};
+
+class BufferGuard {
+public:
+  BufferGuard(ByteBuffer &buf) : buf(buf) {
+    std::cerr << "lock\n";
+    buf.locked = true;
+  }
+  ~BufferGuard() {
+    std::cerr << "unlock\n";
+    buf.locked = false;
+  }
+  ByteBuffer &buf;
+};
+
+class BufferManager {
+public:
+  BufferManager(int n): bufs(n) { std::cerr << "manager\n"; }
+  ~BufferManager() { std::cerr << "~manager\n"; }
+  BufferGuard claim() {
+    // return a BufferGuard that is associated with a buffer
+    for (auto i = 0; i < bufs.size(); i++) {
+      if (!bufs[i].locked) {
+        return BufferGuard(bufs[i]);
+      }
+    }
+    throw std::runtime_error("Buffer manageer Ran out of buffers :()");
+  }
+  BufferGuard claim(uint64_t size) {
+    // same, but check if we have one with the right size (TODO)
+    throw std::runtime_error("Not implemented yet");
+  }
+
+private:
+  std::vector<ByteBuffer> bufs;
 };

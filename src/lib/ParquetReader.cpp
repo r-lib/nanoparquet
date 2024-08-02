@@ -37,6 +37,9 @@ static void thrift_unpack(const uint8_t *buf, uint32_t *len,
 
 ParquetReader::ParquetReader(std::string filename)
   : file_type_(FILE_ON_DISK), filename_(filename) {
+  // set nuber of threads here, assuming each thread needs k buffers
+  bufman_cc = std::unique_ptr<BufferManager>(new BufferManager(1));
+  bufman_na = std::unique_ptr<BufferManager>(new BufferManager(1));
   init_file_on_disk();
 }
 
@@ -195,6 +198,8 @@ void ParquetReader::read_column_chunk(ColumnChunk &cc) {
   alloc_column_chunk(cc);
 
   // read in the whole chunk
+  BufferGuard tmp_buf_g = bufman_cc->claim();
+  ByteBuffer &tmp_buf = tmp_buf_g.buf;
   tmp_buf.resize(cmd.total_compressed_size, false);
   pfile.seekg(chunk_start, ios_base::beg);
   pfile.read(tmp_buf.ptr, cmd.total_compressed_size);
@@ -239,6 +244,17 @@ void ParquetReader::read_column_chunk(ColumnChunk &cc) {
   }
 }
 
+static CompressionCodec::type get_compression(nanoparquet::ColumnChunk &cc,
+                                              parquet::PageHeader &ph) {
+  CompressionCodec::type codec = cc.cc.meta_data.codec;
+  if (ph.__isset.data_page_header_v2 &&
+      ph.data_page_header_v2.__isset.is_compressed &&
+      !ph.data_page_header_v2.is_compressed) {
+    codec = CompressionCodec::UNCOMPRESSED;
+  }
+  return codec;
+}
+
 void ParquetReader::read_dict_page(
   ColumnChunk &cc,
   parquet::PageHeader &ph,
@@ -251,6 +267,11 @@ void ParquetReader::read_dict_page(
   if (ph.dictionary_page_header.encoding != Encoding::PLAIN &&
       ph.dictionary_page_header.encoding != Encoding::PLAIN_DICTIONARY) {
     throw runtime_error("Unknown encoding for dictionary page");
+  }
+
+  CompressionCodec::type codec = get_compression(cc, ph);
+  if (codec != CompressionCodec::UNCOMPRESSED) {
+    throw runtime_error("Compression is not supported yet");
   }
 
   uint32_t num_values = ph.dictionary_page_header.num_values;
@@ -304,6 +325,11 @@ void ParquetReader::read_dict_page(
 }
 
 uint32_t ParquetReader::read_data_page(DataPage &dp, uint8_t *buf, int32_t len) {
+  CompressionCodec::type codec = get_compression(dp.cc, dp.ph);
+  if (codec != CompressionCodec::UNCOMPRESSED) {
+    throw runtime_error("Compression is not supported yet");
+  }
+
   if (dp.ph.type == PageType::DATA_PAGE) {
     return read_data_page_v1(dp, buf, len);
   } else if (dp.ph.type == PageType::DATA_PAGE_V2) {
@@ -322,6 +348,9 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
 
   uint8_t *def_buf = nullptr;
   uint32_t def_len = 0;
+
+  BufferGuard def_levels_g = bufman_na->claim();
+  ByteBuffer &def_levels = def_levels_g.buf;
 
   if (dp.cc.optional) {
     if (dp.ph.data_page_header.definition_level_encoding != Encoding::RLE) {
@@ -359,6 +388,9 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
 
   uint8_t *def_buf = nullptr;
   uint32_t def_len = 0;
+
+  BufferGuard def_levels_g = bufman_na->claim();
+  ByteBuffer &def_levels = def_levels_g.buf;
 
   if (dp.cc.optional) {
     def_buf = buf;

@@ -140,8 +140,12 @@ protected:
   std::vector<int> leaf_cols; // map schema columns to leaf columns in chunks
   uint32_t num_leaf_cols;
 
-  ByteBuffer tmp_buf;
-  ByteBuffer def_levels;
+  // A set of managed buffers for the column chunk data
+  std::unique_ptr<BufferManager> bufman_cc = nullptr;
+  // A set of managed buffers for the missing data. We use a separate set of
+  // buffers for theese because they should be of the same size, so we can
+  // avoid multiple re-allocations
+  std::unique_ptr<BufferManager> bufman_na = nullptr;
 
   void init_file_on_disk();
   void check_meta_data();

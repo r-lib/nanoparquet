@@ -286,3 +286,20 @@ test_that("FIXED_LEN_BYTE_ARRAY", {
     as.data.frame(read_parquet(tmp))
   })
 })
+
+# -------------------------------------------------------------------------
+# Compression
+
+test_that("snappy compression", {
+  skip("not yet")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- test_df()
+  write_parquet(d, tmp, compression = "snappy", encoding = "PLAIN")
+  expect_equal(read_parquet(tmp), d)
+
+  # dict
+#  write_parquet(d, tmp, compression = "snappy", encoding = "RLE_DICTIONARY")
+#  expect_equal(read_parquet(tmp), d)
+})
