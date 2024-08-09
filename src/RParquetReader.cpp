@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "RParquetReader.h"
 #include "protect.h"
 
@@ -1160,7 +1162,7 @@ void convert_column_to_r_ba_decimal_nodict_nomiss(postprocess *pp, uint32_t cl) 
         for (auto j = 0; j < type_len; j++) {
           val = val << ((type_len - j) * 8) | d[j];
         }
-        beg[i] = val / pow(10.0, scale);
+        beg[i] = val / std::pow(10.0, scale);
       }
     }
   }
@@ -1208,7 +1210,7 @@ void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
           for (auto j = 0; j < type_len; j++) {
             val = val << ((type_len - j) * 8) | d[j];
           }
-          beg[i] = val / pow(10.0, scale);
+          beg[i] = val / std::pow(10.0, scale);
         }
       }
     } else {
@@ -1223,7 +1225,7 @@ void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
         for (auto j = 0; j < type_len; j++) {
           val = val << ((type_len - j) * 8) | d[j];
         }
-        REAL(tmp)[i] = val / pow(10.0, scale);
+        REAL(tmp)[i] = val / std::pow(10.0, scale);
       }
 
       // fill in
