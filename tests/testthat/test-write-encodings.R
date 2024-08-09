@@ -191,7 +191,7 @@ test_that("double -> INT96", {
 
   # TODO: fix tests
   if (.Platform$OS.type == "windows" && getRversion() < "4.2.0") {
-    skip("Needs INT96 read w/o converting to time
+    skip("Needs INT96 read w/o converting to time")
   }
 
   do <- function(d) {
