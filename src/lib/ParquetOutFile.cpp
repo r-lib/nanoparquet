@@ -380,30 +380,36 @@ size_t ParquetOutFile::compress(
   parquet::CompressionCodec::type codec,
   ByteBuffer &src,
   uint32_t src_size,
-  ByteBuffer &tgt) {
+  ByteBuffer &tgt,
+  uint32_t skip) {
 
   if (codec == CompressionCodec::SNAPPY) {
-    size_t tgt_size_est = snappy::MaxCompressedLength(src_size);
-    tgt.reset(tgt_size_est);
+    size_t tgt_size_est = snappy::MaxCompressedLength(src_size - skip);
+    tgt.reset(tgt_size_est + skip);
+    if (skip > 0) memcpy(tgt.ptr, src.ptr, skip);
     size_t tgt_size;
-    snappy::RawCompress(src.ptr, src_size, tgt.ptr, &tgt_size);
-    return tgt_size;
+    snappy::RawCompress(src.ptr + skip, src_size - skip, tgt.ptr + skip, &tgt_size);
+    return tgt_size + skip;
+
   } else if (codec == CompressionCodec::GZIP) {
     miniz::MiniZStream mzs;
-    size_t tgt_size_est = mzs.MaxCompressedLength(src_size);
-    tgt.reset(tgt_size_est);
+    size_t tgt_size_est = mzs.MaxCompressedLength(src_size - skip);
+    tgt.reset(tgt_size_est + skip);
+    if (skip > 0) memcpy(tgt.ptr, src.ptr, skip);
     size_t tgt_size = tgt_size_est;
     // throws on error
-    mzs.Compress(src.ptr, src_size, tgt.ptr, &tgt_size);
-    return tgt_size;
+    mzs.Compress(src.ptr + skip, src_size - skip, tgt.ptr + skip, &tgt_size);
+    return tgt_size + skip;
+
   } else if (codec == CompressionCodec::ZSTD) {
-    size_t tgt_size_est = zstd::ZSTD_compressBound(src_size);
+    size_t tgt_size_est = zstd::ZSTD_compressBound(src_size - skip);
     tgt.reset(tgt_size_est);
+    if (skip > 0) memcpy(tgt.ptr, src.ptr, skip);
     size_t tgt_size = zstd::ZSTD_compress(
-      tgt.ptr,
+      tgt.ptr + skip,
       tgt_size_est,
-      src.ptr,
-      src_size,
+      src.ptr + skip,
+      src_size - skip,
       ZSTD_CLEVEL_DEFAULT
     );
     if (zstd::ZSTD_isError(tgt_size)) {
@@ -412,7 +418,8 @@ size_t ParquetOutFile::compress(
            << __LINE__;
         throw runtime_error(ss.str());
     }
-    return tgt_size;
+    return tgt_size + skip;
+
   } else {
     std::stringstream ss;
     ss << "Unsupported Parquet compression codec: " << codec;
@@ -605,14 +612,31 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1];
   PageHeader ph;
-  ph.__set_type(PageType::DATA_PAGE);
-  DataPageHeader dph;
-  dph.__set_num_values(until - from);
-  dph.__set_encoding(encodings[idx]);
-  if (se.repetition_type == FieldRepetitionType::OPTIONAL) {
-    dph.__set_definition_level_encoding(Encoding::RLE);
+  DataPageHeaderV2 dph2;
+  if (data_page_version == 1) {
+    ph.__set_type(PageType::DATA_PAGE);
+    DataPageHeader dph;
+    dph.__set_num_values(until - from);
+    dph.__set_encoding(encodings[idx]);
+    if (se.repetition_type == FieldRepetitionType::OPTIONAL) {
+      dph.__set_definition_level_encoding(Encoding::RLE);
+    }
+    // for version 1 we can set it here
+    ph.__set_data_page_header(dph);
+  } else if (data_page_version == 2) {
+    ph.__set_type(PageType::DATA_PAGE_V2);
+    dph2.__set_num_values(until - from);
+    dph2.__set_num_rows(until - from);
+    dph2.__set_encoding(encodings[idx]);
+    // these might be overwritten later if there are NAs
+    dph2.__set_num_nulls(0);
+    dph2.__set_definition_levels_byte_length(0);
+    dph2.__set_repetition_levels_byte_length(0);
+    // for version 2 we need to set the header after we
+    // set the remaining fields
+  } else {
+    throw runtime_error("Invalid data page version");
   }
-  ph.__set_data_page_header(dph);
 
   if (se.repetition_type == FieldRepetitionType::REQUIRED &&
       encodings[idx] == Encoding::PLAIN &&
@@ -624,6 +648,9 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     );
     ph.__set_uncompressed_page_size(data_size);
     ph.__set_compressed_page_size(data_size);
+    if (data_page_version == 2) {
+      ph.__set_data_page_header_v2(dph2);
+    }
     write_page_header(idx, ph);
     write_data_(pfile, idx, data_size, from, until);
 
@@ -646,6 +673,9 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
 
     // 3. write buf_com to file
     ph.__set_compressed_page_size(cdata_size);
+    if (data_page_version == 2) {
+      ph.__set_data_page_header_v2(dph2);
+    }
     write_page_header(idx, ph);
     pfile.write((const char *) buf_com.ptr, cdata_size);
 
@@ -674,6 +704,9 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     // 3. write buf_com to file
     ph.__set_uncompressed_page_size(rle_size);
     ph.__set_compressed_page_size(rle_size);
+    if (data_page_version == 2) {
+      ph.__set_data_page_header_v2(dph2);
+    }
     write_page_header(idx, ph);
     pfile.write((const char*) buf_com.ptr, rle_size);
     cmd->__set_total_uncompressed_size(
@@ -710,6 +743,9 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     // 4. write buf_unc to file
     ph.__set_uncompressed_page_size(rle_size);
     ph.__set_compressed_page_size(crle_size);
+    if (data_page_version == 2) {
+      ph.__set_data_page_header_v2(dph2);
+    }
     write_page_header(idx, ph);
     pfile.write((const char*) buf_unc.ptr, crle_size);
     cmd->__set_total_uncompressed_size(
@@ -734,10 +770,18 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     uint32_t data_size = calculate_column_data_size(
       idx, num_present, from, until
     );
-    ph.__set_uncompressed_page_size(data_size + rle_size + 4);
-    ph.__set_compressed_page_size(data_size + rle_size + 4);
+    int prep_length = data_page_version == 1 ? 4 : 0;
+    ph.__set_uncompressed_page_size(data_size + rle_size + prep_length);
+    ph.__set_compressed_page_size(data_size + rle_size + prep_length);
+    if (data_page_version == 2) {
+      dph2.__set_num_nulls(until - from - num_present);
+      dph2.__set_definition_levels_byte_length(rle_size);
+      ph.__set_data_page_header_v2(dph2);
+    }
     write_page_header(idx, ph);
-    pfile.write((const char*) &rle_size, 4);
+    if (data_page_version == 1) {
+      pfile.write((const char*) &rle_size, 4);
+    }
     pfile.write((const char*) buf_com.ptr, rle_size);
     cmd->__set_total_uncompressed_size(
       cmd->total_uncompressed_size + rle_size + 4
@@ -762,9 +806,9 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
       buf_unc,
       until - from,
       buf_com,
-      1,         // bit_width
-      false,     // add_bit_width
-      true       // add_size
+      1,                      // bit_width
+      false,                  // add_bit_width
+      data_page_version == 1  // add_size
     );
 
     // 3. Append data to buf_com
@@ -778,11 +822,18 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     write_present_data_(*os1, idx, data_size, num_present, from, until);
 
     // 4. compress buf_com to buf_unc
-    size_t comp_size = compress(cmd->codec, buf_com, rle_size + data_size, buf_unc);
+    // for data page v2, the def levels are not compressed!
+    uint32_t skip = data_page_version == 1 ? 0 : rle_size;
+    size_t comp_size = compress(cmd->codec, buf_com, rle_size + data_size, buf_unc, skip);
 
     // 5. write buf_unc to file
     ph.__set_uncompressed_page_size(rle_size + data_size);
     ph.__set_compressed_page_size(comp_size);
+    if (data_page_version == 2) {
+      dph2.__set_num_nulls(until - from - num_present);
+      dph2.__set_definition_levels_byte_length(rle_size);
+      ph.__set_data_page_header_v2(dph2);
+    }
     write_page_header(idx, ph);
     pfile.write((const char*) buf_unc.ptr, comp_size);
     cmd->__set_total_uncompressed_size(
@@ -805,9 +856,9 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
       buf_unc,
       until - from,
       buf_com,
-      1,         // bit_width
-      false,     // add_bit_width
-      true       // add_size
+      1,                       // bit_width
+      false,                   // add_bit_width
+      data_page_version == 1   // add_size
     );
 
     // 3. write dictionaery indices to buf_unc
@@ -833,6 +884,11 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     // 5. write buf_com to file
     ph.__set_uncompressed_page_size(rle2_size);
     ph.__set_compressed_page_size(rle2_size);
+    if (data_page_version == 2) {
+      dph2.__set_num_nulls(until - from - num_present);
+      dph2.__set_definition_levels_byte_length(rle_size);
+      ph.__set_data_page_header_v2(dph2);
+    }
     write_page_header(idx, ph);
     pfile.write((const char*) buf_com.ptr, rle2_size);
     cmd->__set_total_uncompressed_size(
@@ -855,9 +911,9 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
       buf_unc,
       until - from,
       buf_com,
-      1,         // bit_width
-      false,     // add_bit_width
-      true       // add_size
+      1,                      // bit_width
+      false,                  // add_bit_width
+      data_page_version == 1  // add_size
     );
 
     // 3. write dictionaery indices to buf_unc
@@ -881,11 +937,17 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     );
 
     // 5. compress buf_com to buf_unc
-    size_t crle2_size = compress(cmd->codec, buf_com, rle2_size, buf_unc);
+    uint32_t skip = data_page_version == 1 ? 0 : rle_size;
+    size_t crle2_size = compress(cmd->codec, buf_com, rle2_size, buf_unc, skip);
 
     // 6. write buf_unc to file
     ph.__set_uncompressed_page_size(rle2_size);
     ph.__set_compressed_page_size(crle2_size);
+    if (data_page_version == 2) {
+      dph2.__set_num_nulls(until - from - num_present);
+      dph2.__set_definition_levels_byte_length(rle_size);
+      ph.__set_data_page_header_v2(dph2);
+    }
     write_page_header(idx, ph);
     pfile.write((const char*) buf_unc.ptr, crle2_size);
     cmd->__set_total_uncompressed_size(

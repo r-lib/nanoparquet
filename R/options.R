@@ -18,6 +18,8 @@
 #'     to tell which without using the Arrow metadata.
 #' @param write_arrow_metadata Whether to add the Apache Arrow types as
 #'   metadata to the file [write_parquet()].
+#' @param write_data_page_version Data version to write by default.
+#'   Possible values are 1 and 2. Default is 1.
 #'
 #' @return List of nanoparquet options.
 #'
@@ -36,15 +38,23 @@
 parquet_options <- function(
   class = getOption("nanoparquet.class", "tbl"),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
-  write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE)
+  write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
+  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L)
 ) {
   stopifnot(is.character(class))
   stopifnot(is_flag(use_arrow_metadata))
   stopifnot(is_flag(write_arrow_metadata))
+  stopifnot(
+    identical(write_data_page_version, 1) ||
+    identical(write_data_page_version, 2) ||
+    identical(write_data_page_version, 1L) ||
+    identical(write_data_page_version, 2L)
+  )
 
   list(
     class = class,
     use_arrow_metadata = use_arrow_metadata,
-    write_arrow_metadata = write_arrow_metadata
+    write_arrow_metadata = write_arrow_metadata,
+    write_data_page_version = as.integer(write_data_page_version)
   )
 }
