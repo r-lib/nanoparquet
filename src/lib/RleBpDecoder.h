@@ -53,6 +53,41 @@ public:
     return values_read;
   }
 
+  // Return the number of non-zero elements
+  template <typename T> inline uint32_t GetBatchCount(T *values, int batch_size) {
+    uint32_t values_read = 0;
+    uint32_t num_present = 0;
+
+    while (values_read < batch_size) {
+      if (repeat_count_ > 0) {
+        int repeat_batch = std::min(batch_size - values_read,
+                                    static_cast<uint32_t>(repeat_count_));
+        std::fill(values + values_read, values + values_read + repeat_batch,
+                  static_cast<T>(current_value_));
+        repeat_count_ -= repeat_batch;
+        values_read += repeat_batch;
+        if (current_value_ != 0) num_present += repeat_batch;
+      } else if (literal_count_ > 0) {
+        uint32_t literal_batch = std::min(
+            batch_size - values_read, static_cast<uint32_t>(literal_count_));
+        uint32_t actual_read =
+            BitUnpack<T>(values + values_read, literal_batch);
+        if (literal_batch != actual_read) {
+          throw runtime_error("Did not find enough values");
+        }
+        for (uint32_t i = values_read; i < values_read + actual_read; i++) {
+          if (values[i]) num_present++;
+        }
+        literal_count_ -= literal_batch;
+        values_read += literal_batch;
+      } else {
+        if (!NextCounts<T>())
+          return num_present;
+      }
+    }
+    return num_present;
+  }
+
   template <typename T>
   inline int GetBatchSpaced(uint32_t batch_size, uint32_t null_count,
                             const uint8_t *defined, T *out) {
