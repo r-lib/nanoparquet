@@ -27,6 +27,12 @@ test_that("REQ PLAIN", {
     tapply(pgs$num_values, pgs$column + 1, sum)
   })
   expect_equal(as.data.frame(read_parquet(tmp)), d)
+
+  # data page v2
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "uncompressed")
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2))
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
 
 test_that("OPT PLAIN", {
@@ -58,6 +64,12 @@ test_that("OPT PLAIN", {
     tapply(pgs$num_values, pgs$column + 1, sum)
   })
   expect_equal(as.data.frame(read_parquet(tmp)), d)
+
+  # data page v2
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "uncompressed")
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2))
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
 
 test_that("REQ RLE_DICT", {
@@ -81,6 +93,16 @@ test_that("REQ RLE_DICT", {
   pgs <- read_parquet_pages(tmp)
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
   expect_equal(as.data.frame(read_parquet(tmp)), d)
+
+  # data page v2
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "uncompressed")
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "snappy")
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "gzip")
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "zstd")
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
 
 test_that("OPT RLE_DICT", {
@@ -103,6 +125,16 @@ test_that("OPT RLE_DICT", {
   write_parquet(d, tmp, compression = "snappy")
   pgs <- read_parquet_pages(tmp)
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+
+  # data page v2
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "uncompressed")
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "snappy")
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "gzip")
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "zstd")
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
 
