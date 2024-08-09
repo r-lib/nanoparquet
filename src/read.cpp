@@ -28,7 +28,7 @@ static uint32_t as_uint(const float x) {
   return *(uint32_t*) &x;
 }
 
-static float as_float(const uint x) {
+static float as_float(const uint32_t x) {
   return *(float*) &x;
 }
 
