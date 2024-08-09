@@ -2,7 +2,7 @@ pandoc: 3.1.11
 pkgdown: 2.1.0
 pkgdown_sha: ~
 articles: {}
-last_built: 2024-08-09T14:19Z
+last_built: 2024-08-09T14:52Z
 urls:
   reference: https://nanoparquet.r-lib.org/reference
   article: https://nanoparquet.r-lib.org/articles
