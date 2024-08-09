@@ -189,6 +189,11 @@ test_that("double -> INT96", {
   on.exit(unlink(tmp), add = TRUE)
   schema <- "INT96"
 
+  # TODO: fix tests
+  if (.Platform$OS.type == "windows" && getRversion() < "4.2.0") {
+    skip("Needs INT96 read w/o converting to time")
+  }
+
   do <- function(d) {
     test_write(d, schema)
     test_write(d, schema, "PLAIN")

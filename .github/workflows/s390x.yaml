@@ -1,0 +1,42 @@
+on:
+  workflow_dispatch:
+
+name: s390x.yaml
+
+jobs:
+  s390x:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-hub/actions/ctr-start@main
+        with:
+          image: ghcr.io/r-hub/containers/s390x
+          platform: linux/s390x
+          ctr-name: s390x
+
+      - name: Test R in container
+        run: |
+          getRversion()
+          R.version[["platform"]]
+        shell: Rscript {0}
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          pak-version: none
+          cache-version: s390x-1
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+          upload-results: never
+          upload-snapshots: false
+        env:
+          NOT_CRAN: true
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: ${{ format('{0}-{1}-results', runner.os, runner.arch) }}
+          path: check
