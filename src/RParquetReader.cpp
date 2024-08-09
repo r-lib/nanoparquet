@@ -473,7 +473,6 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         break;
       }
       default:
-        std::cerr << TYPEOF(x) << std::endl;
         throw std::runtime_error("Unknown type when processing dictionaries");
       }
     } else if (hasdict && hasmiss) {

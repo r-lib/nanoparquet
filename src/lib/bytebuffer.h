@@ -87,11 +87,9 @@ private:
 class BufferGuard {
 public:
   BufferGuard(ByteBuffer &buf) : buf(buf) {
-    std::cerr << "lock\n";
     buf.locked = true;
   }
   ~BufferGuard() {
-    std::cerr << "unlock\n";
     buf.locked = false;
   }
   ByteBuffer &buf;
@@ -99,8 +97,8 @@ public:
 
 class BufferManager {
 public:
-  BufferManager(int n): bufs(n) { std::cerr << "manager\n"; }
-  ~BufferManager() { std::cerr << "~manager\n"; }
+  BufferManager(int n): bufs(n) { }
+  ~BufferManager() { }
   BufferGuard claim() {
     // return a BufferGuard that is associated with a buffer
     for (auto i = 0; i < bufs.size(); i++) {
