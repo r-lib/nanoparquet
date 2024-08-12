@@ -7,7 +7,8 @@
 parquet_options(
   class = getOption("nanoparquet.class", "tbl"),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
-  write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE)
+  write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
+  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L)
 )
 }
 \arguments{
@@ -32,6 +33,9 @@ to tell which without using the Arrow metadata.
 
 \item{write_arrow_metadata}{Whether to add the Apache Arrow types as
 metadata to the file \code{\link[=write_parquet]{write_parquet()}}.}
+
+\item{write_data_page_version}{Data version to write by default.
+Possible values are 1 and 2. Default is 1.}
 }
 \value{
 List of nanoparquet options.
