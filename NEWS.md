@@ -43,6 +43,9 @@
     - `list` of `raw` vectors to `BYTE_ARRAY`,
     - `list` of `raw` vectors to `FIXED_LEN_BYTE_ARRAY`.
 
+* `write_parquet()` can now write version 2 data pages. The default is
+  still version 1, but it might change in the future.
+
 * `write_parquet(file = ":raw:")` now works correctly for larger data
   frames (#77).
 

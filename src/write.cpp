@@ -2327,6 +2327,20 @@ void RParquetOutFile::write(
 
 extern "C" {
 
+static SEXP get_list_element(SEXP list, const char *str) {
+  SEXP elmt = R_NilValue;
+  SEXP names = PROTECT(Rf_getAttrib(list, R_NamesSymbol));
+
+  for (R_xlen_t i = 0; i < Rf_xlength(list); i++) {
+    if (strcmp(CHAR(STRING_ELT(names, i)), str) == 0) {
+       elmt = VECTOR_ELT(list, i);
+       break;
+    }
+  }
+  UNPROTECT(1);
+  return elmt;
+}
+
 SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
                         SEXP metadata, SEXP required, SEXP options,
                         SEXP schema, SEXP encoding) {
@@ -2357,11 +2371,14 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
     break;
   }
 
+  int dp_ver = INTEGER(get_list_element(options, "write_data_page_version"))[0];
+
   std::string fname = (char *)CHAR(STRING_ELT(filesxp, 0));
   if (fname == ":raw:") {
     MemStream ms;
     std::ostream &os = ms.stream();
     RParquetOutFile of(os, codec);
+    of.data_page_version = dp_ver;
     of.write(dfsxp, dim, metadata, required, options, schema, encoding);
     R_xlen_t bufsize = ms.size();
     SEXP res = Rf_allocVector(RAWSXP, bufsize);
@@ -2369,6 +2386,7 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
     return res;
   } else {
     RParquetOutFile of(fname, codec);
+    of.data_page_version = dp_ver;
     of.write(dfsxp, dim, metadata, required, options, schema, encoding);
     return R_NilValue;
   }
