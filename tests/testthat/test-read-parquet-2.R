@@ -288,18 +288,23 @@ test_that("FIXED_LEN_BYTE_ARRAY", {
 })
 
 # -------------------------------------------------------------------------
-# Compression
 
-test_that("snappy compression", {
-  skip("not yet")
+test_that("compression", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- test_df()
-  write_parquet(d, tmp, compression = "snappy", encoding = "PLAIN")
-  expect_equal(read_parquet(tmp), d)
+  d <- test_df(missing = TRUE)
+  d2 <- test_df(missing = TRUE)[, 1:11]
+  v2 <- parquet_options(write_data_page_version = 2)
+  for (comp in c("uncompressed", "snappy", "gzip", "zstd")) {
+    write_parquet(d, tmp, compression = comp, encoding = "PLAIN")
+    expect_equal(read_parquet(tmp), d, info = comp)
+    write_parquet(d2, tmp, compression = comp, encoding = "RLE_DICTIONARY")
+    expect_equal(read_parquet(tmp), d2, info = comp)
 
-  # dict
-#  write_parquet(d, tmp, compression = "snappy", encoding = "RLE_DICTIONARY")
-#  expect_equal(read_parquet(tmp), d)
+    write_parquet(d, tmp, compression = comp, encoding = "PLAIN", options = v2)
+    expect_equal(read_parquet(tmp), d, info = comp)
+    write_parquet(d2, tmp, compression = comp, encoding = "RLE_DICTIONARY", options = v2)
+    expect_equal(read_parquet(tmp), d2, info = comp)
+  }
 })

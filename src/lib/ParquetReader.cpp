@@ -7,6 +7,10 @@
 #include "bytebuffer.h"
 #include "RleBpDecoder.h"
 
+#include "snappy/snappy.h"
+#include "miniz/miniz_wrapper.hpp"
+#include "zstd.h"
+
 using namespace std;
 using namespace parquet;
 using namespace apache::thrift;
@@ -40,6 +44,7 @@ ParquetReader::ParquetReader(std::string filename)
   // set nuber of threads here, assuming each thread needs k buffers
   bufman_cc = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_na = std::unique_ptr<BufferManager>(new BufferManager(1));
+  bufman_pg = std::unique_ptr<BufferManager>(new BufferManager(1));
   init_file_on_disk();
 }
 
@@ -255,6 +260,110 @@ static CompressionCodec::type get_compression(nanoparquet::ColumnChunk &cc,
   return codec;
 }
 
+void extract_snappy(uint8_t* buf, int32_t len, ByteBuffer &bb,
+                    int32_t unc_len, int32_t skip) {
+
+  do {
+    size_t dec_size;
+    bool ok = snappy::GetUncompressedLength(
+      (const char *) buf + skip,
+      len - skip,
+      &dec_size
+    );
+    if (dec_size + skip != unc_len) break;
+    if (!ok) break;
+
+    bb.resize(dec_size + skip);
+    if (skip > 0) {
+      memcpy(bb.ptr, buf, skip);
+    }
+    ok = snappy::RawUncompress(
+      (const char*) buf + skip,
+      len - skip,
+      bb.ptr + skip
+    );
+    if (!ok) break;
+
+    return;
+
+  } while (false);
+
+  std::stringstream ss;
+  ss << "Decompression failure, possibly corrupt Parquet file '"
+     << "' @ " << __FILE__ << ":" << __LINE__;
+  throw runtime_error(ss.str());
+}
+
+void extract_gzip(uint8_t* buf, int32_t len, ByteBuffer &bb,
+                  int32_t unc_len, int32_t skip) {
+  miniz::MiniZStream gzst;
+  bb.resize(unc_len);
+  memcpy(bb.ptr, buf, skip);
+
+  // throws on error
+  gzst.Decompress(
+    (const char*) buf + skip,
+    len - skip,
+    bb.ptr + skip,
+    unc_len - skip
+  );
+}
+
+void extract_zstd(uint8_t* buf, int32_t len, ByteBuffer &bb,
+                  int32_t unc_len, int32_t skip) {
+  bb.resize(unc_len);
+  memcpy(bb.ptr, buf, skip);
+
+  size_t res = zstd::ZSTD_decompress(
+    bb.ptr + skip,
+    unc_len - skip,
+    buf + skip,
+    len - skip);
+
+  if (zstd::ZSTD_isError(res) ||
+      res != (size_t) unc_len - skip) {
+    std::stringstream ss;
+    ss << "Zstd decompression failure, possibly corrupt Parquet file '"
+       << "' @ " << __FILE__ << ":" << __LINE__;
+      throw runtime_error(ss.str());
+  }
+}
+
+// Not a very clean API, admittedly.
+
+std::tuple<uint8_t *, int32_t>
+ParquetReader::extract_page(ColumnChunk &cc,
+                            parquet::PageHeader &ph,
+                            uint8_t *buf,
+                            int32_t len,
+                            ByteBuffer &outbuf,
+                            int32_t skip) {
+
+  CompressionCodec::type codec = get_compression(cc, ph);
+  if (codec == CompressionCodec::UNCOMPRESSED) {
+    return std::make_tuple(buf, len);
+  }
+
+  switch(codec) {
+  case CompressionCodec::SNAPPY:
+    extract_snappy(buf, len, outbuf, ph.uncompressed_page_size, skip);
+    break;
+
+  case CompressionCodec::GZIP:
+    extract_gzip(buf, len, outbuf, ph.uncompressed_page_size, skip);
+    break;
+
+  case CompressionCodec::ZSTD:
+    extract_zstd(buf, len, outbuf, ph.uncompressed_page_size, skip);
+    break;
+
+  default:
+    throw runtime_error("Compression is not supported yet");
+  }
+
+  return std::make_tuple((uint8_t*) outbuf.ptr, ph.uncompressed_page_size);
+}
+
 void ParquetReader::read_dict_page(
   ColumnChunk &cc,
   parquet::PageHeader &ph,
@@ -269,10 +378,9 @@ void ParquetReader::read_dict_page(
     throw runtime_error("Unknown encoding for dictionary page");
   }
 
-  CompressionCodec::type codec = get_compression(cc, ph);
-  if (codec != CompressionCodec::UNCOMPRESSED) {
-    throw runtime_error("Compression is not supported yet");
-  }
+  // TODO: do not claim if not compressed
+  BufferGuard bg = bufman_pg->claim();
+  tie(buf, len) = extract_page(cc, ph, buf, len, bg.buf, 0);
 
   uint32_t num_values = ph.dictionary_page_header.num_values;
 
@@ -325,16 +433,18 @@ void ParquetReader::read_dict_page(
 }
 
 uint32_t ParquetReader::read_data_page(DataPage &dp, uint8_t *buf, int32_t len) {
-  CompressionCodec::type codec = get_compression(dp.cc, dp.ph);
-  if (codec != CompressionCodec::UNCOMPRESSED) {
-    throw runtime_error("Compression is not supported yet");
-  }
+  // TODO: do not claim if not compressed
+  BufferGuard bg = bufman_pg->claim();
 
   if (dp.ph.type == PageType::DATA_PAGE) {
-    // data_page_extract_v1();
+    tie(buf, len) = extract_page(dp.cc, dp.ph, buf, len, bg.buf, 0);
     return read_data_page_v1(dp, buf, len);
   } else if (dp.ph.type == PageType::DATA_PAGE_V2) {
-    // data_page_extract_v2();
+    // Data page v2 does not compress the repetition and definition levels
+    int32_t skip =
+      dp.ph.data_page_header_v2.definition_levels_byte_length +
+      dp.ph.data_page_header_v2.repetition_levels_byte_length;
+    tie(buf, len) = extract_page(dp.cc, dp.ph, buf, len, bg.buf, skip);
     return read_data_page_v2(dp, buf, len);
   } else {
     throw std::runtime_error("Invalid data page");

@@ -329,7 +329,7 @@ void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
       continue;
     }
     uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    int64_t from = pp->metadata.row_group_offsets[cl];
+    int64_t from = pp->metadata.row_group_offsets[rg];
     SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
     switch (TYPEOF(x)) {
     case INTSXP: {
@@ -378,7 +378,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
       continue;
     } else if (!hasdict && hasmiss) {
       // missing values in place
-      int64_t from = pp->metadata.row_group_offsets[cl];
+      int64_t from = pp->metadata.row_group_offsets[rg];
       SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
       switch (TYPEOF(x)) {
       case INTSXP: {
