@@ -42,7 +42,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">parquet_options</span><span class="op">(</span></span>
 <span>  class <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.class"</span>, <span class="st">"tbl"</span><span class="op">)</span>,</span>
 <span>  use_arrow_metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.use_arrow_metadata"</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>  write_arrow_metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.write_arrow_metadata"</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  write_arrow_metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.write_arrow_metadata"</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  write_data_page_version <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.write_data_page_version"</span>, <span class="fl">1L</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -73,6 +74,11 @@ to tell which without using the Arrow metadata.</p></li>
 <dt id="arg-write-arrow-metadata">write_arrow_metadata<a class="anchor" aria-label="anchor" href="#arg-write-arrow-metadata"></a></dt>
 <dd><p>Whether to add the Apache Arrow types as
 metadata to the file <code><a href="write_parquet.html">write_parquet()</a></code>.</p></dd>
+
+
+<dt id="arg-write-data-page-version">write_data_page_version<a class="anchor" aria-label="anchor" href="#arg-write-data-page-version"></a></dt>
+<dd><p>Data version to write by default.
+Possible values are 1 and 2. Default is 1.</p></dd>
 
 </dl></div>
     <div class="section level2">
