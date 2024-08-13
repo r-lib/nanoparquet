@@ -37,6 +37,35 @@ apply_arrow_schema <- function(tab, file, dicts, types) {
   tab
 }
 
+apply_arrow_schema2 <- function(tab, file, dicts, types) {
+  mtd <- read_parquet_metadata(file)
+  kv <- mtd$file_meta_data$key_value_metadata[[1]]
+  if ("ARROW:schema" %in% kv$key) {
+    spec <- arrow_find_special(
+      kv$value[match("ARROW:schema", kv$key)],
+      file
+    )
+    for (idx in spec$factor) {
+      clevels <- Reduce(union, dicts[[idx]])
+      tab[[idx]] <- factor(tab[[idx]], levels = clevels)
+    }
+    for (idx in spec$difftime) {
+      # only if INT64, otherwise hms, probably
+      if (types[[idx]] != 2) next
+      mult <- switch(
+        spec$columns$type[[idx]]$unit,
+        SECOND = 1,
+        MILLISECOND = 1000,
+        MICROSECOND = 1000 * 1000,
+        NANOSECOND = 1000 * 1000 * 1000,
+        stop("Unknown Arrow time unit")
+      )
+      tab[[idx]] <- as.difftime(tab[[idx]] / mult, units = "secs")
+    }
+  }
+  tab
+}
+
 arrow_find_special <- function(asch, file) {
   amd <- tryCatch(
     parse_arrow_schema(asch)$columns,

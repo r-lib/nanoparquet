@@ -14,6 +14,7 @@ extern "C" {
 
 SEXP nanoparquet_read_(SEXP filesxp, SEXP options) {
   const char *sfname = CHAR(STRING_ELT(filesxp, 0));
+  SEXP res = R_NilValue;
 
   try {
     std::string fname = sfname;
@@ -21,7 +22,12 @@ SEXP nanoparquet_read_(SEXP filesxp, SEXP options) {
     reader.read_all_columns();
     reader.convert_columns_to_r();
     reader.create_df();
-    return reader.columns;
+    PROTECT(res = Rf_allocVector(VECSXP, 3));
+    SET_VECTOR_ELT(res, 0, reader.columns);
+    SET_VECTOR_ELT(res, 1, reader.facdicts);
+    SET_VECTOR_ELT(res, 2, reader.types);
+    UNPROTECT(1);
+    return res;
   } catch (std::exception &ex) {
     Rf_error("%s", ex.what());
   }

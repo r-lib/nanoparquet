@@ -95,7 +95,7 @@ test_that("basic reading works with snappy", {
 })
 
 test_that("read factors, marked by Arrow", {
-  res <- read_parquet(test_path("data/factor.parquet"))
+  res <- read_parquet2(test_path("data/factor.parquet"))
   expect_snapshot({
     as.data.frame(res[1:5,])
     sapply(res, class)
@@ -117,11 +117,11 @@ test_that("round trip with arrow", {
   on.exit(unlink(tmp), add = TRUE)
 
   arrow::write_parquet(mt, tmp, compression = "uncompressed")
-  expect_equal(read_parquet(tmp), mt)
+  expect_equal(read_parquet2(tmp), mt)
   unlink(tmp)
 
   arrow::write_parquet(mt, tmp, compression = "snappy")
-  expect_equal(read_parquet(tmp), mt)
+  expect_equal(read_parquet2(tmp), mt)
 })
 
 test_that("round trip with duckdb", {
@@ -141,7 +141,7 @@ test_that("round trip with duckdb", {
     "COPY mtcars TO ?filename (FORMAT 'parquet', COMPRESSION 'uncompressed')",
     filename = tmp
   ))
-  expect_equal(read_parquet(tmp), mt)
+  expect_equal(read_parquet2(tmp), mt)
   unlink(tmp)
 
   DBI::dbExecute(con, DBI::sqlInterpolate(con,
@@ -149,7 +149,7 @@ test_that("round trip with duckdb", {
     filename = tmp
   ))
   arrow::write_parquet(mt, tmp, compression = "snappy")
-  expect_equal(read_parquet(tmp), mt)
+  expect_equal(read_parquet2(tmp), mt)
 })
 
 test_that("read Date", {

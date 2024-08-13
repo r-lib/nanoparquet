@@ -26,6 +26,10 @@ RParquetReader::RParquetReader(std::string filename)
   // columns
   columns = Rf_allocVector(VECSXP, metadata.num_leaf_cols);
   R_PreserveObject(columns);
+  facdicts = Rf_allocVector(VECSXP, metadata.num_leaf_cols);
+  R_PreserveObject(facdicts);
+  types = Rf_allocVector(INTSXP, metadata.num_leaf_cols);
+  R_PreserveObject(types);
 
   tmpdata.resize(metadata.num_cols);
   dicts.resize(metadata.num_cols);
@@ -49,6 +53,12 @@ RParquetReader::RParquetReader(std::string filename)
 RParquetReader::~RParquetReader() {
   if (!Rf_isNull(columns)) {
     R_ReleaseObject(columns);
+  }
+  if (!Rf_isNull(facdicts)) {
+    R_ReleaseObject(facdicts);
+  }
+  if (!Rf_isNull(types)) {
+    R_ReleaseObject(types);
   }
 }
 
@@ -313,6 +323,8 @@ void RParquetReader::alloc_data_page(DataPage &data) {
 struct postprocess {
 public:
   SEXP columns;
+  SEXP facdicts;
+  SEXP types;
   rmetadata &metadata;
   std::vector<int> &leaf_cols;
   std::vector<std::vector<uint8_t>> &tmpdata;
@@ -1067,7 +1079,9 @@ void convert_column_to_r_ba_string_nodict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_ba_string_dict_nomiss(postprocess *pp, uint32_t cl) {
-  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+  uint32_t lcl = pp->leaf_cols[cl];
+  SEXP x = VECTOR_ELT(pp->columns, lcl);
+  SET_VECTOR_ELT(pp->facdicts, lcl, Rf_allocVector(VECSXP, pp->metadata.num_row_groups));
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     bool hasdict = pp->dicts[cl][rg].dict_len > 0;
     if (!hasdict) {
@@ -1097,6 +1111,7 @@ void convert_column_to_r_ba_string_dict_nomiss(postprocess *pp, uint32_t cl) {
         );
         SET_STRING_ELT(tmp, i, xi);
       }
+      SET_VECTOR_ELT(VECTOR_ELT(pp->facdicts, lcl), rg, tmp);
 
       // fill in
       uint32_t *didx = pp->dicts[cl][rg].indices.data();
@@ -1535,6 +1550,8 @@ void convert_columns_to_r_(postprocess *pp) {
 void RParquetReader::convert_columns_to_r() {
   postprocess pp = {
     columns,
+    facdicts,
+    types,
     metadata,
     leaf_cols,
     tmpdata,

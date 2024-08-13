@@ -94,6 +94,8 @@ public:
   void alloc_data_page(DataPage &data);
 
   SEXP columns = R_NilValue;
+  SEXP facdicts = R_NilValue;
+  SEXP types = R_NilValue;
 
   std::vector<std::vector<uint8_t>> tmpdata;
   std::vector<std::vector<tmpdict>> dicts;
