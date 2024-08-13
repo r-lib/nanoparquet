@@ -1401,14 +1401,14 @@ void convert_column_to_r_ba_uuid_nodict_nomiss(postprocess *pp, uint32_t cl) {
     for (auto it = rgba.begin(); it != rgba.end(); ++it) {
       int64_t from = it->from;
       for (auto i = 0; i < it->offsets.size(); i++) {
-        char *s = (char*) it->buffer.data() + it->offsets[i];
+        unsigned char *s = (unsigned char*) it->buffer.data() + it->offsets[i];
         snprintf(
           uuid, 37,
           "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
           s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9],
           s[10], s[11], s[12], s[13], s[14], s[15]
         );
-        SET_VECTOR_ELT(x, from, Rf_mkCharLenCE(uuid, 36, CE_UTF8));
+        SET_STRING_ELT(x, from, Rf_mkCharLenCE(uuid, 36, CE_UTF8));
         from++;
       }
     }
@@ -1425,7 +1425,7 @@ void convert_column_to_r_ba_uuid_dict_nomiss(postprocess *pp, uint32_t cl) {
       for (auto it = rgba.begin(); it != rgba.end(); ++it) {
         int64_t from = it->from;
         for (auto i = 0; i < it->offsets.size(); i++) {
-          char *s = (char*) it->buffer.data() + it->offsets[i];
+          unsigned char *s = (unsigned char*) it->buffer.data() + it->offsets[i];
           snprintf(
             uuid, 37,
             "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
@@ -1442,7 +1442,7 @@ void convert_column_to_r_ba_uuid_dict_nomiss(postprocess *pp, uint32_t cl) {
       SEXP tmp = PROTECT(Rf_allocVector(STRSXP, dict_len));
       tmpbytes &ba = pp->dicts[cl][rg].bytes;
       for (uint32_t i = 0; i < dict_len; i++) {
-        char *s = (char*) ba.buffer.data() + ba.offsets[i];
+        unsigned char *s = (unsigned char*) ba.buffer.data() + ba.offsets[i];
         snprintf(
           uuid, 37,
           "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",

@@ -313,7 +313,7 @@
 # UUID columns
 
     Code
-      as.data.frame(read_parquet(pf))
+      as.data.frame(read_parquet2(pf))
     Output
                                             u
       1                                  <NA>
