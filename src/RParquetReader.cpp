@@ -1027,6 +1027,22 @@ void convert_column_to_r_int96(postprocess *pp, uint32_t cl) {
   } else if (hasdict0 && hasmiss0) {
     convert_column_to_r_int96_dict_miss(pp, cl);
   }
+
+  // TODO: make this conversion configurable
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+  SEXP cls = PROTECT(Rf_allocVector(STRSXP, 2));
+  SET_STRING_ELT(cls, 0, Rf_mkChar("POSIXct"));
+  SET_STRING_ELT(cls, 1, Rf_mkChar("POSIXt"));
+  Rf_setAttrib(x, Rf_install("tzone"), Rf_mkString("UTC"));
+  SET_CLASS(x, cls);
+  UNPROTECT(1);
+
+  R_xlen_t len = Rf_xlength(x);
+  double *ptr = REAL(x);
+  double *end = ptr + len;
+  for (; ptr < end; ptr++) {
+    *ptr = *ptr / 1000;
+  }
 }
 
 // ------------------------------------------------------------------------

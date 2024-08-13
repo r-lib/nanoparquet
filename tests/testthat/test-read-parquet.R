@@ -85,12 +85,12 @@ test_that("various error cases", {
 })
 
 test_that("basic reading works", {
-  res <- read_parquet(test_path("data/alltypes_plain.parquet"))
+  res <- read_parquet2(test_path("data/alltypes_plain.parquet"))
   expect_true(data_comparable(alltypes_plain, res))
 })
 
 test_that("basic reading works with snappy", {
-  res <- read_parquet(test_path("data/alltypes_plain.snappy.parquet"))
+  res <- read_parquet2(test_path("data/alltypes_plain.snappy.parquet"))
   expect_true(data_comparable(alltypes_plain_snappy, res))
 })
 
