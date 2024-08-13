@@ -499,11 +499,7 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
   dp.encoding = dp.ph.data_page_header_v2.encoding;
 
   // skip junk repetition and definition levels, if any
-  int32_t skip =
-    dp.ph.data_page_header_v2.repetition_levels_byte_length;
-  if (!dp.cc.optional) {
-    skip += dp.ph.data_page_header_v2.definition_levels_byte_length;
-  }
+  int32_t skip = dp.ph.data_page_header_v2.repetition_levels_byte_length;
   buf += skip;
   len -= skip;
 
@@ -591,7 +587,7 @@ void ParquetReader::read_data_page_boolean(DataPage &dp, uint8_t *buf, int32_t l
   case Encoding::RLE: {
     // skip length, we know how many values we want. bit width is 1
     RleBpDecoder dec(buf + 4, len - 4, 1);
-    dec.GetBatch<uint32_t>((uint32_t*) dp.data, dp.num_values);
+    dec.GetBatch<uint32_t>((uint32_t*) dp.data, dp.num_present);
     break;
   }
   default:
