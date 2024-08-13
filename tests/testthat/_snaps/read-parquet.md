@@ -140,7 +140,7 @@
 # Tricky V2 data page
 
     Code
-      as.data.frame(read_parquet(pf))
+      as.data.frame(read_parquet2(pf))
     Output
          datatype_boolean
       1              TRUE

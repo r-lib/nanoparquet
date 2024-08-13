@@ -308,7 +308,7 @@ test_that("Tricky V2 data page", {
   # definition levels
   pf <- test_path("data/rle_boolean_encoding.parquet")
   expect_snapshot({
-    as.data.frame(read_parquet(pf))
+    as.data.frame(read_parquet2(pf))
   })
 })
 
@@ -326,7 +326,7 @@ test_that("zstd with data page v2", {
     all(read_parquet_pages(pf)$page_type %in% c("DICTIONARY_PAGE", "DATA_PAGE_V2"))
   )
   pf2 <- test_path("data/gzip.parquet")
-  expect_equal(read_parquet(pf), read_parquet(pf2))
+  expect_equal(read_parquet2(pf), read_parquet2(pf2))
 })
 
 test_that("DELTA_BIANRY_PACKED encoding", {

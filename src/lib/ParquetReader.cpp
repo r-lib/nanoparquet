@@ -498,6 +498,15 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
   dp.set_num_values(dp.ph.data_page_header_v2.num_values);
   dp.encoding = dp.ph.data_page_header_v2.encoding;
 
+  // skip junk repetition and definition levels, if any
+  int32_t skip =
+    dp.ph.data_page_header_v2.repetition_levels_byte_length;
+  if (!dp.cc.optional) {
+    skip += dp.ph.data_page_header_v2.definition_levels_byte_length;
+  }
+  buf += skip;
+  len -= skip;
+
   uint8_t *def_buf = nullptr;
   uint32_t def_len = 0;
 
