@@ -77,11 +77,11 @@ data_comparable <- function(df1, df2, dlt = .0001) {
 test_that("various error cases", {
   # https://github.com/llvm/llvm-project/issues/59432
   if (is_asan()) skip("ASAN bug")
-  expect_error(res <- read_parquet(""))
-  expect_error(res <- read_parquet("DONTEXIST"))
+  expect_error(res <- read_parquet2(""))
+  expect_error(res <- read_parquet2("DONTEXIST"))
   tf <- tempfile()
-  expect_error(res <- read_parquet(tf))
-  expect_error(res <- read_parquet(c(tf, tf)))
+  expect_error(res <- read_parquet2(tf))
+  expect_error(res <- read_parquet2(c(tf, tf)))
 })
 
 test_that("basic reading works", {
