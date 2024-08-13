@@ -161,7 +161,7 @@ test_that("read Date", {
   )
   write_parquet(d, tmp)
 
-  d2 <- read_parquet(tmp)
+  d2 <- read_parquet2(tmp)
   expect_s3_class(d2$d, "Date")
   expect_equal(d$d, d2$d)
 })
@@ -175,7 +175,7 @@ test_that("read hms", {
   )
   write_parquet(d, tmp)
 
-  d2 <- read_parquet(tmp)
+  d2 <- read_parquet2(tmp)
   expect_s3_class(d2$h, "hms")
   expect_equal(d$h, d2$h)
 })
@@ -183,7 +183,7 @@ test_that("read hms", {
 test_that("read hms in MICROS", {
   pf <- test_path("data/timetz.parquet")
   expect_snapshot({
-    as.data.frame(read_parquet(pf))
+    as.data.frame(read_parquet2(pf))
   })
 })
 
@@ -196,7 +196,7 @@ test_that("read POSIXct", {
   )
   write_parquet(d, tmp)
 
-  d2 <- read_parquet(tmp)
+  d2 <- read_parquet2(tmp)
   expect_s3_class(d$h, "POSIXct")
   expect_equal(d$h, d2$h)
 })
@@ -206,7 +206,7 @@ test_that("read POSIXct in MILLIS", {
   # This file has UTC = FALSE, so the exact result depends on the current
   # time zone. But it should match Arrow.
   pf <- test_path("data/timestamp-ms.parquet")
-  d1 <- read_parquet(pf)
+  d1 <- read_parquet2(pf)
   d2 <- arrow::read_parquet(pf)
   expect_equal(
     as.data.frame(d1),
@@ -224,7 +224,7 @@ test_that("read difftime", {
   )
   write_parquet(d, tmp)
 
-  d2 <- read_parquet(tmp)
+  d2 <- read_parquet2(tmp)
   expect_s3_class(d2$h, "difftime")
   expect_equal(d$h, d2$h)
 
@@ -233,7 +233,7 @@ test_that("read difftime", {
     h = as.difftime(10, units = "mins")
   )
   write_parquet(d, tmp)
-  d2 <- read_parquet(tmp)
+  d2 <- read_parquet2(tmp)
   expect_snapshot({
     as.data.frame(d2)
   })
@@ -283,14 +283,14 @@ test_that("RLE BOOLEAN", {
 test_that("read GZIP compressed files", {
   pf <- test_path("data/gzip.parquet")
   expect_snapshot({
-    as.data.frame(read_parquet(pf))
+    as.data.frame(read_parquet2(pf))
   })
 })
 
 test_that("V2 data pages", {
   pf <- test_path("data/parquet_go.parquet")
   expect_snapshot({
-    as.data.frame(read_parquet(pf))
+    as.data.frame(read_parquet2(pf))
   })
 })
 
@@ -298,7 +298,7 @@ test_that("V2 data page with missing values", {
   skip_on_cran()
   pf <- test_path("data/duckdb-bug1589.parquet")
   expect_equal(
-    as.data.frame(read_parquet(pf)),
+    as.data.frame(read_parquet2(pf)),
     as.data.frame(arrow::read_parquet(pf))
   )
 })
@@ -316,7 +316,7 @@ test_that("zstd", {
   pf <- test_path("data/zstd.parquet")
   expect_true(all(read_parquet_metadata(pf)$column_chunks$codec == "ZSTD"))
   pf2 <- test_path("data/gzip.parquet")
-  expect_equal(read_parquet(pf), read_parquet(pf2))
+  expect_equal(read_parquet2(pf), read_parquet2(pf2))
 })
 
 test_that("zstd with data page v2", {

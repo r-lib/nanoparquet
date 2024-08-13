@@ -46,6 +46,7 @@ RParquetReader::RParquetReader(std::string filename)
     if (rt.type != rt.tmptype && rt.tmptype != NILSXP) {
       tmpdata[i].resize(metadata.num_rows * rt.elsize);
     }
+    INTEGER(types)[idx] = file_meta_data_.schema[i].type;
     idx++;
   }
 }
@@ -1039,22 +1040,6 @@ void convert_column_to_r_int96(postprocess *pp, uint32_t cl) {
   } else if (hasdict0 && hasmiss0) {
     convert_column_to_r_int96_dict_miss(pp, cl);
   }
-
-  // TODO: make this conversion configurable
-  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
-  SEXP cls = PROTECT(Rf_allocVector(STRSXP, 2));
-  SET_STRING_ELT(cls, 0, Rf_mkChar("POSIXct"));
-  SET_STRING_ELT(cls, 1, Rf_mkChar("POSIXt"));
-  Rf_setAttrib(x, Rf_install("tzone"), Rf_mkString("UTC"));
-  SET_CLASS(x, cls);
-  UNPROTECT(1);
-
-  R_xlen_t len = Rf_xlength(x);
-  double *ptr = REAL(x);
-  double *end = ptr + len;
-  for (; ptr < end; ptr++) {
-    *ptr = *ptr / 1000;
-  }
 }
 
 // ------------------------------------------------------------------------
@@ -1543,6 +1528,56 @@ void convert_columns_to_r_(postprocess *pp) {
       break;
     default:
       break;
+    }
+
+    // add classes, if any
+    size_t nc = rt.classes.size();
+    if (nc > 0) {
+      SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+      SEXP cls = PROTECT(Rf_allocVector(STRSXP, nc));
+      for (size_t i = 0; i < nc; i++) {
+        SET_STRING_ELT(cls, i, Rf_mkCharCE(rt.classes[i].c_str(), CE_UTF8));
+      }
+      SET_CLASS(x, cls);
+      UNPROTECT(1);
+    }
+
+    // add time zone attribute, if any
+    if (rt.tzone != "") {
+      SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+      Rf_setAttrib(x, Rf_install("tzone"), Rf_mkString(rt.tzone.c_str()));
+    }
+
+    // add unit
+    size_t nu = rt.units.size();
+    if (nu > 0) {
+      SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+      SEXP units = PROTECT(Rf_allocVector(STRSXP, nu));
+      for (size_t i = 0; i < nu; i++) {
+        SET_STRING_ELT(units, i, Rf_mkCharCE(rt.units[i].c_str(), CE_UTF8));
+      }
+      Rf_setAttrib(x, Rf_install("units"), units);
+      UNPROTECT(1);
+    }
+
+    // use multiplier, if any
+    if (rt.time_fct != 1.0) {
+      SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+      if (TYPEOF(x) == INTSXP) {
+        int32_t *ptr = INTEGER(x);
+        int32_t *end = ptr + Rf_xlength(x);
+        for (; ptr < end; ptr++) {
+          *ptr /= rt.time_fct;
+        }
+      } else if (TYPEOF(x) == REALSXP) {
+        double *ptr = REAL(x);
+        double *end = ptr + Rf_xlength(x);
+        for (; ptr < end; ptr++) {
+          *ptr /= rt.time_fct;
+        }
+      } else {
+        Rf_error("Internal nanoparquet error, cannot multiply non-numeric");
+      }
     }
   }
 }

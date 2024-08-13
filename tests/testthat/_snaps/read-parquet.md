@@ -38,7 +38,7 @@
 # read hms in MICROS
 
     Code
-      as.data.frame(read_parquet(pf))
+      as.data.frame(read_parquet2(pf))
     Output
               tt
       1 14:30:00
@@ -56,7 +56,7 @@
 # read GZIP compressed files
 
     Code
-      as.data.frame(read_parquet(pf))
+      as.data.frame(read_parquet2(pf))
     Output
                          nam  mpg cyl  disp  hp drat    wt  qsec vs am gear carb
       1                 <NA> 21.0   6 160.0 110 3.90 2.620 16.46  0  1    4    4
@@ -128,7 +128,7 @@
 # V2 data pages
 
     Code
-      as.data.frame(read_parquet(pf))
+      as.data.frame(read_parquet2(pf))
     Output
         FirstName                                       Data
       1      John 48, 65, 6c, 6c, 6f, 20, 57, 6f, 72, 6c, 64
