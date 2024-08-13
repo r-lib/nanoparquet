@@ -38,7 +38,10 @@ RParquetReader::RParquetReader(std::string filename)
 
   for (auto i = 0, idx = 0; i < metadata.num_cols; i++) {
     // skip non-leaf columns
-    if (file_meta_data_.schema[i].__isset.num_children) continue;
+    if (file_meta_data_.schema[i].__isset.num_children &&
+        file_meta_data_.schema[i].num_children > 0) {
+      continue;
+    }
 
     rtype rt = metadata.r_types[i];
     SET_VECTOR_ELT(columns, idx, Rf_allocVector(rt.type, metadata.num_rows));
@@ -86,7 +89,8 @@ void RParquetReader::create_metadata() {
 
   metadata.r_types.resize(metadata.num_cols);
   for (auto i = 0; i < metadata.num_cols; i++) {
-    if (fmt.schema[i].__isset.num_children) {
+    if (fmt.schema[i].__isset.num_children &&
+        fmt.schema[i].num_children > 0) {
       continue;
     }
     rtype rt(fmt.schema[i]);
