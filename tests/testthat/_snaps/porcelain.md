@@ -376,7 +376,8 @@
        [1] 15 06 15 34 15 5c 5c 15 88 01 15 0c 15 88 01 15 06 15 16 15 04 00 00
       
       $data
-       [1] 88 01 07 fb 7f 7f 1c 01 09 fe fb 09 00 00 00 11 cd d9 6c 0e 9b 33 b7 39
+       [1] 88 01 07 fb 7f 7f 1c 01 09 fe fb bf 3f 09 00 00 00 11 cd d9 6c 0e 9b 33 b7
+      [26] 39
       
       $definition_levels_byte_length
       [1] 11
