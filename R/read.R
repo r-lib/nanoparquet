@@ -1,4 +1,6 @@
-
+#' Read Parquet file, next gen
+#'
+#' @inheritParams read_parquet
 #' @export
 
 read_parquet2 <- function(file, options = parquet_options()) {
