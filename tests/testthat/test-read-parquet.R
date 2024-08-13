@@ -258,7 +258,7 @@ test_that("RLE BOOLEAN", {
     list("RLE")
   )
 
-  expect_equal(as.data.frame(read_parquet(tmp)), d)
+  expect_equal(as.data.frame(read_parquet2(tmp)), d)
 
   # larger DF
 
@@ -277,7 +277,7 @@ test_that("RLE BOOLEAN", {
     list("RLE")
   )
 
-  expect_equal(as.data.frame(read_parquet(tmp)), d)
+  expect_equal(as.data.frame(read_parquet2(tmp)), d)
 })
 
 test_that("read GZIP compressed files", {

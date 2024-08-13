@@ -579,7 +579,12 @@ void ParquetReader::read_data_page_boolean(DataPage &dp, uint8_t *buf, int32_t l
     unpack_plain_boolean((uint32_t*) dp.data, (uint8_t*) buf, dp.num_present);
     break;
   }
-  // TODO: rest
+  case Encoding::RLE: {
+    // skip length, we know how many values we want. bit width is 1
+    RleBpDecoder dec(buf + 4, len - 4, 1);
+    dec.GetBatch<uint32_t>((uint32_t*) dp.data, dp.num_values);
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet");
     break;
