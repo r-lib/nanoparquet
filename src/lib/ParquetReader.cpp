@@ -6,6 +6,7 @@
 #include "ParquetReader.h"
 #include "bytebuffer.h"
 #include "RleBpDecoder.h"
+#include "DbpDecoder.h"
 
 #include "snappy/snappy.h"
 #include "miniz/miniz_wrapper.hpp"
@@ -611,7 +612,12 @@ void ParquetReader::read_data_page_int32(
     read_data_page_rle(dp, buf);
     break;
   }
-  // TODO: rest
+  case Encoding::DELTA_BINARY_PACKED: {
+    struct buffer dbpbuf = { (uint8_t*) buf, (uint32_t) len };
+    DbpDecoder<int32_t, uint32_t> dec(&dbpbuf);
+    dec.decode((int32_t*) dp.data);
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet");
     break;
@@ -633,7 +639,12 @@ void ParquetReader::read_data_page_int64(
     read_data_page_rle(dp, buf);
     break;
   }
-  // TODO: rest
+  case Encoding::DELTA_BINARY_PACKED: {
+    struct buffer dbpbuf = { (uint8_t*) buf, (uint32_t) len };
+    DbpDecoder<int64_t, uint64_t> dec(&dbpbuf);
+    dec.decode((int64_t*) dp.data);
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet");
     break;

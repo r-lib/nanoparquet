@@ -334,19 +334,19 @@ test_that("DELTA_BIANRY_PACKED encoding", {
   pf <- test_path("data/dbp-int32.parquet")
   expect_snapshot({
     read_parquet_metadata(pf)$column_chunks$encodings
-    read_parquet(pf)
+    read_parquet2(pf)
   })
 
   pf2 <- test_path("data/dbp-int32-missing.parquet")
   expect_snapshot({
     read_parquet_metadata(pf2)$column_chunks$encodings
-    read_parquet(pf2)
+    read_parquet2(pf2)
   })
 
   pf3 <- test_path("data/dbp-int64.parquet")
   expect_snapshot({
     read_parquet_metadata(pf3)$column_chunks$encodings
-    read_parquet(pf3)
+    read_parquet2(pf3)
   })
 })
 

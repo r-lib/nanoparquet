@@ -224,7 +224,7 @@
       [1] "RLE"                 "DELTA_BINARY_PACKED"
       
     Code
-      read_parquet(pf)
+      read_parquet2(pf)
     Output
       # A data frame: 20 x 2
              x     y
@@ -262,7 +262,7 @@
       [1] "RLE"                 "DELTA_BINARY_PACKED"
       
     Code
-      read_parquet(pf2)
+      read_parquet2(pf2)
     Output
       # A data frame: 20 x 2
              x     y
@@ -297,7 +297,7 @@
       [1] "RLE"                 "DELTA_BINARY_PACKED"
       
     Code
-      read_parquet(pf3)
+      read_parquet2(pf3)
     Output
       # A data frame: 7 x 1
             x
