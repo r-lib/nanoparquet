@@ -103,28 +103,27 @@ read_parquet_page <- function(file, offset) {
 	res$data_type <- names(type_names)[res$data_type + 1L]
 	res$repetition_type <- names(repetition_types)[res$repetition_type + 1L]
 	res$compressed_data <- res$data
-	skip <- 0L
 	copy <- 0L
 	if (res$page_type == "DATA_PAGE_V2") {
 		if (!is.na(res$repetition_levels_byte_length)) {
-			skip <- res$repetition_levels_byte_length
+			copy <- copy + res$repetition_levels_byte_length
 		}
 		if (!is.na(res$definition_levels_byte_length)) {
-			copy <- res$definition_levels_byte_length
+			copy <- copy + res$definition_levels_byte_length
 		}
 	}
 	if (res$codec == "SNAPPY") {
 		res$data <- c(
 			if (copy > 0) res$data[1:copy],
-			snappy_uncompress(res$data[(skip+copy+1L):length(res$data)])
+			snappy_uncompress(res$data[(copy+1L):length(res$data)])
 		)
 	} else if (res$codec == "GZIP") {
 		res$compressed_data <- res$data
 		res$data <- c(
 			if (copy > 0) res$data[1:copy],
 			gzip_uncompress(
-				res$data[(skip+copy+1L):length(res$data)],
-				res$uncompressed_page_size - skip - copy
+				res$data[(copy+1L):length(res$data)],
+				res$uncompressed_page_size - copy
 			)
 		)
 	} else if (res$codec == "ZSTD") {
@@ -132,8 +131,8 @@ read_parquet_page <- function(file, offset) {
 		res$data <- c(
 			if (copy > 0) res$data[1:copy],
 			zstd_uncompress(
-				res$data[(skip+copy+1L):length(res$data)],
-				res$uncompressed_page_size - skip - copy
+				res$data[(copy+1L):length(res$data)],
+				res$uncompressed_page_size - copy
 			)
 		)
 	} else if (res$codec == "UNCOMPRESSED") {
