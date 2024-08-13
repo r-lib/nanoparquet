@@ -4,6 +4,7 @@
 #' @export
 
 read_parquet2 <- function(file, options = parquet_options()) {
+  file <- path.expand(file)
   bits <- .Call(nanoparquet_read2, file, options, sys.call())
   bits
 }
