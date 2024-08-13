@@ -180,6 +180,7 @@ protected:
 
   void unpack_plain_boolean(uint32_t *res, uint8_t *buf, uint32_t num_values);
   void scan_byte_array_plain(StringSet &strs, uint8_t *buf);
+  void scan_byte_array_delta_length(StringSet &strs, uint8_t *buf);
   void scan_fixed_len_byte_array_plain(StringSet &strs, uint8_t *buf, uint32_t len);
 
   std::tuple<uint8_t *, int32_t>

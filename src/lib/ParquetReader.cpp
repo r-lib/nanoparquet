@@ -726,10 +726,14 @@ void ParquetReader::read_data_page_byte_array(
     break;
   }
   case Encoding::RLE_DICTIONARY:
-  case Encoding::PLAIN_DICTIONARY:
+  case Encoding::PLAIN_DICTIONARY: {
     read_data_page_rle(dp, buf);
     break;
-  // TODO: rest
+  }
+  case Encoding::DELTA_LENGTH_BYTE_ARRAY: {
+    scan_byte_array_delta_length(dp.strs, buf);
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet");
     break;
@@ -781,6 +785,20 @@ void ParquetReader::scan_byte_array_plain(StringSet &strs, uint8_t *buf) {
     buf += strs.lengths[i];
   }
 }
+
+void ParquetReader::scan_byte_array_delta_length(StringSet &strs, uint8_t *buf) {
+  struct buffer dlbbuf = { buf, (uint32_t) strs.total_len };
+  DbpDecoder<int32_t, uint32_t> dec(&dlbbuf);
+  uint32_t num_present = dec.size();
+  uint8_t *str = dec.decode((int32_t*) strs.lengths);
+  uint32_t strlen = strs.total_len - (str - buf);
+  memcpy(strs.buf, str, strlen);
+  if (num_present > 0) strs.offsets[0] = 0;
+  for (uint32_t i = 1; i < num_present; i++) {
+    strs.offsets[i] = strs.offsets[i - 1] + strs.lengths[i - 1];
+  }
+}
+
 
 void ParquetReader::scan_fixed_len_byte_array_plain(
   StringSet &strs, uint8_t *buf, uint32_t len) {
