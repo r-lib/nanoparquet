@@ -452,6 +452,26 @@ uint32_t ParquetReader::read_data_page(DataPage &dp, uint8_t *buf, int32_t len) 
   }
 }
 
+void ParquetReader::update_data_page_size(DataPage &dp, uint8_t *buf, int32_t len) {
+  if (dp.encoding != Encoding::DELTA_BYTE_ARRAY) {
+    return;
+  }
+  dp.prelen.resize(dp.num_present);
+  dp.suflen.resize(dp.num_present);
+  struct buffer prebuf = { buf, (uint32_t) len };
+  DbpDecoder<int32_t, uint32_t> predec(&prebuf);
+  uint8_t *sufpos = predec.decode(dp.prelen.data());
+  struct buffer sufbuf = { sufpos, (uint32_t) (len - (sufpos - buf)) };
+  DbpDecoder<int32_t, uint32_t> sufdec(&sufbuf);
+  uint8_t *str = sufdec.decode(dp.suflen.data());
+  dp.stroffset = str - buf;
+  uint32_t totlen = 0;
+  for (auto i = 0; i < dp.prelen.size(); i++) {
+    totlen += dp.prelen[i] + dp.suflen[i];
+  }
+  dp.strs.total_len = totlen;
+}
+
 uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t len) {
   if (!dp.ph.__isset.data_page_header) {
     throw runtime_error("Invalid page, data page header not set");
@@ -484,6 +504,7 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
     );
     dp.set_num_present(num_present);
   }
+  update_data_page_size(dp, buf, len);
   alloc_data_page(dp);
   if (dp.cc.optional && dp.present != nullptr) {
     memcpy(dp.present, def_levels.ptr, dp.num_values);
@@ -517,6 +538,7 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
     len -= def_len;
     uint32_t num_present = dp.num_values - dp.ph.data_page_header_v2.num_nulls;
     dp.set_num_present(num_present);
+    update_data_page_size(dp, buf, len);
     alloc_data_page(dp);
     RleBpDecoder dec((const uint8_t *)def_buf, def_len, 1);
     if (dp.present) {
@@ -526,6 +548,7 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
       dec.GetBatch<uint8_t>((uint8_t*) def_levels.ptr, dp.num_values);
     }
   } else {
+    update_data_page_size(dp, buf, len);
     alloc_data_page(dp);
   }
 
@@ -734,6 +757,10 @@ void ParquetReader::read_data_page_byte_array(
     scan_byte_array_delta_length(dp.strs, buf);
     break;
   }
+  case Encoding::DELTA_BYTE_ARRAY: {
+    scan_byte_array_delta(dp, buf, len);
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet");
     break;
@@ -751,10 +778,14 @@ void ParquetReader::read_data_page_fixed_len_byte_array(
     break;
   }
   case Encoding::RLE_DICTIONARY:
-  case Encoding::PLAIN_DICTIONARY:
+  case Encoding::PLAIN_DICTIONARY: {
     read_data_page_rle(dp, buf);
     break;
-  // TODO: rest
+  }
+  case Encoding::DELTA_BYTE_ARRAY: {
+    scan_byte_array_delta(dp, buf, len);
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet");
     break;
@@ -799,6 +830,26 @@ void ParquetReader::scan_byte_array_delta_length(StringSet &strs, uint8_t *buf) 
   }
 }
 
+void ParquetReader::scan_byte_array_delta(DataPage &dp, uint8_t *buf, int32_t len) {
+  uint8_t *bse = (uint8_t*) dp.strs.buf, *out = bse;
+  uint8_t *inp = buf + dp.stroffset;
+  uint32_t offs = 0;
+  for (uint32_t i = 0; i < dp.strs.len; i++) {
+    dp.strs.offsets[i] = offs;
+    dp.strs.lengths[i] = dp.prelen[i] + dp.suflen[i];
+    if (i > 0 && dp.prelen[i] > 0) {
+      memcpy(out, bse + dp.strs.offsets[i-1], dp.prelen[i]);
+      out += dp.prelen[i];
+      offs += dp.prelen[i];
+    }
+    if (dp.suflen[i]) {
+      memcpy(out, inp, dp.suflen[i]);
+      out += dp.suflen[i];
+      offs += dp.suflen[i];
+      inp += dp.suflen[i];
+    }
+  }
+}
 
 void ParquetReader::scan_fixed_len_byte_array_plain(
   StringSet &strs, uint8_t *buf, uint32_t len) {

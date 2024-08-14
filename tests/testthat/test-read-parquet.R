@@ -369,7 +369,7 @@ test_that("DELTA_LENGTH_BYTE_ARRAY encoding", {
 test_that("DELTA_BYTE_ARRAY encoding", {
   skip_on_cran()
   pf <- test_path("data/delta_byte_array.parquet")
-  dba <- read_parquet(pf)
+  dba <- read_parquet2(pf)
   expect_snapshot({
     as.data.frame(dba)[1:5,]
   })

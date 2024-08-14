@@ -101,6 +101,11 @@ public:
   uint64_t from;
   parquet::Encoding::type encoding;
   StringSet strs;
+  // these are for DELTA_BYTE_ARRAY pages, these need a bit more
+  // preprocessing via update_data_page_size()
+  std::vector<int32_t> prelen;
+  std::vector<int32_t> suflen;
+  uint32_t stroffset = 0;
 };
 
 class ParquetReader {
@@ -166,6 +171,7 @@ protected:
   uint32_t read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t len);
   uint32_t read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t len);
   uint32_t read_data_page_internal(DataPage &dp, uint8_t *buf, int32_t len);
+  void update_data_page_size(DataPage &dp, uint8_t *buf, int32_t len);
 
   void read_data_page_rle(DataPage &dp, uint8_t *buf);
 
@@ -181,6 +187,7 @@ protected:
   void unpack_plain_boolean(uint32_t *res, uint8_t *buf, uint32_t num_values);
   void scan_byte_array_plain(StringSet &strs, uint8_t *buf);
   void scan_byte_array_delta_length(StringSet &strs, uint8_t *buf);
+  void scan_byte_array_delta(DataPage &dp, uint8_t *buf, int32_t len);
   void scan_fixed_len_byte_array_plain(StringSet &strs, uint8_t *buf, uint32_t len);
 
   std::tuple<uint8_t *, int32_t>
