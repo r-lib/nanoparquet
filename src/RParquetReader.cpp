@@ -352,7 +352,7 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   }
 
   if (data.cc.has_dictionary) {
-    data.data = (uint8_t*) dicts[cl][rg].indices.data() + page_off;
+    data.data = (uint8_t*) (dicts[cl][rg].indices.data() + page_off);
 
   } else if (!rt.byte_array) {
     int64_t off = metadata.row_group_offsets[rg];

@@ -86,22 +86,22 @@ test_that("REQ RLE_DICT", {
   write_parquet(d, tmp, compression = "uncompressed")
   pgs <- read_parquet_pages(tmp)
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   write_parquet(d, tmp, compression = "snappy")
   pgs <- read_parquet_pages(tmp)
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   # data page v2
   write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "uncompressed")
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
   write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "snappy")
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
   write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "gzip")
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
   write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "zstd")
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
 
 test_that("OPT RLE_DICT", {
@@ -119,22 +119,22 @@ test_that("OPT RLE_DICT", {
   write_parquet(d, tmp, compression = "uncompressed")
   pgs <- read_parquet_pages(tmp)
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   write_parquet(d, tmp, compression = "snappy")
   pgs <- read_parquet_pages(tmp)
   expect_equal(sum(pgs$num_values[pgs$page_type == "DATA_PAGE"]), nrow(d))
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   # data page v2
   write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "uncompressed")
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
   write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "snappy")
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
   write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "gzip")
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
   write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "zstd")
-  expect_equal(as.data.frame(read_parquet0(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
 
 test_that("write_parquet() to memory", {
