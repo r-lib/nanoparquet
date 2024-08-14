@@ -15,7 +15,9 @@ enum r_type_conversion {
   BA_DECIMAL = 5,
   BA_RAW = 6,
   BA_UUID = 7,
-  BA_FLOAT16
+  BA_FLOAT16 = 8,
+  INT32_DECIMAL = 9,
+  INT64_DECIMAL = 10
 };
 
 class rtype {

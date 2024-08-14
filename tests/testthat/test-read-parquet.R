@@ -406,12 +406,12 @@ test_that("More BYTE_STREAM_SPLIT", {
 
 test_that("DECIMAL in INT32, INT64", {
   pf <- test_path("data/int32_decimal.parquet")
-  expect_equal(typeof(read_parquet(pf)[[1]]), "double")
-  expect_snapshot(as.data.frame(read_parquet(pf)))
+  expect_equal(typeof(read_parquet2(pf)[[1]]), "double")
+  expect_snapshot(as.data.frame(read_parquet2(pf)))
 
   pf <- test_path("data/int64_decimal.parquet")
-  expect_equal(typeof(read_parquet(pf)[[1]]), "double")
-  expect_snapshot(as.data.frame(read_parquet(pf)))
+  expect_equal(typeof(read_parquet2(pf)[[1]]), "double")
+  expect_snapshot(as.data.frame(read_parquet2(pf)))
 })
 
 test_that("FLOAT16", {

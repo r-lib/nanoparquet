@@ -152,6 +152,16 @@ rtype::rtype(parquet::SchemaElement &sel) {
       classes.push_back("hms");
       classes.push_back("difftime");
       units.push_back("secs");
+    } else if ((sel.__isset.logicalType && sel.logicalType.__isset.DECIMAL) ||
+               (sel.__isset.converted_type &&
+                sel.converted_type == parquet::ConvertedType::DECIMAL)) {
+      type = tmptype = REALSXP;
+      elsize = sizeof(double);
+      type_conversion = INT32_DECIMAL;
+      scale = sel.scale;
+      if (sel.__isset.logicalType) {
+        scale = sel.logicalType.DECIMAL.scale;
+      }
     }
     break;
   case parquet::Type::INT64:
@@ -209,6 +219,14 @@ rtype::rtype(parquet::SchemaElement &sel) {
       classes.push_back("hms");
       classes.push_back("difftime");
       units.push_back("secs");
+    } else if ((sel.__isset.logicalType && sel.logicalType.__isset.DECIMAL) ||
+               (sel.__isset.converted_type &&
+                sel.converted_type == parquet::ConvertedType::DECIMAL)) {
+      type_conversion = INT64_DECIMAL;
+      scale = sel.scale;
+      if (sel.__isset.logicalType) {
+        scale = sel.logicalType.DECIMAL.scale;
+      }
     }
     break;
   case parquet::Type::INT96:
@@ -1607,6 +1625,158 @@ void convert_column_to_r_ba_float16(postprocess *pp, uint32_t cl) {
 
 // ------------------------------------------------------------------------
 
+void convert_column_to_r_int32_decimal_nodict_nomiss(postprocess *pp, uint32_t cl) {
+  // Need to do this by row group because the values are at the beginning
+  // of the memory area of the row group
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+  int32_t scale = pp->metadata.r_types[cl].scale;
+  double fct = std::pow(10.0, scale);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    int64_t off = pp->metadata.row_group_offsets[rg];
+    double *beg = REAL(x) + off;
+    double *end = beg + num_values - 1;
+    int32_t *fend = ((int32_t*) beg) + num_values - 1;
+    while (beg <= end) {
+      *end-- = static_cast<double>(*fend--) / fct;
+    }
+  }
+}
+
+void convert_column_to_r_int32_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+  int32_t scale = pp->metadata.r_types[cl].scale;
+  double fct = std::pow(10.0, scale);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    int64_t off = pp->metadata.row_group_offsets[rg];
+    double *beg = REAL(x) + off;
+    // In theory we might dictionary encode a subset of the columns only
+    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
+    if (!hasdict) {
+      double *end = beg + num_values - 1;
+      float *fend = ((float*) beg) + num_values - 1;
+      while (beg <= end) {
+        *end-- = static_cast<double>(*fend--) / fct;
+      }
+    } else {
+      // Convert the dictionary first
+      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+      double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
+      double *dend = dbeg + dict_len - 1;
+      float *fdend = ((float*) dbeg) + dict_len - 1;
+      while (dbeg <= dend) {
+        *dend-- = static_cast<double>(*fdend--) / fct;
+      }
+
+      // fill in the dict
+      double *end = beg + num_values;
+      double *dict = (double*) pp->dicts[cl][rg].buffer.data();
+      uint32_t *didx = pp->dicts[cl][rg].indices.data();
+      while (beg < end) {
+        *beg++ = dict[*didx++];
+      }
+    }
+  }
+}
+
+void convert_column_to_r_int32_decimal_nodict_miss(postprocess *pp, uint32_t cl) {
+  convert_column_to_r_int32_decimal_nodict_nomiss(pp, cl);
+  convert_column_to_r_ba_decimal_miss(pp, cl);
+}
+
+void convert_column_to_r_int32_decimal_dict_miss(postprocess *pp, uint32_t cl) {
+  convert_column_to_r_int32_decimal_dict_nomiss(pp, cl);
+  convert_column_to_r_ba_decimal_miss(pp, cl);
+}
+
+void convert_column_to_r_int32_decimal(postprocess *pp, uint32_t cl) {
+  bool hasdict0 = pp->dicts[cl].size() > 0;
+  bool hasmiss0 = pp->present[cl].size() > 0;
+  if (!hasdict0 && !hasmiss0) {
+    convert_column_to_r_int32_decimal_nodict_nomiss(pp, cl);
+  } else if (hasdict0 && !hasmiss0) {
+    convert_column_to_r_int32_decimal_dict_nomiss(pp, cl);
+  } else if (!hasdict0 && hasmiss0) {
+    convert_column_to_r_int32_decimal_nodict_miss(pp, cl);
+  } else if (hasdict0 && hasmiss0) {
+    convert_column_to_r_int32_decimal_dict_miss(pp, cl);
+  }
+}
+
+// ------------------------------------------------------------------------
+
+void convert_column_to_r_int64_decimal_nodict_nomiss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+  int32_t scale = pp->metadata.r_types[cl].scale;
+  double fct = std::pow(10.0, scale);
+  double *beg = REAL(x);
+  double *end = beg + pp->metadata.num_rows;
+  int64_t *ibeg = (int64_t*) beg;
+  while (beg < end) {
+    *beg++ = static_cast<double>(*ibeg++) / fct;
+  }
+}
+
+void convert_column_to_r_int64_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+  int32_t scale = pp->metadata.r_types[cl].scale;
+  double fct = std::pow(10.0, scale);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    int64_t from = pp->metadata.row_group_offsets[rg];
+    // in theory some row groups might be dict encoded, some not
+    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
+    double *beg = REAL(x) + from;
+    double *end = beg + num_values;
+    if (!hasdict) {
+      int64_t *ibeg = (int64_t*) beg;
+      while (beg < end) {
+        *beg++ = static_cast<double>(*ibeg++) / fct;
+      }
+    } else {
+      // convert dictionary first
+      double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
+      double *dend = dbeg + pp->dicts[cl][rg].dict_len;
+      int64_t *idbeg = (int64_t *) dbeg;
+      while (dbeg < dend) {
+        *dbeg++ = static_cast<double>(*idbeg++) / fct;
+      }
+      double *dict = (double*) pp -> dicts[cl][rg].buffer.data();
+      uint32_t *didx = pp->dicts[cl][rg].indices.data();
+      while (beg < end) {
+        *beg++ = dict[*didx++];
+      }
+    }
+  }
+}
+
+void convert_column_to_r_int64_decimal_nodict_miss(postprocess *pp, uint32_t cl) {
+  convert_column_to_r_int64_decimal_nodict_nomiss(pp, cl);
+  convert_column_to_r_ba_decimal_miss(pp, cl);
+}
+
+void convert_column_to_r_int64_decimal_dict_miss(postprocess *pp, uint32_t cl) {
+  convert_column_to_r_int64_decimal_dict_nomiss(pp, cl);
+  convert_column_to_r_ba_decimal_miss(pp, cl);
+}
+
+void convert_column_to_r_int64_decimal(postprocess *pp, uint32_t cl) {
+  bool hasdict0 = pp->dicts[cl].size() > 0;
+  bool hasmiss0 = pp->present[cl].size() > 0;
+  if (!hasdict0 && !hasmiss0) {
+    convert_column_to_r_int64_decimal_nodict_nomiss(pp, cl);
+  } else if (hasdict0 && !hasmiss0) {
+    convert_column_to_r_int64_decimal_dict_nomiss(pp, cl);
+  } else if (!hasdict0 && hasmiss0) {
+    convert_column_to_r_int64_decimal_nodict_miss(pp, cl);
+  } else if (hasdict0 && hasmiss0) {
+    convert_column_to_r_int64_decimal_dict_miss(pp, cl);
+  }
+}
+
+// ------------------------------------------------------------------------
+
 void convert_columns_to_r_(postprocess *pp) {
 
   for (auto cl = 0; cl < pp->metadata.num_cols; cl++) {
@@ -1647,6 +1817,12 @@ void convert_columns_to_r_(postprocess *pp) {
       break;
     case BA_FLOAT16:
       convert_column_to_r_ba_float16(pp, cl);
+      break;
+    case INT32_DECIMAL:
+      convert_column_to_r_int32_decimal(pp, cl);
+      break;
+    case INT64_DECIMAL:
+      convert_column_to_r_int64_decimal(pp, cl);
       break;
     default:
       break;

@@ -436,7 +436,7 @@
 # DECIMAL in INT32, INT64
 
     Code
-      as.data.frame(read_parquet(pf))
+      as.data.frame(read_parquet2(pf))
     Output
          value
       1      1
@@ -467,7 +467,7 @@
 ---
 
     Code
-      as.data.frame(read_parquet(pf))
+      as.data.frame(read_parquet2(pf))
     Output
          value
       1      1
