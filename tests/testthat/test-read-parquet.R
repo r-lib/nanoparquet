@@ -382,7 +382,7 @@ test_that("DELTA_BYTE_ARRAY encoding", {
 test_that("BYTE_STREAM_SPLIT encoding", {
   skip_on_cran()
   pf <- test_path("data/byte_stream_split.parquet")
-  bss <- read_parquet(pf)
+  bss <- read_parquet2(pf)
   expect_snapshot({
     as.data.frame(bss)[1:5,]
   })
@@ -395,7 +395,7 @@ test_that("BYTE_STREAM_SPLIT encoding", {
 test_that("More BYTE_STREAM_SPLIT", {
   skip_on_cran()
   pf <- test_path("data/byte_stream_split_extended.gzip.parquet")
-  bss <- read_parquet(pf)
+  bss <- read_parquet2(pf)
   expect_snapshot({
     as.data.frame(bss)[1:5,]
   })
@@ -418,6 +418,6 @@ test_that("FLOAT16", {
   pf <- test_path("data/float16_nonzeros_and_nans.parquet")
   expect_snapshot({
     as.data.frame(read_parquet_schema(pf))
-    as.data.frame(read_parquet(pf))
+    as.data.frame(read_parquet2(pf))
   })
 })

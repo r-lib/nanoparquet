@@ -15,6 +15,38 @@ static int64_t impala_timestamp_to_milliseconds(const int96_t &impala_timestamp)
   return (days_since_epoch * kNanosecondsInADay + nanoseconds) / 1000000;
 }
 
+static uint32_t as_uint(const float x) {
+  return *(uint32_t*) &x;
+}
+
+static float as_float(const uint32_t x) {
+  return *(float*) &x;
+}
+
+static double float16_to_double(uint16_t x) {
+  bool neg = (x & 0x8000) != 0;
+  if ((x & 0x7fff) == 0x7c00) {
+    return neg ? R_NegInf : R_PosInf;
+  } else if ((x & 0x7fff) > 0x7c00) {
+    return R_NaN;
+  } else {
+    // Accuracy and performance of the lattice Boltzmann method with
+    // 64-bit, 32-bit, and customized 16-bit number formats
+    // Moritz Lehmann, Mathias J. Krause, Giorgio Amati, Marcello Sega,
+    // Jens Harting, and Stephan Gekle
+    // Phys. Rev. E 106, 015308
+    // https://journals.aps.org/pre/abstract/10.1103/PhysRevE.106.015308
+    const uint32_t e = (x & 0x7C00) >> 10;
+    const uint32_t m = (x & 0x03FF) << 13;
+    const uint32_t v = as_uint((float) m) >> 23;
+    float f = as_float((x & 0x8000) << 16 |
+      (e != 0) * ((e + 112) << 23 | m) |
+      ((e == 0) & (m != 0)) * ((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)));
+    return f;
+  }
+  return 0;
+}
+
 // ------------------------------------------------------------------------
 
 RParquetReader::RParquetReader(std::string filename)
@@ -215,6 +247,10 @@ rtype::rtype(parquet::SchemaElement &sel) {
       type = STRSXP;
       tmptype = NILSXP;
       type_conversion = BA_UUID;
+    } else if (sel.__isset.logicalType && sel.logicalType.__isset.FLOAT16) {
+      type = REALSXP;
+      tmptype = NILSXP;
+      type_conversion = BA_FLOAT16;
     } else if ((sel.__isset.logicalType &&
                 (sel.logicalType.__isset.DECIMAL)) ||
                (sel.__isset.converted_type &&
@@ -1492,6 +1528,85 @@ void convert_column_to_r_ba_uuid(postprocess *pp, uint32_t cl) {
 
 // ------------------------------------------------------------------------
 
+void convert_column_to_r_ba_float16_nodict_nomiss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
+    for (auto it = rgba.begin(); it != rgba.end(); ++it) {
+      int64_t from = it->from;
+      for (auto i = 0; i < it->offsets.size(); i++) {
+        uint16_t *f = (uint16_t*) (it->buffer.data() + it->offsets[i]);
+        REAL(x)[from] = float16_to_double(*f);
+        from++;
+      }
+    }
+  }
+}
+
+void convert_column_to_r_ba_float16_dict_nomiss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
+    if (!hasdict) {
+      std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
+      for (auto it = rgba.begin(); it != rgba.end(); ++it) {
+        int64_t from = it->from;
+        for (auto i = 0; i < it->offsets.size(); i++) {
+          uint16_t *f = (uint16_t*) (it->buffer.data() + it->offsets[i]);
+          REAL(x)[from] = float16_to_double(*f);
+          from++;
+        }
+      }
+    } else {
+      // convert dictionary first
+      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+      SEXP tmp = PROTECT(Rf_allocVector(REALSXP, dict_len));
+      tmpbytes &ba = pp->dicts[cl][rg].bytes;
+      for (uint32_t i = 0; i < dict_len; i++) {
+        uint16_t *f = (uint16_t*) (ba.buffer.data() + ba.offsets[i]);
+        REAL(tmp)[i] = float16_to_double(*f);
+      }
+
+      // fill in
+      uint32_t *didx = pp->dicts[cl][rg].indices.data();
+      uint32_t *end = didx + pp->dicts[cl][rg].indices.size();
+      int64_t from = pp->metadata.row_group_offsets[rg];
+      while (didx < end) {
+        REAL(x)[from] = REAL(tmp)[*didx];
+        from++;
+        didx++;
+      }
+      UNPROTECT(1);
+    }
+  }
+}
+
+void convert_column_to_r_ba_float16_nodict_miss(postprocess *pp, uint32_t cl) {
+  convert_column_to_r_ba_float16_nodict_nomiss(pp, cl);
+  convert_column_to_r_ba_decimal_miss(pp, cl);
+}
+
+void convert_column_to_r_ba_float16_dict_miss(postprocess *pp, uint32_t cl) {
+  convert_column_to_r_ba_float16_dict_nomiss(pp, cl);
+  convert_column_to_r_ba_decimal_miss(pp, cl);
+}
+
+void convert_column_to_r_ba_float16(postprocess *pp, uint32_t cl) {
+  bool hasdict0 = pp->dicts[cl].size() > 0;
+  bool hasmiss0 = pp->present[cl].size() > 0;
+  if (!hasdict0 && !hasmiss0) {
+    convert_column_to_r_ba_float16_nodict_nomiss(pp, cl);
+  } else if (hasdict0 && !hasmiss0) {
+    convert_column_to_r_ba_float16_dict_nomiss(pp, cl);
+  } else if (!hasdict0 && hasmiss0) {
+    convert_column_to_r_ba_float16_nodict_miss(pp, cl);
+  } else if (hasdict0 && hasmiss0) {
+    convert_column_to_r_ba_float16_dict_miss(pp, cl);
+  }
+}
+
+// ------------------------------------------------------------------------
+
 void convert_columns_to_r_(postprocess *pp) {
 
   for (auto cl = 0; cl < pp->metadata.num_cols; cl++) {
@@ -1529,6 +1644,9 @@ void convert_columns_to_r_(postprocess *pp) {
       break;
     case BA_UUID:
       convert_column_to_r_ba_uuid(pp, cl);
+      break;
+    case BA_FLOAT16:
+      convert_column_to_r_ba_float16(pp, cl);
       break;
     default:
       break;

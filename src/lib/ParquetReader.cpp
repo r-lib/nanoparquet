@@ -602,6 +602,20 @@ void ParquetReader::read_data_page_rle(DataPage &dp, uint8_t *buf) {
   }
 }
 
+template <class T> void ParquetReader::read_data_page_bss(
+  DataPage &dp,
+  uint8_t *buf,
+  int32_t len,
+  uint32_t elt_size) {
+
+  uint8_t *end = dp.data + dp.num_present * elt_size;
+  for (uint32_t b = 0; b < elt_size; b++) {
+    for (uint8_t *out = dp.data + b; out < end; out += elt_size) {
+      *out = *buf++;
+    }
+  }
+}
+
 void ParquetReader::read_data_page_boolean(DataPage &dp, uint8_t *buf, int32_t len) {
   switch (dp.encoding) {
   case Encoding::PLAIN: {
@@ -641,6 +655,10 @@ void ParquetReader::read_data_page_int32(
     dec.decode((int32_t*) dp.data);
     break;
   }
+  case Encoding::BYTE_STREAM_SPLIT: {
+    read_data_page_bss<int32_t>(dp, buf, len);
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet");
     break;
@@ -666,6 +684,10 @@ void ParquetReader::read_data_page_int64(
     struct buffer dbpbuf = { (uint8_t*) buf, (uint32_t) len };
     DbpDecoder<int64_t, uint64_t> dec(&dbpbuf);
     dec.decode((int64_t*) dp.data);
+    break;
+  }
+  case Encoding::BYTE_STREAM_SPLIT: {
+    read_data_page_bss<int64_t>(dp, buf, len);
     break;
   }
   default:
@@ -710,7 +732,10 @@ void ParquetReader::read_data_page_float(
   case Encoding::PLAIN_DICTIONARY:
     read_data_page_rle(dp, buf);
     break;
-  // TODO: rest
+  case Encoding::BYTE_STREAM_SPLIT: {
+    read_data_page_bss<float>(dp, buf, len);
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet");
     break;
@@ -731,7 +756,10 @@ void ParquetReader::read_data_page_double(
   case Encoding::PLAIN_DICTIONARY:
     read_data_page_rle(dp, buf);
     break;
-  // TODO: rest
+  case Encoding::BYTE_STREAM_SPLIT: {
+    read_data_page_bss<double>(dp, buf, len);
+    break;
+  }
   default:
     throw runtime_error("Not implemented yet");
     break;
@@ -784,6 +812,16 @@ void ParquetReader::read_data_page_fixed_len_byte_array(
   }
   case Encoding::DELTA_BYTE_ARRAY: {
     scan_byte_array_delta(dp, buf, len);
+    break;
+  }
+  case Encoding::BYTE_STREAM_SPLIT: {
+    for (uint32_t i = 0; i < dp.strs.len; i++) {
+      dp.strs.lengths[i] = dp.cc.sel.type_length;
+      dp.strs.offsets[i] = i * dp.cc.sel.type_length;
+    }
+    dp.data = (uint8_t*) dp.strs.buf;
+    read_data_page_bss<uint8_t>(dp, buf, len, dp.cc.sel.type_length);
+    dp.data = nullptr;
     break;
   }
   default:

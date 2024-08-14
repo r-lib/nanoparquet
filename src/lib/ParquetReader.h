@@ -174,6 +174,9 @@ protected:
   void update_data_page_size(DataPage &dp, uint8_t *buf, int32_t len);
 
   void read_data_page_rle(DataPage &dp, uint8_t *buf);
+  template <class T> void read_data_page_bss(DataPage &dp, uint8_t *buf,
+                                             int32_t len,
+                                             uint32_t elt_size = sizeof(T));
 
   void read_data_page_boolean(DataPage &dp, uint8_t *buf, int32_t len);
   void read_data_page_int32(DataPage &dp, uint8_t *buf, int32_t len);

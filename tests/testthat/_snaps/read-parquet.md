@@ -510,7 +510,7 @@
       1        NA       NA
       2        NA       NA
     Code
-      as.data.frame(read_parquet(pf))
+      as.data.frame(read_parquet2(pf))
     Output
           x
       1  NA
