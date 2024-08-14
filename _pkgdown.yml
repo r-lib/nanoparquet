@@ -53,4 +53,3 @@ reference:
   - nanoparquet-package
   - nanoparquet
   - parquet_column_types
-  - read_parquet2

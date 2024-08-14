@@ -1,6 +1,3 @@
-# temporary...
-read_parquet <- read_parquet2
-
 # -------------------------------------------------------------------------
 # Primitive types
 

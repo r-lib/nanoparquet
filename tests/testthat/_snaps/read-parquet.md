@@ -38,7 +38,7 @@
 # read hms in MICROS
 
     Code
-      as.data.frame(read_parquet2(pf))
+      as.data.frame(read_parquet(pf))
     Output
               tt
       1 14:30:00
@@ -56,7 +56,7 @@
 # read GZIP compressed files
 
     Code
-      as.data.frame(read_parquet2(pf))
+      as.data.frame(read_parquet(pf))
     Output
                          nam  mpg cyl  disp  hp drat    wt  qsec vs am gear carb
       1                 <NA> 21.0   6 160.0 110 3.90 2.620 16.46  0  1    4    4
@@ -128,7 +128,7 @@
 # V2 data pages
 
     Code
-      as.data.frame(read_parquet2(pf))
+      as.data.frame(read_parquet(pf))
     Output
         FirstName                                       Data
       1      John 48, 65, 6c, 6c, 6f, 20, 57, 6f, 72, 6c, 64
@@ -140,7 +140,7 @@
 # Tricky V2 data page
 
     Code
-      as.data.frame(read_parquet2(pf))
+      as.data.frame(read_parquet(pf))
     Output
          datatype_boolean
       1              TRUE
@@ -224,7 +224,7 @@
       [1] "RLE"                 "DELTA_BINARY_PACKED"
       
     Code
-      read_parquet2(pf)
+      read_parquet(pf)
     Output
       # A data frame: 20 x 2
              x     y
@@ -262,7 +262,7 @@
       [1] "RLE"                 "DELTA_BINARY_PACKED"
       
     Code
-      read_parquet2(pf2)
+      read_parquet(pf2)
     Output
       # A data frame: 20 x 2
              x     y
@@ -297,7 +297,7 @@
       [1] "RLE"                 "DELTA_BINARY_PACKED"
       
     Code
-      read_parquet2(pf3)
+      read_parquet(pf3)
     Output
       # A data frame: 7 x 1
             x
@@ -313,7 +313,7 @@
 # UUID columns
 
     Code
-      as.data.frame(read_parquet2(pf))
+      as.data.frame(read_parquet(pf))
     Output
                                             u
       1                                  <NA>
@@ -436,7 +436,7 @@
 # DECIMAL in INT32, INT64
 
     Code
-      as.data.frame(read_parquet2(pf))
+      as.data.frame(read_parquet(pf))
     Output
          value
       1      1
@@ -467,7 +467,7 @@
 ---
 
     Code
-      as.data.frame(read_parquet2(pf))
+      as.data.frame(read_parquet(pf))
     Output
          value
       1      1
@@ -510,7 +510,7 @@
       1        NA       NA
       2        NA       NA
     Code
-      as.data.frame(read_parquet2(pf))
+      as.data.frame(read_parquet(pf))
     Output
           x
       1  NA

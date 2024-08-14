@@ -459,7 +459,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
         uint32_t num_miss = num_values - num_present;
         while (num_miss > 0) {
-          if (*presm1) {
+          if (*presm1 != 0) {
             *endm1-- = *pendm1--;
             presm1--;
           } else {
@@ -1655,7 +1655,7 @@ void convert_column_to_r_int32_decimal_dict_nomiss(postprocess *pp, uint32_t cl)
     bool hasdict = pp->dicts[cl][rg].dict_len > 0;
     if (!hasdict) {
       double *end = beg + num_values - 1;
-      float *fend = ((float*) beg) + num_values - 1;
+      int32_t *fend = ((int32_t*) beg) + num_values - 1;
       while (beg <= end) {
         *end-- = static_cast<double>(*fend--) / fct;
       }
@@ -1664,7 +1664,7 @@ void convert_column_to_r_int32_decimal_dict_nomiss(postprocess *pp, uint32_t cl)
       uint32_t dict_len = pp->dicts[cl][rg].dict_len;
       double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
       double *dend = dbeg + dict_len - 1;
-      float *fdend = ((float*) dbeg) + dict_len - 1;
+      int32_t *fdend = ((int32_t*) dbeg) + dict_len - 1;
       while (dbeg <= dend) {
         *dend-- = static_cast<double>(*fdend--) / fct;
       }

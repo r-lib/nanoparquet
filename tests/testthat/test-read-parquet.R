@@ -77,25 +77,25 @@ data_comparable <- function(df1, df2, dlt = .0001) {
 test_that("various error cases", {
   # https://github.com/llvm/llvm-project/issues/59432
   if (is_asan()) skip("ASAN bug")
-  expect_error(res <- read_parquet2(""))
-  expect_error(res <- read_parquet2("DONTEXIST"))
+  expect_error(res <- read_parquet(""))
+  expect_error(res <- read_parquet("DONTEXIST"))
   tf <- tempfile()
-  expect_error(res <- read_parquet2(tf))
-  expect_error(res <- read_parquet2(c(tf, tf)))
+  expect_error(res <- read_parquet(tf))
+  expect_error(res <- read_parquet(c(tf, tf)))
 })
 
 test_that("basic reading works", {
-  res <- read_parquet2(test_path("data/alltypes_plain.parquet"))
+  res <- read_parquet(test_path("data/alltypes_plain.parquet"))
   expect_true(data_comparable(alltypes_plain, res))
 })
 
 test_that("basic reading works with snappy", {
-  res <- read_parquet2(test_path("data/alltypes_plain.snappy.parquet"))
+  res <- read_parquet(test_path("data/alltypes_plain.snappy.parquet"))
   expect_true(data_comparable(alltypes_plain_snappy, res))
 })
 
 test_that("read factors, marked by Arrow", {
-  res <- read_parquet2(test_path("data/factor.parquet"))
+  res <- read_parquet(test_path("data/factor.parquet"))
   expect_snapshot({
     as.data.frame(res[1:5,])
     sapply(res, class)
@@ -117,11 +117,11 @@ test_that("round trip with arrow", {
   on.exit(unlink(tmp), add = TRUE)
 
   arrow::write_parquet(mt, tmp, compression = "uncompressed")
-  expect_equal(read_parquet2(tmp), mt)
+  expect_equal(read_parquet(tmp), mt)
   unlink(tmp)
 
   arrow::write_parquet(mt, tmp, compression = "snappy")
-  expect_equal(read_parquet2(tmp), mt)
+  expect_equal(read_parquet(tmp), mt)
 })
 
 test_that("round trip with duckdb", {
@@ -141,7 +141,7 @@ test_that("round trip with duckdb", {
     "COPY mtcars TO ?filename (FORMAT 'parquet', COMPRESSION 'uncompressed')",
     filename = tmp
   ))
-  expect_equal(read_parquet2(tmp), mt)
+  expect_equal(read_parquet(tmp), mt)
   unlink(tmp)
 
   DBI::dbExecute(con, DBI::sqlInterpolate(con,
@@ -149,7 +149,7 @@ test_that("round trip with duckdb", {
     filename = tmp
   ))
   arrow::write_parquet(mt, tmp, compression = "snappy")
-  expect_equal(read_parquet2(tmp), mt)
+  expect_equal(read_parquet(tmp), mt)
 })
 
 test_that("read Date", {
@@ -161,7 +161,7 @@ test_that("read Date", {
   )
   write_parquet(d, tmp)
 
-  d2 <- read_parquet2(tmp)
+  d2 <- read_parquet(tmp)
   expect_s3_class(d2$d, "Date")
   expect_equal(d$d, d2$d)
 })
@@ -175,7 +175,7 @@ test_that("read hms", {
   )
   write_parquet(d, tmp)
 
-  d2 <- read_parquet2(tmp)
+  d2 <- read_parquet(tmp)
   expect_s3_class(d2$h, "hms")
   expect_equal(d$h, d2$h)
 })
@@ -183,7 +183,7 @@ test_that("read hms", {
 test_that("read hms in MICROS", {
   pf <- test_path("data/timetz.parquet")
   expect_snapshot({
-    as.data.frame(read_parquet2(pf))
+    as.data.frame(read_parquet(pf))
   })
 })
 
@@ -196,7 +196,7 @@ test_that("read POSIXct", {
   )
   write_parquet(d, tmp)
 
-  d2 <- read_parquet2(tmp)
+  d2 <- read_parquet(tmp)
   expect_s3_class(d$h, "POSIXct")
   expect_equal(d$h, d2$h)
 })
@@ -206,7 +206,7 @@ test_that("read POSIXct in MILLIS", {
   # This file has UTC = FALSE, so the exact result depends on the current
   # time zone. But it should match Arrow.
   pf <- test_path("data/timestamp-ms.parquet")
-  d1 <- read_parquet2(pf)
+  d1 <- read_parquet(pf)
   d2 <- arrow::read_parquet(pf)
   expect_equal(
     as.data.frame(d1),
@@ -224,7 +224,7 @@ test_that("read difftime", {
   )
   write_parquet(d, tmp)
 
-  d2 <- read_parquet2(tmp)
+  d2 <- read_parquet(tmp)
   expect_s3_class(d2$h, "difftime")
   expect_equal(d$h, d2$h)
 
@@ -233,7 +233,7 @@ test_that("read difftime", {
     h = as.difftime(10, units = "mins")
   )
   write_parquet(d, tmp)
-  d2 <- read_parquet2(tmp)
+  d2 <- read_parquet(tmp)
   expect_snapshot({
     as.data.frame(d2)
   })
@@ -258,7 +258,7 @@ test_that("RLE BOOLEAN", {
     list("RLE")
   )
 
-  expect_equal(as.data.frame(read_parquet2(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   # larger DF
 
@@ -277,20 +277,20 @@ test_that("RLE BOOLEAN", {
     list("RLE")
   )
 
-  expect_equal(as.data.frame(read_parquet2(tmp)), d)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
 
 test_that("read GZIP compressed files", {
   pf <- test_path("data/gzip.parquet")
   expect_snapshot({
-    as.data.frame(read_parquet2(pf))
+    as.data.frame(read_parquet(pf))
   })
 })
 
 test_that("V2 data pages", {
   pf <- test_path("data/parquet_go.parquet")
   expect_snapshot({
-    as.data.frame(read_parquet2(pf))
+    as.data.frame(read_parquet(pf))
   })
 })
 
@@ -298,7 +298,7 @@ test_that("V2 data page with missing values", {
   skip_on_cran()
   pf <- test_path("data/duckdb-bug1589.parquet")
   expect_equal(
-    as.data.frame(read_parquet2(pf)),
+    as.data.frame(read_parquet(pf)),
     as.data.frame(arrow::read_parquet(pf))
   )
 })
@@ -308,7 +308,7 @@ test_that("Tricky V2 data page", {
   # definition levels
   pf <- test_path("data/rle_boolean_encoding.parquet")
   expect_snapshot({
-    as.data.frame(read_parquet2(pf))
+    as.data.frame(read_parquet(pf))
   })
 })
 
@@ -316,7 +316,7 @@ test_that("zstd", {
   pf <- test_path("data/zstd.parquet")
   expect_true(all(read_parquet_metadata(pf)$column_chunks$codec == "ZSTD"))
   pf2 <- test_path("data/gzip.parquet")
-  expect_equal(read_parquet2(pf), read_parquet2(pf2))
+  expect_equal(read_parquet(pf), read_parquet(pf2))
 })
 
 test_that("zstd with data page v2", {
@@ -326,7 +326,7 @@ test_that("zstd with data page v2", {
     all(read_parquet_pages(pf)$page_type %in% c("DICTIONARY_PAGE", "DATA_PAGE_V2"))
   )
   pf2 <- test_path("data/gzip.parquet")
-  expect_equal(read_parquet2(pf), read_parquet2(pf2))
+  expect_equal(read_parquet(pf), read_parquet(pf2))
 })
 
 test_that("DELTA_BIANRY_PACKED encoding", {
@@ -334,32 +334,32 @@ test_that("DELTA_BIANRY_PACKED encoding", {
   pf <- test_path("data/dbp-int32.parquet")
   expect_snapshot({
     read_parquet_metadata(pf)$column_chunks$encodings
-    read_parquet2(pf)
+    read_parquet(pf)
   })
 
   pf2 <- test_path("data/dbp-int32-missing.parquet")
   expect_snapshot({
     read_parquet_metadata(pf2)$column_chunks$encodings
-    read_parquet2(pf2)
+    read_parquet(pf2)
   })
 
   pf3 <- test_path("data/dbp-int64.parquet")
   expect_snapshot({
     read_parquet_metadata(pf3)$column_chunks$encodings
-    read_parquet2(pf3)
+    read_parquet(pf3)
   })
 })
 
 test_that("UUID columns", {
   pf <- test_path("data/uuid-arrow.parquet")
   expect_snapshot({
-    as.data.frame(read_parquet2(pf))
+    as.data.frame(read_parquet(pf))
   })
 })
 
 test_that("DELTA_LENGTH_BYTE_ARRAY encoding", {
   pf <- test_path("data/delta_length_byte_array.parquet")
-  dlba <- read_parquet2(pf)
+  dlba <- read_parquet(pf)
   expect_snapshot({
     as.data.frame(dlba)[1:10,]
     rle(nchar(dlba$FRUIT))
@@ -369,7 +369,7 @@ test_that("DELTA_LENGTH_BYTE_ARRAY encoding", {
 test_that("DELTA_BYTE_ARRAY encoding", {
   skip_on_cran()
   pf <- test_path("data/delta_byte_array.parquet")
-  dba <- read_parquet2(pf)
+  dba <- read_parquet(pf)
   expect_snapshot({
     as.data.frame(dba)[1:5,]
   })
@@ -382,7 +382,7 @@ test_that("DELTA_BYTE_ARRAY encoding", {
 test_that("BYTE_STREAM_SPLIT encoding", {
   skip_on_cran()
   pf <- test_path("data/byte_stream_split.parquet")
-  bss <- read_parquet2(pf)
+  bss <- read_parquet(pf)
   expect_snapshot({
     as.data.frame(bss)[1:5,]
   })
@@ -395,7 +395,7 @@ test_that("BYTE_STREAM_SPLIT encoding", {
 test_that("More BYTE_STREAM_SPLIT", {
   skip_on_cran()
   pf <- test_path("data/byte_stream_split_extended.gzip.parquet")
-  bss <- read_parquet2(pf)
+  bss <- read_parquet(pf)
   expect_snapshot({
     as.data.frame(bss)[1:5,]
   })
@@ -406,18 +406,18 @@ test_that("More BYTE_STREAM_SPLIT", {
 
 test_that("DECIMAL in INT32, INT64", {
   pf <- test_path("data/int32_decimal.parquet")
-  expect_equal(typeof(read_parquet2(pf)[[1]]), "double")
-  expect_snapshot(as.data.frame(read_parquet2(pf)))
+  expect_equal(typeof(read_parquet(pf)[[1]]), "double")
+  expect_snapshot(as.data.frame(read_parquet(pf)))
 
   pf <- test_path("data/int64_decimal.parquet")
-  expect_equal(typeof(read_parquet2(pf)[[1]]), "double")
-  expect_snapshot(as.data.frame(read_parquet2(pf)))
+  expect_equal(typeof(read_parquet(pf)[[1]]), "double")
+  expect_snapshot(as.data.frame(read_parquet(pf)))
 })
 
 test_that("FLOAT16", {
   pf <- test_path("data/float16_nonzeros_and_nans.parquet")
   expect_snapshot({
     as.data.frame(read_parquet_schema(pf))
-    as.data.frame(read_parquet2(pf))
+    as.data.frame(read_parquet(pf))
   })
 })

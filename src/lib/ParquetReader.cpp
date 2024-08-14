@@ -586,7 +586,7 @@ uint32_t ParquetReader::read_data_page_internal(DataPage &dp, uint8_t *buf, int3
     break;
   }
 
-  return dp.num_present;
+  return dp.num_values;
 }
 
 void ParquetReader::read_data_page_rle(DataPage &dp, uint8_t *buf) {
