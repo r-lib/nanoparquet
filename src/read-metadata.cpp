@@ -1,7 +1,9 @@
 #include "lib/nanoparquet.h"
 
 #include <Rdefines.h>
+
 #include "protect.h"
+#include "RParquetReader.h"
 
 using namespace nanoparquet;
 using namespace std;
@@ -392,7 +394,7 @@ SEXP nanoparquet_read_metadata(SEXP filesxp) {
   R_API_START(R_NilValue);
 
   const char *fname = CHAR(STRING_ELT(filesxp, 0));
-  ParquetFile f(fname);
+  RParquetReader f(fname);
 
   const char *res_nms[] = {
     "file_meta_data",
@@ -403,7 +405,7 @@ SEXP nanoparquet_read_metadata(SEXP filesxp) {
     };
   SEXP res = PROTECT(safe_mknamed_vec(res_nms, &uwtoken));
 
-  parquet::FileMetaData fmd = f.file_meta_data;
+  parquet::FileMetaData fmd = f.file_meta_data_;
   const char *fmd_nms[] = {
     "file_name",
     "version",
@@ -444,8 +446,8 @@ SEXP nanoparquet_read_schema(SEXP filesxp) {
   R_API_START(R_NilValue);
   SEXP cfname = PROTECT(STRING_ELT(filesxp, 0));
   const char *fname = CHAR(cfname);
-  ParquetFile f(fname);
-  parquet::FileMetaData fmd = f.file_meta_data;
+  RParquetReader f(fname);
+  parquet::FileMetaData fmd = f.file_meta_data_;
   UNPROTECT(1);
   return convert_schema(fname, fmd.schema);
   R_API_END();

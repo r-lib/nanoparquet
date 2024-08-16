@@ -55,7 +55,6 @@ test_that("OPT PLAIN", {
   expect_snapshot({
     tapply(pgs$num_values, pgs$column + 1, sum)
   })
-  d2 <- read_parquet(tmp)
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   write_parquet(d, tmp, compression = "snappy")

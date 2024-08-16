@@ -17,13 +17,13 @@
 #' print(str(parquet_df))
 
 read_parquet <- function(file, options = parquet_options()) {
-	file <- path.expand(file)
-	res <- .Call(nanoparquet_read, file)
+  file <- path.expand(file)
+  res <- .Call(nanoparquet_read2, file, options, sys.call())
 	dicts <- res[[2]]
 	types <- res[[3]]
 	res <- res[[1]]
 	if (options[["use_arrow_metadata"]]) {
-		res <- apply_arrow_schema(res, file, dicts, types)
+		res <- apply_arrow_schema2(res, file, dicts, types)
 	}
 
 	# convert hms from milliseconds to seconds, also integer -> double
@@ -44,8 +44,5 @@ read_parquet <- function(file, options = parquet_options()) {
 		)
 	}
 
-	# some data.frame dress up
-	attr(res, "row.names") <- c(NA_integer_, as.integer(-1 * length(res[[1]])))
-	class(res) <- c(options[["class"]], "data.frame")
-	res
+  res
 }

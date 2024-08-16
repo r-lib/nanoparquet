@@ -1,9 +1,9 @@
-OBJECTS= \
-  rwrapper.o protect.o read.o write.o \
+OBJECTS= lib/ParquetReader.o RParquetReader.o \
+  rwrapper.o protect.o read2.o write.o \
   read-metadata.o read-pages.o \
   arrow-schema.o base64.o r-base64.o snappy.o encodings.o \
   dictionary-encoding.o test.o \
-  lib/ParquetFile.o lib/ParquetOutFile.o lib/RleBpDecoder.o \
+  lib/ParquetOutFile.o lib/RleBpDecoder.o \
   parquet/parquet_types.o \
   thrift/protocol/TProtocol.o thrift/transport/TTransportException.o \
   thrift/transport/TBufferTransports.o \
