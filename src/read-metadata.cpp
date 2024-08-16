@@ -56,11 +56,11 @@ SEXP convert_logical_type_(parquet::LogicalType ltype) {
     SET_VECTOR_ELT(rtype, 0, Rf_mkString("TIME"));
     SET_VECTOR_ELT(rtype, 1, Rf_ScalarLogical(ltype.TIME.isAdjustedToUTC));
     if (ltype.TIME.unit.__isset.MILLIS) {
-      SET_VECTOR_ELT(rtype, 2, Rf_mkString("millis"));
+      SET_VECTOR_ELT(rtype, 2, Rf_mkString("MILLIS"));
     } else if (ltype.TIME.unit.__isset.MICROS) {
-      SET_VECTOR_ELT(rtype, 2, Rf_mkString("micros"));
+      SET_VECTOR_ELT(rtype, 2, Rf_mkString("MICROS"));
     } else if (ltype.TIME.unit.__isset.NANOS) {
-      SET_VECTOR_ELT(rtype, 2, Rf_mkString("nanos"));
+      SET_VECTOR_ELT(rtype, 2, Rf_mkString("NANOS"));
     } else {
       SET_VECTOR_ELT(rtype, 2, R_NaString);
     }
@@ -70,11 +70,11 @@ SEXP convert_logical_type_(parquet::LogicalType ltype) {
     SET_VECTOR_ELT(rtype, 0, Rf_mkString("TIMESTAMP"));
     SET_VECTOR_ELT(rtype, 1, Rf_ScalarLogical(ltype.TIMESTAMP.isAdjustedToUTC));
     if (ltype.TIMESTAMP.unit.__isset.MILLIS) {
-      SET_VECTOR_ELT(rtype, 2, Rf_mkString("millis"));
+      SET_VECTOR_ELT(rtype, 2, Rf_mkString("MILLIS"));
     } else if (ltype.TIMESTAMP.unit.__isset.MICROS) {
-      SET_VECTOR_ELT(rtype, 2, Rf_mkString("micros"));
+      SET_VECTOR_ELT(rtype, 2, Rf_mkString("MICROS"));
     } else if (ltype.TIMESTAMP.unit.__isset.NANOS) {
-      SET_VECTOR_ELT(rtype, 2, Rf_mkString("nanos"));
+      SET_VECTOR_ELT(rtype, 2, Rf_mkString("NANOS"));
     } else {
       SET_VECTOR_ELT(rtype, 2, R_NaString);
     }

@@ -351,7 +351,7 @@
       [1] TRUE
       
       $unit
-      [1] "micros"
+      [1] "MICROS"
       
       attr(,"class")
       [1] "nanoparquet_logical_type"
@@ -385,7 +385,7 @@
       [1] FALSE
       
       $unit
-      [1] "micros"
+      [1] "MICROS"
       
       attr(,"class")
       [1] "nanoparquet_logical_type"
