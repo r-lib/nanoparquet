@@ -1,6 +1,7 @@
 #include "lib/nanoparquet.h"
 
 #include "protect.h"
+#include "RParquetReader.h"
 
 using namespace nanoparquet;
 using namespace std;
@@ -17,11 +18,11 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
   R_API_START(R_NilValue);
   const char *fname = CHAR(STRING_ELT(filesxp, 0));
-  ParquetFile f(fname);
+  RParquetReader f(fname);
 
   // first go over the pages to see how many we have
   size_t num_pages = 0;
-  parquet::FileMetaData fmd = f.file_meta_data;
+  parquet::FileMetaData fmd = f.file_meta_data_;
   vector<parquet::RowGroup> rgs = fmd.row_groups;
   for (auto i = 0; i < rgs.size(); i++) {
     for (auto j = 0; j < rgs[i].columns.size(); j++) {
@@ -204,10 +205,10 @@ struct PageData {
   bool has_definition_levels;
 };
 
-static PageData find_page(ParquetFile &file, int64_t page_header_offset) {
+static PageData find_page(ParquetReader &file, int64_t page_header_offset) {
   PageData pd;
 
-  parquet::FileMetaData fmd = file.file_meta_data;
+  parquet::FileMetaData fmd = file.file_meta_data_;
   vector<parquet::RowGroup> rgs = fmd.row_groups;
   for (auto i = 0; i < rgs.size(); i++) {
     for (auto j = 0; j < rgs[i].columns.size(); j++) {
@@ -296,11 +297,11 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
   R_API_START(R_NilValue);
   const char *fname = CHAR(STRING_ELT(filesxp, 0));
-  ParquetFile f(fname);
+  RParquetReader f(fname);
   // Find where it is in the file
   PageData pd = find_page(f, page_header_offset);
   // Need to find some metadata about this column
-  auto schema = f.file_meta_data.schema;
+  auto schema = f.file_meta_data_.schema;
   int leafs = 0;
   for (int i = 0; i < schema.size(); i++) {
     parquet::SchemaElement se = schema[i];

@@ -71,6 +71,8 @@ void ParquetReader::init_file_on_disk() {
   }
 
   // check for magic bytes at end of file
+  pfile.seekg( 0, ios_base::end );
+  file_size = pfile.tellg();
   pfile.seekg(-4, ios_base::end);
   pfile.read(buf.ptr, 4);
   if (strncmp(buf.ptr, "PAR1", 4) != 0) {
@@ -896,4 +898,39 @@ void ParquetReader::scan_fixed_len_byte_array_plain(
     strs.lengths[i] = len;
     strs.offsets[i] = i * len;
   }
+}
+
+pair<parquet::PageHeader, int64_t>
+ParquetReader::read_page_header(int64_t pos) {
+  uint32_t len = 2048;  // guessing, but this must be enough
+  // Avoid going EOF, file_size is set when we open the file
+  if (len > file_size - pos) {
+    len = file_size - pos - 4;
+  }
+  BufferGuard tmp_buf_g = bufman_cc->claim();
+  ByteBuffer &tmp_buf=tmp_buf_g.buf;
+  tmp_buf.resize(len);
+  pfile.seekg(pos, ios_base::beg);
+  pfile.read(tmp_buf.ptr, len);
+  if (pfile.eof()) {
+    std::stringstream ss;
+    ss << "End of file while reading, possibly corrupt Parquet file '"
+       << filename_ << "; @ " << __FILE__ << ":" << __LINE__;
+    throw runtime_error(ss.str());
+  }
+  PageHeader ph;
+  uint32_t ph_size = len;
+  thrift_unpack((const uint8_t *) tmp_buf.ptr, &ph_size, &ph, filename_);
+  return std::make_pair(ph, ph_size);
+}
+
+void ParquetReader::read_chunk(int64_t offset, int64_t size, int8_t *buffer) {
+  if (size > file_size - offset) {
+    std::stringstream ss;
+    ss << "Unexpected end of Parquet file, possibly corrupt file '"
+       << filename_ << "' @ " << __FILE__ << ":" << __LINE__;
+    throw runtime_error(ss.str());
+  }
+  pfile.seekg(offset, ios_base::beg);
+  pfile.read((char*) buffer, size);
 }

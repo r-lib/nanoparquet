@@ -135,12 +135,17 @@ public:
   virtual void alloc_dict_page(DictPage &dict) = 0;
   virtual void alloc_data_page(DataPage &data) = 0;
 
+  parquet::FileMetaData file_meta_data_;
+
+  std::pair<parquet::PageHeader, int64_t> read_page_header(int64_t pos);
+  void read_chunk(int64_t offset, int64_t size, int8_t *buffer);
+
 protected:
   enum parquet_input_type file_type_;
   std::string filename_;
   std::ifstream pfile;
+  size_t file_size;
 
-  parquet::FileMetaData file_meta_data_;
   bool has_file_meta_data_;
   std::vector<int> leaf_cols; // map schema columns to leaf columns in chunks
   uint32_t num_leaf_cols;
