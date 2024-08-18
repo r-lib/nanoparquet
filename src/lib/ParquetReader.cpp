@@ -1,5 +1,5 @@
 #include <sstream>
-#include <thread>
+#include <future>
 
 #include <protocol/TCompactProtocol.h>
 #include <transport/TBufferTransports.h>
@@ -43,7 +43,7 @@ static void thrift_unpack(const uint8_t *buf, uint32_t *len,
 
 ParquetReader::ParquetReader(std::string filename)
   : file_type_(FILE_ON_DISK), filename_(filename) {
-  // set nuber of threads here, assuming each thread needs k buffers
+  // set number of threads here, assuming each thread needs k buffers
   bufman_cc = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_na = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_pg = std::unique_ptr<BufferManager>(new BufferManager(1));
@@ -167,8 +167,8 @@ void ParquetReader::check_meta_data() {
 
 void ParquetReader::read_all_columns() {
   for (uint32_t i = 1; i < file_meta_data_.schema.size(); i++) {
-    std::thread rt(&ParquetReader::read_column, this, i);
-    rt.join();
+    auto coldef = std::async(std::launch::async, &ParquetReader::read_column, this, i);
+    coldef.get();
   }
 }
 
