@@ -1,4 +1,5 @@
 #include <sstream>
+#include <thread>
 
 #include <protocol/TCompactProtocol.h>
 #include <transport/TBufferTransports.h>
@@ -166,7 +167,8 @@ void ParquetReader::check_meta_data() {
 
 void ParquetReader::read_all_columns() {
   for (uint32_t i = 1; i < file_meta_data_.schema.size(); i++) {
-    read_column(i);
+    std::thread rt(&ParquetReader::read_column, this, i);
+    rt.join();
   }
 }
 
