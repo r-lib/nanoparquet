@@ -21,11 +21,13 @@ using namespace apache::thrift::transport;
 
 using namespace nanoparquet;
 
-static TCompactProtocolFactoryT<TMemoryBuffer> tproto_factory;
-
 template <class T>
-static void thrift_unpack(const uint8_t *buf, uint32_t *len,
-                          T *deserialized_msg, string &filename) {
+void ParquetReader::thrift_unpack(
+    const uint8_t *buf,
+    uint32_t *len,
+    T *deserialized_msg, string &filename) {
+  const std::lock_guard<std::mutex> lock(thrift_mutex);
+  TCompactProtocolFactoryT<TMemoryBuffer> tproto_factory;
   shared_ptr<TMemoryBuffer> tmem_transport(
       new TMemoryBuffer(const_cast<uint8_t *>(buf), *len));
   shared_ptr<TProtocol> tproto = tproto_factory.getProtocol(tmem_transport);
@@ -44,9 +46,9 @@ static void thrift_unpack(const uint8_t *buf, uint32_t *len,
 ParquetReader::ParquetReader(std::string filename)
   : file_type_(FILE_ON_DISK), filename_(filename) {
   // set number of threads here, assuming each thread needs k buffers
-  bufman_cc = std::unique_ptr<BufferManager>(new BufferManager(1));
-  bufman_na = std::unique_ptr<BufferManager>(new BufferManager(1));
-  bufman_pg = std::unique_ptr<BufferManager>(new BufferManager(1));
+  bufman_cc = std::unique_ptr<BufferManager>(new BufferManager(8));
+  bufman_na = std::unique_ptr<BufferManager>(new BufferManager(8));
+  bufman_pg = std::unique_ptr<BufferManager>(new BufferManager(8));
   init_file_on_disk();
 }
 
@@ -166,9 +168,35 @@ void ParquetReader::check_meta_data() {
 }
 
 void ParquetReader::read_all_columns() {
+  const char *serial = getenv("NANOPARQUET_SERIAL");
+  if (serial && !strcmp("true", serial)) {
+    read_all_columns_serial();
+  } else {
+    read_all_columns_parallel();
+  }
+}
+
+void ParquetReader::read_all_columns_serial() {
   for (uint32_t i = 1; i < file_meta_data_.schema.size(); i++) {
-    auto coldef = std::async(std::launch::async, &ParquetReader::read_column, this, i);
-    coldef.get();
+    read_column(i);
+  }
+}
+
+void ParquetReader::read_all_columns_parallel() {
+  // TODO: set number of threads automatically
+  std::cerr << "Parallel" << std::endl;
+  semaphore sem(8);
+  std::vector<std::future<void>> tasks;
+
+  for (uint32_t i = 1; i < file_meta_data_.schema.size(); i++) {
+    tasks.emplace_back(std::async(std::launch::async, [this, i, &sem] {
+      critical_section cs(sem);
+      this->read_column(i);
+    }));
+  }
+
+  for (auto &&task : tasks) {
+    task.get();
   }
 }
 
@@ -211,8 +239,11 @@ void ParquetReader::read_column_chunk(ColumnChunk &cc) {
   BufferGuard tmp_buf_g = bufman_cc->claim();
   ByteBuffer &tmp_buf = tmp_buf_g.buf;
   tmp_buf.resize(cmd.total_compressed_size, false);
-  pfile.seekg(chunk_start, ios_base::beg);
-  pfile.read(tmp_buf.ptr, cmd.total_compressed_size);
+  {
+    std::lock_guard<std::mutex> lg(io_mutex);
+    pfile.seekg(chunk_start, ios_base::beg);
+    pfile.read(tmp_buf.ptr, cmd.total_compressed_size);
+  }
   uint8_t *ptr = (uint8_t*) tmp_buf.ptr;
   uint8_t *end = ptr + cmd.total_compressed_size;
 

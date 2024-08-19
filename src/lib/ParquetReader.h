@@ -141,6 +141,13 @@ public:
   void read_chunk(int64_t offset, int64_t size, int8_t *buffer);
 
 protected:
+  std::mutex thrift_mutex;
+  std::mutex io_mutex;
+  template <class T> void thrift_unpack(
+    const uint8_t *buf,
+    uint32_t *len,
+    T *deserialized_msg, std::string &filename);
+
   enum parquet_input_type file_type_;
   std::string filename_;
   std::ifstream pfile;
@@ -162,6 +169,9 @@ protected:
 
   void init_file_on_disk();
   void check_meta_data();
+
+  void read_all_columns_serial();
+  void read_all_columns_parallel();
 
   void read_column_chunk(ColumnChunk &cc);
 

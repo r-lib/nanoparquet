@@ -4,6 +4,7 @@
 #include <memory>
 #include <cstring>
 #include <vector>
+#include <mutex>
 
 class ByteBuffer : public std::streambuf {
 public:
@@ -101,6 +102,7 @@ public:
   ~BufferManager() { }
   BufferGuard claim() {
     // return a BufferGuard that is associated with a buffer
+    std::lock_guard<std::mutex> lg(m);
     for (auto i = 0; i < bufs.size(); i++) {
       if (!bufs[i].locked) {
         return BufferGuard(bufs[i]);
@@ -115,4 +117,5 @@ public:
 
 private:
   std::vector<ByteBuffer> bufs;
+  std::mutex m;
 };
