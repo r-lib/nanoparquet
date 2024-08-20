@@ -66,3 +66,31 @@
       12           <NA>                        NA    NA        NA       NA
       13           <NA>                        NA    NA        NA       NA
 
+# logical_to_converted
+
+    Code
+      logical_to_converted(list("DECIMAL"))
+    Condition
+      Error:
+      ! Parquet decimal logical type needs scale and precision
+    Code
+      logical_to_converted(list("TIME", TRUE, "SECS"))
+    Condition
+      Error:
+      ! Unknown TIME time unit: SECS
+    Code
+      logical_to_converted(list("TIMESTAMP", TRUE, "SECS"))
+    Condition
+      Error:
+      ! Unknown TIMESTAMP time unit: SECS
+    Code
+      logical_to_converted(list("INT"))
+    Condition
+      Error:
+      ! Parquet integer logical type needs bit width and signedness
+    Code
+      logical_to_converted(list("FOOBAR"))
+    Condition
+      Error:
+      ! Unknown Parquet logical type: FOOBAR
+

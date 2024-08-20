@@ -117,7 +117,7 @@ public:
     if (has_file_meta_data_) {
       return file_meta_data_;
     } else {
-      throw std::runtime_error("Parquet metadata has not been parsed yet");
+      throw std::runtime_error("Parquet metadata has not been parsed yet"); // # nocov
     }
   }
   bool has_file_meta_data() {

@@ -118,7 +118,7 @@ test_that("write broken INT32", {
   d2 <- data.frame(dec = as.double(1:5))
 
   schema <- parquet_schema("INT_32")
-  schema$logical_type[[1]]$bit_width <- 64
+  schema$logical_type[[1]]$bit_width <- 64L
 
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = schema)
@@ -136,7 +136,7 @@ test_that("write broken UINT32", {
   d2 <- data.frame(dec = as.double(1:5))
 
   schema <- parquet_schema("UINT_32")
-  schema$logical_type[[1]]$bit_width <- 64
+  schema$logical_type[[1]]$bit_width <- 64L
 
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = schema)
@@ -357,6 +357,11 @@ test_that("more dictionaries", {
   expect_snapshot(error = TRUE, {
     write_parquet(d5, tmp, schema = schema, encoding = "RLE_DICTIONARY")
   })
+  schema <- parquet_schema("UINT_32")
+  schema$logical_type[[1]]$bit_width <- 64L
+  expect_snapshot(error = TRUE, {
+    write_parquet(d5, tmp, schema = schema, encoding = "RLE_DICTIONARY")
+  })
 
   # too large value
   d6 <- data.frame(c = 128.0)
@@ -422,5 +427,12 @@ test_that("R -> Parquet mapping error", {
   d <- data.frame(x = raw(10))
   expect_snapshot(error = TRUE, {
     infer_parquet_schema(d)
+  })
+})
+
+test_that("argument errors", {
+  expect_snapshot(error = TRUE, {
+    write_parquet(mtcars, 1:10)
+    write_parquet(mtcars, letters)
   })
 })

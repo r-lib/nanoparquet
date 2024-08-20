@@ -423,7 +423,7 @@ void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
       }
       break;
     }
-    case LGLSXP: {
+    case LGLSXP: {                                                     // # nocov start
       int *beg = LOGICAL(x) + from;
       int *end = beg + num_values;
       int *dict = (int*) pp->dicts[cl][rg].buffer.data();
@@ -431,7 +431,7 @@ void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
       while (beg < end) {
         *beg++ = dict[*idx++];
       }
-      break;
+      break;                                                           // # nocov end
     }
     }
   }
@@ -534,7 +534,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         }
         break;
       }
-      case LGLSXP: {
+      case LGLSXP: {                                                   // # nocov start
         // BOOLEAN dictionaries are not really possible...
         int *beg = LOGICAL(x) + from;
         int *end = beg + num_values;
@@ -543,7 +543,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         while (beg < end) {
           *beg++ = dict[*idx++];
         }
-        break;
+        break;                                                         // # nocov end
       }
       default:
         throw std::runtime_error("Unknown type when processing dictionaries");

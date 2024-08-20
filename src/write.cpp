@@ -1685,10 +1685,10 @@ void RParquetOutFile::write_dictionary(
         break;
       }
       default:
-        Rf_errorcall(
-          nanoparquet_call,
-          "Cannot convert an integer vector to Parquet type %s.",
-         parquet::_Type_VALUES_TO_NAMES.at(type)
+        Rf_errorcall(                                              // # nocov
+          nanoparquet_call,                                        // # nocov
+          "Cannot convert an integer vector to Parquet type %s.",  // # nocov
+         parquet::_Type_VALUES_TO_NAMES.at(type)                   // # nocov
         );
       }
     }
@@ -1906,10 +1906,10 @@ void RParquetOutFile::write_dictionary(
         break;
       }
       default:
-        Rf_errorcall(
-          nanoparquet_call,
-          "Cannot convert a double vector to Parquet type %s.",
-          parquet:: _Type_VALUES_TO_NAMES.at(type)
+        Rf_errorcall(                                             // # nocov
+          nanoparquet_call,                                       // # nocov
+          "Cannot convert a double vector to Parquet type %s.",   // # nocov
+          parquet:: _Type_VALUES_TO_NAMES.at(type)                // # nocov
         );
       }
     }
@@ -2033,7 +2033,7 @@ void RParquetOutFile::write_dictionary_indices(
   }
 }
 
-bool nanoparquet_map_to_parquet_type(
+void nanoparquet_map_to_parquet_type(
   SEXP x,
   SEXP options,
   parquet::SchemaElement &sel,
@@ -2130,13 +2130,12 @@ bool nanoparquet_map_to_parquet_type(
   }
 
   fill_converted_type_for_logical_type(sel);
-  return true;
 }
 
 #define NUMERIC_SCALAR(x) \
   (TYPEOF(x) == INTSXP ? INTEGER(x)[0] : REAL(x)[0])
 
-bool r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
+void r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
   const char *ctype = CHAR(STRING_ELT(VECTOR_ELT(logical_type, 0), 0));
   parquet::LogicalType lt;
   if (!strcmp(ctype, "STRING")) {
@@ -2198,7 +2197,7 @@ bool r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
     } else if (!strcmp(unit, "NANOS")) {
       tu.__set_NANOS(parquet::NanoSeconds());
     } else {
-      Rf_errorcall(nanoparquet_call, "Unknown TIME time unit: %s", unit);
+      Rf_errorcall(nanoparquet_call, "Unknown TIMESTAMP time unit: %s", unit);
     }
     tt.__set_unit(tu);
     lt.__set_TIMESTAMP(tt);
@@ -2239,8 +2238,6 @@ bool r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
       "Unknown Parquet logical type: %s", ctype
     );
   }
-
-  return true;
 }
 
 void RParquetOutFile::write(
@@ -2280,10 +2277,7 @@ void RParquetOutFile::write(
 
     if (type[idx] == NA_INTEGER) {
       // default mapping
-      bool ok = nanoparquet_map_to_parquet_type(col, options, sel, rtypename);
-      if (!ok) {
-        throw runtime_error("Cannot write R column to Parquet");
-      }
+      nanoparquet_map_to_parquet_type(col, options, sel, rtypename);
       fill_converted_type_for_logical_type(sel);
     } else {
       // use the supplied schema
@@ -2295,10 +2289,7 @@ void RParquetOutFile::write(
         sel.__set_converted_type((parquet::ConvertedType::type) converted_type[idx]);
       }
       if (!Rf_isNull(VECTOR_ELT(logical_type, idx))) {
-        bool ok = r_to_logical_type(VECTOR_ELT(logical_type, idx), sel);
-        if (!ok) {
-          throw runtime_error("Unknown logical type");
-        }
+        r_to_logical_type(VECTOR_ELT(logical_type, idx), sel);
       }
       if (scale[idx] != NA_INTEGER) {
         sel.__set_scale(scale[idx]);
@@ -2371,8 +2362,8 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
     codec = parquet::CompressionCodec::ZSTD;
     break;
   default:
-    Rf_errorcall(nanoparquet_call, "Invalid compression type code: %d",
-                 c_compression);
+    Rf_errorcall(nanoparquet_call, "Invalid compression type code: %d", // # nocov
+                 c_compression);                                        // # nocov
     break;
   }
 
@@ -2457,7 +2448,7 @@ SEXP nanoparquet_write(
   UNPROTECT(1);
   return ret;
 
-  R_API_END();
+  R_API_END();                 // # nocov
 }
 
 extern SEXP convert_logical_type(parquet::LogicalType ltype, SEXP *uwt);
@@ -2485,7 +2476,7 @@ SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options) {
 
   UNPROTECT(2);
   return res;
-  R_API_END();
+  R_API_END();             // # nocov
 }
 
 SEXP nanoparquet_logical_to_converted(SEXP logical_type) {
@@ -2496,27 +2487,10 @@ SEXP nanoparquet_logical_to_converted(SEXP logical_type) {
   SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(NA_INTEGER));
 
   parquet::SchemaElement sel;
-  if (!r_to_logical_type(logical_type, sel)) {
-    // Unknown logucal type, do nothing
-    UNPROTECT(1);
-    return res;
-  }
+  r_to_logical_type(logical_type, sel);
 
-  bool err_ = false;
-  char error_buffer_[8192];                                              \
-  error_buffer_[0] = '\0';                                               \
-  try {
-    fill_converted_type_for_logical_type(sel);
-  } catch(std::exception& ex) {                                          \
-    strncpy(error_buffer_, ex.what(), sizeof(error_buffer_) - 1);        \
-  } catch(std::string& ex) {                                             \
-    strncpy(error_buffer_, ex.c_str(), sizeof(error_buffer_) - 1);       \
-  } catch(...) {                                                         \
-    Rf_error("nanoparquet error @ " __FILE__ ":" STR(__LINE__));         \
-  }                                                                      \
-  if (err_) {
-    Rf_error("%s", error_buffer_);
-  }
+  R_API_START(R_NilValue);
+  fill_converted_type_for_logical_type(sel);
 
   if (sel.__isset.converted_type) {
     INTEGER(VECTOR_ELT(res, 0))[0] = sel.converted_type;
@@ -2530,6 +2504,7 @@ SEXP nanoparquet_logical_to_converted(SEXP logical_type) {
 
   UNPROTECT(1);
   return res;
+  R_API_END();           // # nocov
 }
 
 SEXP nanoparquet_any_null(SEXP x) {

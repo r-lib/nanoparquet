@@ -375,6 +375,14 @@
 ---
 
     Code
+      write_parquet(d5, tmp, schema = schema, encoding = "RLE_DICTIONARY")
+    Condition
+      Error in `write_parquet()`:
+      ! Invalid bit width for INT32: 64
+
+---
+
+    Code
       write_parquet(d6, tmp, schema = parquet_schema("INT_8"), encoding = "RLE_DICTIONARY")
     Condition
       Error in `write_parquet()`:
@@ -451,4 +459,17 @@
     Condition
       Error:
       ! Cannot map a raw vector to any Parquet type
+
+# argument errors
+
+    Code
+      write_parquet(mtcars, 1:10)
+    Condition
+      Error in `path.expand()`:
+      ! invalid 'path' argument
+    Code
+      write_parquet(mtcars, letters)
+    Condition
+      Error in `write_parquet()`:
+      ! nanoparquet_write: filename must be a string
 
