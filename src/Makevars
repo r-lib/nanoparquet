@@ -42,3 +42,11 @@ PKG_CXX29FLAGS = -DR_NO_REMAP
 PKG_CXX30FLAGS = -DR_NO_REMAP
 
 # PKG_LIBS = -lws2_32
+
+all: $(SHLIB)
+
+broken: broken.cpp parquet/parquet_types.cpp \
+        thrift/protocol/TProtocol.cpp\
+        thrift/transport/TTransportException.cpp \
+        thrift/transport/TBufferTransports.cpp
+	clang++ -std=gnu++11 -Ithrift -I. -Izstd/include $^ -g -O0 -o broken

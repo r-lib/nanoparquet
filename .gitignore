@@ -4,3 +4,5 @@
 *.gcda
 /docs
 *.o.bc
+/src/broken.dSYM
+/src/broken

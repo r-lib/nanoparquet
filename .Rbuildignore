@@ -1,5 +1,7 @@
 ^src/.*\.o$
 ^src/.*\.so$
+^src/.*[.]dSYM$
+^src/broken$
 ^\.github$
 ^codecov\.yml$
 ^.vscode$

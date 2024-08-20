@@ -394,7 +394,7 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
     break;
   }
   default:
-    Rf_errorcall(nanoparquet_call, "Unsupported Parquet type");
+    Rf_errorcall(nanoparquet_call, "Unsupported Parquet type"); // # nocov
   }
 
   return (parquet::Encoding::type) renc;
