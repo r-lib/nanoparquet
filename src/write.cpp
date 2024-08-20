@@ -822,12 +822,23 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
                         uint64_t from, uint64_t until,
                         parquet::SchemaElement &sel) {
   if (Rf_inherits(col, "POSIXct")) {
+    double fact = 1;
+    if (sel.__isset.logicalType && sel.logicalType.__isset.TIMESTAMP) {
+      auto &unit = sel.logicalType.TIMESTAMP.unit;
+      if (unit.__isset.MILLIS) {
+        fact = 1000;
+      } else if (unit.__isset.MICROS) {
+        fact = 1000 * 1000;
+      } else if (unit.__isset.NANOS) {
+        fact = 1000 * 1000 * 1000;
+      }
+    }
     // TODO: check logical type
     // need to convert seconds to microseconds
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
-      int64_t el = val * 1000 * 1000;
+      int64_t el = val * fact;
       file.write((const char *)&el, sizeof(int64_t));
     }
   } else if (Rf_inherits(col, "difftime")) {
