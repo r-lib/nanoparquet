@@ -18,34 +18,6 @@ apply_arrow_schema <- function(tab, file, dicts, types) {
       file
     )
     for (idx in spec$factor) {
-      tab[[idx]] <- factor(tab[[idx]], levels = dicts[[idx]])
-    }
-    for (idx in spec$difftime) {
-      # only if INT64, otherwise hms, probably
-      if (types[[idx]] != 2) next
-      mult <- switch(
-        spec$columns$type[[idx]]$unit,
-        SECOND = 1,
-        MILLISECOND = 1000,
-        MICROSECOND = 1000 * 1000,
-        NANOSECOND = 1000 * 1000 * 1000,
-        stop("Unknown Arrow time unit")
-      )
-      tab[[idx]] <- as.difftime(tab[[idx]] / mult, units = "secs")
-    }
-  }
-  tab
-}
-
-apply_arrow_schema2 <- function(tab, file, dicts, types) {
-  mtd <- read_parquet_metadata(file)
-  kv <- mtd$file_meta_data$key_value_metadata[[1]]
-  if ("ARROW:schema" %in% kv$key) {
-    spec <- arrow_find_special(
-      kv$value[match("ARROW:schema", kv$key)],
-      file
-    )
-    for (idx in spec$factor) {
       clevels <- Reduce(union, dicts[[idx]])
       tab[[idx]] <- factor(tab[[idx]], levels = clevels)
     }
@@ -201,7 +173,7 @@ parse_arrow_schema <- function(schema) {
 encode_arrow_schema_r <- function(df) {
   endianness <- capitalize(.Platform$endian)
 	fctrs <- vapply(df, function(c) inherits(c, "factor"), logical(1))
-  dfts <- vapply(df, function(c) inherits(c, "difftime"), logical(1))
+  dfts <- vapply(df, function(c) !inherits(c, "hms") && inherits(c, "difftime"), logical(1))
   typemap <- c(
     "integer" = "Int",
     "double" = "FloatingPoint",

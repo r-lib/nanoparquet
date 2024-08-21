@@ -177,7 +177,7 @@ test_that("read hms", {
 
   d2 <- read_parquet(tmp)
   expect_s3_class(d2$h, "hms")
-  expect_equal(d$h, d2$h)
+  expect_equal(d2$h, d$h)
 })
 
 test_that("read hms in MICROS", {

@@ -397,7 +397,7 @@ test_that("write hms", {
   write_parquet(d, tmp)
 
   d2 <- arrow::read_parquet(tmp)
-  expect_equal(d$h, d2$h)
+  expect_equal(d2$h, d$h)
 })
 
 test_that("write POSIXct", {

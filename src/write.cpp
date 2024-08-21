@@ -503,6 +503,30 @@ static bool is_decimal(parquet::SchemaElement &sel, int32_t &precision,
   }
 }
 
+static bool is_time(parquet::SchemaElement &sel, double &factor) {
+  factor = 1.0;
+  if (sel.__isset.logicalType && sel.logicalType.__isset.TIME) {
+    auto unit = sel.logicalType.TIME.unit;
+    if (unit.__isset.MILLIS) {
+      factor = 1000;
+    } else if (unit.__isset.MICROS) {
+      factor = 1000 * 1000;
+    } else if (unit.__isset.NANOS) {
+      factor = 1000 * 1000 * 1000;
+    }
+    return true;
+  } else if (sel.__isset.converted_type) {
+    if (sel.converted_type == parquet::ConvertedType::TIME_MILLIS) {
+      factor = 1000;
+      return true;
+    } else if (sel.converted_type == parquet::ConvertedType::TIME_MICROS) {
+      factor = 1000 * 1000;
+      return true;
+    }
+  }
+  return false;
+}
+
 void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
                              uint64_t until, int32_t precision,
                              int32_t scale) {
@@ -619,6 +643,17 @@ void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
   }
 }
 
+void write_double_int32_time(std::ostream &file, SEXP col, uint32_t idx,
+                             uint64_t from, uint64_t until,
+                             parquet::SchemaElement &sel, double factor) {
+  for (uint64_t i = from; i < until; i++) {
+    double val = REAL(col)[i];
+    if (R_IsNA(val)) continue;
+    int32_t ival = val * factor;
+    file.write((const char *)&ival, sizeof(int32_t));
+  }
+}
+
 void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
                         uint64_t from, uint64_t until,
                         parquet::SchemaElement &sel) {
@@ -714,6 +749,8 @@ void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
   }
   int32_t precision, scale;
   bool isdec = is_decimal(sel, precision, scale);
+  double factor = 1;
+  bool istime = is_time(sel, factor);
   switch (TYPEOF(col)) {
   case INTSXP:
     if (isdec) {
@@ -725,6 +762,8 @@ void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
   case REALSXP:
     if (isdec) {
       write_double_int32_dec(file, col, from, until, precision, scale);
+    } else if (istime) {
+      write_double_int32_time(file, col, idx, from, until, sel, factor);
     } else {
       write_double_int32(file, col, idx, from, until, sel);
     }
@@ -818,11 +857,22 @@ void write_integer_int64(std::ostream &file, SEXP col, uint64_t from,
   }
 }
 
+void write_double_int64_time(std::ostream &file, SEXP col, uint32_t idx,
+                             uint64_t from, uint64_t until,
+                             parquet::SchemaElement &sel, double factor) {
+  for (uint64_t i = from; i < until; i++) {
+    double val = REAL(col)[i];
+    if (R_IsNA(val)) continue;
+    int64_t ival = val * factor;
+    file.write((const char *)&ival, sizeof(int64_t));
+  }
+}
+
 void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
                         uint64_t from, uint64_t until,
                         parquet::SchemaElement &sel) {
   if (Rf_inherits(col, "POSIXct")) {
-    double fact = 1;
+    int64_t fact = 1;
     if (sel.__isset.logicalType && sel.logicalType.__isset.TIMESTAMP) {
       auto &unit = sel.logicalType.TIMESTAMP.unit;
       if (unit.__isset.MILLIS) {
@@ -832,9 +882,13 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
       } else if (unit.__isset.NANOS) {
         fact = 1000 * 1000 * 1000;
       }
+    } else if (sel.__isset.converted_type) {
+      if (sel.converted_type == parquet::ConvertedType::TIMESTAMP_MILLIS) {
+        fact = 1000;
+      } else if (sel.converted_type == parquet::ConvertedType::TIMESTAMP_MICROS) {
+        fact = 1000 * 1000;
+      }
     }
-    // TODO: check logical type
-    // need to convert seconds to microseconds
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
@@ -842,8 +896,6 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
       file.write((const char *)&el, sizeof(int64_t));
     }
   } else if (Rf_inherits(col, "difftime")) {
-    // TODO: check logical type
-    // need to convert seconds to nanoseconds
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
@@ -921,6 +973,8 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
   }
   int32_t precision, scale;
   bool isdec = is_decimal(sel, precision, scale);
+  double factor;
+  bool istime = is_time(sel, factor);
   switch (TYPEOF(col)) {
   case INTSXP:
     if (isdec) {
@@ -932,6 +986,8 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
   case REALSXP:
     if (isdec) {
       write_double_int64_dec(file, col, from, until, precision, scale);
+    } else if (istime) {
+      write_double_int64_time(file, col, idx, from, until, sel, factor);
     } else {
       write_double_int64(file, col, idx, from, until, sel);
     }
@@ -1718,9 +1774,47 @@ void RParquetOutFile::write_dictionary(
          parquet:: _Type_VALUES_TO_NAMES.at(type)
         );
       }
+      int64_t fact = 1;
+      if (sel.__isset.logicalType && sel.logicalType.__isset.TIMESTAMP) {
+        auto &unit = sel.logicalType.TIMESTAMP.unit;
+        if (unit.__isset.MILLIS) {
+          fact = 1000;
+        } else if (unit.__isset.MICROS) {
+          fact = 1000 * 1000;
+        } else if (unit.__isset.NANOS) {
+          fact = 1000 * 1000 * 1000;
+        }
+      } else if (sel.__isset.converted_type) {
+        if (sel.converted_type == parquet::ConvertedType::TIMESTAMP_MILLIS) {
+          fact = 1000;
+        } else if (sel.converted_type ==
+                   parquet::ConvertedType::TIMESTAMP_MICROS) {
+          fact = 1000 * 1000;
+        }
+      }
       for (auto i = 0; i < len; i++) {
-        int64_t el = icol[iidx[i]] * 1000 * 1000;
+        int64_t el = icol[iidx[i]] * fact;
         file.write((const char*) &el, sizeof(int64_t));
+      }
+    } else if (Rf_inherits(col, "hms")) {
+      double fact;
+      is_time(sel, fact);
+      if (type == parquet::Type::INT32) {
+        for (auto i = 0; i < len; i++) {
+          int32_t el = icol[iidx[i]] * fact;
+          file.write((const char*) &el, sizeof(int32_t));
+        }
+      } else if (type == parquet::Type::INT64) {
+        for (auto i = 0; i < len; i++) {
+          int64_t el = icol[iidx[i]] * fact;
+          file.write((const char*) &el, sizeof(int64_t));
+        }
+      } else {
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot convert an hms vector to Parquet type %s.",
+         parquet:: _Type_VALUES_TO_NAMES.at(type)
+        );
       }
     } else if (Rf_inherits(col, "difftime")) {
       if (type != parquet::Type::INT64) {
@@ -2101,6 +2195,19 @@ void nanoparquet_map_to_parquet_type(
       lt.__set_TIMESTAMP(tt);
       sel.__set_logicalType(lt);
       sel.__set_type(get_type_from_logical_type(lt));
+
+    } else if (Rf_inherits(x, "hms")) {
+      rtype = "hms";
+      parquet::TimeType tt;
+      tt.__set_isAdjustedToUTC(true);
+      parquet::TimeUnit tu;
+      tu.__set_MILLIS(parquet::MilliSeconds());
+      tt.__set_unit(tu);
+      parquet::LogicalType lt;
+      lt.__set_TIME(tt);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+      sel.__set_type(parquet::Type::INT32);
 
     } else if (Rf_inherits(x, "difftime")) {
       rtype = "difftime";

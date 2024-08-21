@@ -23,7 +23,7 @@ read_parquet <- function(file, options = parquet_options()) {
 	types <- res[[3]]
 	res <- res[[1]]
 	if (options[["use_arrow_metadata"]]) {
-		res <- apply_arrow_schema2(res, file, dicts, types)
+		res <- apply_arrow_schema(res, file, dicts, types)
 	}
 
 	# convert hms from milliseconds to seconds, also integer -> double

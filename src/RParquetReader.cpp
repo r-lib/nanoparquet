@@ -145,13 +145,30 @@ rtype::rtype(parquet::SchemaElement &sel) {
         (sel.__isset.converted_type &&
          sel.converted_type == parquet::ConvertedType::DATE)) {
       classes.push_back("Date");
-    } else if ((sel.__isset.logicalType && sel.logicalType.__isset.TIME &&
-                sel.logicalType.TIME.unit.__isset.MILLIS) ||
-               (sel.__isset.converted_type &&
-                sel.converted_type == parquet::ConvertedType::TIME_MILLIS)) {
+    } else if (sel.__isset.logicalType && sel.logicalType.__isset.TIME) {
       classes.push_back("hms");
       classes.push_back("difftime");
       units.push_back("secs");
+      auto unit = sel.logicalType.TIME.unit;
+      if (unit.__isset.MILLIS) {
+        time_fct = 1;
+      } else if (unit.__isset.MICROS) {
+        time_fct = 1000;
+      } else if (unit.__isset.NANOS) {
+        time_fct = 1000 * 1000;
+      }
+    } else if (sel.__isset.converted_type &&
+               sel.converted_type == parquet::ConvertedType::TIME_MILLIS) {
+      classes.push_back("hms");
+      classes.push_back("difftime");
+      units.push_back("secs");
+      time_fct = 1;
+    } else if (sel.__isset.converted_type &&
+               sel.converted_type == parquet::ConvertedType::TIME_MICROS) {
+      classes.push_back("hms");
+      classes.push_back("difftime");
+      units.push_back("secs");
+      time_fct = 1000;
     } else if ((sel.__isset.logicalType && sel.logicalType.__isset.DECIMAL) ||
                (sel.__isset.converted_type &&
                 sel.converted_type == parquet::ConvertedType::DECIMAL)) {

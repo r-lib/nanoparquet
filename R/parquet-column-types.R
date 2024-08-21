@@ -102,7 +102,7 @@ add_r_type_to_schema <- function(mtd, sch, options) {
 		sch$logical_type,
 		function(lt) !is.null(lt$type) && lt$type == "TIME",
 		logical(1)
-	) | sch$converted_type == "TIME_MILLIS"
+	) | sch$converted_type == "TIME_MILLIS" | sch$converted_type == "TIME_MICROS"
 	sch$r_type[hmss] <- "hms"
 
 	poscts <- vapply(

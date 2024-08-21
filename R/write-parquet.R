@@ -108,13 +108,11 @@ write_parquet <- function(
     mode(x[[idx]]) <- "integer"
   }
 
-  # Convert hms to milliseconds in integer
+  # Convert hms to double
   hmss <- which(vapply(x, "inherits", "hms", FUN.VALUE = logical(1)))
   for (idx in hmss) {
-    # convert seconds and milliseconds
-    x[[idx]][] <- x[[idx]] * 1000
     # this keeps the class
-    mode(x[[idx]]) <- "integer"
+    mode(x[[idx]]) <- "double"
   }
 
   # Make sure POSIXct is double
