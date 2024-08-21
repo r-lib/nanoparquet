@@ -627,7 +627,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         break;                                             // # nocov end
       }
       default:
-        throw std::runtime_error("Unknown type when processing dictionaries");
+        throw std::runtime_error("Unknown type when processing dictionaries"); // # nocov
       }
     }
   }
@@ -1882,11 +1882,11 @@ void convert_columns_to_r_(postprocess *pp) {
     // use multiplier, if any
     if (rt.time_fct != 1.0) {
       SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
-      if (TYPEOF(x) == INTSXP) {
-        int32_t *ptr = INTEGER(x);
-        int32_t *end = ptr + Rf_xlength(x);
-        for (; ptr < end; ptr++) {
-          *ptr /= rt.time_fct;
+      if (TYPEOF(x) == INTSXP) {                       // does not happen
+        int32_t *ptr = INTEGER(x);                     // # nocov
+        int32_t *end = ptr + Rf_xlength(x);            // # nocov
+        for (; ptr < end; ptr++) {                     // # nocov
+          *ptr /= rt.time_fct;                         // # nocov
         }
       } else if (TYPEOF(x) == REALSXP) {
         double *ptr = REAL(x);
