@@ -152,10 +152,10 @@ rtype::rtype(parquet::SchemaElement &sel) {
       auto unit = sel.logicalType.TIME.unit;
       if (unit.__isset.MILLIS) {
         time_fct = 1;
-      } else if (unit.__isset.MICROS) {
-        time_fct = 1000;
-      } else if (unit.__isset.NANOS) {
-        time_fct = 1000 * 1000;
+      } else if (unit.__isset.MICROS) {           // not possible for INT32
+        time_fct = 1000;                          // # nocov
+      } else if (unit.__isset.NANOS) {            // # nocov
+        time_fct = 1000 * 1000;                   // # nocov
       }
     } else if (sel.__isset.converted_type &&
                sel.converted_type == parquet::ConvertedType::TIME_MILLIS) {
@@ -165,10 +165,11 @@ rtype::rtype(parquet::SchemaElement &sel) {
       time_fct = 1;
     } else if (sel.__isset.converted_type &&
                sel.converted_type == parquet::ConvertedType::TIME_MICROS) {
-      classes.push_back("hms");
-      classes.push_back("difftime");
-      units.push_back("secs");
-      time_fct = 1000;
+                                                  // not possible for INT32
+      classes.push_back("hms");                   // # nocov
+      classes.push_back("difftime");              // # nocov
+      units.push_back("secs");                    // # nocov
+      time_fct = 1000;                            // # nocov
     } else if ((sel.__isset.logicalType && sel.logicalType.__isset.DECIMAL) ||
                (sel.__isset.converted_type &&
                 sel.converted_type == parquet::ConvertedType::DECIMAL)) {
@@ -524,7 +525,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         break;
       }
       default:
-        throw std::runtime_error("Unknown type when processing dictionaries");
+        throw std::runtime_error("Unknown type when processing dictionaries"); // # nocov
       }
     } else if (hasdict && !hasmiss) {
       // only dict
@@ -563,7 +564,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         break;                                                         // # nocov end
       }
       default:
-        throw std::runtime_error("Unknown type when processing dictionaries");
+        throw std::runtime_error("Unknown type when processing dictionaries"); // # nocov
       }
     } else if (hasdict && hasmiss) {
       // dict + missing values
@@ -607,7 +608,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         break;
       }
       case LGLSXP: {
-        // BOOLEAN dictionaries are not really possible...
+        // BOOLEAN dictionaries are not really possible... // # nocov start
         int *beg = LOGICAL(x) + from;
         int *endm1 = beg + num_values - 1;
         int *dict = (int*) pp->dicts[cl][rg].buffer.data();
@@ -623,7 +624,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
             presm1--;
           }
         }
-        break;
+        break;                                             // # nocov end
       }
       default:
         throw std::runtime_error("Unknown type when processing dictionaries");
@@ -1238,22 +1239,36 @@ void convert_column_to_r_ba_string(postprocess *pp, uint32_t cl) {
 
 // ------------------------------------------------------------------------
 
+inline double parse_decimal(uint8_t *d, uint32_t len) {
+  if (len == 0) return 0;
+  uint64_t val = 0;
+  bool neg = d[0] >= 128;
+  if (neg) {
+    for (auto j = 0; j < len; j++) {
+      uint8_t n = ~ d[j];
+      val = (val << 8) | n;
+    }
+    return - ((double) val + 1);
+
+  } else {
+    for (auto j = 0; j < len; j++) {
+      val = (val << 8) | d[j];
+    }
+    return val;
+  }
+}
+
 void convert_column_to_r_ba_decimal_nodict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   int32_t scale = pp->metadata.r_types[cl].scale;
+  double fct = std::pow(10.0, scale);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
     for (auto it = rgba.begin(); it != rgba.end(); ++it) {
       int64_t from = it->from;
       double *beg = REAL(x) + from;
       for (auto i = 0; i < it->offsets.size(); i++) {
-        int64_t val = 0;
-        uint8_t *d = it->buffer.data() + it->offsets[i];
-        uint32_t type_len = it->lengths[i];
-        for (auto j = 0; j < type_len; j++) {
-          val = val << ((type_len - j) * 8) | d[j];
-        }
-        beg[i] = val / std::pow(10.0, scale);
+        beg[i] = parse_decimal(it->buffer.data() + it->offsets[i], it->lengths[i]) / fct;
       }
     }
   }
@@ -1287,6 +1302,7 @@ void convert_column_to_r_ba_decimal_miss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, pp->leaf_cols[cl]);
   int32_t scale = pp->metadata.r_types[cl].scale;
+  double fct = std::pow(10.0, scale);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     bool hasdict = pp->dicts[cl][rg].dict_len > 0;
     if (!hasdict) {
@@ -1295,13 +1311,7 @@ void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
         int64_t from = it->from;
         double *beg = REAL(x) + from;
         for (auto i = 0; i < it->offsets.size(); i++) {
-          int64_t val = 0;
-          uint8_t *d = it->buffer.data() + it->offsets[i];
-          uint32_t type_len = it->lengths[i];
-          for (auto j = 0; j < type_len; j++) {
-            val = val << ((type_len - j) * 8) | d[j];
-          }
-          beg[i] = val / std::pow(10.0, scale);
+          beg[i] = parse_decimal(it->buffer.data() + it->offsets[i], it->lengths[i]) / fct;
         }
       }
     } else {
@@ -1310,13 +1320,7 @@ void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
       SEXP tmp = PROTECT(Rf_allocVector(REALSXP, dict_len));
       tmpbytes &ba = pp->dicts[cl][rg].bytes;
       for (uint32_t i = 0; i < dict_len; i++) {
-        int64_t val = 0;
-        uint8_t *d = ba.buffer.data() + ba.offsets[i];
-        uint32_t type_len = ba.lengths[i];
-        for (auto j = 0; j < type_len; j++) {
-          val = val << ((type_len - j) * 8) | d[j];
-        }
-        REAL(tmp)[i] = val / std::pow(10.0, scale);
+        REAL(tmp)[i] = parse_decimal(ba.buffer.data() + ba.offsets[i], ba.lengths[i]) / fct;
       }
 
       // fill in
@@ -1324,7 +1328,7 @@ void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
       uint32_t *end = didx + pp->dicts[cl][rg].indices.size();
       int64_t from = pp->metadata.row_group_offsets[rg];
       while (didx < end) {
-        REAL(x)[from++] = REAL(x)[*didx++];
+        REAL(x)[from++] = REAL(tmp)[*didx++];
       }
       UNPROTECT(1);
     }
@@ -1803,7 +1807,7 @@ void convert_columns_to_r_(postprocess *pp) {
       continue;
     }
 
-    switch (rt.type_conversion) {
+  switch (rt.type_conversion) {
     case NONE:
       if (pp->present[cl].size() == 0) {
         convert_column_to_r_dicts(pp, cl);
@@ -1842,7 +1846,7 @@ void convert_columns_to_r_(postprocess *pp) {
       convert_column_to_r_int64_decimal(pp, cl);
       break;
     default:
-      break;
+      break;        // # nocov
     }
 
     // add classes, if any
@@ -1891,7 +1895,7 @@ void convert_columns_to_r_(postprocess *pp) {
           *ptr /= rt.time_fct;
         }
       } else {
-        Rf_error("Internal nanoparquet error, cannot multiply non-numeric");
+        Rf_error("Internal nanoparquet error, cannot multiply non-numeric"); // # nocov
       }
     }
   }

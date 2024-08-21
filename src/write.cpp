@@ -1138,6 +1138,15 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
     }
     break;
   }
+  case INTSXP: {
+    int32_t precision, scale;
+    bool isdec = is_decimal(sel, precision, scale);
+
+    break;
+  }
+  case REALSXP: {
+    break;
+  }
   default:
     Rf_errorcall(                                       // # nocov
       nanoparquet_call,                                 // # nocov
