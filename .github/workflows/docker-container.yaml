@@ -9,6 +9,8 @@ on:
 
 jobs:
   build:
+    name: build
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -34,4 +36,4 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         file: tools/docker/Dockerfile
-        tags: ${{ env.GITHUB_REF_TYPE == "tag" && env.GITHUB_REF_NAME || 'devel' }}
+        tags: ${{ env.GITHUB_REF_TYPE == 'tag' && env.GITHUB_REF_NAME || 'devel' }}
