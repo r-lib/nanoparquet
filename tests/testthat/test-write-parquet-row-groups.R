@@ -48,7 +48,20 @@ test_that("grouped df", {
   )
 
   tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
   expect_snapshot(write_parquet(df, tmp))
   expect_equal(nrow(read_parquet_metadata(tmp)[["row_groups"]]), 3L)
   expect_snapshot(as.data.frame(read_parquet(tmp)[, c("nam", "cyl")]))
+})
+
+test_that("factors & factor levels", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame(
+    f = factor(c(rep("a", 100), rep("b", 100), rep("c", 100)))
+  )
+  withr::local_options(nanoparquet.num_rows_per_row_group = 50L)
+  write_parquet(df, tmp)
+  expect_equal(as.data.frame(read_parquet(tmp)), df)
 })

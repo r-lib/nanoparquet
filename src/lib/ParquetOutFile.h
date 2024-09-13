@@ -70,12 +70,15 @@ public:
   virtual uint32_t get_size_byte_array(uint32_t idx,
                                        uint32_t num_present,
                                        uint64_t from, uint64_t until) = 0;
-  virtual uint32_t get_num_values_dictionary(uint32_t idx) = 0;
+  virtual uint32_t get_num_values_dictionary(uint32_t idx, int64_t from,
+                                             int64_t until) = 0;
   virtual uint32_t get_size_dictionary(uint32_t idx,
-                                       parquet::SchemaElement &sel) = 0;
+                                       parquet::SchemaElement &sel,
+                                       int64_t from, int64_t until) = 0;
   virtual void write_dictionary(std::ostream &file,
                                 uint32_t idx,
-                                parquet::SchemaElement &sel) = 0;
+                                parquet::SchemaElement &sel, int64_t from,
+                                int64_t until) = 0;
   // Needs to write indices as int32_t
   virtual void write_dictionary_indices(std::ostream &file, uint32_t idx,
                                         uint64_t from, uint64_t until) = 0;
@@ -107,9 +110,10 @@ private:
   // return total size
   int64_t write_columns(int64_t from, int64_t until);
   void write_column(uint32_t idx, int64_t from, int64_t until);
-  void write_dictionary_page(uint32_t idx);
+  void write_dictionary_page(uint32_t idx, int64_t from, int64_t until);
   void write_data_pages(uint32_t idx, int64_t from, int64_t until);
-  void write_data_page(uint32_t idx, uint64_t from, uint64_t until);
+  void write_data_page(uint32_t idx, int64_t rg_from, int64_t rg_until,
+                       uint64_t from, uint64_t until);
   void write_page_header(uint32_t idx, parquet::PageHeader &ph);
   void write_footer();
 
@@ -119,7 +123,8 @@ private:
                            uint32_t size, uint32_t num_present,
                            uint64_t from, uint64_t until);
   void write_dictionary_(std::ostream &file, uint32_t idx, uint32_t size,
-                         parquet::SchemaElement &sel);
+                         parquet::SchemaElement &sel, int64_t from,
+                         int64_t until);
   void write_dictionary_indices_(std::ostream &file, uint32_t idx,
                                 uint32_t size, uint64_t from,
                                 uint64_t until);

@@ -135,10 +135,13 @@ public:
                                     uint64_t until);
 
   // for dictionaries
-  uint32_t get_num_values_dictionary(uint32_t idx);
-  uint32_t get_size_dictionary(uint32_t idx, parquet::SchemaElement &type);
+  uint32_t get_num_values_dictionary(uint32_t idx, int64_t form,
+                                     int64_t until);
+  uint32_t get_size_dictionary(uint32_t idx, parquet::SchemaElement &type,
+                               int64_t from, int64_t until);
   void write_dictionary(std::ostream &file, uint32_t idx,
-                        parquet::SchemaElement &sel);
+                        parquet::SchemaElement &sel, int64_t from,
+                        int64_t until);
   void write_dictionary_indices(std::ostream &file, uint32_t idx,
                                 uint64_t from, uint64_t until);
 
@@ -1537,7 +1540,9 @@ void RParquetOutFile::write_present_boolean(
 }
 
 uint32_t RParquetOutFile::get_num_values_dictionary(
-    uint32_t idx) {
+    uint32_t idx,
+    int64_t from,
+    int64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   if (Rf_inherits(col, "factor")) {
     return Rf_nlevels(col);
@@ -1549,7 +1554,9 @@ uint32_t RParquetOutFile::get_num_values_dictionary(
 
 uint32_t RParquetOutFile::get_size_dictionary(
   uint32_t idx,
-  parquet::SchemaElement &sel) {
+  parquet::SchemaElement &sel,
+  int64_t from,
+  int64_t until) {
 
   SEXP col = VECTOR_ELT(df, idx);
   parquet::Type::type type = sel.type;
@@ -1646,7 +1653,9 @@ uint32_t RParquetOutFile::get_size_dictionary(
 void RParquetOutFile::write_dictionary(
     std::ostream &file,
     uint32_t idx,
-    parquet::SchemaElement &sel) {
+    parquet::SchemaElement &sel,
+    int64_t from,
+    int64_t until) {
 
   parquet::Type::type type = sel.type;
 

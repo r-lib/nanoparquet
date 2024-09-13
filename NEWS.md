@@ -21,6 +21,10 @@
     `write_parquet()`, to specify how the columns of a data frame should
     be mapped to Parquet types.
 
+  - `write_parquet()` can now write multiple row groups. By default it puts
+    at most 10 million rows into a single row group. You can choose the
+    row groups manually with the `row_groups` argument.
+
   - Newly supported type conversions in `write_parquet()` via the
     schema argument:
 
