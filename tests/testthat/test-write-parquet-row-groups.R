@@ -1,0 +1,54 @@
+test_that("errors", {
+  expect_snapshot(error = TRUE, {
+    parquet_options(num_rows_per_row_group = "foobar")
+  })
+
+  df <- test_df()
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  expect_snapshot(error = TRUE, {
+    write_parquet(df, tmp, row_groups = "foobar")
+    write_parquet(df, tmp, row_groups = c(100L, 1L))
+    write_parquet(df, tmp, row_groups = c(1L, 100L))
+  })
+})
+
+test_that("row groups", {
+  tmp1 <- tempfile(fileext = ".parquet")
+  tmp2 <- tempfile(fileext = ".parquet")
+  on.exit(unlink(c(tmp1, tmp2)), add = TRUE)
+
+  df <- test_df()
+  write_parquet(df, tmp1, row_groups = 1L)
+  write_parquet(df, tmp2, row_groups = c(1L, 16L))
+  expect_equal(read_parquet(tmp1), read_parquet(tmp2))
+  expect_equal(nrow(read_parquet_metadata(tmp2)[["row_groups"]]), 2L)
+
+  unlink(tmp2)
+  write_parquet(df, tmp2, row_groups = seq_len(nrow(df)))
+  expect_equal(read_parquet(tmp1), read_parquet(tmp2))
+  expect_equal(nrow(read_parquet_metadata(tmp2)[["row_groups"]]), nrow(df))
+
+  unlink(tmp2)
+  withr::local_options(nanoparquet.num_rows_per_row_group = 10L)
+  write_parquet(df, tmp2)
+  expect_equal(read_parquet(tmp1), read_parquet(tmp2))
+  expect_equal(nrow(read_parquet_metadata(tmp2)[["row_groups"]]), 4L)
+})
+
+test_that("grouped df", {
+  df <- test_df()
+  attr(df, "groups") <- data.frame(
+    cyl = c(4L, 6L, 8L),
+    .rows = I(list(
+      c(3L, 8L, 9L, 18L, 19L, 20L, 21L, 26L, 27L, 28L, 32L),
+      c(1L, 2L, 4L, 6L, 10L, 11L, 30L),
+      c(5L, 7L, 12L, 13L, 14L, 15L, 16L, 17L, 22L, 23L, 24L, 25L, 29L, 31L)
+    ))
+  )
+
+  tmp <- tempfile(fileext = ".parquet")
+  expect_snapshot(write_parquet(df, tmp))
+  expect_equal(nrow(read_parquet_metadata(tmp)[["row_groups"]]), 3L)
+  expect_snapshot(as.data.frame(read_parquet(tmp)[, c("nam", "cyl")]))
+})

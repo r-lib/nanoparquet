@@ -51,3 +51,39 @@ test_that("is_uint32", {
   expect_false(is_uint32(NA_real_))
   expect_false(is_uint32("foo"))
 })
+
+test_that("is_icount", {
+  expect_true(is_icount(1L))
+  expect_true(is_icount(100L))
+  expect_true(is_icount(2147483647L))
+
+  expect_false(is_icount(NA_integer_))
+  expect_false(is_icount(1:2))
+  expect_false(is_icount(1))
+  expect_false(is_icount(0L))
+  expect_false(is_icount(-100L))
+})
+
+test_that("is_dcount", {
+  expect_true(is_dcount(1))
+  expect_true(is_dcount(100))
+  expect_true(is_dcount(2147483647))
+
+  expect_false(is_dcount(NA_real_))
+  expect_false(is_dcount(1:2))
+  expect_false(is_dcount(1L))
+  expect_false(is_dcount(0))
+  expect_false(is_dcount(-100))
+})
+
+test_that("as_count", {
+  expect_equal(as_count(1), 1L)
+  expect_equal(as_count(100), 100L)
+  expect_snapshot(error = TRUE, {
+    as_count(1:2)
+    as_count(0)
+    as_count(NA_real_)
+    as_count(-100)
+    as_count(-100L)
+  })
+})
