@@ -235,8 +235,12 @@ parse_row_groups <- function(x, rg) {
     rg <- c(1L, cumsum(lengths(rg)))
     rg <- rg[-length(rg)]
   } else {
-    if (!is.integer(rg) || anyNA(rg) || any(rg <= 0) || any(diff(rg) <= 0)) {
-      stop("Row groups must be specified as a growing positive integer vector")
+    if (!is.integer(rg) || anyNA(rg) || any(rg <= 0) ||
+        any(diff(rg) <= 0) || rg[1] != 1L) {
+      stop(
+        "Row groups must be specified as a growing positive integer ",
+        "vector, starting with 1."
+      )
     }
   }
   list(x = x, row_groups = rg)

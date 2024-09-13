@@ -34,14 +34,15 @@ is_string <- function(x) {
 }
 
 is_icount <- function(x) {
-  is.integer(x) && length(x) == 1 && !is.na(x)
+  is.integer(x) && length(x) == 1 && !is.na(x) && x >= 1L
 }
 
 is_dcount <- function(x) {
-  is.double(x) && length(x) == 1 && !is.na(x) && as.integer(x) == x
+  is.double(x) && length(x) == 1 && !is.na(x) && as.integer(x) == x &&
+    x >= 1
 }
 
-as_count <- function(x, name) {
+as_count <- function(x, name = "x") {
   if (is_icount(x)) return(x)
   if (is_dcount(x)) return(as.integer(x))
   stop(name, " must be a count, i.e. an integer scalar")

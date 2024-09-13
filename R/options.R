@@ -54,7 +54,10 @@ parquet_options <- function(
     identical(write_data_page_version, 1L) ||
     identical(write_data_page_version, 2L)
   )
-  num_rows_per_row_group <- as_count(num_rows_per_row_group)
+  num_rows_per_row_group <- as_count(
+    num_rows_per_row_group,
+    "num_rows_per_row_group"
+  )
 
   list(
     class = class,
