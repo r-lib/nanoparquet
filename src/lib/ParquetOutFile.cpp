@@ -82,7 +82,7 @@ void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
 
 void ParquetOutFile::init_column_meta_data() {
   column_meta_data.clear();
-  for (uint32_t cl = 0; cl < schemas.size(); cl++) {
+  for (uint32_t cl = 0; cl < schemas.size() - 1; cl++) {
     parquet::SchemaElement &sel = schemas[cl + 1];
     parquet::Encoding::type encoding = encodings[cl];
     ColumnMetaData cmd;
@@ -595,16 +595,17 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
 void ParquetOutFile::write_data_pages(uint32_t idx, int64_t from,
                                       int64_t until) {
   SchemaElement se = schemas[idx + 1];
+  int64_t rg_num_rows = until - from;
 
   // guess total size and decide on number of pages
   uint64_t total_size;
   if (encodings[idx] == Encoding::PLAIN) {
-    total_size = calculate_column_data_size(idx, until - from, from, until);
+    total_size = calculate_column_data_size(idx, rg_num_rows, from, until);
   } else {
     // estimate the max RLE length
     uint32_t num_values = get_num_values_dictionary(idx);
     uint8_t bit_width = ceil(log2((double) num_values));
-    total_size = MaxRleBpSizeSimple(until - from, bit_width);
+    total_size = MaxRleBpSizeSimple(rg_num_rows, bit_width);
   }
 
   uint32_t page_size = 1024 * 1024;
@@ -626,7 +627,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx, int64_t from,
     num_pages = 1;
   }
 
-  uint32_t rows_per_page = num_rows / num_pages + (num_rows % num_pages ? 1 : 0);
+  uint32_t rows_per_page = rg_num_rows / num_pages + (rg_num_rows % num_pages ? 1 : 0);
   if (rows_per_page == 0)  {
     rows_per_page = 1;
   }
