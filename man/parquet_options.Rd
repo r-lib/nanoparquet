@@ -6,6 +6,7 @@
 \usage{
 parquet_options(
   class = getOption("nanoparquet.class", "tbl"),
+  num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
   write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L)
@@ -16,6 +17,10 @@ parquet_options(
 in \code{\link[=read_parquet]{read_parquet()}}. By default nanoparquet adds the \code{"tbl"} class,
 so data frames are printed differently if the pillar package is
 loaded.}
+
+\item{num_rows_per_row_group}{The number of rows to put into a row
+group, if row groups are not specified explicitly. It should be
+an integer scalar. Defaults to 10 million.}
 
 \item{use_arrow_metadata}{\code{TRUE} or \code{FALSE}. If \code{TRUE}, then
 \code{\link[=read_parquet]{read_parquet()}} and \code{\link[=read_parquet_schema]{read_parquet_schema()}} will make use of the Apache

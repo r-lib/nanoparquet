@@ -33,6 +33,20 @@ is_string <- function(x) {
   is.character(x) && length(x) == 1 && !is.na(x)
 }
 
+is_icount <- function(x) {
+  is.integer(x) && length(x) == 1 && !is.na(x)
+}
+
+is_dcount <- function(x) {
+  is.double(x) && length(x) == 1 && !is.na(x) && as.integer(x) == x
+}
+
+as_count <- function(x, name) {
+  if (is_icount(x)) return(x)
+  if (is_dcount(x)) return(as.integer(x))
+  stop(name, " must be a count, i.e. an integer scalar")
+}
+
 is_uint32 <- function(x) {
   is.numeric(x) && length(x) == 1 && !is.na(x) &&
     round(x) == x && x >= 0 && x <= 4294967295

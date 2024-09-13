@@ -44,6 +44,12 @@
 #' @param metadata Additional key-value metadata to add to the file.
 #'   This must be a named character vector, or a data frame with columns
 #'   character columns called `key` and `value`.
+#' @param row_groups Row groups of the Parquet file. If `NULL`, and `x`
+#'   is a grouped data frame, then the groups are used as row groups.
+#'   The rows will be reordered to match groups. If `NULL`, and `x` is
+#'   not a grouped data frame, then the `num_rows_per_row_group` option is
+#'   used from the `options` argument, see [parquet_options()]. Otherwise
+#'   it must be an integer vector, specifying the starts of the row groups.
 #' @param options Nanoparquet options, see [parquet_options()].
 #' @return `NULL`, unless `file` is `":raw:"`, in which case the Parquet
 #'   file is returned as a raw vector.
@@ -62,6 +68,7 @@ write_parquet <- function(
   compression = c("snappy", "gzip", "zstd", "uncompressed"),
   encoding = NULL,
   metadata = NULL,
+  row_groups = NULL,
   options = parquet_options()) {
 
   file <- path.expand(file)
@@ -148,6 +155,14 @@ write_parquet <- function(
 
 encoding <- parse_encoding(encoding, x)
 
+row_groups <- row_groups %||%
+  attr(x, "groups") %||%
+  default_row_groups(x, schema, compression, encoding, options)
+
+row_group_starts <- parse_row_groups(x, row_groups)
+x <- row_group_starts[[1]]
+row_group_starts <- row_group_starts[[2]]
+
 res <- .Call(
     nanoparquet_write,
     x,
@@ -159,6 +174,7 @@ res <- .Call(
     options,
     schema,
     encodings[encoding],
+    row_group_starts,
     sys.call()
   )
 
@@ -200,4 +216,24 @@ parse_encoding <- function(encoding, x) {
     stopifnot(length(encoding) == length(x))
     structure(encoding, names = names(x))
   }
+}
+
+# we should refine this later
+default_row_groups <- function(x, schema, compression, encoding, options) {
+  n <- options[["num_rows_per_row_group"]]
+  seq(1L, nrow(x), by = n)
+}
+
+parse_row_groups <- function(x, rg) {
+  if (is.data.frame(rg)) {
+    rg <- rg[[".rows"]]
+    urg <- unlist(rg)
+    if (any(diff(urg) != 1)) {
+      message("Ordering data frame according to row groups.")
+      x <- x[urg, ]
+    }
+    rg <- c(1L, cumsum(lengths(rg)))
+    rg <- rg[-length(rg)]
+  }
+  list(x = x, row_groups = rg)
 }

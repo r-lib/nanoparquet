@@ -2466,7 +2466,8 @@ static SEXP get_list_element(SEXP list, const char *str) {
 
 SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
                         SEXP metadata, SEXP required, SEXP options,
-                        SEXP schema, SEXP encoding) {
+                        SEXP schema, SEXP encoding,
+                        SEXP row_group_starts) {
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_errorcall(nanoparquet_call,
@@ -2525,6 +2526,7 @@ struct nanoparquet_write_data {
   SEXP options;
   SEXP schema;
   SEXP encoding;
+  SEXP row_group_starts;
 };
 
 SEXP nanoparquet_write_wrapped(void *data) {
@@ -2539,9 +2541,11 @@ SEXP nanoparquet_write_wrapped(void *data) {
   SEXP options = rdata->options;
   SEXP schema = rdata->schema;
   SEXP encoding = rdata->encoding;
+  SEXP row_group_starts = rdata->row_group_starts;
 
   return nanoparquet_write_(dfsxp, filesxp, dim, compression, metadata,
-                            required, options, schema, encoding);
+                            required, options, schema, encoding,
+                            row_group_starts);
 }
 
 SEXP nanoparquet_write(
@@ -2554,11 +2558,12 @@ SEXP nanoparquet_write(
   SEXP options,
   SEXP schema,
   SEXP encoding,
+  SEXP row_group_starts,
   SEXP call) {
 
   struct nanoparquet_write_data data = {
     dfsxp, filesxp, dim, compression, metadata, required, options, schema,
-    encoding
+    encoding, row_group_starts
   };
 
   SEXP uwt = PROTECT(R_MakeUnwindCont());
