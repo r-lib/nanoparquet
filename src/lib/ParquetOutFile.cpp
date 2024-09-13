@@ -34,9 +34,11 @@ static string type_to_string(Type::type t) {
 
 ParquetOutFile::ParquetOutFile(
   std::string filename,
-  parquet::CompressionCodec::type codec) :
+  parquet::CompressionCodec::type codec,
+  vector<int64_t> &row_group_starts) :
     pfile(pfile_), num_rows(0), num_cols(0), num_rows_set(false),
-    codec(codec), mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
+    codec(codec), row_group_starts(row_group_starts),
+    mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
 
   // open file
@@ -51,9 +53,11 @@ ParquetOutFile::ParquetOutFile(
 
 ParquetOutFile::ParquetOutFile(
   std::ostream &stream,
-  parquet::CompressionCodec::type codec) :
+  parquet::CompressionCodec::type codec,
+  vector<int64_t> &row_group_starts) :
     pfile(stream), num_rows(0), num_cols(0), num_rows_set(false),
-    codec(codec), mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
+    codec(codec), row_group_starts(row_group_starts),
+    mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
 
   // root schema element
@@ -72,36 +76,42 @@ void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
                                        parquet::Encoding::type encoding) {
   schemas.push_back(sel);
   schemas[0].__set_num_children(schemas[0].num_children + 1);
-
-  ColumnMetaData cmd;
-  cmd.__set_type(sel.type);
-  vector<Encoding::type> encs;
-  if (sel.repetition_type != parquet::FieldRepetitionType::REQUIRED &&
-      encoding != Encoding::RLE) {
-    // def levels, but do not duplicate
-    encs.push_back(Encoding::RLE);
-  }
-  if (encoding == Encoding::RLE_DICTIONARY ||
-      encoding == Encoding::PLAIN_DICTIONARY) {
-    // dictionary values
-    encs.push_back(Encoding::PLAIN);
-  }
-  encs.push_back(encoding);
   encodings.push_back(encoding);
-
-  cmd.__set_encodings(encs);
-  vector<string> paths;
-  paths.push_back(sel.name);
-  cmd.__set_path_in_schema(paths);
-  cmd.__set_codec(codec);
-  // num_values set later
-  // total_uncompressed_size set later
-  // total_compressed_size set later
-  // data_page_offset  set later
-  // dictionary_page_offset set later when we have dictionaries
-  column_meta_data.push_back(cmd);
-
   num_cols++;
+}
+
+void ParquetOutFile::init_column_meta_data() {
+  column_meta_data.clear();
+  for (uint32_t cl = 0; cl < schemas.size(); cl++) {
+    parquet::SchemaElement &sel = schemas[cl + 1];
+    parquet::Encoding::type encoding = encodings[cl];
+    ColumnMetaData cmd;
+    cmd.__set_type(sel.type);
+    vector<Encoding::type> encs;
+    if (sel.repetition_type != parquet::FieldRepetitionType::REQUIRED &&
+        encoding != Encoding::RLE) {
+      // def levels, but do not duplicate
+      encs.push_back(Encoding::RLE);
+    }
+    if (encoding == Encoding::RLE_DICTIONARY ||
+        encoding == Encoding::PLAIN_DICTIONARY) {
+      // dictionary values
+      encs.push_back(Encoding::PLAIN);
+    }
+    encs.push_back(encoding);
+
+    cmd.__set_encodings(encs);
+    vector<string> paths;
+    paths.push_back(sel.name);
+    cmd.__set_path_in_schema(paths);
+    cmd.__set_codec(codec);
+    // num_values set later
+    // total_uncompressed_size set later
+    // total_compressed_size set later
+    // data_page_offset  set later
+    // dictionary_page_offset set later when we have dictionaries
+    column_meta_data.push_back(cmd);
+  }
 }
 
 void ParquetOutFile::add_key_value_metadata(
@@ -467,22 +477,45 @@ void ParquetOutFile::write() {
     throw runtime_error("Need to set the number of rows before writing"); // # nocov
   }
   pfile.write("PAR1", 4);
-  write_columns();
+  for (int idx = 0; idx < row_group_starts.size(); idx++) {
+    // init for row group
+    init_column_meta_data();
+
+    // write
+    int64_t from = row_group_starts[idx];
+    int64_t until = idx < row_group_starts.size() - 1 ? row_group_starts[idx + 1] : num_rows;
+    int64_t total_size = write_columns(from, until);
+
+    // row group metadata
+    vector<ColumnChunk> ccs;
+    for (uint32_t idx = 0; idx < num_cols; idx++) {
+      ColumnChunk cc;
+      cc.__set_file_offset(column_meta_data[idx].data_page_offset);
+      cc.__set_meta_data(column_meta_data[idx]);
+      ccs.push_back(cc);
+    }
+    RowGroup rg;
+    rg.__set_num_rows(until - from);
+    rg.__set_total_byte_size(total_size);
+    rg.__set_columns(ccs);
+    row_groups.push_back(rg);
+  }
   write_footer();
   pfile.write("PAR1", 4);
   pfile_.close();
 }
 
-void ParquetOutFile::write_columns() {
+int64_t ParquetOutFile::write_columns(int64_t from, int64_t until) {
   uint32_t start = pfile.tellp();
   for (uint32_t idx = 0; idx < num_cols; idx++) {
-    write_column(idx);
+    write_column(idx, from, until);
   }
   uint32_t end = pfile.tellp();
-  total_size = end - start;
+  // return total size
+  return end - start;
 }
 
-void ParquetOutFile::write_column(uint32_t idx) {
+void ParquetOutFile::write_column(uint32_t idx, int64_t from, int64_t until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1];
   uint32_t col_start = pfile.tellp();
@@ -494,9 +527,9 @@ void ParquetOutFile::write_column(uint32_t idx) {
     cmd->__set_dictionary_page_offset(dictionary_page_offset);
   }
   uint32_t data_offset = pfile.tellp();
-  write_data_pages(idx);
+  write_data_pages(idx, from, until);
   int32_t column_bytes = ((int32_t) pfile.tellp()) - col_start;
-  cmd->__set_num_values(num_rows);
+  cmd->__set_num_values(until - from);
   cmd->__set_total_compressed_size(column_bytes);
   cmd->__set_data_page_offset(data_offset);
 }
@@ -559,18 +592,19 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
   }
 }
 
-void ParquetOutFile::write_data_pages(uint32_t idx) {
+void ParquetOutFile::write_data_pages(uint32_t idx, int64_t from,
+                                      int64_t until) {
   SchemaElement se = schemas[idx + 1];
 
   // guess total size and decide on number of pages
   uint64_t total_size;
   if (encodings[idx] == Encoding::PLAIN) {
-    total_size = calculate_column_data_size(idx, num_rows, 0, num_rows);
+    total_size = calculate_column_data_size(idx, until - from, from, until);
   } else {
     // estimate the max RLE length
     uint32_t num_values = get_num_values_dictionary(idx);
     uint8_t bit_width = ceil(log2((double) num_values));
-    total_size = MaxRleBpSizeSimple(num_rows, bit_width);
+    total_size = MaxRleBpSizeSimple(until - from, bit_width);
   }
 
   uint32_t page_size = 1024 * 1024;
@@ -598,12 +632,12 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
   }
 
   for (auto i = 0; i < num_pages; i++) {
-    uint64_t from = i * rows_per_page;
-    uint64_t until = (i + 1) * rows_per_page;
-    if (until > num_rows) {
-      until = num_rows;
+    uint64_t page_from = from + i * rows_per_page;
+    uint64_t page_until = from + (i + 1) * rows_per_page;
+    if (page_until > until) {
+      page_until = until;
     }
-    write_data_page(idx, from, until);
+    write_data_page(idx, page_from, page_until);
   }
 }
 
@@ -1158,26 +1192,11 @@ uint64_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
 }
 
 void ParquetOutFile::write_footer() {
-  vector<ColumnChunk> ccs;
-  for (uint32_t idx = 0; idx < num_cols; idx++) {
-    ColumnChunk cc;
-    cc.__set_file_offset(column_meta_data[idx].data_page_offset);
-    cc.__set_meta_data(column_meta_data[idx]);
-    ccs.push_back(cc);
-  }
-
-  vector<RowGroup> rgs;
-  RowGroup rg;
-  rg.__set_num_rows(num_rows);
-  rg.__set_total_byte_size(total_size);
-  rg.__set_columns(ccs);
-  rgs.push_back(rg);
-
   FileMetaData fmd;
   fmd.__set_version(1);
   fmd.__set_schema(schemas);
   fmd.__set_num_rows(num_rows);
-  fmd.__set_row_groups(rgs);
+  fmd.__set_row_groups(row_groups);
   fmd.__set_key_value_metadata(kv);
   fmd.__set_created_by("https://github.com/gaborcsardi/nanoparquet");
   fmd.write(tproto.get());
