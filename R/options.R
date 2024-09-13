@@ -20,36 +20,8 @@
 #'   metadata to the file [write_parquet()].
 #' @param write_data_page_version Data version to write by default.
 #'   Possible values are 1 and 2. Default is 1.
-#' @param row_groups_at Integer vector, the start positions of the row
-#'   groups when writing a Parquet file in [write_parquet()]. Give at most
-#'   one of `row_groups_at`, `num_rows_per_row_group` and `num_row_groups`.
-#'   See 'Row groups' below.
-#' @param num_rows_per_row_group Number of rows to include in each row
-#'   group. It is used as a hint, so the actual numbers might slightly
-#'   differ. Give at most one of `row_groups_at`, `num_rows_per_row_group`
-#'   and `num_row_groups`. See 'Row groups' below.
-#' @param num_row_groups Number of row groups to write. It is used as a
-#'   hint, so the actualy number might slightly differ. Give at most one of
-#'   `row_groups_at`, `num_rows_per_row_group` and `num_row_groups`.
-#'   See 'Row groups' below.
 #'
 #' @return List of nanoparquet options.
-#'
-#' ## Row groups
-#'
-#' By default [write_parquet()] determines the number of row groups to
-#' write automatically, trying to make each column chunk about at most
-#' 100MiB.
-#'
-#' To manually specify the number of row groups, use the `options` argument
-#' of [write_parquet()] and one of `row_groups_at`,
-#' `num_rows_per_row_group` or `num_row_groups`. (See them above.)
-#' It is an error to specify more than one of them in `parquet_options()`.
-#'
-#' You can also set one or more of the `nanoparquet.row_groups_at`,
-#' `nanoparquet.num_rows_per_row_group` or `nanoparquet.num_row_groups`
-#' options. The first takes precedence over the other two and the second
-#' takes precedence over the third.
 #'
 #' @export
 #' @examplesIf FALSE
@@ -67,10 +39,7 @@ parquet_options <- function(
   class = getOption("nanoparquet.class", "tbl"),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
-  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L),
-  row_groups_at = NULL,
-  num_rows_per_row_group = NULL,
-  num_row_groups = NULL
+  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L)
 ) {
   stopifnot(is.character(class))
   stopifnot(is_flag(use_arrow_metadata))
@@ -82,34 +51,10 @@ parquet_options <- function(
     identical(write_data_page_version, 2L)
   )
 
-  # at least two must be NULL
-  if ((is.null(row_groups_at) + is.null(num_rows_per_row_group) +
-      is.null(num_row_groups)) < 2) {
-    stop("You can only specify at most one of the row group options.")
-  }
-  stopifnot(is.null(row_groups_at) || is_row_group_sequence(row_groups_at))
-  stopifnot(is.null(num_rows_per_row_group) || is_count(num_rows_per_row_group, min = 1L))
-  stopifnot(is.null(num_row_groups) || is_count(num_row_groups, min = 1L))
-  rg_opt <- if (!is.null(row_groups_at)) {
-    list(row_groups_at = row_groups_at)
-  } else if (!is.null(num_rows_per_row_group)) {
-    list(num_rows_per_row_group = num_rows_per_row_group)
-  } else if (!is.null(num_row_groups)) {
-    list(num_row_groups = num_row_groups)
-  } else if (!is.null(o <- getOption("row_groups_at"))) {
-    list(row_groups_at = o)
-  } else if (!is.null(o <- getOption("num_rows_per_row_group"))) {
-    list(num_rows_per_row_group = o)
-  } else if (!is.null(o <- getOption("num_row_groups"))) {
-    list(num_row_groups = o)
-  }
-
-  c(list(
-      class = class,
-      use_arrow_metadata = use_arrow_metadata,
-      write_arrow_metadata = write_arrow_metadata,
-      write_data_page_version = as.integer(write_data_page_version)
-    ),
-    rg_opt
+  list(
+    class = class,
+    use_arrow_metadata = use_arrow_metadata,
+    write_arrow_metadata = write_arrow_metadata,
+    write_data_page_version = as.integer(write_data_page_version)
   )
 }

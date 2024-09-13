@@ -8,10 +8,7 @@ parquet_options(
   class = getOption("nanoparquet.class", "tbl"),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
-  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L),
-  rows_groups_at = NULL,
-  num_rows_per_row_group = NULL,
-  num_row_groups = NULL
+  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L)
 )
 }
 \arguments{
@@ -39,40 +36,9 @@ metadata to the file \code{\link[=write_parquet]{write_parquet()}}.}
 
 \item{write_data_page_version}{Data version to write by default.
 Possible values are 1 and 2. Default is 1.}
-
-\item{rows_groups_at}{Integer vector, the start positions of the row
-groups when writing a Parquet file in \code{\link[=write_parquet]{write_parquet()}}. Give at most
-one of \code{row_groups_at}, \code{num_rows_per_row_group} and \code{num_row_groups}.
-See 'Row groups' below.}
-
-\item{num_rows_per_row_group}{Number of rows to include in each row
-group. It is used as a hint, so the actual numbers might slightly
-differ. Give at most one of \code{row_groups_at}, \code{num_rows_per_row_group}
-and \code{num_row_groups}. See 'Row groups' below.}
-
-\item{num_row_groups}{Number of row groups to write. It is used as a
-hint, so the actualy number might slightly differ. Give at most one of
-\code{row_groups_at}, \code{num_rows_per_row_group} and \code{num_row_groups}.
-See 'Row groups' below.}
 }
 \value{
 List of nanoparquet options.
-\subsection{Row groups}{
-
-By default \code{\link[=write_parquet]{write_parquet()}} determines the number of row groups to
-write automatically, trying to make each column chunk about at most
-100MiB.
-
-To manually specify the number of row groups, use the \code{options} argument
-of \code{\link[=write_parquet]{write_parquet()}} and one of \code{rows_groups_at},
-\code{num_rows_per_row_group} or \code{num_row_groups}. (See them above.)
-It is an error to specify more than one of them in \code{parquet_options()}.
-
-You can also set one or more of the \code{nanoparquet.rows_groups_at},
-\code{nanoparquet.num_rows_per_row_group} or \code{nanoparquet.num_row_groups}
-options. The first takes precedence over the other two and the second
-takes precedence over the third.
-}
 }
 \description{
 Create a list of nanoparquet options.

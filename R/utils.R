@@ -61,14 +61,3 @@ is_named <- function(x) {
   nm <- names(x)
   !is.null(nm) && !anyNA(nm)
 }
-
-is_row_group_sequence <- function(x) {
-  x <- tryCatch(as.integer(x), error = function(e) x)
-  is.integer(x) && ! any(is.na(x)) && length(x) >= 1 && x[1] == 1L &&
-    all(diff(x) > 0)
-}
-
-is_count <- function(x, min = 0L) {
-  x <- tryCatch(as.integer(x), error = function(e) x)
-  is.integer(x) && length(x) == 1 && !is.na(x) && x >= min
-}

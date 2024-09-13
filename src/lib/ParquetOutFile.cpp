@@ -514,6 +514,8 @@ void ParquetOutFile::write_page_header(uint32_t idx, PageHeader &ph) {
   );
 }
 
+// Currently only for byte arrays, more later
+
 void ParquetOutFile::write_dictionary_page(uint32_t idx) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1];
