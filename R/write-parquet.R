@@ -3,8 +3,13 @@
 #' Writes the contents of an R data frame into a Parquet file.
 #'
 #' `write_parquet()` converts string columns to UTF-8 encoding by calling
-#' [base::enc2utf8()]. It does the same for factor levels.
-#'
+#' [base::enc2utf8()]. It does the same for factor levels. `NA_integer_`
+#'   is the default, and it specifies the default compression level of
+#'   each method. More details:
+#'   * Snappy does not support compression levels currently.
+#'   * GZIP supports levels from 0 (uncompessed), 1 (fastest), to 9 (best).
+#'     The default is 6.
+#'   * ZSTD: TODO
 #' @param x Data frame to write.
 #' @param file Path to the output file. If this is the string `":raw:"`,
 #'   then the data frame is written to a memory buffer, and the memory

@@ -81,7 +81,15 @@ Writes the contents of an R data frame into a Parquet file.
 }
 \details{
 \code{write_parquet()} converts string columns to UTF-8 encoding by calling
-\code{\link[base:Encoding]{base::enc2utf8()}}. It does the same for factor levels.
+\code{\link[base:Encoding]{base::enc2utf8()}}. It does the same for factor levels. \code{NA_integer_}
+is the default, and it specifies the default compression level of
+each method. More details:
+\itemize{
+\item Snappy does not support compression levels currently.
+\item GZIP supports levels from 0 (uncompessed), 1 (fastest), to 9 (best).
+The default is 6.
+\item ZSTD: TODO
+}
 }
 \examples{
 \dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

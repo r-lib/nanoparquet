@@ -5,6 +5,8 @@
 #'   in [read_parquet()]. By default nanoparquet adds the `"tbl"` class,
 #'   so data frames are printed differently if the pillar package is
 #'   loaded.
+#' @param compression_level The compression level in [write_parquet()].
+#'
 #' @param num_rows_per_row_group The number of rows to put into a row
 #'   group, if row groups are not specified explicitly. It should be
 #'   an integer scalar. Defaults to 10 million.
@@ -40,6 +42,7 @@
 
 parquet_options <- function(
   class = getOption("nanoparquet.class", "tbl"),
+  compression_level = getOption("nanoparquet.compression_level", NA_integer_),
   num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
@@ -58,9 +61,15 @@ parquet_options <- function(
     num_rows_per_row_group,
     "num_rows_per_row_group"
   )
+  if (identical(compression_level, NA_integer_)) {
+    compression_level <- -1L
+  } else {
+    compression_level <- as_count(compression_level, "compression_level", zero = TRUE)
+  }
 
   list(
     class = class,
+    compression_level = compression_level,
     num_rows_per_row_group = num_rows_per_row_group,
     use_arrow_metadata = use_arrow_metadata,
     write_arrow_metadata = write_arrow_metadata,

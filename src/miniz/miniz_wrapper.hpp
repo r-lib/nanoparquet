@@ -42,6 +42,8 @@ public:
 			break;
 		}
 	}
+	int compression_level = miniz::MZ_DEFAULT_LEVEL;
+
 	void FormatException(std::string error_msg) {
 		throw std::runtime_error(error_msg);
 	}
@@ -104,7 +106,7 @@ public:
 	}
 
 	void Compress(const char *uncompressed_data, size_t uncompressed_size, char *out_data, size_t *out_size) {
-		auto mz_ret = mz_deflateInit2(&stream, miniz::MZ_DEFAULT_LEVEL, MZ_DEFLATED, -MZ_DEFAULT_WINDOW_BITS, 1, 0);
+		auto mz_ret = mz_deflateInit2(&stream, compression_level, MZ_DEFLATED, -MZ_DEFAULT_WINDOW_BITS, 1, 0);
 		if (mz_ret != miniz::MZ_OK) {
 			FormatException("Failed to initialize miniz", mz_ret);
 		}

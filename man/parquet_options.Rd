@@ -6,6 +6,7 @@
 \usage{
 parquet_options(
   class = getOption("nanoparquet.class", "tbl"),
+  compression_level = getOption("nanoparquet.compression_level", NA_integer_),
   num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
@@ -17,6 +18,8 @@ parquet_options(
 in \code{\link[=read_parquet]{read_parquet()}}. By default nanoparquet adds the \code{"tbl"} class,
 so data frames are printed differently if the pillar package is
 loaded.}
+
+\item{compression_level}{The compression level in \code{\link[=write_parquet]{write_parquet()}}.}
 
 \item{num_rows_per_row_group}{The number of rows to put into a row
 group, if row groups are not specified explicitly. It should be

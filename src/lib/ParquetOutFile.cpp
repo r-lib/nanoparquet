@@ -35,9 +35,11 @@ static string type_to_string(Type::type t) {
 ParquetOutFile::ParquetOutFile(
   std::string filename,
   parquet::CompressionCodec::type codec,
+  int compression_level,
   vector<int64_t> &row_group_starts) :
     pfile(pfile_), num_rows(0), num_cols(0), num_rows_set(false),
-    codec(codec), row_group_starts(row_group_starts),
+    codec(codec), compression_level(compression_level),
+    row_group_starts(row_group_starts),
     mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
 
@@ -54,9 +56,11 @@ ParquetOutFile::ParquetOutFile(
 ParquetOutFile::ParquetOutFile(
   std::ostream &stream,
   parquet::CompressionCodec::type codec,
+  int compression_level,
   vector<int64_t> &row_group_starts) :
     pfile(stream), num_rows(0), num_cols(0), num_rows_set(false),
-    codec(codec), row_group_starts(row_group_starts),
+    codec(codec), compression_level(compression_level),
+    row_group_starts(row_group_starts),
     mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
 
@@ -408,6 +412,13 @@ size_t ParquetOutFile::compress(
 
   } else if (codec == CompressionCodec::GZIP) {
     miniz::MiniZStream mzs;
+    if (compression_level < 0) {
+      mzs.compression_level = miniz::MZ_DEFAULT_LEVEL;
+    } else if (compression_level >= 9) {
+      mzs.compression_level = 9;
+    } else {
+      mzs.compression_level = compression_level;
+    }
     size_t tgt_size_est = mzs.MaxCompressedLength(src_size - skip);
     tgt.reset(tgt_size_est + skip);
     if (skip > 0) memcpy(tgt.ptr, src.ptr, skip);

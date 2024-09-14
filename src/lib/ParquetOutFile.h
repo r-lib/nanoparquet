@@ -16,11 +16,13 @@ public:
   ParquetOutFile(
     std::string filename,
     parquet::CompressionCodec::type codec,
+    int compression_level,
     std::vector<int64_t> &row_group_starts
   );
   ParquetOutFile(
     std::ostream &stream,
     parquet::CompressionCodec::type codec,
+    int compression_level,
     std::vector<int64_t> &row_group_starts
   );
   void set_num_rows(uint32_t nr);
@@ -93,6 +95,7 @@ private:
   uint32_t num_rows, num_cols;
   bool num_rows_set;
   parquet::CompressionCodec::type codec;
+  int compression_level;
 
   std::vector<parquet::Encoding::type> encodings;
   std::vector<parquet::SchemaElement> schemas;
