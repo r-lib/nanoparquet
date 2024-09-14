@@ -30,7 +30,7 @@ The default is 6.
 \item ZSTD allows positive levels up to 22 currently. 20 and above require
 more memory. Negative levels are also allowed, the lower the level,
 the faster the speed, at the cost of compression. Currently the
-smallest level is -131072.
+smallest level is -131072. The default level is 3.
 }}
 
 \item{num_rows_per_row_group}{The number of rows to put into a row
