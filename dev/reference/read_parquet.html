@@ -47,7 +47,12 @@
 
 
 <dl><dt id="arg-file">file<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>
-<dd><p>Path to a Parquet file.</p></dd>
+<dd><p>Path to a Parquet file. It may also be an R connection,
+in which case it first reads all data from the connection, writes
+it into a temporary file, then reads the temporary file, and
+deletes it. The connection might be open, it which case it must be
+a binary connection. If it is not open, then <code>read_parquet()</code> will
+open it and also close it in the end.</p></dd>
 
 
 <dt id="arg-options">options<a class="anchor" aria-label="anchor" href="#arg-options"></a></dt>
