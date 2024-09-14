@@ -33,19 +33,28 @@ is_string <- function(x) {
   is.character(x) && length(x) == 1 && !is.na(x)
 }
 
-is_icount <- function(x) {
-  is.integer(x) && length(x) == 1 && !is.na(x) && x >= 1L
+is_icount <- function(x, zero = FALSE) {
+  is.integer(x) && length(x) == 1 && !is.na(x) &&
+    ((zero && x >= 0L) || (!zero && x >= 1L))
 }
 
-is_dcount <- function(x) {
+is_dcount <- function(x, zero = FALSE) {
   is.double(x) && length(x) == 1 && !is.na(x) && as.integer(x) == x &&
-    x >= 1
+    ((zero && x >= 0) || (!zero && x >= 1))
 }
 
-as_count <- function(x, name = "x") {
-  if (is_icount(x)) return(x)
-  if (is_dcount(x)) return(as.integer(x))
+as_count <- function(x, name = "x", zero = FALSE) {
+  if (is_icount(x, zero)) return(x)
+  if (is_dcount(x, zero)) return(as.integer(x))
   stop(name, " must be a count, i.e. an integer scalar")
+}
+
+as_integer_scalar <- function(x, name = "x") {
+  if (is.integer(x) && length(x) == 1 && !is.na(x)) return(x)
+  if (is.double(x) && length(x) == 1 && !is.na(x) && as.integer(x) == x) {
+    return(as.integer(x))
+  }
+  stop(name, " must be an integer scalar")
 }
 
 is_uint32 <- function(x) {

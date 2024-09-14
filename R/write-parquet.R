@@ -72,8 +72,18 @@ write_parquet <- function(
   options = parquet_options()) {
 
   file <- path.expand(file)
+
   codecs <- c("uncompressed" = 0L, "snappy" = 1L, "gzip" = 2L, "zstd" = 6L)
   compression <- codecs[match.arg(compression)]
+  if (is.na(options[["compression_level"]])) {
+    # -1 is an allowed value for zstd, so we set the default here
+    if (compression == "zstd") {
+      options[["compression_level"]] <- 3L
+    } else {
+      options[["compression_level"]] <- -1L
+    }
+  }
+
   dim <- as.integer(dim(x))
 
   schema <- map_schema_to_df(schema, x, options)

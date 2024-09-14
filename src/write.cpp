@@ -96,11 +96,13 @@ public:
   RParquetOutFile(
     std::string filename,
     parquet::CompressionCodec::type codec,
+    int compression_level,
     std::vector<int64_t> &row_groups
   );
   RParquetOutFile(
     std::ostream &stream,
     parquet::CompressionCodec::type codec,
+    int compsession_level,
     std::vector<int64_t> &row_groups
   );
   void write_int32(std::ostream &file, uint32_t idx, uint64_t from,
@@ -173,15 +175,17 @@ private:
 RParquetOutFile::RParquetOutFile(
   std::string filename,
   parquet::CompressionCodec::type codec,
+  int compression_level,
   std::vector<int64_t> &row_groups) :
-    ParquetOutFile(filename, codec, row_groups) {
+    ParquetOutFile(filename, codec, compression_level, row_groups) {
 }
 
 RParquetOutFile::RParquetOutFile(
   std::ostream &stream,
   parquet::CompressionCodec::type codec,
+  int compression_level,
   std::vector<int64_t> &row_groups) :
-    ParquetOutFile(stream, codec, row_groups) {
+    ParquetOutFile(stream, codec, compression_level, row_groups) {
 }
 
 void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
@@ -2519,6 +2523,7 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
   }
 
   int dp_ver = INTEGER(get_list_element(options, "write_data_page_version"))[0];
+  int comp_level = INTEGER(get_list_element(options, "compression_level"))[0];
 
   R_xlen_t nrg = Rf_xlength(row_group_starts);
   std::vector<int64_t> row_groups(nrg);
@@ -2531,7 +2536,7 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
   if (fname == ":raw:") {
     MemStream ms;
     std::ostream &os = ms.stream();
-    RParquetOutFile of(os, codec, row_groups);
+    RParquetOutFile of(os, codec, comp_level, row_groups);
     of.data_page_version = dp_ver;
     of.write(dfsxp, dim, metadata, required, options, schema, encoding);
     R_xlen_t bufsize = ms.size();
@@ -2539,7 +2544,7 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
     ms.copy(RAW(res), bufsize);
     return res;
   } else {
-    RParquetOutFile of(fname, codec, row_groups);
+    RParquetOutFile of(fname, codec, comp_level, row_groups);
     of.data_page_version = dp_ver;
     of.write(dfsxp, dim, metadata, required, options, schema, encoding);
     return R_NilValue;
