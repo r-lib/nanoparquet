@@ -7,7 +7,12 @@
 read_parquet(file, options = parquet_options())
 }
 \arguments{
-\item{file}{Path to a Parquet file.}
+\item{file}{Path to a Parquet file. It may also be an R connection,
+in which case it first reads all data from the connection, writes
+it into a temporary file, then reads the temporary file, and
+deletes it. The connection might be open, it which case it must be
+a binary connection. If it is not open, then \code{read_parquet()} will
+open it and also close it in the end.}
 
 \item{options}{Nanoparquet options, see \code{\link[=parquet_options]{parquet_options()}}.}
 }
