@@ -86,7 +86,7 @@ is the default, and it specifies the default compression level of
 each method. More details:
 \itemize{
 \item Snappy does not support compression levels currently.
-\item GZIP supports levels from 0 (uncompessed), 1 (fastest), to 9 (best).
+\item GZIP supports levels from 0 (uncompressed), 1 (fastest), to 9 (best).
 The default is 6.
 \item ZSTD: TODO
 }

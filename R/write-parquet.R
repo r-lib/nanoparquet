@@ -7,7 +7,7 @@
 #'   is the default, and it specifies the default compression level of
 #'   each method. More details:
 #'   * Snappy does not support compression levels currently.
-#'   * GZIP supports levels from 0 (uncompessed), 1 (fastest), to 9 (best).
+#'   * GZIP supports levels from 0 (uncompressed), 1 (fastest), to 9 (best).
 #'     The default is 6.
 #'   * ZSTD: TODO
 #' @param x Data frame to write.
