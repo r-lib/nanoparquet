@@ -64,4 +64,35 @@ test_that("factors & factor levels", {
   withr::local_options(nanoparquet.num_rows_per_row_group = 50L)
   write_parquet(df, tmp)
   expect_equal(as.data.frame(read_parquet(tmp)), df)
+  # the same dict is written into every dicitonary page
+  pgs <- read_parquet_pages(tmp)
+  dict_ofs <- pgs[["page_header_offset"]][
+    pgs[["page_type"]] == "DICTIONARY_PAGE"
+  ]
+  dict_data <- read_parquet_page(tmp, dict_ofs[1])[["data"]]
+  for (do in dict_ofs) {
+    expect_equal(dict_data, read_parquet_page(tmp, do)[["data"]])
+  }
+})
+
+test_that("non-factors write local dictionary", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame(
+    stringsAsFactors = FALSE,
+    f = c(rep("a", 100), rep("b", 100), rep("c", 100))
+  )
+  withr::local_options(nanoparquet.num_rows_per_row_group = 40L)
+  write_parquet(df, tmp)
+  expect_equal(as.data.frame(read_parquet(tmp)), df)
+  pgs <- read_parquet_pages(tmp)
+  dict_ofs <- pgs[["page_header_offset"]][
+    pgs[["page_type"]] == "DICTIONARY_PAGE"
+  ]
+  expect_snapshot({
+    for (do in dict_ofs) {
+      print(read_parquet_page(tmp, do)[["data"]])
+    }
+  })
 })

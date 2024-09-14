@@ -372,11 +372,14 @@ void ParquetOutFile::write_dictionary_indices_(
   std::ostream &file,
   uint32_t idx,
   uint32_t size,
-  uint64_t from,
-  uint64_t until) {
+  int64_t rg_from,
+  int64_t rg_until,
+  uint64_t page_from,
+  uint64_t page_until) {
 
   streampos start = file.tellp();
-  write_dictionary_indices(file, idx, from, until);
+  write_dictionary_indices(file, idx, rg_from, rg_until,
+                           page_from, page_until);
   streampos end = file.tellp();
   if (end - start != size) {
     throw runtime_error(
@@ -728,7 +731,8 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size, page_from, page_until);
+    write_dictionary_indices_(*os0, idx, data_size, rg_from, rg_until,
+                              page_from, page_until);
 
     // 2. RLE encode buf_unc to buf_com
     uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
@@ -763,7 +767,8 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size, page_from, page_until);
+    write_dictionary_indices_(*os0, idx, data_size, rg_from, rg_until,
+                              page_from, page_until);
 
     // 2. RLE encode buf_unc to buf_com
     uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
@@ -906,7 +911,8 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size, page_from, page_until);
+    write_dictionary_indices_(*os0, idx, data_size, rg_from, rg_until,
+                              page_from, page_until);
 
     // 4. append RLE buf_unc to buf_com
     uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
@@ -961,7 +967,8 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size, page_from, page_until);
+    write_dictionary_indices_(*os0, idx, data_size, rg_from, rg_until,
+                              page_from, page_until);
 
     // 4. append RLE buf_unc to buf_com
     uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);

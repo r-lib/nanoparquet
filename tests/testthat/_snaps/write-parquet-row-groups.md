@@ -70,3 +70,19 @@
       31      Ford Pantera L   8
       32       Maserati Bora   8
 
+# non-factors write local dictionary
+
+    Code
+      for (do in dict_ofs) {
+        print(read_parquet_page(tmp, do)[["data"]])
+      }
+    Output
+      [1] 01 00 00 00 61
+      [1] 01 00 00 00 61
+       [1] 01 00 00 00 61 01 00 00 00 62
+      [1] 01 00 00 00 62
+      [1] 01 00 00 00 62
+      [1] 01 00 00 00 63
+      [1] 01 00 00 00 63
+      [1] 01 00 00 00 63
+

@@ -41,7 +41,7 @@ SEXP nanoparquet_unpack_bits_int32(SEXP x, SEXP bit_width, SEXP n);
 SEXP nanoparquet_pack_bits_int32(SEXP x, SEXP bit_width);
 
 SEXP nanoparquet_create_dict(SEXP x, SEXP l);
-SEXP nanoparquet_create_dict_idx(SEXP x, SEXP call);
+SEXP nanoparquet_create_dict_idx(SEXP x, SEXP from, SEXP until, SEXP call);
 SEXP nanoparquet_avg_run_length(SEXP x, SEXP len);
 
 SEXP nanoparquet_base64_decode(SEXP x);
@@ -110,7 +110,7 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_unpack_bits_int32, 3),
   CALLDEF(nanoparquet_pack_bits_int32, 2),
   CALLDEF(nanoparquet_create_dict, 2),
-  CALLDEF(nanoparquet_create_dict_idx, 2),
+  CALLDEF(nanoparquet_create_dict_idx, 4),
   CALLDEF(nanoparquet_avg_run_length, 2),
   CALLDEF(nanoparquet_base64_decode, 1),
   CALLDEF(nanoparquet_base64_encode, 1),

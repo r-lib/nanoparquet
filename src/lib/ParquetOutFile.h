@@ -81,7 +81,9 @@ public:
                                 int64_t until) = 0;
   // Needs to write indices as int32_t
   virtual void write_dictionary_indices(std::ostream &file, uint32_t idx,
-                                        uint64_t from, uint64_t until) = 0;
+                                        int64_t rg_from, int64_t rg_until,
+                                        uint64_t page_from,
+                                        uint64_t page_until) = 0;
 
   int data_page_version = 1;
 
@@ -126,8 +128,9 @@ private:
                          parquet::SchemaElement &sel, int64_t from,
                          int64_t until);
   void write_dictionary_indices_(std::ostream &file, uint32_t idx,
-                                uint32_t size, uint64_t from,
-                                uint64_t until);
+                                uint32_t size, int64_t rg_from,
+                                int64_t rg_ti, uint64_t page_from,
+                                uint64_t page_until);
 
   size_t compress(parquet::CompressionCodec::type codec,
                   ByteBuffer &src, uint32_t src_size, ByteBuffer &tgt,
