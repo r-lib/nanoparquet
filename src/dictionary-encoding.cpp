@@ -175,8 +175,11 @@ SEXP nanoparquet_create_dict(SEXP x, SEXP rlen) {
   return Rf_ScalarInteger(dictlen);
 }
 
-SEXP nanoparquet_create_dict_idx_(SEXP x) {
-  R_xlen_t dictlen, len = Rf_xlength(x);
+SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until) {
+  int64_t cfrom = INTEGER(from)[0];
+  int64_t cuntil = INTEGER(until)[0];
+  int64_t len = cuntil - cfrom;
+  R_xlen_t dictlen;
 
   SEXP idx = PROTECT(Rf_allocVector(INTSXP, len));
   SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
@@ -184,16 +187,16 @@ SEXP nanoparquet_create_dict_idx_(SEXP x) {
   int *iidx = INTEGER(idx);
   switch (TYPEOF(x)) {
     case LGLSXP:
-      dictlen = create_dict_idx<int>(LOGICAL(x), iidx, idict, len, NA_LOGICAL);
+      dictlen = create_dict_idx<int>(LOGICAL(x) + cfrom, iidx, idict, len, NA_LOGICAL);
       break;
     case INTSXP:
-      dictlen = create_dict_idx<int>(INTEGER(x), idict, iidx, len, NA_INTEGER);
+      dictlen = create_dict_idx<int>(INTEGER(x) + cfrom, idict, iidx, len, NA_INTEGER);
       break;
     case REALSXP:
-      dictlen = create_dict_real_idx(REAL(x), idict, iidx, len);
+      dictlen = create_dict_real_idx(REAL(x) + cfrom, idict, iidx, len);
       break;
     case STRSXP: {
-      dictlen = create_dict_ptr_idx((void**)STRING_PTR_RO(x),idict, iidx, len, (void*) NA_STRING);
+      dictlen = create_dict_ptr_idx((void**)(STRING_PTR_RO(x) + cfrom), idict, iidx, len, (void*) NA_STRING);
       break;
     }
     default:
@@ -213,19 +216,32 @@ SEXP nanoparquet_create_dict_idx_(SEXP x) {
   return res;
 }
 
+struct nanoparquet_create_dict_idx_data {
+  SEXP data;
+  SEXP from;
+  SEXP until;
+};
+
 inline SEXP nanoparquet_create_dict_idx_wrapper(void *data) {
-  SEXP x = (SEXP) data;
-  return nanoparquet_create_dict_idx_(x);
+  struct nanoparquet_create_dict_idx_data *rdata =
+    (struct nanoparquet_create_dict_idx_data*) data;
+  return nanoparquet_create_dict_idx_(
+    rdata->data,
+    rdata->from,
+    rdata->until
+  );
 }
 
-SEXP nanoparquet_create_dict_idx(SEXP x, SEXP call) {
+SEXP nanoparquet_create_dict_idx(SEXP x, SEXP from, SEXP until, SEXP call) {
+
+  struct nanoparquet_create_dict_idx_data data = { x, from, until };
 
   SEXP uwt = PROTECT(R_MakeUnwindCont());
   R_API_START(call);
 
   SEXP ret = R_UnwindProtect(
     nanoparquet_create_dict_idx_wrapper,
-    (void*) x,
+    &data,
     throw_error,
     &uwt,
     uwt

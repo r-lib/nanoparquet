@@ -3,7 +3,7 @@
     Code
       .Call(nanoparquet_write, mtcars, tempfile(), dim(mtcars), 0L, list(character(),
       character()), rep(FALSE, ncol(mtcars)), options, map_schema_to_df(NULL, mtcars),
-      rep(10L, ncol(mtcars)), sys.call())
+      rep(10L, ncol(mtcars)), 1L, sys.call())
     Condition
       Error:
       ! Unknown Praquet encoding code: 10

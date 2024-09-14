@@ -34,9 +34,11 @@ static string type_to_string(Type::type t) {
 
 ParquetOutFile::ParquetOutFile(
   std::string filename,
-  parquet::CompressionCodec::type codec) :
+  parquet::CompressionCodec::type codec,
+  vector<int64_t> &row_group_starts) :
     pfile(pfile_), num_rows(0), num_cols(0), num_rows_set(false),
-    codec(codec), mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
+    codec(codec), row_group_starts(row_group_starts),
+    mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
 
   // open file
@@ -51,9 +53,11 @@ ParquetOutFile::ParquetOutFile(
 
 ParquetOutFile::ParquetOutFile(
   std::ostream &stream,
-  parquet::CompressionCodec::type codec) :
+  parquet::CompressionCodec::type codec,
+  vector<int64_t> &row_group_starts) :
     pfile(stream), num_rows(0), num_cols(0), num_rows_set(false),
-    codec(codec), mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
+    codec(codec), row_group_starts(row_group_starts),
+    mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
 
   // root schema element
@@ -72,36 +76,42 @@ void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
                                        parquet::Encoding::type encoding) {
   schemas.push_back(sel);
   schemas[0].__set_num_children(schemas[0].num_children + 1);
-
-  ColumnMetaData cmd;
-  cmd.__set_type(sel.type);
-  vector<Encoding::type> encs;
-  if (sel.repetition_type != parquet::FieldRepetitionType::REQUIRED &&
-      encoding != Encoding::RLE) {
-    // def levels, but do not duplicate
-    encs.push_back(Encoding::RLE);
-  }
-  if (encoding == Encoding::RLE_DICTIONARY ||
-      encoding == Encoding::PLAIN_DICTIONARY) {
-    // dictionary values
-    encs.push_back(Encoding::PLAIN);
-  }
-  encs.push_back(encoding);
   encodings.push_back(encoding);
-
-  cmd.__set_encodings(encs);
-  vector<string> paths;
-  paths.push_back(sel.name);
-  cmd.__set_path_in_schema(paths);
-  cmd.__set_codec(codec);
-  // num_values set later
-  // total_uncompressed_size set later
-  // total_compressed_size set later
-  // data_page_offset  set later
-  // dictionary_page_offset set later when we have dictionaries
-  column_meta_data.push_back(cmd);
-
   num_cols++;
+}
+
+void ParquetOutFile::init_column_meta_data() {
+  column_meta_data.clear();
+  for (uint32_t cl = 0; cl < schemas.size() - 1; cl++) {
+    parquet::SchemaElement &sel = schemas[cl + 1];
+    parquet::Encoding::type encoding = encodings[cl];
+    ColumnMetaData cmd;
+    cmd.__set_type(sel.type);
+    vector<Encoding::type> encs;
+    if (sel.repetition_type != parquet::FieldRepetitionType::REQUIRED &&
+        encoding != Encoding::RLE) {
+      // def levels, but do not duplicate
+      encs.push_back(Encoding::RLE);
+    }
+    if (encoding == Encoding::RLE_DICTIONARY ||
+        encoding == Encoding::PLAIN_DICTIONARY) {
+      // dictionary values
+      encs.push_back(Encoding::PLAIN);
+    }
+    encs.push_back(encoding);
+
+    cmd.__set_encodings(encs);
+    vector<string> paths;
+    paths.push_back(sel.name);
+    cmd.__set_path_in_schema(paths);
+    cmd.__set_codec(codec);
+    // num_values set later
+    // total_uncompressed_size set later
+    // total_compressed_size set later
+    // data_page_offset  set later
+    // dictionary_page_offset set later when we have dictionaries
+    column_meta_data.push_back(cmd);
+  }
 }
 
 void ParquetOutFile::add_key_value_metadata(
@@ -339,11 +349,13 @@ void ParquetOutFile::write_dictionary_(
   std::ostream &file,
   uint32_t idx,
   uint32_t size,
-  parquet::SchemaElement &sel) {
+  parquet::SchemaElement &sel,
+  int64_t from,
+  int64_t until) {
 
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   uint32_t start = file.tellp();
-  write_dictionary(file, idx, sel);
+  write_dictionary(file, idx, sel, from, until);
   uint32_t end = file.tellp();
   if (end - start != size) {
     throw runtime_error(
@@ -360,11 +372,14 @@ void ParquetOutFile::write_dictionary_indices_(
   std::ostream &file,
   uint32_t idx,
   uint32_t size,
-  uint64_t from,
-  uint64_t until) {
+  int64_t rg_from,
+  int64_t rg_until,
+  uint64_t page_from,
+  uint64_t page_until) {
 
   streampos start = file.tellp();
-  write_dictionary_indices(file, idx, from, until);
+  write_dictionary_indices(file, idx, rg_from, rg_until,
+                           page_from, page_until);
   streampos end = file.tellp();
   if (end - start != size) {
     throw runtime_error(
@@ -467,22 +482,45 @@ void ParquetOutFile::write() {
     throw runtime_error("Need to set the number of rows before writing"); // # nocov
   }
   pfile.write("PAR1", 4);
-  write_columns();
+  for (int idx = 0; idx < row_group_starts.size(); idx++) {
+    // init for row group
+    init_column_meta_data();
+
+    // write
+    int64_t from = row_group_starts[idx];
+    int64_t until = idx < row_group_starts.size() - 1 ? row_group_starts[idx + 1] : num_rows;
+    int64_t total_size = write_columns(from, until);
+
+    // row group metadata
+    vector<ColumnChunk> ccs;
+    for (uint32_t idx = 0; idx < num_cols; idx++) {
+      ColumnChunk cc;
+      cc.__set_file_offset(column_meta_data[idx].data_page_offset);
+      cc.__set_meta_data(column_meta_data[idx]);
+      ccs.push_back(cc);
+    }
+    RowGroup rg;
+    rg.__set_num_rows(until - from);
+    rg.__set_total_byte_size(total_size);
+    rg.__set_columns(ccs);
+    row_groups.push_back(rg);
+  }
   write_footer();
   pfile.write("PAR1", 4);
   pfile_.close();
 }
 
-void ParquetOutFile::write_columns() {
+int64_t ParquetOutFile::write_columns(int64_t from, int64_t until) {
   uint32_t start = pfile.tellp();
   for (uint32_t idx = 0; idx < num_cols; idx++) {
-    write_column(idx);
+    write_column(idx, from, until);
   }
   uint32_t end = pfile.tellp();
-  total_size = end - start;
+  // return total size
+  return end - start;
 }
 
-void ParquetOutFile::write_column(uint32_t idx) {
+void ParquetOutFile::write_column(uint32_t idx, int64_t from, int64_t until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1];
   uint32_t col_start = pfile.tellp();
@@ -490,13 +528,13 @@ void ParquetOutFile::write_column(uint32_t idx) {
   cmd->__set_total_uncompressed_size(0);
   if (encodings[idx] == Encoding::RLE_DICTIONARY) {
     uint32_t dictionary_page_offset = pfile.tellp();
-    write_dictionary_page(idx);
+    write_dictionary_page(idx, from, until);
     cmd->__set_dictionary_page_offset(dictionary_page_offset);
   }
   uint32_t data_offset = pfile.tellp();
-  write_data_pages(idx);
+  write_data_pages(idx, from, until);
   int32_t column_bytes = ((int32_t) pfile.tellp()) - col_start;
-  cmd->__set_num_values(num_rows);
+  cmd->__set_num_values(until - from);
   cmd->__set_total_compressed_size(column_bytes);
   cmd->__set_data_page_offset(data_offset);
 }
@@ -516,13 +554,14 @@ void ParquetOutFile::write_page_header(uint32_t idx, PageHeader &ph) {
 
 // Currently only for byte arrays, more later
 
-void ParquetOutFile::write_dictionary_page(uint32_t idx) {
+void ParquetOutFile::write_dictionary_page(uint32_t idx, int64_t from,
+                                           int64_t until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1];
   // Uncompresed size of the dictionary in bytes
-  uint32_t dict_size = get_size_dictionary(idx, se);
+  uint32_t dict_size = get_size_dictionary(idx, se, from, until);
   // Number of entries in the dicitonary
-  uint32_t num_dict_values = get_num_values_dictionary(idx);
+  uint32_t num_dict_values = get_num_values_dictionary(idx, from, until);
 
   // Init page header
   PageHeader ph;
@@ -539,7 +578,7 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
     // then the data directly to the file
     ph.__set_compressed_page_size(dict_size);
     write_page_header(idx, ph);
-    write_dictionary_(pfile, idx, dict_size, se);
+    write_dictionary_(pfile, idx, dict_size, se, from, until);
 
   } else {
     // With compression we need two temporary buffers
@@ -547,7 +586,7 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
     buf_unc.reset(dict_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_(*os0, idx, dict_size, se);
+    write_dictionary_(*os0, idx, dict_size, se, from, until);
 
     // 2. compress buf_unc to buf_com
     size_t cdict_size = compress(cmd->codec, buf_unc, dict_size, buf_com);
@@ -559,18 +598,20 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx) {
   }
 }
 
-void ParquetOutFile::write_data_pages(uint32_t idx) {
+void ParquetOutFile::write_data_pages(uint32_t idx, int64_t from,
+                                      int64_t until) {
   SchemaElement se = schemas[idx + 1];
+  int64_t rg_num_rows = until - from;
 
   // guess total size and decide on number of pages
   uint64_t total_size;
   if (encodings[idx] == Encoding::PLAIN) {
-    total_size = calculate_column_data_size(idx, num_rows, 0, num_rows);
+    total_size = calculate_column_data_size(idx, rg_num_rows, from, until);
   } else {
     // estimate the max RLE length
-    uint32_t num_values = get_num_values_dictionary(idx);
+    uint32_t num_values = get_num_values_dictionary(idx, from, until);
     uint8_t bit_width = ceil(log2((double) num_values));
-    total_size = MaxRleBpSizeSimple(num_rows, bit_width);
+    total_size = MaxRleBpSizeSimple(rg_num_rows, bit_width);
   }
 
   uint32_t page_size = 1024 * 1024;
@@ -592,31 +633,33 @@ void ParquetOutFile::write_data_pages(uint32_t idx) {
     num_pages = 1;
   }
 
-  uint32_t rows_per_page = num_rows / num_pages + (num_rows % num_pages ? 1 : 0);
+  uint32_t rows_per_page = rg_num_rows / num_pages + (rg_num_rows % num_pages ? 1 : 0);
   if (rows_per_page == 0)  {
     rows_per_page = 1;
   }
 
   for (auto i = 0; i < num_pages; i++) {
-    uint64_t from = i * rows_per_page;
-    uint64_t until = (i + 1) * rows_per_page;
-    if (until > num_rows) {
-      until = num_rows;
+    uint64_t page_from = from + i * rows_per_page;
+    uint64_t page_until = from + (i + 1) * rows_per_page;
+    if (page_until > until) {
+      page_until = until;
     }
-    write_data_page(idx, from, until);
+    write_data_page(idx, from, until, page_from, page_until);
   }
 }
 
-void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
-                                     uint64_t until) {
+void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
+                                     int64_t rg_until, uint64_t page_from,
+                                     uint64_t page_until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1];
   PageHeader ph;
   DataPageHeaderV2 dph2;
+  uint32_t page_num_values = page_until - page_from;
   if (data_page_version == 1) {
     ph.__set_type(PageType::DATA_PAGE);
     DataPageHeader dph;
-    dph.__set_num_values(until - from);
+    dph.__set_num_values(page_num_values);
     dph.__set_encoding(encodings[idx]);
     if (se.repetition_type == FieldRepetitionType::OPTIONAL) {
       dph.__set_definition_level_encoding(Encoding::RLE);
@@ -625,8 +668,8 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     ph.__set_data_page_header(dph);
   } else if (data_page_version == 2) {
     ph.__set_type(PageType::DATA_PAGE_V2);
-    dph2.__set_num_values(until - from);
-    dph2.__set_num_rows(until - from);
+    dph2.__set_num_values(page_num_values);
+    dph2.__set_num_rows(page_num_values);
     dph2.__set_encoding(encodings[idx]);
     // these might be overwritten later if there are NAs
     dph2.__set_num_nulls(0);
@@ -644,7 +687,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     // CASE 1: REQ, PLAIN, UNC
     // 1. write directly to file
     uint32_t data_size = calculate_column_data_size(
-      idx, until - from, from, until
+      idx, page_num_values, page_from, page_until
     );
     ph.__set_uncompressed_page_size(data_size);
     ph.__set_compressed_page_size(data_size);
@@ -652,7 +695,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
       ph.__set_data_page_header_v2(dph2);
     }
     write_page_header(idx, ph);
-    write_data_(pfile, idx, data_size, from, until);
+    write_data_(pfile, idx, data_size, page_from, page_until);
 
   } else if (se.repetition_type == FieldRepetitionType::REQUIRED &&
              encodings[idx] == Encoding::PLAIN &&
@@ -660,13 +703,13 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     // CASE 2: REQ, PLAIN, COMP
     // 1. write data to buf_unc
     uint32_t data_size = calculate_column_data_size(
-      idx, until - from, from, until
+      idx, page_num_values, page_from, page_until
     );
     ph.__set_uncompressed_page_size(data_size);
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_data_(*os0, idx, data_size, from, until);
+    write_data_(*os0, idx, data_size, page_from, page_until);
 
     // 2. compress buf_unc to buf_com
     size_t cdata_size = compress(cmd->codec, buf_unc, data_size, buf_com);
@@ -684,18 +727,19 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
              cmd->codec == CompressionCodec::UNCOMPRESSED) {
     // CASE 3: REQ, RLE_DICT, UNC
     // 1. write dictionary indices to buf_unc
-    uint32_t data_size = (until - from) * sizeof(int);
+    uint32_t data_size = (page_num_values) * sizeof(int);
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size, from, until);
+    write_dictionary_indices_(*os0, idx, data_size, rg_from, rg_until,
+                              page_from, page_until);
 
     // 2. RLE encode buf_unc to buf_com
-    uint32_t num_dict_values = get_num_values_dictionary(idx);
+    uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
     uint8_t bit_width = ceil(log2((double) num_dict_values));
     uint32_t rle_size = rle_encode(
       buf_unc,
-      until - from,
+      page_num_values,
       buf_com,
       bit_width,
       true
@@ -718,19 +762,20 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
              cmd->codec != CompressionCodec::UNCOMPRESSED) {
     // CASE 4: REQ, RLE_DICT, COMP
     // 1. write dictionary indices to buf_unc
-    uint32_t data_size = (until - from) * sizeof(int);
+    uint32_t data_size = page_num_values * sizeof(int);
     ph.__set_uncompressed_page_size(data_size);
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size, from, until);
+    write_dictionary_indices_(*os0, idx, data_size, rg_from, rg_until,
+                              page_from, page_until);
 
     // 2. RLE encode buf_unc to buf_com
-    uint32_t num_dict_values = get_num_values_dictionary(idx);
+    uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
     uint8_t bit_width = ceil(log2((double) num_dict_values));
     uint32_t rle_size = rle_encode(
       buf_unc,
-      until - from,
+      page_num_values,
       buf_com,
       bit_width,
       true,       // add_bit_width
@@ -757,24 +802,24 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
              cmd->codec == CompressionCodec::UNCOMPRESSED) {
     // CASE 5: OPT, PLAIN, UNC
     // 1. write definition levels to buf_unc
-    uint32_t miss_size = (until - from) * sizeof(int);
+    uint32_t miss_size = page_num_values * sizeof(int);
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os0, idx, from, until);
+    uint32_t num_present = write_present(*os0, idx, page_from, page_until);
 
     // 2. RLE buf_unc to buf_com
-    uint32_t rle_size = rle_encode(buf_unc, until - from, buf_com, 1, false);
+    uint32_t rle_size = rle_encode(buf_unc, page_num_values, buf_com, 1, false);
 
     // 3. Write buf_unc to file
     uint32_t data_size = calculate_column_data_size(
-      idx, num_present, from, until
+      idx, num_present, page_from, page_until
     );
     int prep_length = data_page_version == 1 ? 4 : 0;
     ph.__set_uncompressed_page_size(data_size + rle_size + prep_length);
     ph.__set_compressed_page_size(data_size + rle_size + prep_length);
     if (data_page_version == 2) {
-      dph2.__set_num_nulls(until - from - num_present);
+      dph2.__set_num_nulls(page_num_values - num_present);
       dph2.__set_definition_levels_byte_length(rle_size);
       ph.__set_data_page_header_v2(dph2);
     }
@@ -788,23 +833,23 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     );
 
     // 4. write data to file
-    write_present_data_(pfile, idx, data_size, num_present, from, until);
+    write_present_data_(pfile, idx, data_size, num_present, page_from, page_until);
 
   } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
              encodings[idx] == Encoding::PLAIN &&
              cmd->codec != CompressionCodec::UNCOMPRESSED) {
     // CASE 6: OPT, PLAIN, COMP
     // 1. write definition levels to buf_unc
-    uint32_t miss_size = (until - from) * sizeof(int);
+    uint32_t miss_size = page_num_values * sizeof(int);
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os0, idx, from, until);
+    uint32_t num_present = write_present(*os0, idx, page_from, page_until);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
       buf_unc,
-      until - from,
+      page_num_values,
       buf_com,
       1,                      // bit_width
       false,                  // add_bit_width
@@ -813,13 +858,13 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
 
     // 3. Append data to buf_com
     uint32_t data_size = calculate_column_data_size(
-      idx, num_present, from, until
+      idx, num_present, page_from, page_until
     );
     buf_com.resize(rle_size + data_size, true);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_com));
     buf_com.skip(rle_size);
-    write_present_data_(*os1, idx, data_size, num_present, from, until);
+    write_present_data_(*os1, idx, data_size, num_present, page_from, page_until);
 
     // 4. compress buf_com to buf_unc
     // for data page v2, the def levels are not compressed!
@@ -830,7 +875,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     ph.__set_uncompressed_page_size(rle_size + data_size);
     ph.__set_compressed_page_size(comp_size);
     if (data_page_version == 2) {
-      dph2.__set_num_nulls(until - from - num_present);
+      dph2.__set_num_nulls(page_num_values - num_present);
       dph2.__set_definition_levels_byte_length(rle_size);
       ph.__set_data_page_header_v2(dph2);
     }
@@ -845,16 +890,16 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
              cmd->codec == CompressionCodec::UNCOMPRESSED) {
     // CASE 7: OPT RLE_DICT UNC
     // 1. write definition levels to buf_unc
-    uint32_t miss_size = (until - from) * sizeof(int);
+    uint32_t miss_size = page_num_values * sizeof(int);
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os1, idx, from, until);
+    uint32_t num_present = write_present(*os1, idx, page_from, page_until);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
       buf_unc,
-      until - from,
+      page_num_values,
       buf_com,
       1,                       // bit_width
       false,                   // add_bit_width
@@ -866,10 +911,11 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size, from, until);
+    write_dictionary_indices_(*os0, idx, data_size, rg_from, rg_until,
+                              page_from, page_until);
 
     // 4. append RLE buf_unc to buf_com
-    uint32_t num_dict_values = get_num_values_dictionary(idx);
+    uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
     uint8_t bit_width = ceil(log2((double) num_dict_values));
     uint32_t rle2_size = rle_encode(
       buf_unc,
@@ -885,7 +931,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     ph.__set_uncompressed_page_size(rle2_size);
     ph.__set_compressed_page_size(rle2_size);
     if (data_page_version == 2) {
-      dph2.__set_num_nulls(until - from - num_present);
+      dph2.__set_num_nulls(page_num_values - num_present);
       dph2.__set_definition_levels_byte_length(rle_size);
       ph.__set_data_page_header_v2(dph2);
     }
@@ -900,16 +946,16 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
              cmd->codec != CompressionCodec::UNCOMPRESSED) {
     // CASE 8: OPT RLE_DICT COM
     // 1. write definition levels to buf_unc
-    uint32_t miss_size = (until - from) * sizeof(int);
+    uint32_t miss_size = page_num_values * sizeof(int);
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os1, idx, from, until);
+    uint32_t num_present = write_present(*os1, idx, page_from, page_until);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
       buf_unc,
-      until - from,
+      page_num_values,
       buf_com,
       1,                      // bit_width
       false,                  // add_bit_width
@@ -921,10 +967,11 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_dictionary_indices_(*os0, idx, data_size, from, until);
+    write_dictionary_indices_(*os0, idx, data_size, rg_from, rg_until,
+                              page_from, page_until);
 
     // 4. append RLE buf_unc to buf_com
-    uint32_t num_dict_values = get_num_values_dictionary(idx);
+    uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
     uint8_t bit_width = ceil(log2((double) num_dict_values));
     uint32_t rle2_size = rle_encode(
       buf_unc,
@@ -944,7 +991,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     ph.__set_uncompressed_page_size(rle2_size);
     ph.__set_compressed_page_size(crle2_size);
     if (data_page_version == 2) {
-      dph2.__set_num_nulls(until - from - num_present);
+      dph2.__set_num_nulls(page_num_values - num_present);
       dph2.__set_definition_levels_byte_length(rle_size);
       ph.__set_data_page_header_v2(dph2);
     }
@@ -959,16 +1006,16 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
              cmd->codec == CompressionCodec::UNCOMPRESSED) {
     // CASE 9: REQ, RLE, UNCOMP
     // 1. write logicals into buf_unc
-    uint32_t data_size = (until - from) * sizeof(int);
+    uint32_t data_size = page_num_values * sizeof(int);
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_boolean_as_int(*os0, idx, from, until);
+    write_boolean_as_int(*os0, idx, page_from, page_until);
 
     // 2. RLE encode buf_unc to buf_com
     uint32_t rle_size = rle_encode(
       buf_unc,
-      until - from,
+      page_num_values,
       buf_com,
       1,             // bit_width
       false,         // add_bit_width
@@ -989,16 +1036,16 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
              cmd->codec != CompressionCodec::UNCOMPRESSED) {
     // CASE 10: REQ, RLE, COMP
     // 1. write logicals into buf_unc
-    uint32_t data_size = (until - from) * sizeof(int);
+    uint32_t data_size = page_num_values * sizeof(int);
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_boolean_as_int(*os0, idx, from, until);
+    write_boolean_as_int(*os0, idx, page_from, page_until);
 
     // 2. RLE encode buf_unc to buf_com
     uint32_t rle_size = rle_encode(
       buf_unc,
-      until - from,
+      page_num_values,
       buf_com,
       1,             // bit_width
       false,         // add_bit_width
@@ -1022,16 +1069,16 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
              cmd->codec == CompressionCodec::UNCOMPRESSED) {
     // CASE 11: OPT RLE UNC
     // 1. write definition levels to buf_unc
-    uint32_t miss_size = (until - from) * sizeof(int);
+    uint32_t miss_size = page_num_values * sizeof(int);
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os1, idx, from, until);
+    uint32_t num_present = write_present(*os1, idx, page_from, page_until);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
       buf_unc,
-      until - from,
+      page_num_values,
       buf_com,
       1,         // bit_width
       false,     // add_bit_width
@@ -1043,7 +1090,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_present_boolean_as_int(*os0, idx, num_present, from, until);
+    write_present_boolean_as_int(*os0, idx, num_present, page_from, page_until);
 
     // 4. append RLE buf_unc to buf_com
     uint32_t rle2_size = rle_encode(
@@ -1070,16 +1117,16 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
              cmd->codec != CompressionCodec::UNCOMPRESSED) {
     // CASE 12: OPT RLE COMP
     // 1. write definition levels to buf_unc
-    uint32_t miss_size = (until - from) * sizeof(int);
+    uint32_t miss_size = page_num_values * sizeof(int);
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os1, idx, from, until);
+    uint32_t num_present = write_present(*os1, idx, page_from, page_until);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
       buf_unc,
-      until - from,
+      page_num_values,
       buf_com,
       1,         // bit_width
       false,     // add_bit_width
@@ -1091,7 +1138,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint64_t from,
     buf_unc.reset(data_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    write_present_boolean_as_int(*os0, idx, num_present, from, until);
+    write_present_boolean_as_int(*os0, idx, num_present, page_from, page_until);
 
     // 4. append RLE buf_unc to buf_com
     uint32_t rle2_size = rle_encode(
@@ -1158,26 +1205,11 @@ uint64_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
 }
 
 void ParquetOutFile::write_footer() {
-  vector<ColumnChunk> ccs;
-  for (uint32_t idx = 0; idx < num_cols; idx++) {
-    ColumnChunk cc;
-    cc.__set_file_offset(column_meta_data[idx].data_page_offset);
-    cc.__set_meta_data(column_meta_data[idx]);
-    ccs.push_back(cc);
-  }
-
-  vector<RowGroup> rgs;
-  RowGroup rg;
-  rg.__set_num_rows(num_rows);
-  rg.__set_total_byte_size(total_size);
-  rg.__set_columns(ccs);
-  rgs.push_back(rg);
-
   FileMetaData fmd;
   fmd.__set_version(1);
   fmd.__set_schema(schemas);
   fmd.__set_num_rows(num_rows);
-  fmd.__set_row_groups(rgs);
+  fmd.__set_row_groups(row_groups);
   fmd.__set_key_value_metadata(kv);
   fmd.__set_created_by("https://github.com/gaborcsardi/nanoparquet");
   fmd.write(tproto.get());

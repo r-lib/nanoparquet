@@ -87,7 +87,7 @@ static uint16_t double_to_float16(double x) {
 
 extern "C" {
 SEXP nanoparquet_create_dict(SEXP x, SEXP rlen);
-SEXP nanoparquet_create_dict_idx_(SEXP x);
+SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until);
 SEXP nanoparquet_avg_run_length(SEXP x, SEXP rlen);
 }
 
@@ -95,11 +95,13 @@ class RParquetOutFile : public ParquetOutFile {
 public:
   RParquetOutFile(
     std::string filename,
-    parquet::CompressionCodec::type codec
+    parquet::CompressionCodec::type codec,
+    std::vector<int64_t> &row_groups
   );
   RParquetOutFile(
     std::ostream &stream,
-    parquet::CompressionCodec::type codec
+    parquet::CompressionCodec::type codec,
+    std::vector<int64_t> &row_groups
   );
   void write_int32(std::ostream &file, uint32_t idx, uint64_t from,
                    uint64_t until, parquet::SchemaElement &sel);
@@ -133,12 +135,16 @@ public:
                                     uint64_t until);
 
   // for dictionaries
-  uint32_t get_num_values_dictionary(uint32_t idx);
-  uint32_t get_size_dictionary(uint32_t idx, parquet::SchemaElement &type);
+  uint32_t get_num_values_dictionary(uint32_t idx, int64_t form,
+                                     int64_t until);
+  uint32_t get_size_dictionary(uint32_t idx, parquet::SchemaElement &type,
+                               int64_t from, int64_t until);
   void write_dictionary(std::ostream &file, uint32_t idx,
-                        parquet::SchemaElement &sel);
+                        parquet::SchemaElement &sel, int64_t from,
+                        int64_t until);
   void write_dictionary_indices(std::ostream &file, uint32_t idx,
-                                uint64_t from, uint64_t until);
+                                int64_t rg_from, int64_t rg_until,
+                                uint64_t page_from, uint64_t page_until);
 
   void write(
     SEXP dfsxp,
@@ -154,9 +160,10 @@ private:
   SEXP df = R_NilValue;
   SEXP required = R_NilValue;
   SEXP dicts = R_NilValue;
+  SEXP dicts_from = R_NilValue;
   ByteBuffer present;
 
-  void create_dictionary(uint32_t idx);
+  void create_dictionary(uint32_t idx, int64_t from, int64_t until);
   // for LGLSXP this mean RLE encoding
   bool should_use_dict_encoding(uint32_t idx);
   parquet::Encoding::type
@@ -165,26 +172,32 @@ private:
 
 RParquetOutFile::RParquetOutFile(
   std::string filename,
-  parquet::CompressionCodec::type codec) :
-    ParquetOutFile(filename, codec) {
+  parquet::CompressionCodec::type codec,
+  std::vector<int64_t> &row_groups) :
+    ParquetOutFile(filename, codec, row_groups) {
 }
 
 RParquetOutFile::RParquetOutFile(
   std::ostream &stream,
-  parquet::CompressionCodec::type codec
-) : ParquetOutFile(stream, codec) {
+  parquet::CompressionCodec::type codec,
+  std::vector<int64_t> &row_groups) :
+    ParquetOutFile(stream, codec, row_groups) {
 }
 
-void RParquetOutFile::create_dictionary(uint32_t idx) {
-  // olny do it once
-  if (!Rf_isNull(VECTOR_ELT(dicts, idx))) {
+void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
+                                        int64_t until) {
+  if (!Rf_isNull(VECTOR_ELT(dicts, idx)) &&
+      INTEGER(dicts_from)[idx] == from) {
     return;
   }
 
   SEXP col = VECTOR_ELT(df, idx);
-  SEXP d = PROTECT(nanoparquet_create_dict_idx_(col));
+  SEXP sfrom = PROTECT(Rf_ScalarInteger(from));
+  SEXP suntil = PROTECT(Rf_ScalarInteger(until));
+  SEXP d = PROTECT(nanoparquet_create_dict_idx_(col, sfrom, suntil));
   SET_VECTOR_ELT(dicts, idx, d);
-  UNPROTECT(1);
+  INTEGER(dicts_from)[idx] = from;
+  UNPROTECT(3);
 }
 
 static const char *enc_[] = {
@@ -1533,19 +1546,23 @@ void RParquetOutFile::write_present_boolean(
 }
 
 uint32_t RParquetOutFile::get_num_values_dictionary(
-    uint32_t idx) {
+    uint32_t idx,
+    int64_t from,
+    int64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   if (Rf_inherits(col, "factor")) {
     return Rf_nlevels(col);
   } else {
-    create_dictionary(idx);
+    create_dictionary(idx, from, until);
     return Rf_length(VECTOR_ELT(VECTOR_ELT(dicts, idx), 0));
   }
 }
 
 uint32_t RParquetOutFile::get_size_dictionary(
   uint32_t idx,
-  parquet::SchemaElement &sel) {
+  parquet::SchemaElement &sel,
+  int64_t from,
+  int64_t until) {
 
   SEXP col = VECTOR_ELT(df, idx);
   parquet::Type::type type = sel.type;
@@ -1563,7 +1580,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
       UNPROTECT(1);
       return size;
     } else {
-      create_dictionary(idx);
+      create_dictionary(idx, from, until);
       SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
       if (type == parquet::Type::INT32) {
         return Rf_xlength(dictidx) * sizeof(int);
@@ -1582,7 +1599,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
     break;
   }
   case REALSXP: {
-    create_dictionary(idx);
+    create_dictionary(idx, from, until);
     SEXP dict = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     if (type == parquet::Type::DOUBLE) {
       return Rf_xlength(dict) * sizeof(double);
@@ -1607,7 +1624,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
   }
   case STRSXP: {
     // need to count the length of the stings that are indexed in dict
-    create_dictionary(idx);
+    create_dictionary(idx, from, until);
     SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     R_xlen_t len = Rf_xlength(dictidx);
     bool is_uuid = sel.__isset.logicalType && sel.logicalType.__isset.UUID;
@@ -1628,7 +1645,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
   }
   case LGLSXP: {
     // this does not happen, no dictionaries for BOOLEAN, makes no sense
-    create_dictionary(idx);                                  // # nocov
+    create_dictionary(idx, from, until);                     // # nocov
     SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);    // # nocov
     R_xlen_t l = Rf_xlength(dictidx);                        // # nocov
     return l / 8 + (l % 8 > 0);                              // # nocov
@@ -1642,7 +1659,9 @@ uint32_t RParquetOutFile::get_size_dictionary(
 void RParquetOutFile::write_dictionary(
     std::ostream &file,
     uint32_t idx,
-    parquet::SchemaElement &sel) {
+    parquet::SchemaElement &sel,
+    int64_t from,
+    int64_t until) {
 
   parquet::Type::type type = sel.type;
 
@@ -1671,7 +1690,7 @@ void RParquetOutFile::write_dictionary(
     } else {
       SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
       R_xlen_t len = Rf_xlength(dictidx);
-      int *icol = INTEGER(col);
+      int *icol = INTEGER(col) + from;
       int *iidx = INTEGER(dictidx);
       switch (type) {
       case parquet::Type::INT32: {
@@ -1773,7 +1792,7 @@ void RParquetOutFile::write_dictionary(
   case REALSXP: {
     SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     R_xlen_t len = Rf_xlength(dictidx);
-    double *icol = REAL(col);
+    double *icol = REAL(col) + from;
     int *iidx = INTEGER(dictidx);
     if (Rf_inherits(col, "POSIXct")) {
       if (type != parquet::Type::INT64) {
@@ -2036,7 +2055,7 @@ void RParquetOutFile::write_dictionary(
       R_xlen_t len = Rf_xlength(dictidx);
       int *iidx = INTEGER(dictidx);
       for (uint64_t i = 0; i < len; i++) {
-        const char *c = CHAR(STRING_ELT(col, iidx[i]));
+        const char *c = CHAR(STRING_ELT(col, from + iidx[i]));
         uint32_t len1 = strlen(c);
         file.write((const char *)&len1, 4);
         file.write(c, len1);
@@ -2051,7 +2070,7 @@ void RParquetOutFile::write_dictionary(
         R_xlen_t len = Rf_xlength(dictidx);
         int *iidx = INTEGER(dictidx);
         for (uint64_t i = 0; i < len; i++) {
-          const char *c = CHAR(STRING_ELT(col, iidx[i]));
+          const char *c = CHAR(STRING_ELT(col, from + iidx[i]));
           if (!parse_uuid(c, u, tmp)) {
             Rf_errorcall(
               nanoparquet_call,
@@ -2065,7 +2084,7 @@ void RParquetOutFile::write_dictionary(
         R_xlen_t len = Rf_xlength(dictidx);
         int *iidx = INTEGER(dictidx);
         for (uint64_t i = 0; i < len; i++) {
-          const char *c = CHAR(STRING_ELT(col, iidx[i]));
+          const char *c = CHAR(STRING_ELT(col, from + iidx[i]));
           uint32_t len1 = strlen(c);
           if (len1 != sel.type_length) {
             Rf_errorcall(
@@ -2100,7 +2119,7 @@ void RParquetOutFile::write_dictionary(
     SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     R_xlen_t len = Rf_xlength(dictidx);
     SEXP dict = PROTECT(Rf_allocVector(LGLSXP, len));
-    int *icol = LOGICAL(col);
+    int *icol = LOGICAL(col) + from;
     int *iidx = INTEGER(dictidx);
     int *idict = LOGICAL(dict);
     for (auto i = 0; i < len; i++) {
@@ -2118,18 +2137,18 @@ void RParquetOutFile::write_dictionary(
 void RParquetOutFile::write_dictionary_indices(
   std::ostream &file,
   uint32_t idx,
-  uint64_t from,
-  uint64_t until) {
+  int64_t rg_from,
+  int64_t rg_until,
+  uint64_t page_from,
+  uint64_t page_until) {
+
+  // Both all of rg_* and page_* are in absolute coordinates
 
   SEXP col = VECTOR_ELT(df, idx);
-  if (until > Rf_xlength(col)) {
-    Rf_errorcall(                                          // # nocov
-      nanoparquet_call,                                    // # nocov
-      "Internal nanoparquet error, row index too large"
-    );
-  }
   if (TYPEOF(col) == INTSXP && Rf_inherits(col, "factor")) {
-    for (uint64_t i = from; i < until; i++) {
+    // there is a single dict for a factor, which is used in all row
+    // groups, so we use absolute coordinates here
+    for (uint64_t i = page_from; i < page_until; i++) {
       int el = INTEGER(col)[i];
       if (el != NA_INTEGER) {
         el--;
@@ -2138,7 +2157,10 @@ void RParquetOutFile::write_dictionary_indices(
     }
   } else {
     SEXP dictmap = VECTOR_ELT(VECTOR_ELT(dicts, idx), 1);
-    for (uint64_t i = from; i < until; i++) {
+    // there is a separate dict for each row group, so we need to convert
+    // the absolute page_* coordinates to relative coordinates, starting
+    // at rg_from
+    for (uint64_t i = page_from - rg_from; i < page_until - rg_from; i++) {
       int el = INTEGER(dictmap)[i];
       if (el != NA_INTEGER) {
         file.write((const char *) &el, sizeof(int));
@@ -2379,6 +2401,7 @@ void RParquetOutFile::write(
   df = dfsxp;
   required = rrequired;
   dicts = PROTECT(Rf_allocVector(VECSXP, Rf_length(df)));
+  dicts_from = PROTECT(Rf_allocVector(INTSXP, Rf_length(df)));
   SEXP nms = PROTECT(Rf_getAttrib(dfsxp, R_NamesSymbol));
   int *type = INTEGER(VECTOR_ELT(schema, 3));
   int *type_length = INTEGER(VECTOR_ELT(schema, 4));
@@ -2445,7 +2468,7 @@ void RParquetOutFile::write(
 
   ParquetOutFile::write();
 
-  UNPROTECT(2);
+  UNPROTECT(3);
 }
 
 extern "C" {
@@ -2466,7 +2489,8 @@ static SEXP get_list_element(SEXP list, const char *str) {
 
 SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
                         SEXP metadata, SEXP required, SEXP options,
-                        SEXP schema, SEXP encoding) {
+                        SEXP schema, SEXP encoding,
+                        SEXP row_group_starts) {
 
   if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
     Rf_errorcall(nanoparquet_call,
@@ -2496,11 +2520,18 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
 
   int dp_ver = INTEGER(get_list_element(options, "write_data_page_version"))[0];
 
+  R_xlen_t nrg = Rf_xlength(row_group_starts);
+  std::vector<int64_t> row_groups(nrg);
+  for (R_xlen_t i = 0; i < nrg; i++) {
+    // convert to zero-based
+    row_groups[i] = INTEGER(row_group_starts)[i] - 1;
+  }
+
   std::string fname = (char *)CHAR(STRING_ELT(filesxp, 0));
   if (fname == ":raw:") {
     MemStream ms;
     std::ostream &os = ms.stream();
-    RParquetOutFile of(os, codec);
+    RParquetOutFile of(os, codec, row_groups);
     of.data_page_version = dp_ver;
     of.write(dfsxp, dim, metadata, required, options, schema, encoding);
     R_xlen_t bufsize = ms.size();
@@ -2508,7 +2539,7 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
     ms.copy(RAW(res), bufsize);
     return res;
   } else {
-    RParquetOutFile of(fname, codec);
+    RParquetOutFile of(fname, codec, row_groups);
     of.data_page_version = dp_ver;
     of.write(dfsxp, dim, metadata, required, options, schema, encoding);
     return R_NilValue;
@@ -2525,6 +2556,7 @@ struct nanoparquet_write_data {
   SEXP options;
   SEXP schema;
   SEXP encoding;
+  SEXP row_group_starts;
 };
 
 SEXP nanoparquet_write_wrapped(void *data) {
@@ -2539,9 +2571,11 @@ SEXP nanoparquet_write_wrapped(void *data) {
   SEXP options = rdata->options;
   SEXP schema = rdata->schema;
   SEXP encoding = rdata->encoding;
+  SEXP row_group_starts = rdata->row_group_starts;
 
   return nanoparquet_write_(dfsxp, filesxp, dim, compression, metadata,
-                            required, options, schema, encoding);
+                            required, options, schema, encoding,
+                            row_group_starts);
 }
 
 SEXP nanoparquet_write(
@@ -2554,11 +2588,12 @@ SEXP nanoparquet_write(
   SEXP options,
   SEXP schema,
   SEXP encoding,
+  SEXP row_group_starts,
   SEXP call) {
 
   struct nanoparquet_write_data data = {
     dfsxp, filesxp, dim, compression, metadata, required, options, schema,
-    encoding
+    encoding, row_group_starts
   };
 
   SEXP uwt = PROTECT(R_MakeUnwindCont());

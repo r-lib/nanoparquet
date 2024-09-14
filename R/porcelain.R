@@ -241,8 +241,8 @@ dict_encode <- function(x, n = length(x)) {
 	.Call(nanoparquet_create_dict, x, n)
 }
 
-dict_encode_idx <- function(x) {
-	.Call(nanoparquet_create_dict_idx, x, sys.call())
+dict_encode_idx <- function(x, from = 1L, until = length(x) + 1L ) {
+	.Call(nanoparquet_create_dict_idx, x, from - 1L, until - 1L, sys.call())
 }
 
 lgl_avg_run_length <- function(x, n = length(x)) {
