@@ -84,6 +84,7 @@
 </ul></li>
 <li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> can now write version 2 data pages. The default is still version 1, but it might change in the future.</p></li>
 <li><p><code>write_parquet(file = ":raw:")</code> now works correctly for larger data frames (<a href="https://github.com/r-lib/nanoparquet/issues/77" class="external-link">#77</a>).</p></li>
+<li><p>New <code>compression_level</code> option to select the compression level manually. See <code><a href="../reference/parquet_options.html">?parquet_options</a></code> for details. (<a href="https://github.com/r-lib/nanoparquet/issues/91" class="external-link">#91</a>).</p></li>
 <li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> can now read from an R connection (<a href="https://github.com/r-lib/nanoparquet/issues/71" class="external-link">#71</a>).</p></li>
 <li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> now reads <code>DECIMAL</code> values correctly from <code>INT32</code> and <code>INT64</code> columns if their <code>scale</code> is not zero.</p></li>
 <li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> now reads <code>JSON</code> columns as character vectors, as documented.</p></li>
