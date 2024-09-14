@@ -25,25 +25,6 @@ test_df <- function(tibble = FALSE, factor = FALSE, missing = FALSE) {
   df
 }
 
-test_package_root <- function() {
-  skip_if_not_installed("rprojroot")
-  x <- tryCatch(
-    rprojroot::find_package_root_file(),
-    error = function(e) NULL)
-
-  if (!is.null(x)) return(x)
-
-  pkg <- testthat::testing_package()
-  x <- tryCatch(
-    rprojroot::find_package_root_file(
-      path = file.path("..", "..", "00_pkg_src", pkg)),
-    error = function(e) NULL)
-
-  if (!is.null(x)) return(x)
-
-  stop("Cannot find package root")
-}
-
 test_write <- function(d, schema = NULL, encoding = NULL) {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
