@@ -53,6 +53,9 @@
 * `write_parquet(file = ":raw:")` now works correctly for larger data
   frames (#77).
 
+* New `compression_level` option to select the compression level
+  manually. See `?parquet_options` for details. (#91).
+
 * `read_parquet()` now reads `DECIMAL` values correctly from `INT32`
   and `INT64` columns if their `scale` is not zero.
 

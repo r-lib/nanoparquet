@@ -19,7 +19,19 @@ in \code{\link[=read_parquet]{read_parquet()}}. By default nanoparquet adds the 
 so data frames are printed differently if the pillar package is
 loaded.}
 
-\item{compression_level}{The compression level in \code{\link[=write_parquet]{write_parquet()}}.}
+\item{compression_level}{The compression level in \code{\link[=write_parquet]{write_parquet()}}.
+\code{NA} is the default, and it specifies the default
+compression level of each method. \code{Inf} always selects the highest
+possible compression level. More details:
+\itemize{
+\item Snappy does not support compression levels currently.
+\item GZIP supports levels from 0 (uncompressed), 1 (fastest), to 9 (best).
+The default is 6.
+\item ZSTD allows positive levels up to 22 currently. 20 and above require
+more memory. Negative levels are also allowed, the lower the level,
+the faster the speed, at the cost of compression. Currently the
+smallest level is -131072.
+}}
 
 \item{num_rows_per_row_group}{The number of rows to put into a row
 group, if row groups are not specified explicitly. It should be

@@ -431,12 +431,22 @@ size_t ParquetOutFile::compress(
     size_t tgt_size_est = zstd::ZSTD_compressBound(src_size - skip);
     tgt.reset(tgt_size_est);
     if (skip > 0) memcpy(tgt.ptr, src.ptr, skip);
+    int level;
+    int minlevel = zstd::ZSTD_minCLevel();
+    int maxlevel = zstd::ZSTD_maxCLevel();
+    if (compression_level < minlevel) {
+      level = minlevel;
+    } else if (compression_level > maxlevel) {
+      level = maxlevel;
+    } else {
+      level = compression_level;
+    }
     size_t tgt_size = zstd::ZSTD_compress(
       tgt.ptr + skip,
       tgt_size_est,
       src.ptr + skip,
       src_size - skip,
-      ZSTD_CLEVEL_DEFAULT
+      level
     );
     if (zstd::ZSTD_isError(tgt_size)) {
         std::stringstream ss;

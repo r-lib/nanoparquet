@@ -49,6 +49,14 @@ as_count <- function(x, name = "x", zero = FALSE) {
   stop(name, " must be a count, i.e. an integer scalar")
 }
 
+as_integer_scalar <- function(x, name = "x") {
+  if (is.integer(x) && length(x) == 1 && !is.na(x)) return(x)
+  if (is.double(x) && length(x) == 1 && !is.na(x) && as.integer(x) == x) {
+    return(as.integer(x))
+  }
+  stop(name, " must be an integer scalar")
+}
+
 is_uint32 <- function(x) {
   is.numeric(x) && length(x) == 1 && !is.na(x) &&
     round(x) == x && x >= 0 && x <= 4294967295

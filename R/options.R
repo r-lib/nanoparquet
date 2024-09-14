@@ -6,7 +6,16 @@
 #'   so data frames are printed differently if the pillar package is
 #'   loaded.
 #' @param compression_level The compression level in [write_parquet()].
-#'
+#'   `NA` is the default, and it specifies the default
+#'   compression level of each method. `Inf` always selects the highest
+#'   possible compression level. More details:
+#'   * Snappy does not support compression levels currently.
+#'   * GZIP supports levels from 0 (uncompressed), 1 (fastest), to 9 (best).
+#'     The default is 6.
+#'   * ZSTD allows positive levels up to 22 currently. 20 and above require
+#'     more memory. Negative levels are also allowed, the lower the level,
+#'     the faster the speed, at the cost of compression. Currently the
+#'     smallest level is -131072.
 #' @param num_rows_per_row_group The number of rows to put into a row
 #'   group, if row groups are not specified explicitly. It should be
 #'   an integer scalar. Defaults to 10 million.
@@ -61,10 +70,14 @@ parquet_options <- function(
     num_rows_per_row_group,
     "num_rows_per_row_group"
   )
-  if (identical(compression_level, NA_integer_)) {
-    compression_level <- -1L
+  if (identical(compression_level, Inf)) {
+    compression_level <- 100000L
+  } else if (identical(compression_level, NA) ||
+             identical(compression_level, NA_integer_) ||
+             identical(compression_level, NA_real_)) {
+    compression_level <- NA_integer_
   } else {
-    compression_level <- as_count(compression_level, "compression_level", zero = TRUE)
+    compression_level <- as_integer_scalar(compression_level, "compression_level")
   }
 
   list(

@@ -3,13 +3,8 @@
 #' Writes the contents of an R data frame into a Parquet file.
 #'
 #' `write_parquet()` converts string columns to UTF-8 encoding by calling
-#' [base::enc2utf8()]. It does the same for factor levels. `NA_integer_`
-#'   is the default, and it specifies the default compression level of
-#'   each method. More details:
-#'   * Snappy does not support compression levels currently.
-#'   * GZIP supports levels from 0 (uncompressed), 1 (fastest), to 9 (best).
-#'     The default is 6.
-#'   * ZSTD: TODO
+#' [base::enc2utf8()]. It does the same for factor levels.
+#'
 #' @param x Data frame to write.
 #' @param file Path to the output file. If this is the string `":raw:"`,
 #'   then the data frame is written to a memory buffer, and the memory
@@ -77,8 +72,18 @@ write_parquet <- function(
   options = parquet_options()) {
 
   file <- path.expand(file)
+
   codecs <- c("uncompressed" = 0L, "snappy" = 1L, "gzip" = 2L, "zstd" = 6L)
   compression <- codecs[match.arg(compression)]
+  if (is.na(options[["compression_level"]])) {
+    # -1 is an allowed value for zstd, so we set the default here
+    if (compression == "zstd") {
+      options[["compression_level"]] <- 3L
+    } else {
+      options[["compression_level"]] <- -1L
+    }
+  }
+
   dim <- as.integer(dim(x))
 
   schema <- map_schema_to_df(schema, x, options)
