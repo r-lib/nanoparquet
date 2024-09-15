@@ -301,7 +301,8 @@ SEXP convert_column_chunks(const char *file_name,
     "data_page_offset",
     "index_page_offset",
     "dictionary_page_offset",
-    // TODO: statistics
+    "null_count",
+    // TODO: more statistics
     // TODO: encoding_stats
     ""
   };
@@ -334,6 +335,7 @@ SEXP convert_column_chunks(const char *file_name,
   SET_VECTOR_ELT(rccs, 16, safe_allocvector_real(nccs, &uwtoken));  // data_page_offset
   SET_VECTOR_ELT(rccs, 17, safe_allocvector_real(nccs, &uwtoken));  // index_page_offset
   SET_VECTOR_ELT(rccs, 18, safe_allocvector_real(nccs, &uwtoken));  // dictionary_page_offset
+  SET_VECTOR_ELT(rccs, 19, safe_allocvector_real(nccs, &uwtoken));  // statistics.null_count
 
   SEXP rfile_name = PROTECT(safe_mkchar(file_name, &uwtoken));
 
@@ -375,6 +377,9 @@ SEXP convert_column_chunks(const char *file_name,
         cmd.__isset.index_page_offset ? cmd.index_page_offset : NA_REAL;
       REAL(VECTOR_ELT(rccs, 18))[idx] =
         cmd.__isset.dictionary_page_offset ? cmd.dictionary_page_offset : NA_REAL;
+      REAL(VECTOR_ELT(rccs, 19))[idx] =
+        cmd.__isset.statistics && cmd.statistics.__isset.null_count ?
+        cmd.statistics.null_count : NA_REAL;
 
       idx++;
     }

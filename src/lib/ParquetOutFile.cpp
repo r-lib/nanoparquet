@@ -547,6 +547,10 @@ void ParquetOutFile::write_column(uint32_t idx, int64_t from, int64_t until) {
   uint32_t col_start = pfile.tellp();
   // we increase this as needed
   cmd->__set_total_uncompressed_size(0);
+  Statistics stat;
+  // we increase this as we write
+  stat.__set_null_count(0);
+  cmd->__set_statistics(stat);
   if (encodings[idx] == Encoding::RLE_DICTIONARY) {
     uint32_t dictionary_page_offset = pfile.tellp();
     write_dictionary_page(idx, from, until);
@@ -673,6 +677,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
                                      int64_t rg_until, uint64_t page_from,
                                      uint64_t page_until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
+  Statistics *stat = &(cmd->statistics);
   SchemaElement se = schemas[idx + 1];
   PageHeader ph;
   DataPageHeaderV2 dph2;
@@ -852,6 +857,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
     cmd->__set_total_uncompressed_size(
       cmd->total_uncompressed_size + rle_size + 4
     );
+    stat->__set_null_count(stat->null_count + page_num_values - num_present);
 
     // 4. write data to file
     write_present_data_(pfile, idx, data_size, num_present, page_from, page_until);
@@ -905,6 +911,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
     cmd->__set_total_uncompressed_size(
       cmd->total_uncompressed_size + rle_size
     );
+    stat->__set_null_count(stat->null_count + page_num_values - num_present);
 
   } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
              encodings[idx] == Encoding::RLE_DICTIONARY &&
@@ -961,6 +968,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
     cmd->__set_total_uncompressed_size(
       cmd->total_uncompressed_size + rle2_size
     );
+    stat->__set_null_count(stat->null_count + page_num_values - num_present);
 
   } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
              encodings[idx] == Encoding::RLE_DICTIONARY &&
@@ -1021,6 +1029,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
     cmd->__set_total_uncompressed_size(
       cmd->total_uncompressed_size + rle2_size
     );
+    stat->__set_null_count(stat->null_count + page_num_values - num_present);
 
   } else if (se.repetition_type == FieldRepetitionType::REQUIRED &&
              encodings[idx] == Encoding::RLE &&
@@ -1132,6 +1141,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
     cmd->__set_total_uncompressed_size(
       cmd->total_uncompressed_size + rle2_size
     );
+    stat->__set_null_count(stat->null_count + page_num_values - num_present);
 
   } else if (se.repetition_type == FieldRepetitionType::OPTIONAL &&
              encodings[idx] == Encoding::RLE &&
@@ -1183,6 +1193,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, int64_t rg_from,
     cmd->__set_total_uncompressed_size(
       cmd->total_uncompressed_size + rle2_size
     );
+    stat->__set_null_count(stat->null_count + page_num_values - num_present);
   }
 }
 
