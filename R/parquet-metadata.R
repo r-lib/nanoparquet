@@ -170,6 +170,8 @@ format_schema_result <- function(mtd, sch, options) {
 #'     - `dictionary_page_offset`: absolute position of the first
 #'       dictionary page of the column chunk in the file, or `NA` if there
 #'       are no dictionary pages.
+#'     - `null_count`: the number of missing values in the column chunk.
+#'       It may be `NA`.
 #'     - `min_value`: list column of raw vectors, the minimum value of the
 #'       column, in binary. If `NULL`, then then it is not specified.
 #'       This column is experimental.

@@ -99,6 +99,8 @@ the column chunk in the file, or \code{NA} if there are no index pages.
 \item \code{dictionary_page_offset}: absolute position of the first
 dictionary page of the column chunk in the file, or \code{NA} if there
 are no dictionary pages.
+\item \code{null_count}: the number of missing values in the column chunk.
+It may be \code{NA}.
 \item \code{min_value}: list column of raw vectors, the minimum value of the
 column, in binary. If \code{NULL}, then then it is not specified.
 This column is experimental.
