@@ -17,6 +17,11 @@ SEXP wrapped_intsxp(void *len) {
   return Rf_allocVector(INTSXP, *xlen);
 }
 
+SEXP wrapped_lglsxp(void *len) {
+  R_xlen_t *xlen = (R_xlen_t*) len;
+  return Rf_allocVector(LGLSXP, *xlen);
+}
+
 SEXP wrapped_realsxp(void *len) {
   R_xlen_t *xlen = (R_xlen_t*) len;
   return Rf_allocVector(REALSXP, *xlen);

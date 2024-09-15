@@ -302,6 +302,10 @@ SEXP convert_column_chunks(const char *file_name,
     "index_page_offset",
     "dictionary_page_offset",
     "null_count",
+    "min_value",
+    "max_value",
+    "is_min_value_exact",
+    "is_max_value_exact",
     // TODO: more statistics
     // TODO: encoding_stats
     ""
@@ -336,6 +340,10 @@ SEXP convert_column_chunks(const char *file_name,
   SET_VECTOR_ELT(rccs, 17, safe_allocvector_real(nccs, &uwtoken));  // index_page_offset
   SET_VECTOR_ELT(rccs, 18, safe_allocvector_real(nccs, &uwtoken));  // dictionary_page_offset
   SET_VECTOR_ELT(rccs, 19, safe_allocvector_real(nccs, &uwtoken));  // statistics.null_count
+  SET_VECTOR_ELT(rccs, 20, safe_allocvector_vec(nccs, &uwtoken));   // statistics.min_value
+  SET_VECTOR_ELT(rccs, 21, safe_allocvector_vec(nccs, &uwtoken));   // statistics.max_value
+  SET_VECTOR_ELT(rccs, 22, safe_allocvector_lgl(nccs, &uwtoken));   // statistics.is_min_value_exact
+  SET_VECTOR_ELT(rccs, 23, safe_allocvector_lgl(nccs, &uwtoken));   // statistics.is_max_value_exact
 
   SEXP rfile_name = PROTECT(safe_mkchar(file_name, &uwtoken));
 
@@ -380,6 +388,22 @@ SEXP convert_column_chunks(const char *file_name,
       REAL(VECTOR_ELT(rccs, 19))[idx] =
         cmd.__isset.statistics && cmd.statistics.__isset.null_count ?
         cmd.statistics.null_count : NA_REAL;
+      if (cmd.__isset.statistics && cmd.statistics.__isset.min_value) {
+        size_t vl = cmd.statistics.min_value.size();
+        SET_VECTOR_ELT(VECTOR_ELT(rccs, 20), idx, safe_allocvector_raw(vl, &uwtoken));
+        memcpy(RAW(VECTOR_ELT(VECTOR_ELT(rccs, 20), idx)), cmd.statistics.min_value.data(), vl);
+      }
+      if (cmd.__isset.statistics && cmd.statistics.__isset.max_value) {
+        size_t vl = cmd.statistics.max_value.size();
+        SET_VECTOR_ELT(VECTOR_ELT(rccs, 21), idx, safe_allocvector_raw(vl, &uwtoken));
+        memcpy(RAW(VECTOR_ELT(VECTOR_ELT(rccs, 21), idx)), cmd.statistics.max_value.data(), vl);
+      }
+      LOGICAL(VECTOR_ELT(rccs, 22))[idx] =
+        cmd.__isset.statistics && cmd.statistics.__isset.is_min_value_exact ?
+        cmd.statistics.is_min_value_exact : NA_LOGICAL;
+      LOGICAL(VECTOR_ELT(rccs, 23))[idx] =
+        cmd.__isset.statistics && cmd.statistics.__isset.is_max_value_exact ?
+        cmd.statistics.is_max_value_exact : NA_LOGICAL;
 
       idx++;
     }
