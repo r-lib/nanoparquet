@@ -105,27 +105,33 @@ public:
     int compsession_level,
     std::vector<int64_t> &row_groups
   );
-  void write_int32(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until, parquet::SchemaElement &sel);
-  void write_int64(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until, parquet::SchemaElement &sel);
-  void write_int96(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until, parquet::SchemaElement &sel);
-  void write_float(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until, parquet::SchemaElement &sel);
-  void write_double(std::ostream &file, uint32_t idx, uint64_t from,
-                    uint64_t until, parquet::SchemaElement &sel);
-  void write_byte_array(std::ostream &file, uint32_t id, uint64_t from,
-                        uint64_t until, parquet::SchemaElement &sel);
+  void write_int32(std::ostream &file, uint32_t idx, uint32_t group,
+                   uint32_t page, uint64_t from, uint64_t until,
+                   parquet::SchemaElement &sel);
+  void write_int64(std::ostream &file, uint32_t idx, uint32_t group,
+                   uint32_t page, uint64_t from, uint64_t until,
+                   parquet::SchemaElement &sel);
+  void write_int96(std::ostream &file, uint32_t idx, uint32_t group,
+                   uint32_t page, uint64_t from, uint64_t until,
+                   parquet::SchemaElement &sel);
+  void write_float(std::ostream &file, uint32_t idx, uint32_t group,
+                   uint32_t page, uint64_t from, uint64_t until,
+                   parquet::SchemaElement &sel);
+  void write_double(std::ostream &file, uint32_t idx, uint32_t group,
+                    uint32_t page, uint64_t from, uint64_t until,
+                    parquet::SchemaElement &sel);
+  void write_byte_array(std::ostream &file, uint32_t idx, uint32_t group,
+                        uint32_t page, uint64_t from, uint64_t until,
+                        parquet::SchemaElement &sel);
   void write_fixed_len_byte_array(std::ostream &file, uint32_t id,
-                                  uint64_t from, uint64_t until,
-                                  parquet::SchemaElement &sel);
+                                  uint32_t group, uint32_t page, uint64_t from,
+                                  uint64_t until, parquet::SchemaElement &sel);
   uint32_t get_size_byte_array(uint32_t idx, uint32_t num_present,
                                uint64_t from, uint64_t until);
-  void write_boolean(std::ostream &file, uint32_t idx, uint64_t from,
-                     uint64_t until);
-  void write_boolean_as_int(std::ostream &file, uint32_t idx,
-                            uint64_t from, uint64_t until);
+  void write_boolean(std::ostream &file, uint32_t idx, uint32_t group,
+                     uint32_t page, uint64_t from, uint64_t until);
+  void write_boolean_as_int(std::ostream &file, uint32_t idx, uint32_t group,
+                            uint32_t page, uint64_t from, uint64_t until);
 
   uint32_t write_present(std::ostream &file, uint32_t idx, uint64_t from,
                          uint64_t until);
@@ -755,6 +761,7 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
 }
 
 void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
+                                  uint32_t group, uint32_t page,
                                   uint64_t from, uint64_t until,
                                   parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -978,6 +985,7 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
 }
 
 void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
+                                  uint32_t group, uint32_t page,
                                   uint64_t from, uint64_t until,
                                   parquet::SchemaElement &sel) {
   // This is double in R, so we need to convert
@@ -1019,6 +1027,7 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_int96(std::ostream &file, uint32_t idx,
+                                  uint32_t group, uint32_t page,
                                   uint64_t from, uint64_t until,
                                   parquet::SchemaElement &sel) {
   // This is double in R, so we need to convert
@@ -1058,6 +1067,7 @@ void RParquetOutFile::write_int96(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
+                                  uint32_t group, uint32_t page,
                                   uint64_t from, uint64_t until,
                                   parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -1083,6 +1093,7 @@ void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
+                                   uint32_t group, uint32_t page,
                                    uint64_t from, uint64_t until,
                                    parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -1112,6 +1123,7 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
+                                       uint32_t group, uint32_t page,
                                        uint64_t from, uint64_t until,
                                        parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -1259,6 +1271,7 @@ static bool parse_uuid(const char *c, char *u, char *t) {
 void RParquetOutFile::write_fixed_len_byte_array(
   std::ostream &file,
   uint32_t idx,
+  uint32_t group, uint32_t page,
   uint64_t from, uint64_t until,
   parquet::SchemaElement &sel) {
 
@@ -1399,6 +1412,7 @@ void write_boolean_impl(std::ostream &file, SEXP col,
 }
 
 void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx,
+                                    uint32_t group, uint32_t page,
                                     uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != LGLSXP) {
@@ -1413,6 +1427,8 @@ void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx,
 
 void RParquetOutFile::write_boolean_as_int(std::ostream &file,
                                            uint32_t idx,
+                                           uint32_t group,
+                                           uint32_t page,
                                            uint64_t from,
                                            uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
