@@ -96,3 +96,16 @@ test_that("non-factors write local dictionary", {
     }
   })
 })
+
+test_that("strings in a dictionary", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- test_df()
+  write_parquet(
+    df, tmp,
+    encoding = c(large = "RLE", "RLE_DICTIONARY"),
+    options = parquet_options(num_rows_per_row_group=10)
+  )
+  expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
+})
