@@ -106,20 +106,34 @@
       11                   275             2879                NA
       12                   275             3154                NA
       13                    21             3429                NA
-         dictionary_page_offset
-      1                      NA
-      2                      NA
-      3                      NA
-      4                      NA
-      5                      NA
-      6                      NA
-      7                      NA
-      8                      NA
-      9                      NA
-      10                     NA
-      11                     NA
-      12                     NA
-      13                     NA
+         dictionary_page_offset null_count min_value max_value is_min_value_exact
+      1                      NA          0                                     NA
+      2                      NA          0                                     NA
+      3                      NA          0                                     NA
+      4                      NA          0                                     NA
+      5                      NA          0                                     NA
+      6                      NA          0                                     NA
+      7                      NA          0                                     NA
+      8                      NA          0                                     NA
+      9                      NA          0                                     NA
+      10                     NA          0                                     NA
+      11                     NA          0                                     NA
+      12                     NA          0                                     NA
+      13                     NA          0                                     NA
+         is_max_value_exact
+      1                  NA
+      2                  NA
+      3                  NA
+      4                  NA
+      5                  NA
+      6                  NA
+      7                  NA
+      8                  NA
+      9                  NA
+      10                 NA
+      11                 NA
+      12                 NA
+      13                 NA
 
 ---
 
