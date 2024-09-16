@@ -514,12 +514,12 @@ void ParquetOutFile::write() {
     // write
     int64_t from = row_group_starts[idx];
     int64_t until = idx < row_group_starts.size() - 1 ? row_group_starts[idx + 1] : num_rows;
+    write_row_group(idx);
     int64_t total_size = write_columns(idx, from, until);
 
     // row group metadata
     vector<ColumnChunk> ccs;
     for (uint32_t idx = 0; idx < num_cols; idx++) {
-      Statistics stat;
       ColumnChunk cc;
       cc.__set_file_offset(column_meta_data[idx].data_page_offset);
       cc.__set_meta_data(column_meta_data[idx]);
@@ -569,6 +569,15 @@ void ParquetOutFile::write_column(uint32_t idx, uint32_t group,
   cmd->__set_num_values(until - from);
   cmd->__set_total_compressed_size(column_bytes);
   cmd->__set_data_page_offset(data_offset);
+  // min-max values
+  std::string min_value, max_value;
+  if (get_group_minmax_values(idx, group, se, min_value, max_value)) {
+    Statistics *stat = &cmd->statistics;
+    stat->__set_min_value(min_value);
+    stat->__set_max_value(max_value);
+    stat->__set_is_min_value_exact(true);
+    stat->__set_is_max_value_exact(true);
+  }
 }
 
 void ParquetOutFile::write_page_header(uint32_t idx, PageHeader &ph) {

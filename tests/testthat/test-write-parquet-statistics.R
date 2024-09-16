@@ -13,3 +13,34 @@ test_that("null_count is written", {
     ])
   )
 })
+
+test_that("min/max for integers", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- test_df(missing = TRUE)
+  df <- df[order(df$cyl), ]
+  rownames(df) <- NULL
+
+  write_parquet(
+    df, tmp,
+    encoding = "PLAIN",
+    options = parquet_options(num_rows_per_row_group = 5)
+  )
+  expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
+  mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+  expect_snapshot(
+    mtd[mtd$column == 2, c("row_group", "column", "min_value", "max_value")]
+  )
+
+  # dictionary
+  write_parquet(
+    df, tmp,
+    encoding = ifelse(map_chr(df, class) == "logical", "PLAIN", "RLE_DICTIONARY"),
+    options = parquet_options(num_rows_per_row_group = 5)
+  )
+  expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
+  mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+  expect_snapshot(
+    mtd[mtd$column == 2, c("row_group", "column", "min_value", "max_value")]
+  )
+})

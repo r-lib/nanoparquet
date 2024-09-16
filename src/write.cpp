@@ -89,6 +89,7 @@ extern "C" {
 SEXP nanoparquet_create_dict(SEXP x, SEXP rlen);
 SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until);
 SEXP nanoparquet_avg_run_length(SEXP x, SEXP rlen);
+static SEXP get_list_element(SEXP list, const char *str);
 }
 
 class RParquetOutFile : public ParquetOutFile {
@@ -105,6 +106,7 @@ public:
     int compsession_level,
     std::vector<int64_t> &row_groups
   );
+  void write_row_group(uint32_t group);
   void write_int32(std::ostream &file, uint32_t idx, uint32_t group,
                    uint32_t page, uint64_t from, uint64_t until,
                    parquet::SchemaElement &sel);
@@ -154,6 +156,12 @@ public:
                                 int64_t rg_from, int64_t rg_until,
                                 uint64_t page_from, uint64_t page_until);
 
+  // statistics
+  bool get_group_minmax_values(uint32_t idx, uint32_t group,
+                               parquet::SchemaElement &sel,
+                               std::string &min_value,
+                               std::string &max_value);
+
   void write(
     SEXP dfsxp,
     SEXP dim,
@@ -171,11 +179,24 @@ private:
   SEXP dicts_from = R_NilValue;
   ByteBuffer present;
 
+  bool write_minmax_values;
+  std::vector<bool> is_minmax_supported;
+  std::vector<std::string> min_values;
+  std::vector<std::string> max_values;
+  std::vector<bool> has_minmax_value;
+
   void create_dictionary(uint32_t idx, int64_t from, int64_t until);
   // for LGLSXP this mean RLE encoding
   bool should_use_dict_encoding(uint32_t idx);
   parquet::Encoding::type
   detect_encoding(uint32_t idx, parquet::SchemaElement &sel, int32_t renc);
+
+  void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
+                           uint64_t from, uint64_t until,
+                           parquet::SchemaElement &sel);
+  void write_double_int32_time(std::ostream &file, SEXP col, uint32_t idx,
+                               uint64_t from, uint64_t until,
+                               parquet::SchemaElement &sel, double factor);
 };
 
 RParquetOutFile::RParquetOutFile(
@@ -583,23 +604,56 @@ void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
   }
 }
 
-void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
-                         uint64_t from, uint64_t until,
-                         parquet::SchemaElement &sel) {
+void RParquetOutFile::write_row_group(uint32_t group) {
+  if (write_minmax_values) {
+    std::fill(min_values.begin(), min_values.end(), std::string());
+    std::fill(max_values.begin(), max_values.end(), std::string());
+    std::fill(has_minmax_value.begin(), has_minmax_value.end(), false);
+  }
+}
+
+#define GRAB_MIN(idx, t) ((t*) min_values[idx].data())
+#define GRAB_MAX(idx, t) ((t*) max_values[idx].data())
+#define SAVE_MIN(idx, val, t) do {                               \
+  min_values[idx] = std::string((const char*) &val, sizeof(t));  \
+  min_value = (t*) min_values[idx].data(); } while (0)
+#define SAVE_MAX(idx, val, t) do {                               \
+  max_values[idx] = std::string((const char*) &val, sizeof(t));  \
+  max_value = (t*) max_values[idx].data(); } while (0)
+
+void RParquetOutFile::write_integer_int32(std::ostream &file, SEXP col,
+                                          uint32_t idx,
+                                          uint64_t from, uint64_t until,
+                                          parquet::SchemaElement &sel) {
   bool is_signed = TRUE;
   int bit_width = 32;
   if (sel.__isset.logicalType && sel.logicalType.__isset.INTEGER) {
     is_signed = sel.logicalType.INTEGER.isSigned;
     bit_width = sel.logicalType.INTEGER.bitWidth;
   }
+
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  int32_t *min_value = 0, *max_value = 0;
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, int32_t);
+    max_value = GRAB_MAX(idx, int32_t);
+  }
+
   if (bit_width == 32) {
-    if (sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
+    if (!write_minmax_values &&
+        sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
       uint64_t len = until - from;
       file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
     } else {
       for (uint64_t i = from; i < until; i++) {
         int32_t val = INTEGER(col)[i];
         if (val == NA_INTEGER) continue;
+        if (minmax && (min_value == 0 || val < *min_value)) {
+          SAVE_MIN(idx, val, int32_t);
+        }
+        if (minmax && (max_value == 0 || val > *max_value)) {
+          SAVE_MAX(idx, val, int32_t);
+        }
         file.write((const char*) &val, sizeof(int32_t));
       }
     }
@@ -628,9 +682,16 @@ void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
           w, (is_signed ? "" : "U"), bit_width, val, idx + 1, i + 1
         );
       }
+      if (minmax && (min_value == 0 || val < *min_value)) {
+        SAVE_MIN(idx, val, int32_t);
+      }
+      if (minmax && (max_value == 0 || val > *max_value)) {
+        SAVE_MAX(idx, val, int32_t);
+      }
       file.write((const char *) &val, sizeof(int32_t));
     }
   }
+  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
 }
 
 void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
@@ -666,15 +727,31 @@ void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
   }
 }
 
-void write_double_int32_time(std::ostream &file, SEXP col, uint32_t idx,
-                             uint64_t from, uint64_t until,
-                             parquet::SchemaElement &sel, double factor) {
+void RParquetOutFile::write_double_int32_time(std::ostream &file, SEXP col,
+                                              uint32_t idx, uint64_t from,
+                                              uint64_t until,
+                                              parquet::SchemaElement &sel,
+                                              double factor) {
+  int32_t *min_value = 0, *max_value = 0;
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, int32_t);
+    max_value = GRAB_MAX(idx, int32_t);
+  }
+
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
     if (R_IsNA(val)) continue;
     int32_t ival = val * factor;
+    if (minmax && (min_value == 0 || ival < *min_value)) {
+      SAVE_MIN(idx, ival, int32_t);
+    }
+    if (minmax && (max_value == 0 || ival > *max_value)) {
+      SAVE_MAX(idx, ival, int32_t);
+    }
     file.write((const char *)&ival, sizeof(int32_t));
   }
+  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
 }
 
 void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
@@ -2189,6 +2266,23 @@ void RParquetOutFile::write_dictionary_indices(
   }
 }
 
+bool RParquetOutFile::get_group_minmax_values(uint32_t idx, uint32_t group,
+                                              parquet::SchemaElement &sel,
+                                              std::string &min_value,
+                                              std::string &max_value) {
+
+  if (!is_minmax_supported[idx]) {
+    return false;
+  } else if (!has_minmax_value[idx]) {
+    // maybe all values are missing
+    return false;
+  } else {
+    min_value = min_values[idx];
+    max_value = max_values[idx];
+    return true;
+  }
+}
+
 void nanoparquet_map_to_parquet_type(
   SEXP x,
   SEXP options,
@@ -2433,6 +2527,13 @@ void RParquetOutFile::write(
   R_xlen_t nr = INTEGER(dim)[0];
   set_num_rows(nr);
   R_xlen_t nc = INTEGER(dim)[1];
+
+  write_minmax_values = LOGICAL(get_list_element(options, "write_minmax_values"))[0];
+  is_minmax_supported = std::vector<bool>(nc, false);
+  has_minmax_value.resize(nc);
+  min_values.resize(nc);
+  max_values.resize(nc);
+
   for (R_xlen_t idx = 0; idx < nc; idx++) {
     SEXP col = VECTOR_ELT(dfsxp, idx);
     bool req = LOGICAL(required)[idx];
@@ -2466,6 +2567,32 @@ void RParquetOutFile::write(
       }
       if (precision[idx] != NA_INTEGER) {
         sel.__set_precision(precision[idx]);
+      }
+    }
+
+    if (!write_minmax_values) {
+      // nothing to do
+    } if (sel.__isset.logicalType) {
+      parquet::LogicalType &lt = sel.logicalType;
+      is_minmax_supported[idx] = lt.__isset.DATE || lt.__isset.INTEGER;
+      // TODO: support the rest
+      // is_minmax_supported[idx] =
+      //   lt.__isset.STRING || lt.__isset.ENUM ||
+      //   lt.__isset.TIME || lt.__isset.TIMESTAMP ||
+      //   lt.__isset.JSON || lt.__isset.BSON || lt.__isset.UUID ||
+      //   lt.__isset.DECIMAL || lt.isset.FLOAT16;
+    } else {
+      switch(sel.type) {
+      // case parquet::Type::BOOLEAN:
+      case parquet::Type::INT32:
+      // case parquet::Type::INT64:
+      // case parquet::Type::FLOAT:
+      // case parquet::Type::DOUBLE:
+        is_minmax_supported[idx] = true;
+        break;
+      default:
+        is_minmax_supported[idx] = false;
+        break;
       }
     }
 

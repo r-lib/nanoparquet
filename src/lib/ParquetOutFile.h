@@ -33,6 +33,11 @@ public:
   void add_key_value_metadata(std::string key, std::string value);
   void write();
 
+  // This makes the write inherently sequential and we might remove it
+  // latest. Currently, it makes it easier to keep track of minimume and
+  // maximum values per row group.
+  virtual void write_row_group(uint32_t group) = 0;
+
   // write out various parquet types, these must be implemented in
   // the subclass
   virtual void write_int32(std::ostream &file, uint32_t idx, uint32_t group,
@@ -94,6 +99,11 @@ public:
                                         int64_t rg_from, int64_t rg_until,
                                         uint64_t page_from,
                                         uint64_t page_until) = 0;
+
+  virtual bool get_group_minmax_values(uint32_t idx, uint32_t group,
+                                       parquet::SchemaElement &sel,
+                                       std::string &min_value,
+                                       std::string &max_value) = 0;
 
   int data_page_version = 1;
 

@@ -10,7 +10,8 @@ parquet_options(
   num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
-  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L)
+  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L),
+  write_minmax_values = getOption("nanoparquet.write_minmax_values", TRUE)
 )
 }
 \arguments{
@@ -56,6 +57,12 @@ metadata to the file \code{\link[=write_parquet]{write_parquet()}}.}
 
 \item{write_data_page_version}{Data version to write by default.
 Possible values are 1 and 2. Default is 1.}
+
+\item{write_minmax_values}{Whether to write minimum and maximum values
+per row group, for data types that support this in \code{\link[=write_parquet]{write_parquet()}}.
+However, nanoparquet currently does not support minimum and maximum
+values for the \code{DECIMAL} and \code{FLOAT16} logical types. Currently the
+default is \code{TRUE}.}
 }
 \value{
 List of nanoparquet options.
