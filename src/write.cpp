@@ -1732,7 +1732,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
     int *beg = INTEGER(dictidx);
     int *end = beg + len;
     for (; beg < end; beg++) {
-      const char *c = CHAR(STRING_ELT(col, *beg));
+      const char *c = CHAR(STRING_ELT(col, *beg + from));
       size += strlen(c);
     }
     return size;
