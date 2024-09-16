@@ -122,12 +122,18 @@ uint64_t create_dict_real_idx(double* values, int *dict, int *idx, uint64_t len)
 }
 
 template <typename T>
-uint64_t create_dict_idx(T* values, int *dict, int *idx, uint64_t len, T naval) {
+uint64_t create_dict_idx(T* values, int *dict, int *idx, uint64_t len,
+                         T naval, T &minval, T &maxval) {
   std::unordered_map<T, int> mm;
   mm.reserve(len * 2);
   T *begin = values;
   T *end = begin + len;
   int n = 0;
+
+  if (begin < end) {
+    minval = *begin;
+    maxval = *begin;
+  }
 
   for (int i = 0; begin < end; begin++, i++) {
     if (*begin == naval) {
@@ -136,6 +142,8 @@ uint64_t create_dict_idx(T* values, int *dict, int *idx, uint64_t len, T naval) 
     }
     auto it = mm.find(*begin);
     if (it == mm.end()) {
+      if (*begin < minval) minval = *begin;
+      if (*begin > maxval) maxval = *begin;
       mm.insert(std::make_pair(*begin, n));
       idx[i] = n;
       dict[n] = i;
@@ -185,12 +193,13 @@ SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until) {
   SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));
   int *idict = INTEGER(dict);
   int *iidx = INTEGER(idx);
+  int imin, imax;
   switch (TYPEOF(x)) {
     case LGLSXP:
-      dictlen = create_dict_idx<int>(LOGICAL(x) + cfrom, iidx, idict, len, NA_LOGICAL);
+      dictlen = create_dict_idx<int>(LOGICAL(x) + cfrom, iidx, idict, len, NA_LOGICAL, imin, imax);
       break;
     case INTSXP:
-      dictlen = create_dict_idx<int>(INTEGER(x) + cfrom, idict, iidx, len, NA_INTEGER);
+      dictlen = create_dict_idx<int>(INTEGER(x) + cfrom, idict, iidx, len, NA_INTEGER, imin, imax);
       break;
     case REALSXP:
       dictlen = create_dict_real_idx(REAL(x) + cfrom, idict, iidx, len);
@@ -204,9 +213,13 @@ SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until) {
       break;
   }
 
-  SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+  SEXP res = PROTECT(Rf_allocVector(VECSXP, TYPEOF(x) == INTSXP ? 4 : 2));
   SET_VECTOR_ELT(res, 0, dict);
   SET_VECTOR_ELT(res, 1, idx);
+  if (TYPEOF(x) == INTSXP) {
+    SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(imin));
+    SET_VECTOR_ELT(res, 3, Rf_ScalarInteger(imax));
+  }
 
   if (dictlen < len) {
     SET_VECTOR_ELT(res, 0, Rf_xlengthgets(dict, dictlen));

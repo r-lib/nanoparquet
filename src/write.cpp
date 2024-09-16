@@ -229,6 +229,13 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
   SET_VECTOR_ELT(dicts, idx, d);
   INTEGER(dicts_from)[idx] = from;
   UNPROTECT(3);
+  if (write_minmax_values && Rf_length(d) == 4 &&
+      is_minmax_supported[idx] && Rf_xlength(col) > 0 &&
+      !Rf_isNull(VECTOR_ELT(d, 2)) && !Rf_isNull(VECTOR_ELT(d, 3))) {
+    has_minmax_value[idx] = true;
+    min_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 2)), sizeof(int32_t));
+    max_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 3)), sizeof(int32_t));
+  }
 }
 
 static const char *enc_[] = {
@@ -1242,15 +1249,6 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
       file.write((const char*) &len1, sizeof(uint32_t));
       file.write((const char*) RAW(el), len1);
     }
-    break;
-  }
-  case INTSXP: {
-    int32_t precision, scale;
-    bool isdec = is_decimal(sel, precision, scale);
-
-    break;
-  }
-  case REALSXP: {
     break;
   }
   default:
