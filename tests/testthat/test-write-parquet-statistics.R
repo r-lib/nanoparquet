@@ -33,9 +33,10 @@ test_that("min/max for integers", {
   )
 
   # dictionary
+  enc <- ifelse(map_chr(df, class) == "integer", "RLE_DICTIONARY", "PLAIN")
   write_parquet(
     df, tmp,
-    encoding = ifelse(map_chr(df, class) == "logical", "PLAIN", "RLE_DICTIONARY"),
+    encoding = enc,
     options = parquet_options(num_rows_per_row_group = 5)
   )
   expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))

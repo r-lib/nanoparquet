@@ -72,3 +72,17 @@
       68         5      2 08, 00, .... 08, 00, ....
       81         6      2 08, 00, .... 08, 00, ....
 
+---
+
+    Code
+      mtd[mtd$column == 2, c("row_group", "column", "min_value", "max_value")]
+    Output
+         row_group column min_value max_value
+      3          0      2                    
+      16         1      2                    
+      29         2      2                    
+      42         3      2                    
+      55         4      2                    
+      68         5      2                    
+      81         6      2                    
+
