@@ -100,11 +100,11 @@
       2           NA    NA        NA       NA
       3           NA    NA        NA       NA
     Code
-      as.Date(map_int(minv, readBin, what = "integer", n = 1))
+      as.Date(map_int(minv, readBin, what = "integer", n = 1), origin = "1970-01-01")
     Output
       [1] "2024-09-06" "2024-09-08" "2024-09-10" "2024-09-12" "2024-09-14"
     Code
-      as.Date(map_int(maxv, readBin, what = "integer", n = 1))
+      as.Date(map_int(maxv, readBin, what = "integer", n = 1), origin = "1970-01-01")
     Output
       [1] "2024-09-07" "2024-09-09" "2024-09-11" "2024-09-13" "2024-09-15"
 

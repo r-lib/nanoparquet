@@ -64,7 +64,7 @@ test_that("min/max for DATEs", {
   maxv <- mtd[mtd$column == 0, "max_value"]
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[,-1])
-    as.Date(map_int(minv, readBin, what = "integer", n = 1))
-    as.Date(map_int(maxv, readBin, what = "integer", n = 1))
+    as.Date(map_int(minv, readBin, what = "integer", n = 1), origin = "1970-01-01")
+    as.Date(map_int(maxv, readBin, what = "integer", n = 1), origin = "1970-01-01")
   })
 })
