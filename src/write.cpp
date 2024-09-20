@@ -526,6 +526,14 @@ static const char *type_names[] = {
   "an S4 object"
 };
 
+void RParquetOutFile::write_row_group(uint32_t group) {
+  if (write_minmax_values) {
+    std::fill(min_values.begin(), min_values.end(), std::string());
+    std::fill(max_values.begin(), max_values.end(), std::string());
+    std::fill(has_minmax_value.begin(), has_minmax_value.end(), false);
+  }
+}
+
 static bool is_decimal(parquet::SchemaElement &sel, int32_t &precision,
                        int32_t &scale) {
   if (sel.__isset.logicalType && sel.logicalType.__isset.DECIMAL) {
@@ -608,14 +616,6 @@ void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
     }
     val *= fact;
     file.write((const char *)&val, sizeof(int32_t));
-  }
-}
-
-void RParquetOutFile::write_row_group(uint32_t group) {
-  if (write_minmax_values) {
-    std::fill(min_values.begin(), min_values.end(), std::string());
-    std::fill(max_values.begin(), max_values.end(), std::string());
-    std::fill(has_minmax_value.begin(), has_minmax_value.end(), false);
   }
 }
 
