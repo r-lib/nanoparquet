@@ -61,7 +61,7 @@
 # min/max for integers
 
     Code
-      mtd[mtd$column == 2, c("row_group", "column", "min_value", "max_value")]
+      do(compression = "snappy")
     Output
          row_group column    min_value    max_value
       3          0      2 04, 00, .... 04, 00, ....
@@ -75,7 +75,35 @@
 ---
 
     Code
-      mtd[mtd$column == 2, c("row_group", "column", "min_value", "max_value")]
+      do(compression = "uncompressed")
+    Output
+         row_group column    min_value    max_value
+      3          0      2 04, 00, .... 04, 00, ....
+      16         1      2 04, 00, .... 04, 00, ....
+      29         2      2 06, 00, .... 06, 00, ....
+      42         3      2 06, 00, .... 08, 00, ....
+      55         4      2 08, 00, .... 08, 00, ....
+      68         5      2 08, 00, .... 08, 00, ....
+      81         6      2 08, 00, .... 08, 00, ....
+
+---
+
+    Code
+      do(encoding = enc, compression = "snappy")
+    Output
+         row_group column    min_value    max_value
+      3          0      2 04, 00, .... 04, 00, ....
+      16         1      2 04, 00, .... 04, 00, ....
+      29         2      2 06, 00, .... 06, 00, ....
+      42         3      2 06, 00, .... 08, 00, ....
+      55         4      2 08, 00, .... 08, 00, ....
+      68         5      2 08, 00, .... 08, 00, ....
+      81         6      2 08, 00, .... 08, 00, ....
+
+---
+
+    Code
+      do(encoding = enc, compression = "uncompressed")
     Output
          row_group column    min_value    max_value
       3          0      2 04, 00, .... 04, 00, ....
@@ -89,8 +117,9 @@
 # min/max for DATEs
 
     Code
-      as.data.frame(read_parquet_schema(tmp)[, -1])
+      do()
     Output
+      [[1]]
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
       2    day    Date INT32          NA        REQUIRED           DATE         DATE
@@ -99,12 +128,11 @@
       1            2    NA        NA       NA
       2           NA    NA        NA       NA
       3           NA    NA        NA       NA
-    Code
-      as.Date(map_int(minv, readBin, what = "integer", n = 1), origin = "1970-01-01")
-    Output
+      
+      [[2]]
       [1] "2024-09-06" "2024-09-08" "2024-09-10" "2024-09-12" "2024-09-14"
-    Code
-      as.Date(map_int(maxv, readBin, what = "integer", n = 1), origin = "1970-01-01")
-    Output
+      
+      [[3]]
       [1] "2024-09-07" "2024-09-09" "2024-09-11" "2024-09-13" "2024-09-15"
+      
 
