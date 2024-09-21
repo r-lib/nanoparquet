@@ -296,3 +296,75 @@
       [1] TRUE TRUE TRUE   NA
       
 
+# minmax for double -> INT32 TIME(MULLIS)
+
+    Code
+      do(compression = "snappy")
+    Output
+      [[1]]
+      [1]     1000  -100000 -1000000       NA
+      
+      [[2]]
+      [1]    5000  100000 1000000      NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "uncompressed")
+    Output
+      [[1]]
+      [1]     1000  -100000 -1000000       NA
+      
+      [[2]]
+      [1]    5000  100000 1000000      NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy")
+    Output
+      [[1]]
+      [1]     1000  -100000 -1000000       NA
+      
+      [[2]]
+      [1]    5000  100000 1000000      NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed")
+    Output
+      [[1]]
+      [1]     1000  -100000 -1000000       NA
+      
+      [[2]]
+      [1]    5000  100000 1000000      NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+

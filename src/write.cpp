@@ -220,6 +220,30 @@ RParquetOutFile::RParquetOutFile(
     ParquetOutFile(stream, codec, compression_level, row_groups) {
 }
 
+static bool is_time(parquet::SchemaElement &sel, double &factor) {
+  factor = 1.0;
+  if (sel.__isset.logicalType && sel.logicalType.__isset.TIME) {
+    auto unit = sel.logicalType.TIME.unit;
+    if (unit.__isset.MILLIS) {
+      factor = 1000;
+    } else if (unit.__isset.MICROS) {
+      factor = 1000 * 1000;
+    } else if (unit.__isset.NANOS) {
+      factor = 1000 * 1000 * 1000;
+    }
+    return true;
+  } else if (sel.__isset.converted_type) {
+    if (sel.converted_type == parquet::ConvertedType::TIME_MILLIS) {
+      factor = 1000;
+      return true;
+    } else if (sel.converted_type == parquet::ConvertedType::TIME_MICROS) {
+      factor = 1000 * 1000;
+      return true;
+    }
+  }
+  return false;
+}
+
 void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
                                         int64_t until,
                                         parquet::SchemaElement &sel) {
@@ -243,11 +267,25 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
       min_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 2)), sizeof(int32_t));
       max_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 3)), sizeof(int32_t));
     } else if (TYPEOF(VECTOR_ELT(d, 2)) == REALSXP) {
-      if (sel.type == parquet::Type::INT32) {
-        int32_t min = REAL(VECTOR_ELT(d, 2))[0];
-        int32_t max = REAL(VECTOR_ELT(d, 3))[0];
+      double factor;
+      bool istime = is_time(sel, factor);
+      if (istime) {
+        if (sel.type == parquet::Type::INT32) {
+          int32_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
+          int32_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
           min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
           max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
+        } else {
+          int64_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
+          int64_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
+          min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
+          max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
+        }
+      } else if (sel.type == parquet::Type::INT32) {
+        int32_t min = REAL(VECTOR_ELT(d, 2))[0];
+        int32_t max = REAL(VECTOR_ELT(d, 3))[0];
+        min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
+        max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
       } else if (sel.type == parquet::Type::DOUBLE) {
         min_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 2)), sizeof(double));
         max_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 3)), sizeof(double));
@@ -578,30 +616,6 @@ static bool is_decimal(parquet::SchemaElement &sel, int32_t &precision,
   } else {
     return false;
   }
-}
-
-static bool is_time(parquet::SchemaElement &sel, double &factor) {
-  factor = 1.0;
-  if (sel.__isset.logicalType && sel.logicalType.__isset.TIME) {
-    auto unit = sel.logicalType.TIME.unit;
-    if (unit.__isset.MILLIS) {
-      factor = 1000;
-    } else if (unit.__isset.MICROS) {
-      factor = 1000 * 1000;
-    } else if (unit.__isset.NANOS) {
-      factor = 1000 * 1000 * 1000;
-    }
-    return true;
-  } else if (sel.__isset.converted_type) {
-    if (sel.converted_type == parquet::ConvertedType::TIME_MILLIS) {
-      factor = 1000;
-      return true;
-    } else if (sel.converted_type == parquet::ConvertedType::TIME_MICROS) {
-      factor = 1000 * 1000;
-      return true;
-    }
-  }
-  return false;
 }
 
 void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
@@ -2620,11 +2634,12 @@ void RParquetOutFile::write(
       // nothing to do
     } if (sel.__isset.logicalType) {
       parquet::LogicalType &lt = sel.logicalType;
-      is_minmax_supported[idx] = lt.__isset.DATE || lt.__isset.INTEGER;
+      is_minmax_supported[idx] = lt.__isset.DATE || lt.__isset.INTEGER ||
+        lt.__isset.TIME;
       // TODO: support the rest
       // is_minmax_supported[idx] =
       //   lt.__isset.STRING || lt.__isset.ENUM ||
-      //   lt.__isset.TIME || lt.__isset.TIMESTAMP ||
+      //   lt.__isset.TIMESTAMP ||
       //   lt.__isset.JSON || lt.__isset.BSON || lt.__isset.UUID ||
       //   lt.__isset.DECIMAL || lt.isset.FLOAT16;
     } else {
