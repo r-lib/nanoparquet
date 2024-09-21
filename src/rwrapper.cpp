@@ -1,3 +1,5 @@
+#include <cstdint>
+
 #include <Rdefines.h>
 
 extern "C" {
