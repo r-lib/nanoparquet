@@ -17,9 +17,16 @@ test_that("null_count is written", {
 test_that("min/max for integers", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
-  df <- test_df(missing = TRUE)
-  df <- df[order(df$cyl), ]
-  rownames(df) <- NULL
+  df <- data.frame(x = c(
+    sample(1:5),
+    sample(c(1:3, -100L, 100L)),
+    sample(c(-1000L, NA_integer_, 1000L, NA_integer_, NA_integer_)),
+    rep(NA_integer_, 3)
+  ))
+
+  as_int <- function(x) {
+    sapply(x, function(xx) xx %&&% readBin(xx, what = "integer") %||% NA_integer_)
+  }
 
   do <- function(encoding = "PLAIN",...) {
     write_parquet(
@@ -30,7 +37,12 @@ test_that("min/max for integers", {
     )
     expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
     mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
-    mtd[mtd$column == 2, c("row_group", "column", "min_value", "max_value")]
+    list(
+      as_int(mtd[["min_value"]]),
+      as_int(mtd[["max_value"]]),
+      mtd[["is_min_value_exact"]],
+      mtd[["is_max_value_exact"]]
+    )
   }
   expect_snapshot(do(compression = "snappy"))
   expect_snapshot(do(compression = "uncompressed"))
@@ -50,6 +62,7 @@ test_that("min/max for DATEs", {
       day = rep(as.Date("2024-09-16") - 10:1, each = 10),
       count = 1:100
     )
+    df$day[c(1, 20, 25, 40)] <- as.Date(NA_character_)
     write_parquet(
       df, tmp,
       options = parquet_options(num_rows_per_row_group = 20),
@@ -67,4 +80,82 @@ test_that("min/max for DATEs", {
   }
 
   expect_snapshot(do())
+})
+
+test_that("min/max for double -> signed integers", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- data.frame(x = as.double(c(
+    sample(1:5),
+    sample(c(1:3, -100L, 100L)),
+    sample(c(-1000L, NA_integer_, 1000L, NA_integer_, NA_integer_)),
+    rep(NA_integer_, 3)
+  )))
+
+  as_int <- function(x) {
+    sapply(x, function(xx) xx %&&% readBin(xx, what = "integer") %||% NA_integer_)
+  }
+
+  do <- function(encoding = "PLAIN",...) {
+    write_parquet(
+      df, tmp,
+      schema = parquet_schema(x = "INT32"),
+      encoding = encoding,
+      options = parquet_options(num_rows_per_row_group = 5),
+      ...
+    )
+    expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
+    mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+    list(
+      as_int(mtd[["min_value"]]),
+      as_int(mtd[["max_value"]]),
+      mtd[["is_min_value_exact"]],
+      mtd[["is_max_value_exact"]]
+    )
+  }
+  expect_snapshot(do(compression = "snappy"))
+  expect_snapshot(do(compression = "uncompressed"))
+
+  # dictionary
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
+})
+
+test_that("min/max for double -> unsigned integers", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- data.frame(x = as.double(c(
+    sample(1:5),
+    sample(c(1:3, 1L, 100L)),
+    sample(c(0L, NA_integer_, 1000L, NA_integer_, NA_integer_)),
+    rep(NA_integer_, 3)
+  )))
+
+  as_int <- function(x) {
+    sapply(x, function(xx) xx %&&% readBin(xx, what = "integer") %||% NA_integer_)
+  }
+
+  do <- function(encoding = "PLAIN",...) {
+    write_parquet(
+      df, tmp,
+      schema = parquet_schema(x = "UINT_32"),
+      encoding = encoding,
+      options = parquet_options(num_rows_per_row_group = 5),
+      ...
+    )
+    expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
+    mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+    list(
+      as_int(mtd[["min_value"]]),
+      as_int(mtd[["max_value"]]),
+      mtd[["is_min_value_exact"]],
+      mtd[["is_max_value_exact"]]
+    )
+  }
+  expect_snapshot(do(compression = "snappy"))
+  expect_snapshot(do(compression = "uncompressed"))
+
+  # dictionary
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
 })

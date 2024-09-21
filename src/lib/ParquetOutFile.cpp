@@ -602,7 +602,7 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx, int64_t from,
   // Uncompresed size of the dictionary in bytes
   uint32_t dict_size = get_size_dictionary(idx, se, from, until);
   // Number of entries in the dicitonary
-  uint32_t num_dict_values = get_num_values_dictionary(idx, from, until);
+  uint32_t num_dict_values = get_num_values_dictionary(idx, se, from, until);
 
   // Init page header
   PageHeader ph;
@@ -650,7 +650,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx, uint32_t group,
     total_size = calculate_column_data_size(idx, rg_num_rows, from, until);
   } else {
     // estimate the max RLE length
-    uint32_t num_values = get_num_values_dictionary(idx, from, until);
+    uint32_t num_values = get_num_values_dictionary(idx, se, from, until);
     uint8_t bit_width = ceil(log2((double) num_values));
     total_size = MaxRleBpSizeSimple(rg_num_rows, bit_width);
   }
@@ -778,7 +778,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
                               page_from, page_until);
 
     // 2. RLE encode buf_unc to buf_com
-    uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
+    uint32_t num_dict_values = get_num_values_dictionary(idx, se, rg_from, rg_until);
     uint8_t bit_width = ceil(log2((double) num_dict_values));
     uint32_t rle_size = rle_encode(
       buf_unc,
@@ -814,7 +814,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
                               page_from, page_until);
 
     // 2. RLE encode buf_unc to buf_com
-    uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
+    uint32_t num_dict_values = get_num_values_dictionary(idx, se, rg_from, rg_until);
     uint8_t bit_width = ceil(log2((double) num_dict_values));
     uint32_t rle_size = rle_encode(
       buf_unc,
@@ -962,7 +962,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
                               page_from, page_until);
 
     // 4. append RLE buf_unc to buf_com
-    uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
+    uint32_t num_dict_values = get_num_values_dictionary(idx, se, rg_from, rg_until);
     uint8_t bit_width = ceil(log2((double) num_dict_values));
     uint32_t rle2_size = rle_encode(
       buf_unc,
@@ -1019,7 +1019,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
                               page_from, page_until);
 
     // 4. append RLE buf_unc to buf_com
-    uint32_t num_dict_values = get_num_values_dictionary(idx, rg_from, rg_until);
+    uint32_t num_dict_values = get_num_values_dictionary(idx, se, rg_from, rg_until);
     uint8_t bit_width = ceil(log2((double) num_dict_values));
     uint32_t rle2_size = rle_encode(
       buf_unc,

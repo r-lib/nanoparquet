@@ -95,20 +95,30 @@ uint64_t create_dict_ptr_idx(void** values, int *dict, int *idx,
   return n;
 }
 
-uint64_t create_dict_real_idx(double* values, int *dict, int *idx, uint64_t len) {
+uint64_t create_dict_real_idx(double* values, int *dict, int *idx,
+                              uint64_t len, double &minval,
+                              double &maxval, bool &hasminmax) {
   std::unordered_map<double, int> mm;
   mm.reserve(len * 2);
   double *begin = values;
   double *end = begin + len;
   int n = 0;
 
+  hasminmax = false;
+
   for (int i = 0; begin < end; begin++, i++) {
     if (R_IsNA(*begin)) {
       idx[i] = NA_INTEGER;
       continue;
     }
+    if (!hasminmax) {
+      hasminmax = true;
+      minval = maxval = *begin;
+    }
     auto it = mm.find(*begin);
     if (it == mm.end()) {
+      if (*begin < minval) minval = *begin;
+      if (*begin > maxval) maxval = *begin;
       mm.insert(std::make_pair(*begin, n));
       idx[i] = n;
       dict[n] = i;
@@ -123,22 +133,23 @@ uint64_t create_dict_real_idx(double* values, int *dict, int *idx, uint64_t len)
 
 template <typename T>
 uint64_t create_dict_idx(T* values, int *dict, int *idx, uint64_t len,
-                         T naval, T &minval, T &maxval) {
+                         T naval, T &minval, T &maxval, bool &hasminmax) {
   std::unordered_map<T, int> mm;
   mm.reserve(len * 2);
   T *begin = values;
   T *end = begin + len;
   int n = 0;
 
-  if (begin < end) {
-    minval = *begin;
-    maxval = *begin;
-  }
+  hasminmax = false;
 
   for (int i = 0; begin < end; begin++, i++) {
     if (*begin == naval) {
       idx[i] = NA_INTEGER;
       continue;
+    }
+    if (!hasminmax) {
+      hasminmax = true;
+      minval = maxval = *begin;
     }
     auto it = mm.find(*begin);
     if (it == mm.end()) {
@@ -194,18 +205,32 @@ SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until) {
   int *idict = INTEGER(dict);
   int *iidx = INTEGER(idx);
   int imin, imax;
+  double dmin, dmax;
+  bool hasminmax = false;
   switch (TYPEOF(x)) {
     case LGLSXP:
-      dictlen = create_dict_idx<int>(LOGICAL(x) + cfrom, iidx, idict, len, NA_LOGICAL, imin, imax);
+      dictlen = create_dict_idx<int>(
+        LOGICAL(x) + cfrom, iidx, idict, len, NA_LOGICAL,
+        imin, imax, hasminmax
+      );
       break;
     case INTSXP:
-      dictlen = create_dict_idx<int>(INTEGER(x) + cfrom, idict, iidx, len, NA_INTEGER, imin, imax);
+      dictlen = create_dict_idx<int>(
+        INTEGER(x) + cfrom, idict, iidx, len, NA_INTEGER,
+        imin, imax, hasminmax
+      );
       break;
     case REALSXP:
-      dictlen = create_dict_real_idx(REAL(x) + cfrom, idict, iidx, len);
+      dictlen = create_dict_real_idx(
+        REAL(x) + cfrom, idict, iidx, len,
+        dmin, dmax, hasminmax
+      );
       break;
     case STRSXP: {
-      dictlen = create_dict_ptr_idx((void**)(STRING_PTR_RO(x) + cfrom), idict, iidx, len, (void*) NA_STRING);
+      dictlen = create_dict_ptr_idx(
+        (void**)(STRING_PTR_RO(x) + cfrom), idict, iidx, len,
+        (void*) NA_STRING
+      );
       break;
     }
     default:
@@ -213,12 +238,17 @@ SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until) {
       break;
   }
 
-  SEXP res = PROTECT(Rf_allocVector(VECSXP, TYPEOF(x) == INTSXP ? 4 : 2));
+  SEXP res = PROTECT(Rf_allocVector(VECSXP, hasminmax ? 4 : 2));
   SET_VECTOR_ELT(res, 0, dict);
   SET_VECTOR_ELT(res, 1, idx);
-  if (TYPEOF(x) == INTSXP) {
-    SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(imin));
-    SET_VECTOR_ELT(res, 3, Rf_ScalarInteger(imax));
+  if (hasminmax) {
+    if (TYPEOF(x) == INTSXP) {
+      SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(imin));
+      SET_VECTOR_ELT(res, 3, Rf_ScalarInteger(imax));
+    } else if (TYPEOF(x) == REALSXP) {
+      SET_VECTOR_ELT(res, 2, Rf_ScalarReal(dmin));
+      SET_VECTOR_ELT(res, 3, Rf_ScalarReal(dmax));
+    }
   }
 
   if (dictlen < len) {

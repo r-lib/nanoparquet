@@ -63,56 +63,72 @@
     Code
       do(compression = "snappy")
     Output
-         row_group column    min_value    max_value
-      3          0      2 04, 00, .... 04, 00, ....
-      16         1      2 04, 00, .... 04, 00, ....
-      29         2      2 06, 00, .... 06, 00, ....
-      42         3      2 06, 00, .... 08, 00, ....
-      55         4      2 08, 00, .... 08, 00, ....
-      68         5      2 08, 00, .... 08, 00, ....
-      81         6      2 08, 00, .... 08, 00, ....
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
 
 ---
 
     Code
       do(compression = "uncompressed")
     Output
-         row_group column    min_value    max_value
-      3          0      2 04, 00, .... 04, 00, ....
-      16         1      2 04, 00, .... 04, 00, ....
-      29         2      2 06, 00, .... 06, 00, ....
-      42         3      2 06, 00, .... 08, 00, ....
-      55         4      2 08, 00, .... 08, 00, ....
-      68         5      2 08, 00, .... 08, 00, ....
-      81         6      2 08, 00, .... 08, 00, ....
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
 
 ---
 
     Code
       do(encoding = enc, compression = "snappy")
     Output
-         row_group column    min_value    max_value
-      3          0      2 04, 00, .... 04, 00, ....
-      16         1      2 04, 00, .... 04, 00, ....
-      29         2      2 06, 00, .... 06, 00, ....
-      42         3      2 06, 00, .... 08, 00, ....
-      55         4      2 08, 00, .... 08, 00, ....
-      68         5      2 08, 00, .... 08, 00, ....
-      81         6      2 08, 00, .... 08, 00, ....
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
 
 ---
 
     Code
       do(encoding = enc, compression = "uncompressed")
     Output
-         row_group column    min_value    max_value
-      3          0      2 04, 00, .... 04, 00, ....
-      16         1      2 04, 00, .... 04, 00, ....
-      29         2      2 06, 00, .... 06, 00, ....
-      42         3      2 06, 00, .... 08, 00, ....
-      55         4      2 08, 00, .... 08, 00, ....
-      68         5      2 08, 00, .... 08, 00, ....
-      81         6      2 08, 00, .... 08, 00, ....
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
 
 # min/max for DATEs
 
@@ -122,7 +138,7 @@
       [[1]]
           name  r_type  type type_length repetition_type converted_type logical_type
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2    day    Date INT32          NA        REQUIRED           DATE         DATE
+      2    day    Date INT32          NA        OPTIONAL           DATE         DATE
       3  count integer INT32          NA        REQUIRED         INT_32 INT, 32,....
         num_children scale precision field_id
       1            2    NA        NA       NA
@@ -134,5 +150,149 @@
       
       [[3]]
       [1] "2024-09-07" "2024-09-09" "2024-09-11" "2024-09-13" "2024-09-15"
+      
+
+# min/max for double -> signed integers
+
+    Code
+      do(compression = "snappy")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "uncompressed")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+# min/max for double -> unsigned integers
+
+    Code
+      do(compression = "snappy")
+    Output
+      [[1]]
+      [1]  1  1  0 NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "uncompressed")
+    Output
+      [[1]]
+      [1]  1  1  0 NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy")
+    Output
+      [[1]]
+      [1]  1  1  0 NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed")
+    Output
+      [[1]]
+      [1]  1  1  0 NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
       
 

@@ -85,7 +85,9 @@ public:
   virtual uint32_t get_size_byte_array(uint32_t idx,
                                        uint32_t num_present,
                                        uint64_t from, uint64_t until) = 0;
-  virtual uint32_t get_num_values_dictionary(uint32_t idx, int64_t from,
+  virtual uint32_t get_num_values_dictionary(uint32_t idx,
+                                             parquet::SchemaElement &sel,
+                                             int64_t from,
                                              int64_t until) = 0;
   virtual uint32_t get_size_dictionary(uint32_t idx,
                                        parquet::SchemaElement &sel,

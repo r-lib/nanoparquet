@@ -145,8 +145,9 @@ public:
                                     uint64_t until);
 
   // for dictionaries
-  uint32_t get_num_values_dictionary(uint32_t idx, int64_t form,
-                                     int64_t until);
+  uint32_t get_num_values_dictionary(uint32_t idx,
+                                     parquet::SchemaElement &sel,
+                                     int64_t form, int64_t until);
   uint32_t get_size_dictionary(uint32_t idx, parquet::SchemaElement &type,
                                int64_t from, int64_t until);
   void write_dictionary(std::ostream &file, uint32_t idx,
@@ -185,7 +186,8 @@ private:
   std::vector<std::string> max_values;
   std::vector<bool> has_minmax_value;
 
-  void create_dictionary(uint32_t idx, int64_t from, int64_t until);
+  void create_dictionary(uint32_t idx, int64_t from, int64_t until,
+                         parquet::SchemaElement &sel);
   // for LGLSXP this mean RLE encoding
   bool should_use_dict_encoding(uint32_t idx);
   parquet::Encoding::type
@@ -197,6 +199,9 @@ private:
   void write_double_int32_time(std::ostream &file, SEXP col, uint32_t idx,
                                uint64_t from, uint64_t until,
                                parquet::SchemaElement &sel, double factor);
+  void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
+                          uint64_t from, uint64_t until,
+                          parquet::SchemaElement &sel);
 };
 
 RParquetOutFile::RParquetOutFile(
@@ -216,7 +221,8 @@ RParquetOutFile::RParquetOutFile(
 }
 
 void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
-                                        int64_t until) {
+                                        int64_t until,
+                                        parquet::SchemaElement &sel) {
   if (!Rf_isNull(VECTOR_ELT(dicts, idx)) &&
       INTEGER(dicts_from)[idx] == from) {
     return;
@@ -233,8 +239,20 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
       is_minmax_supported[idx] && Rf_xlength(col) > 0 &&
       !Rf_isNull(VECTOR_ELT(d, 2)) && !Rf_isNull(VECTOR_ELT(d, 3))) {
     has_minmax_value[idx] = true;
-    min_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 2)), sizeof(int32_t));
-    max_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 3)), sizeof(int32_t));
+    if (TYPEOF(VECTOR_ELT(d, 2)) == INTSXP) {
+      min_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 2)), sizeof(int32_t));
+      max_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 3)), sizeof(int32_t));
+    } else if (TYPEOF(VECTOR_ELT(d, 2)) == REALSXP) {
+      if (sel.type == parquet::Type::INT32) {
+        int32_t min = REAL(VECTOR_ELT(d, 2))[0];
+        int32_t max = REAL(VECTOR_ELT(d, 3))[0];
+          min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
+          max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
+      } else if (sel.type == parquet::Type::DOUBLE) {
+        min_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 2)), sizeof(double));
+        max_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 3)), sizeof(double));
+      }
+    }
   }
 }
 
@@ -761,9 +779,10 @@ void RParquetOutFile::write_double_int32_time(std::ostream &file, SEXP col,
   has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
 }
 
-void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
-                        uint64_t from, uint64_t until,
-                        parquet::SchemaElement &sel) {
+void RParquetOutFile::write_double_int32(std::ostream &file, SEXP col,
+                                         uint32_t idx, uint64_t from,
+                                         uint64_t until,
+                                         parquet::SchemaElement &sel) {
   bool is_signed = TRUE;
   int bit_width = 32;
   if (sel.__isset.logicalType && sel.logicalType.__isset.INTEGER) {
@@ -771,6 +790,13 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
     bit_width = sel.logicalType.INTEGER.bitWidth;
   }
   if (is_signed) {
+    int32_t *min_value = 0, *max_value = 0;
+    bool minmax = write_minmax_values && is_minmax_supported[idx];
+    if (minmax && has_minmax_value[idx]) {
+      min_value = GRAB_MIN(idx, int32_t);
+      max_value = GRAB_MAX(idx, int32_t);
+    }
+
     int32_t min, max;
     switch (bit_width) {
     case 8:
@@ -799,9 +825,23 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
         );
       }
       int32_t ival = val;
+      if (minmax && (min_value == 0 || ival < *min_value)) {
+        SAVE_MIN(idx, ival, int32_t);
+      }
+      if (minmax && (max_value == 0 || ival > *max_value)) {
+        SAVE_MAX(idx, ival, int32_t);
+      }
       file.write((const char *)&ival, sizeof(int32_t));
     }
+    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
   } else {
+    uint32_t *min_value = 0, *max_value = 0;
+    bool minmax = write_minmax_values && is_minmax_supported[idx];
+    if (minmax && has_minmax_value[idx]) {
+      min_value = GRAB_MIN(idx, uint32_t);
+      max_value = GRAB_MAX(idx, uint32_t);
+    }
+
     uint32_t max;
     switch (bit_width) {
     case 8:
@@ -838,9 +878,16 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
           val, idx + 1, i + 1
         );
       }
-      int32_t ival = val;
-      file.write((const char *)&ival, sizeof(int32_t));
+      uint32_t uival = val;
+      if (minmax && (min_value == 0 || uival < *min_value)) {
+        SAVE_MIN(idx, uival, uint32_t);
+      }
+      if (minmax && (max_value == 0 || uival > *max_value)) {
+        SAVE_MAX(idx, uival, uint32_t);
+      }
+      file.write((const char *)&uival, sizeof(uint32_t));
     }
+    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
   }
 }
 
@@ -1642,13 +1689,14 @@ void RParquetOutFile::write_present_boolean(
 
 uint32_t RParquetOutFile::get_num_values_dictionary(
     uint32_t idx,
+    parquet::SchemaElement &sel,
     int64_t from,
     int64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   if (Rf_inherits(col, "factor")) {
     return Rf_nlevels(col);
   } else {
-    create_dictionary(idx, from, until);
+    create_dictionary(idx, from, until, sel);
     return Rf_length(VECTOR_ELT(VECTOR_ELT(dicts, idx), 0));
   }
 }
@@ -1675,7 +1723,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
       UNPROTECT(1);
       return size;
     } else {
-      create_dictionary(idx, from, until);
+      create_dictionary(idx, from, until, sel);
       SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
       if (type == parquet::Type::INT32) {
         return Rf_xlength(dictidx) * sizeof(int);
@@ -1694,7 +1742,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
     break;
   }
   case REALSXP: {
-    create_dictionary(idx, from, until);
+    create_dictionary(idx, from, until, sel);
     SEXP dict = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     if (type == parquet::Type::DOUBLE) {
       return Rf_xlength(dict) * sizeof(double);
@@ -1719,7 +1767,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
   }
   case STRSXP: {
     // need to count the length of the stings that are indexed in dict
-    create_dictionary(idx, from, until);
+    create_dictionary(idx, from, until, sel);
     SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     R_xlen_t len = Rf_xlength(dictidx);
     bool is_uuid = sel.__isset.logicalType && sel.logicalType.__isset.UUID;
@@ -1740,7 +1788,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
   }
   case LGLSXP: {
     // this does not happen, no dictionaries for BOOLEAN, makes no sense
-    create_dictionary(idx, from, until);                     // # nocov
+    create_dictionary(idx, from, until, sel);                // # nocov
     SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);    // # nocov
     R_xlen_t l = Rf_xlength(dictidx);                        // # nocov
     return l / 8 + (l % 8 > 0);                              // # nocov
