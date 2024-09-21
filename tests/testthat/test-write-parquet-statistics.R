@@ -354,3 +354,64 @@ test_that("min/max for REALSXP -> INT64", {
   expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy"))
   expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
 })
+
+test_that("min/max for STRING", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- data.frame(x = c(
+    sample(letters[1:5]),
+    sample(c(letters[1:3], "!!!", "~~~")),
+    sample(c("!", NA_character_, "~", NA_character_, NA_character_)),
+    rep(NA_character_, 3)
+  ))
+
+  as_str <- function(x) {
+    sapply(x, function(xx) xx %&&% rawToChar(xx) %||% NA_character_)
+  }
+
+  do <- function(encoding = "PLAIN", type = "STRING", ...) {
+    write_parquet(
+      df, tmp,
+      schema = parquet_schema(x = type),
+      encoding = encoding,
+      options = parquet_options(num_rows_per_row_group = 5),
+      ...
+    )
+    expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
+    expect_equal(read_parquet_schema(tmp)$logical_type[[2]]$type, type)
+    mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+    list(
+      as_str(mtd[["min_value"]]),
+      as_str(mtd[["max_value"]]),
+      mtd[["is_min_value_exact"]],
+      mtd[["is_max_value_exact"]]
+    )
+  }
+  expect_snapshot(do(compression = "snappy"))
+  expect_snapshot(do(compression = "uncompressed"))
+
+  # dictionary
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
+
+  expect_snapshot(do(compression = "snappy", type = "JSON"))
+  expect_snapshot(do(compression = "uncompressed", type = "JSON"))
+
+  # dictionary
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy", type = "JSON"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed", type = "JSON"))
+
+  expect_snapshot(do(compression = "snappy", type = "BSON"))
+  expect_snapshot(do(compression = "uncompressed", type = "BSON"))
+
+  # dictionary
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy", type = "BSON"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed", type = "BSON"))
+
+  expect_snapshot(do(compression = "snappy", type = "ENUM"))
+  expect_snapshot(do(compression = "uncompressed", type = "ENUM"))
+
+  # dictionary
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy", type = "ENUM"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed", type = "ENUM"))
+})

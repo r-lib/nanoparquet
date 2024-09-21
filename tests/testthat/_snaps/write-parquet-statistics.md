@@ -656,3 +656,291 @@
       [1] TRUE TRUE TRUE   NA
       
 
+# min/max for STRING
+
+    Code
+      do(compression = "snappy")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "uncompressed")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "snappy", type = "JSON")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "uncompressed", type = "JSON")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy", type = "JSON")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed", type = "JSON")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "snappy", type = "BSON")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "uncompressed", type = "BSON")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy", type = "BSON")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed", type = "BSON")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "snappy", type = "ENUM")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "uncompressed", type = "ENUM")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy", type = "ENUM")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed", type = "ENUM")
+    Output
+      [[1]]
+      [1] "a"   "!!!" "!"   NA   
+      
+      [[2]]
+      [1] "e"   "~~~" "~"   NA   
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+

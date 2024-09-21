@@ -327,6 +327,11 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
           parquet::_Type_VALUES_TO_NAMES.at(sel.type)
         );
       }
+    } else if (TYPEOF(VECTOR_ELT(d, 2)) == CHARSXP) {
+      const char *min = CHAR(VECTOR_ELT(d, 2));
+      const char *max = CHAR(VECTOR_ELT(d, 3));
+      min_values[idx] = std::string(min, strlen(min));
+      max_values[idx] = std::string(max, strlen(min));
     } else {
       Rf_error("Unknown R type when writing out min/max values, internal error");
     }
@@ -1421,6 +1426,33 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
   }
 }
 
+static inline bool STR_LESS(const char *c, size_t l, std::string &etalon) {
+  size_t el = etalon.size();
+  // "" is less than anything but ""
+  if (l == 0) return el > 0;
+  // otherwise anything is more than ""
+  if (el == 0) return false;
+  int res = memcmp(c, etalon.data(), l < el ? l : el);
+  return res < 0 || (res == 0 && l < el);
+}
+
+static inline bool STR_MORE(const char *c, size_t l, std::string &etalon) {
+  size_t el = etalon.size();
+  // "" is not more than anything
+  if (l == 0) return false;
+  // othwrwise anything is more than ""
+  if (el == 0) return true;
+  int res = memcmp(c, etalon.data(), l < el ? l : el);
+  return res > 0 || (res == 0 && l > el);
+}
+
+#define SAVE_MIN_STR(idx, c, l) do {          \
+  min_values[idx] = std::string((c), (l));    \
+  min_value = &min_values[idx]; } while (0)
+#define SAVE_MAX_STR(idx, c, l) do {          \
+  max_values[idx] = std::string((c), (l));    \
+  max_value = &max_values[idx]; } while (0)
+
 void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
                                        uint32_t group, uint32_t page,
                                        uint64_t from, uint64_t until,
@@ -1435,6 +1467,13 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
 
   switch (TYPEOF(col)) {
   case STRSXP: {
+    bool minmax = write_minmax_values && is_minmax_supported[idx];
+    std::string *min_value = nullptr, *max_value = nullptr;
+    if (minmax && has_minmax_value[idx]) {
+      min_value = &min_values[idx];
+      max_value = &max_values[idx];
+    }
+
     for (uint64_t i = from; i < until; i++) {
       SEXP el = STRING_ELT(col, i);
       if (el == NA_STRING) {
@@ -1442,9 +1481,16 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
       }
       const char *c = CHAR(el);
       uint32_t len1 = strlen(c);
+      if (minmax && (min_value == nullptr || STR_LESS(c, len1, *min_value))) {
+        SAVE_MIN_STR(idx, c, len1);
+      }
+      if (minmax && (max_value == nullptr || STR_MORE(c, len1, *max_value))) {
+        SAVE_MAX_STR(idx, c, len1);
+      }
       file.write((const char *)&len1, 4);
       file.write(c, len1);
     }
+    has_minmax_value[idx] = has_minmax_value[idx] || min_value != nullptr;
     break;
   }
   case VECSXP: {
@@ -2789,13 +2835,11 @@ void RParquetOutFile::write(
     } if (sel.__isset.logicalType) {
       parquet::LogicalType &lt = sel.logicalType;
       is_minmax_supported[idx] = lt.__isset.DATE || lt.__isset.INTEGER ||
-        lt.__isset.TIME;
+        lt.__isset.TIME || lt.__isset.STRING || lt.__isset.ENUM ||
+        lt.__isset.JSON || lt.__isset.BSON;
       // TODO: support the rest
-      // is_minmax_supported[idx] =
-      //   lt.__isset.STRING || lt.__isset.ENUM ||
-      //   lt.__isset.TIMESTAMP ||
-      //   lt.__isset.JSON || lt.__isset.BSON || lt.__isset.UUID ||
-      //   lt.__isset.DECIMAL || lt.isset.FLOAT16;
+      // is_minmax_supported[idx] = lt.__isset.TIMESTAMP ||
+      //   lt.__isset.UUID || lt.__isset.DECIMAL || lt.isset.FLOAT16;
     } else {
       switch(sel.type) {
       // case parquet::Type::BOOLEAN:
@@ -2803,6 +2847,8 @@ void RParquetOutFile::write(
       case parquet::Type::INT64:
       case parquet::Type::FLOAT:
       case parquet::Type::DOUBLE:
+      // case parquet::Type::BYTE_ARRAY;
+      // case parquet::Type::FIXED_LEN_BYTE_ARRAY;
         is_minmax_supported[idx] = true;
         break;
       default:
