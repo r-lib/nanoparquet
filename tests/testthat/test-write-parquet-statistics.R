@@ -237,3 +237,42 @@ test_that("min/max for DOUBLE", {
   expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy"))
   expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
 })
+
+test_that("min/max for FLOAT", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- data.frame(x = as.double(c(
+    sample(1:5),
+    sample(c(1:3, -100, 100)),
+    sample(c(-1000, NA_real_, 1000, NA_real_, NA_real_)),
+    rep(NA_real_, 3)
+  )))
+
+  as_flt <- function(x) {
+    sapply(x, function(xx) xx %&&% .Call(read_float, xx) %||% NA_real_)
+  }
+
+  do <- function(encoding = "PLAIN",...) {
+    write_parquet(
+      df, tmp,
+      schema = parquet_schema(x = "FLOAT"),
+      encoding = encoding,
+      options = parquet_options(num_rows_per_row_group = 5),
+      ...
+    )
+    expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
+    mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+    list(
+      as_flt(mtd[["min_value"]]),
+      as_flt(mtd[["max_value"]]),
+      mtd[["is_min_value_exact"]],
+      mtd[["is_max_value_exact"]]
+    )
+  }
+  expect_snapshot(do(compression = "snappy"))
+  expect_snapshot(do(compression = "uncompressed"))
+
+  # dictionary
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
+})

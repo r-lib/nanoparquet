@@ -289,6 +289,11 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
       } else if (sel.type == parquet::Type::DOUBLE) {
         min_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 2)), sizeof(double));
         max_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 3)), sizeof(double));
+      } else if (sel.type == parquet::Type::FLOAT) {
+        float min = REAL(VECTOR_ELT(d, 2))[0];
+        float max = REAL(VECTOR_ELT(d, 3))[0];
+        min_values[idx] = std::string((const char*) &min, sizeof(float));
+        max_values[idx] = std::string((const char*) &max, sizeof(float));
       }
     }
   }
@@ -1229,12 +1234,27 @@ void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
       "Internal nanoparquet error, row index too large"
     );
   }
+
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  float *min_value = 0, *max_value = 0;
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, float);
+    max_value = GRAB_MAX(idx, float);
+  }
+
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
     if (R_IsNA(val)) continue;
     float el = val;
+    if (minmax && (min_value == 0 || el< *min_value)) {
+      SAVE_MIN(idx, el, float);
+    }
+    if (minmax && (max_value == 0 || el > *max_value)) {
+      SAVE_MAX(idx, el, float);
+    }
     file.write((const char*) &el, sizeof(float));
   }
+  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
 }
 
 void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
@@ -2663,7 +2683,7 @@ void RParquetOutFile::write(
       // case parquet::Type::BOOLEAN:
       case parquet::Type::INT32:
       // case parquet::Type::INT64:
-      // case parquet::Type::FLOAT:
+      case parquet::Type::FLOAT:
       case parquet::Type::DOUBLE:
         is_minmax_supported[idx] = true;
         break;
