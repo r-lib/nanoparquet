@@ -281,7 +281,11 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
         min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
         max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
       } else {
-        Rf_error("Unknown type when writing out INTSXP min/max values, internal error");
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot convert an integer vector to Parquet type %s.",
+          parquet::_Type_VALUES_TO_NAMES.at(sel.type)
+        );
       }
     } else if (TYPEOF(VECTOR_ELT(d, 2)) == REALSXP) {
       double factor;
@@ -317,7 +321,11 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
         min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
         max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
       } else {
-        Rf_error("Unknown type when writing out REALSXP min/max values, internal error");
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot convert a double vector to Parquet type %s.",
+          parquet::_Type_VALUES_TO_NAMES.at(sel.type)
+        );
       }
     } else {
       Rf_error("Unknown R type when writing out min/max values, internal error");
