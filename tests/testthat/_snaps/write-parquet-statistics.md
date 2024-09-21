@@ -512,3 +512,147 @@
       [1] TRUE TRUE TRUE   NA
       
 
+# min/max for integer -> INT64
+
+    Code
+      do(compression = "snappy")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "uncompressed")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+# min/max for REALSXP -> INT64
+
+    Code
+      do(compression = "snappy")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "uncompressed")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+

@@ -62,6 +62,12 @@ SEXP read_float(SEXP x) {
   return Rf_ScalarReal(d);
 }
 
+SEXP read_int64(SEXP x) {
+  int64_t *f = (int64_t*) RAW(x);
+  double d = *f;
+  return Rf_ScalarReal(d);
+}
+
 SEXP is_asan_() {
 #if defined(__has_feature)
 #   if __has_feature(address_sanitizer) // for clang
@@ -129,6 +135,7 @@ static const R_CallMethodDef R_CallDef[] = {
 
   CALLDEF(test_memstream, 0),
   CALLDEF(read_float, 1),
+  CALLDEF(read_int64, 1),
 
   CALLDEF(is_asan_, 0),
   CALLDEF(is_ubsan_, 0),
