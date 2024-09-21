@@ -679,7 +679,7 @@ void RParquetOutFile::write_integer_int32(std::ostream &file, SEXP col,
   }
 
   if (bit_width == 32) {
-    if (!write_minmax_values &&
+    if (!minmax &&
         sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
       uint64_t len = until - from;
       file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
@@ -1255,15 +1255,31 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
       "Internal nanoparquet error, row index too large"
     );
   }
-  if (sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
+
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  double *min_value = 0, *max_value = 0;
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, double);
+    max_value = GRAB_MAX(idx, double);
+  }
+
+  if (!minmax &&
+      sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
     uint64_t len = until - from;
     file.write((const char *) (REAL(col) + from), sizeof(double) * len);
   } else {
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
+      if (minmax && (min_value == 0 || val < *min_value)) {
+        SAVE_MIN(idx, val, double);
+      }
+      if (minmax && (max_value == 0 || val > *max_value)) {
+        SAVE_MAX(idx, val, double);
+      }
       file.write((const char*) &val, sizeof(double));
     }
+    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
   }
 }
 
@@ -2648,7 +2664,7 @@ void RParquetOutFile::write(
       case parquet::Type::INT32:
       // case parquet::Type::INT64:
       // case parquet::Type::FLOAT:
-      // case parquet::Type::DOUBLE:
+      case parquet::Type::DOUBLE:
         is_minmax_supported[idx] = true;
         break;
       default:

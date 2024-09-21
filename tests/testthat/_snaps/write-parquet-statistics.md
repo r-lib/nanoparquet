@@ -97,7 +97,7 @@
 ---
 
     Code
-      do(encoding = enc, compression = "snappy")
+      do(encoding = "RLE_DICTIONARY", compression = "snappy")
     Output
       [[1]]
       [1]     1  -100 -1000    NA
@@ -115,7 +115,7 @@
 ---
 
     Code
-      do(encoding = enc, compression = "uncompressed")
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed")
     Output
       [[1]]
       [1]     1  -100 -1000    NA
@@ -360,6 +360,78 @@
       
       [[2]]
       [1]    5000  100000 1000000      NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+# min/max for DOUBLE
+
+    Code
+      do(compression = "snappy")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(compression = "uncompressed")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed")
+    Output
+      [[1]]
+      [1]     1  -100 -1000    NA
+      
+      [[2]]
+      [1]    5  100 1000   NA
       
       [[3]]
       [1] TRUE TRUE TRUE   NA

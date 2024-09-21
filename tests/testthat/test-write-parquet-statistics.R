@@ -48,9 +48,8 @@ test_that("min/max for integers", {
   expect_snapshot(do(compression = "uncompressed"))
 
   # dictionary
-  enc <- ifelse(map_chr(df, class) == "integer", "RLE_DICTIONARY", "PLAIN")
-  expect_snapshot(do(encoding = enc, compression = "snappy"))
-  expect_snapshot(do(encoding = enc, compression = "uncompressed"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
 })
 
 test_that("min/max for DATEs", {
@@ -189,6 +188,44 @@ test_that("minmax for double -> INT32 TIME(MULLIS)", {
     list(
       as_int(mtd[["min_value"]]),
       as_int(mtd[["max_value"]]),
+      mtd[["is_min_value_exact"]],
+      mtd[["is_max_value_exact"]]
+    )
+  }
+  expect_snapshot(do(compression = "snappy"))
+  expect_snapshot(do(compression = "uncompressed"))
+
+  # dictionary
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
+})
+
+test_that("min/max for DOUBLE", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- data.frame(x = as.double(c(
+    sample(1:5),
+    sample(c(1:3, -100, 100)),
+    sample(c(-1000, NA_real_, 1000, NA_real_, NA_real_)),
+    rep(NA_real_, 3)
+  )))
+
+  as_dbl <- function(x) {
+    sapply(x, function(xx) xx %&&% readBin(xx, what = "double") %||% NA_real_)
+  }
+
+  do <- function(encoding = "PLAIN",...) {
+    write_parquet(
+      df, tmp,
+      encoding = encoding,
+      options = parquet_options(num_rows_per_row_group = 5),
+      ...
+    )
+    expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
+    mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+    list(
+      as_dbl(mtd[["min_value"]]),
+      as_dbl(mtd[["max_value"]]),
       mtd[["is_min_value_exact"]],
       mtd[["is_max_value_exact"]]
     )
