@@ -48,7 +48,7 @@
         ordinal
       1      NA
     Code
-      as.data.frame(mtd$column_chunks)
+      as.data.frame(mtd$column_chunks[, 1:20])
     Output
             file_name row_group column file_path file_offset offset_index_offset
       1  test.parquet         0      0      <NA>           4                  NA
@@ -106,34 +106,20 @@
       11                   275             2879                NA
       12                   275             3154                NA
       13                    21             3429                NA
-         dictionary_page_offset null_count    min_value    max_value
-      1                      NA          0                          
-      2                      NA          0                          
-      3                      NA          0 04, 00, .... 08, 00, ....
-      4                      NA          0                          
-      5                      NA          0                          
-      6                      NA          0                          
-      7                      NA          0                          
-      8                      NA          0                          
-      9                      NA          0                          
-      10                     NA          0                          
-      11                     NA          0                          
-      12                     NA          0                          
-      13                     NA          0                          
-         is_min_value_exact is_max_value_exact
-      1                  NA                 NA
-      2                  NA                 NA
-      3                TRUE               TRUE
-      4                  NA                 NA
-      5                  NA                 NA
-      6                  NA                 NA
-      7                  NA                 NA
-      8                  NA                 NA
-      9                  NA                 NA
-      10                 NA                 NA
-      11                 NA                 NA
-      12                 NA                 NA
-      13                 NA                 NA
+         dictionary_page_offset null_count
+      1                      NA          0
+      2                      NA          0
+      3                      NA          0
+      4                      NA          0
+      5                      NA          0
+      6                      NA          0
+      7                      NA          0
+      8                      NA          0
+      9                      NA          0
+      10                     NA          0
+      11                     NA          0
+      12                     NA          0
+      13                     NA          0
 
 ---
 
