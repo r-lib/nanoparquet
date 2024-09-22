@@ -1116,6 +1116,13 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
                                          uint32_t idx, uint64_t from,
                                          uint64_t until,
                                          parquet::SchemaElement &sel) {
+  int64_t *min_value = 0, *max_value = 0;
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, int64_t);
+    max_value = GRAB_MAX(idx, int64_t);
+  }
+
   if (Rf_inherits(col, "POSIXct")) {
     int64_t fact = 1;
     if (sel.__isset.logicalType && sel.logicalType.__isset.TIMESTAMP) {
@@ -1134,12 +1141,6 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
         fact = 1000 * 1000;
       }
     }
-    int64_t *min_value = 0, *max_value = 0;
-    bool minmax = write_minmax_values && is_minmax_supported[idx];
-    if (minmax && has_minmax_value[idx]) {
-      min_value = GRAB_MIN(idx, int64_t);
-      max_value = GRAB_MAX(idx, int64_t);
-    }
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
@@ -1154,12 +1155,6 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
     }
     has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
   } else if (Rf_inherits(col, "difftime")) {
-    int64_t *min_value = 0, *max_value = 0;
-    bool minmax = write_minmax_values && is_minmax_supported[idx];
-    if (minmax && has_minmax_value[idx]) {
-      min_value = GRAB_MIN(idx, int64_t);
-      max_value = GRAB_MAX(idx, int64_t);
-    }
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
@@ -1188,12 +1183,6 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
     }
     if (is_signed) {
       double min = -pow(2, 63), max = -(min+1);
-      int64_t *min_value = 0, *max_value = 0;
-      bool minmax = write_minmax_values && is_minmax_supported[idx];
-      if (minmax && has_minmax_value[idx]) {
-        min_value = GRAB_MIN(idx, int64_t);
-        max_value = GRAB_MAX(idx, int64_t);
-      }
       for (uint64_t i = from; i < until; i++) {
         double val = REAL(col)[i];
         if (R_IsNA(val)) continue;
@@ -2836,10 +2825,10 @@ void RParquetOutFile::write(
       parquet::LogicalType &lt = sel.logicalType;
       is_minmax_supported[idx] = lt.__isset.DATE || lt.__isset.INTEGER ||
         lt.__isset.TIME || lt.__isset.STRING || lt.__isset.ENUM ||
-        lt.__isset.JSON || lt.__isset.BSON;
+        lt.__isset.JSON || lt.__isset.BSON || lt.__isset.TIMESTAMP;
       // TODO: support the rest
-      // is_minmax_supported[idx] = lt.__isset.TIMESTAMP ||
-      //   lt.__isset.UUID || lt.__isset.DECIMAL || lt.isset.FLOAT16;
+      // is_minmax_supported[idx] = lt.__isset.UUID ||
+      //   lt.__isset.DECIMAL || lt.isset.FLOAT16;
     } else {
       switch(sel.type) {
       // case parquet::Type::BOOLEAN:

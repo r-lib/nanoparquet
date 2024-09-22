@@ -415,3 +415,42 @@ test_that("min/max for STRING", {
   expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy", type = "ENUM"))
   expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed", type = "ENUM"))
 })
+
+test_that("min/max for REALSXP -> TIMESTAMP (INT64)", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  now <- 0L
+  df <- data.frame(x = .POSIXct(as.double(c(
+    sample(now + 1:5),
+    sample(c(now + c(1:3, -100L, 100L))),
+    sample(c(now - 1000L, NA_integer_, now + 1000L, NA_integer_, NA_integer_)),
+    rep(NA_integer_, 3)
+  )), tz = "UTC"))
+
+  as_int64 <- function(x) {
+    sapply(x, function(xx) xx %&&% .Call(read_int64, xx) %||% NA_real_)
+  }
+
+  do <- function(encoding = "PLAIN",...) {
+    write_parquet(
+      df, tmp,
+      encoding = encoding,
+      options = parquet_options(num_rows_per_row_group = 5),
+      ...
+    )
+    expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
+    mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+    list(
+      as_int64(mtd[["min_value"]]),
+      as_int64(mtd[["max_value"]]),
+      mtd[["is_min_value_exact"]],
+      mtd[["is_max_value_exact"]]
+    )
+  }
+  expect_snapshot(do(compression = "snappy"))
+  expect_snapshot(do(compression = "uncompressed"))
+return()
+  # dictionary
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy"))
+  expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
+})
