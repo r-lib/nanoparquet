@@ -8,8 +8,48 @@ How nanoparquet maps R types to Parquet types.
 }
 \section{R's data types}{
 When writing out a data frame, nanoparquet maps R's data types to Parquet
-logical types. This is how the mapping is performed.
+logical types. The following table is a summary of the mapping. For the
+details see below.\tabular{llcl}{
+   R type \tab Parquet type \tab Default \tab Notes \cr
+   character \tab STRING (BYTE_ARRAY) \tab x \tab I.e. STRSXP. Converted to UTF-8. \cr
+   " \tab BYTE_ARRAY \tab  \tab  \cr
+   " \tab FIXED_LEN_BYTE_ARRAY \tab  \tab  \cr
+   " \tab ENUM \tab  \tab  \cr
+   " \tab UUID \tab  \tab  \cr
+   Date \tab DATE \tab x \tab  \cr
+   difftime \tab INT64 \tab x \tab If not hms::hms. Arrow metadata marks it as Duration(NS). \cr
+   factor \tab STRING \tab x \tab Arrow metadata marks it as a factor. \cr
+   " \tab ENUM \tab  \tab  \cr
+   hms::hms \tab TIME(true, MILLIS) \tab x \tab Sub-milliseconds precision is lost. \cr
+   integer \tab INT(32, true) \tab x \tab I.e. INTSXP. \cr
+   " \tab INT64 \tab  \tab  \cr
+   " \tab INT96 \tab  \tab  \cr
+   " \tab DECIMAL (INT32) \tab  \tab  \cr
+   " \tab DECIMAL (INT64) \tab  \tab  \cr
+   " \tab INT(8, *) \tab  \tab  \cr
+   " \tab INT(16, *) \tab  \tab  \cr
+   " \tab INT(32, signed) \tab  \tab  \cr
+   list \tab BYTE_ARRAY \tab  \tab Must be a list of raw vectors. Messing values are \code{NULL}. \cr
+   " \tab FIXED_LEN_BYTE_ARRAY \tab  \tab Must be a list of raw vectors of the same length. Missing values are \code{NULL}. \cr
+   logical \tab BOOLEAN \tab x \tab I.e. LGLSXP. \cr
+   numeric \tab DOUBLE \tab x \tab I.e. REALSXP. \cr
+   " \tab INT96 \tab  \tab  \cr
+   " \tab FLOAT \tab  \tab  \cr
+   " \tab DECIMAL (INT32) \tab  \tab  \cr
+   " \tab DECIMAL (INT64) \tab  \tab  \cr
+   " \tab INT(*, *) \tab  \tab  \cr
+   " \tab FLOAT16 \tab  \tab  \cr
+   POSIXct \tab TIMESTAMP(true, MICROS) \tab x \tab Sub-microsecond precision is lost. \cr
+}
 
+
+The non-default mappings can be selected via the \code{schema} argument. E.g.
+to write out a factor column called 'name' as \code{ENUM}, use
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{write_parquet(..., schema = parquet_schema(name = "ENUM"))
+}\if{html}{\out{</div>}}
+
+The detailed mapping rules are listed below, in order of preference.
 These rules will likely change until nanoparquet reaches version 1.0.0.
 \enumerate{
 \item Factors (i.e. vectors that inherit the \emph{factor} class) are converted
@@ -70,9 +110,44 @@ non-default mappings are:
 \section{Parquet's data types}{
 When reading a Parquet file nanoparquet also relies on logical types and
 the Arrow metadata (if present, see below) in addition to the low level
-data types. The exact rules are below.
+data types. The following table summarizes the mappings. See more details
+below.\tabular{lll}{
+   Parquet type \tab R type \tab Notes \cr
+   \emph{Logical types} \tab  \tab  \cr
+   BSON \tab character \tab  \cr
+   DATE \tab Date \tab  \cr
+   DECIMAL \tab numeric \tab REALSXP, potentially losing precision. \cr
+   ENUM \tab character \tab  \cr
+   FLOAT16 \tab numeric \tab REALSXP \cr
+   INT(8, *) \tab integer \tab  \cr
+   INT(16, *) \tab integer \tab  \cr
+   INT(32, *) \tab integer \tab Large unsigned values may overflow! \cr
+   INT(64, *) \tab numeric \tab REALSXP \cr
+   INTERVAL \tab list(raw) \tab Missing values are \code{NULL}. \cr
+   JSON \tab character \tab  \cr
+   LIST \tab  \tab Not supported. \cr
+   MAP \tab  \tab Not supported. \cr
+   STRING \tab factor \tab If Arrow metadata says it is a factor. Also UTF8. \cr
+   " \tab character \tab Otherwise. Also UTF8. \cr
+   TIME \tab hms::hms \tab Also TIME_MILLIS and TIME_MICROS. \cr
+   TIMESTAMP \tab POSIXct \tab Also TIMESTAMP_MILLIS and TIMESTAMP_MICROS. \cr
+   UUID \tab character \tab In \code{00112233-4455-6677-8899-aabbccddeeff} form. \cr
+   UNKNOWN \tab  \tab Not supported. \cr
+   \emph{Primitive types} \tab  \tab  \cr
+   BOOLEAN \tab logical \tab  \cr
+   BYTE_ARRAY \tab factor \tab If Arrow metadata says it is a factor. \cr
+   " \tab list(raw) \tab Otherwise. Missing values are \code{NULL}. \cr
+   DOUBLE \tab numeric \tab REALSXP \cr
+   FIXED_LEN_BYTE_ARRAY \tab list(raw) \tab Missing values are \code{NULL}. \cr
+   FLOAT \tab numeric \tab REALSXP \cr
+   INT32 \tab integer \tab  \cr
+   INT64 \tab numeric \tab REALSXP \cr
+   INT96 \tab POSIXct \tab  \cr
+}
 
-These rules will likely change until nanoparquet reaches version 1.0.0.
+
+The exact rules are below. These rules will likely change until nanoparquet
+reaches version 1.0.0.
 \enumerate{
 \item The \code{BOOLEAN} type is read as a logical vector (\code{LGLSXP}).
 \item The \code{STRING} logical type and the \code{UTF8} converted type is read as
@@ -96,7 +171,7 @@ precision.
 \item The \code{ENUM} logical type is read as a character vector.
 \item The \code{UUID} logical type is read as a character vector that uses the
 \code{00112233-4455-6677-8899-aabbccddeeff} form.
-\item The \code{FLOAT16} logical type is read as a real vector (\code{READLSXP}).
+\item The \code{FLOAT16} logical type is read as a real vector (\code{REALSXP}).
 \item \code{BYTE_ARRAY} is read as a \emph{factor} object if the file was written
 by Arrow and the original data type of the column was a factor.
 (See 'The Arrow metadata below.)

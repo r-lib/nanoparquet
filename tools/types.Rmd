@@ -1,8 +1,48 @@
 # R's data types
 
 When writing out a data frame, nanoparquet maps R's data types to Parquet
-logical types. This is how the mapping is performed.
+logical types. The following table is a summary of the mapping. For the
+details see below.
 
+R type   | Parquet type            | Default | Notes
+:--------|:------------------------|:-------:|:----------------------------------------
+character| STRING (BYTE_ARRAY)     | x       | I.e. STRSXP. Converted to UTF-8.
+"        | BYTE_ARRAY              |         |
+"        | FIXED_LEN_BYTE_ARRAY    |         |
+"        | ENUM                    |         |
+"        | UUID                    |         |
+Date     | DATE                    | x       |
+difftime | INT64                   | x       | If not hms::hms. Arrow metadata marks it as Duration(NS).
+factor   | STRING                  | x       | Arrow metadata marks it as a factor.
+"        | ENUM                    |         |
+hms::hms | TIME(true, MILLIS)      | x       | Sub-milliseconds precision is lost.
+integer  | INT(32, true)           | x       | I.e. INTSXP.
+"        | INT64                   |         |
+"        | INT96                   |         |
+"        | DECIMAL (INT32)         |         |
+"        | DECIMAL (INT64)         |         |
+"        | INT(8, *)               |         |
+"        | INT(16, *)              |         |
+"        | INT(32, signed)         |         |
+list     | BYTE_ARRAY              |         | Must be a list of raw vectors. Messing values are `NULL`.
+"        | FIXED_LEN_BYTE_ARRAY    |         | Must be a list of raw vectors of the same length. Missing values are `NULL`.
+logical  | BOOLEAN                 | x       | I.e. LGLSXP.
+numeric  | DOUBLE                  | x       | I.e. REALSXP.
+"        | INT96                   |         |
+"        | FLOAT                   |         |
+"        | DECIMAL (INT32)         |         |
+"        | DECIMAL (INT64)         |         |
+"        | INT(*, *)               |         |
+"        | FLOAT16                 |         |
+POSIXct  | TIMESTAMP(true, MICROS) | x       | Sub-microsecond precision is lost.
+
+The non-default mappings can be selected via the `schema` argument. E.g.
+to write out a factor column called 'name' as `ENUM`, use
+```r
+write_parquet(..., schema = parquet_schema(name = "ENUM"))
+```
+
+The detailed mapping rules are listed below, in order of preference.
 These rules will likely change until nanoparquet reaches version 1.0.0.
 
 1. Factors (i.e. vectors that inherit the *factor* class) are converted
@@ -61,9 +101,44 @@ non-default mappings are:
 
 When reading a Parquet file nanoparquet also relies on logical types and
 the Arrow metadata (if present, see below) in addition to the low level
-data types. The exact rules are below.
+data types. The following table summarizes the mappings. See more details
+below.
 
-These rules will likely change until nanoparquet reaches version 1.0.0.
+Parquet type         | R type    | Notes
+:--------------------|:----------|:---------------------------------------------
+*Logical types*      |           |
+BSON                 | character |
+DATE                 | Date      |
+DECIMAL              | numeric   | REALSXP, potentially losing precision.
+ENUM                 | character |
+FLOAT16              | numeric   | REALSXP
+INT(8, *)            | integer   |
+INT(16, *)           | integer   |
+INT(32, *)           | integer   | Large unsigned values may overflow!
+INT(64, *)           | numeric   | REALSXP
+INTERVAL             | list(raw) | Missing values are `NULL`.
+JSON                 | character |
+LIST                 |           | Not supported.
+MAP                  |           | Not supported.
+STRING               | factor    | If Arrow metadata says it is a factor. Also UTF8.
+"                    | character | Otherwise. Also UTF8.
+TIME                 | hms::hms  | Also TIME_MILLIS and TIME_MICROS.
+TIMESTAMP            | POSIXct   | Also TIMESTAMP_MILLIS and TIMESTAMP_MICROS.
+UUID                 | character | In `00112233-4455-6677-8899-aabbccddeeff` form.
+UNKNOWN              |           | Not supported.
+*Primitive types*    |           |
+BOOLEAN              | logical   |
+BYTE_ARRAY           | factor    | If Arrow metadata says it is a factor.
+"                    | list(raw) | Otherwise. Missing values are `NULL`.
+DOUBLE               | numeric   | REALSXP
+FIXED_LEN_BYTE_ARRAY | list(raw) | Missing values are `NULL`.
+FLOAT                | numeric   | REALSXP
+INT32                | integer   |
+INT64                | numeric   | REALSXP
+INT96                | POSIXct   |
+
+The exact rules are below. These rules will likely change until nanoparquet
+reaches version 1.0.0.
 
 1. The `BOOLEAN` type is read as a logical vector (`LGLSXP`).
 1. The `STRING` logical type and the `UTF8` converted type is read as
@@ -87,7 +162,7 @@ These rules will likely change until nanoparquet reaches version 1.0.0.
 1. The `ENUM` logical type is read as a character vector.
 1. The `UUID` logical type is read as a character vector that uses the
    `00112233-4455-6677-8899-aabbccddeeff` form.
-1. The `FLOAT16` logical type is read as a real vector (`READLSXP`).
+1. The `FLOAT16` logical type is read as a real vector (`REALSXP`).
 1. `BYTE_ARRAY` is read as a *factor* object if the file was written
    by Arrow and the original data type of the column was a factor.
    (See 'The Arrow metadata below.)
