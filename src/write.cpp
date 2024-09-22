@@ -89,6 +89,7 @@ extern "C" {
 SEXP nanoparquet_create_dict(SEXP x, SEXP rlen);
 SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until);
 SEXP nanoparquet_avg_run_length(SEXP x, SEXP rlen);
+static SEXP get_list_element(SEXP list, const char *str);
 }
 
 class RParquetOutFile : public ParquetOutFile {
@@ -105,27 +106,34 @@ public:
     int compsession_level,
     std::vector<int64_t> &row_groups
   );
-  void write_int32(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until, parquet::SchemaElement &sel);
-  void write_int64(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until, parquet::SchemaElement &sel);
-  void write_int96(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until, parquet::SchemaElement &sel);
-  void write_float(std::ostream &file, uint32_t idx, uint64_t from,
-                   uint64_t until, parquet::SchemaElement &sel);
-  void write_double(std::ostream &file, uint32_t idx, uint64_t from,
-                    uint64_t until, parquet::SchemaElement &sel);
-  void write_byte_array(std::ostream &file, uint32_t id, uint64_t from,
-                        uint64_t until, parquet::SchemaElement &sel);
+  void write_row_group(uint32_t group);
+  void write_int32(std::ostream &file, uint32_t idx, uint32_t group,
+                   uint32_t page, uint64_t from, uint64_t until,
+                   parquet::SchemaElement &sel);
+  void write_int64(std::ostream &file, uint32_t idx, uint32_t group,
+                   uint32_t page, uint64_t from, uint64_t until,
+                   parquet::SchemaElement &sel);
+  void write_int96(std::ostream &file, uint32_t idx, uint32_t group,
+                   uint32_t page, uint64_t from, uint64_t until,
+                   parquet::SchemaElement &sel);
+  void write_float(std::ostream &file, uint32_t idx, uint32_t group,
+                   uint32_t page, uint64_t from, uint64_t until,
+                   parquet::SchemaElement &sel);
+  void write_double(std::ostream &file, uint32_t idx, uint32_t group,
+                    uint32_t page, uint64_t from, uint64_t until,
+                    parquet::SchemaElement &sel);
+  void write_byte_array(std::ostream &file, uint32_t idx, uint32_t group,
+                        uint32_t page, uint64_t from, uint64_t until,
+                        parquet::SchemaElement &sel);
   void write_fixed_len_byte_array(std::ostream &file, uint32_t id,
-                                  uint64_t from, uint64_t until,
-                                  parquet::SchemaElement &sel);
+                                  uint32_t group, uint32_t page, uint64_t from,
+                                  uint64_t until, parquet::SchemaElement &sel);
   uint32_t get_size_byte_array(uint32_t idx, uint32_t num_present,
                                uint64_t from, uint64_t until);
-  void write_boolean(std::ostream &file, uint32_t idx, uint64_t from,
-                     uint64_t until);
-  void write_boolean_as_int(std::ostream &file, uint32_t idx,
-                            uint64_t from, uint64_t until);
+  void write_boolean(std::ostream &file, uint32_t idx, uint32_t group,
+                     uint32_t page, uint64_t from, uint64_t until);
+  void write_boolean_as_int(std::ostream &file, uint32_t idx, uint32_t group,
+                            uint32_t page, uint64_t from, uint64_t until);
 
   uint32_t write_present(std::ostream &file, uint32_t idx, uint64_t from,
                          uint64_t until);
@@ -137,8 +145,9 @@ public:
                                     uint64_t until);
 
   // for dictionaries
-  uint32_t get_num_values_dictionary(uint32_t idx, int64_t form,
-                                     int64_t until);
+  uint32_t get_num_values_dictionary(uint32_t idx,
+                                     parquet::SchemaElement &sel,
+                                     int64_t form, int64_t until);
   uint32_t get_size_dictionary(uint32_t idx, parquet::SchemaElement &type,
                                int64_t from, int64_t until);
   void write_dictionary(std::ostream &file, uint32_t idx,
@@ -147,6 +156,12 @@ public:
   void write_dictionary_indices(std::ostream &file, uint32_t idx,
                                 int64_t rg_from, int64_t rg_until,
                                 uint64_t page_from, uint64_t page_until);
+
+  // statistics
+  bool get_group_minmax_values(uint32_t idx, uint32_t group,
+                               parquet::SchemaElement &sel,
+                               std::string &min_value,
+                               std::string &max_value);
 
   void write(
     SEXP dfsxp,
@@ -165,11 +180,36 @@ private:
   SEXP dicts_from = R_NilValue;
   ByteBuffer present;
 
-  void create_dictionary(uint32_t idx, int64_t from, int64_t until);
+  bool write_minmax_values;
+  std::vector<bool> is_minmax_supported;
+  std::vector<std::string> min_values;
+  std::vector<std::string> max_values;
+  std::vector<bool> has_minmax_value;
+
+  void create_dictionary(uint32_t idx, int64_t from, int64_t until,
+                         parquet::SchemaElement &sel);
   // for LGLSXP this mean RLE encoding
   bool should_use_dict_encoding(uint32_t idx);
   parquet::Encoding::type
   detect_encoding(uint32_t idx, parquet::SchemaElement &sel, int32_t renc);
+
+  void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
+                           uint64_t from, uint64_t until,
+                           parquet::SchemaElement &sel);
+  void write_double_int32_time(std::ostream &file, SEXP col, uint32_t idx,
+                               uint64_t from, uint64_t until,
+                               parquet::SchemaElement &sel, double factor);
+  void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
+                          uint64_t from, uint64_t until,
+                          parquet::SchemaElement &sel);
+  void write_integer_int64(std::ostream &file, SEXP col, uint32_t idx,
+                           uint64_t from, uint64_t until);
+  void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
+                          uint64_t from, uint64_t until,
+                          parquet::SchemaElement &sel);
+  void write_double_int64_time(std::ostream &file, SEXP col, uint32_t idx,
+                               uint64_t from, uint64_t until,
+                               parquet::SchemaElement &sel, double factor);
 };
 
 RParquetOutFile::RParquetOutFile(
@@ -188,8 +228,33 @@ RParquetOutFile::RParquetOutFile(
     ParquetOutFile(stream, codec, compression_level, row_groups) {
 }
 
+static bool is_time(parquet::SchemaElement &sel, double &factor) {
+  factor = 1.0;
+  if (sel.__isset.logicalType && sel.logicalType.__isset.TIME) {
+    auto unit = sel.logicalType.TIME.unit;
+    if (unit.__isset.MILLIS) {
+      factor = 1000;
+    } else if (unit.__isset.MICROS) {
+      factor = 1000 * 1000;
+    } else if (unit.__isset.NANOS) {
+      factor = 1000 * 1000 * 1000;
+    }
+    return true;
+  } else if (sel.__isset.converted_type) {
+    if (sel.converted_type == parquet::ConvertedType::TIME_MILLIS) {
+      factor = 1000;
+      return true;
+    } else if (sel.converted_type == parquet::ConvertedType::TIME_MICROS) {
+      factor = 1000 * 1000;
+      return true;
+    }
+  }
+  return false;
+}
+
 void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
-                                        int64_t until) {
+                                        int64_t until,
+                                        parquet::SchemaElement &sel) {
   if (!Rf_isNull(VECTOR_ELT(dicts, idx)) &&
       INTEGER(dicts_from)[idx] == from) {
     return;
@@ -202,6 +267,75 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
   SET_VECTOR_ELT(dicts, idx, d);
   INTEGER(dicts_from)[idx] = from;
   UNPROTECT(3);
+  if (write_minmax_values && Rf_length(d) == 4 &&
+      is_minmax_supported[idx] && Rf_xlength(col) > 0 &&
+      !Rf_isNull(VECTOR_ELT(d, 2)) && !Rf_isNull(VECTOR_ELT(d, 3))) {
+    has_minmax_value[idx] = true;
+    if (TYPEOF(VECTOR_ELT(d, 2)) == INTSXP) {
+      if (sel.type == parquet::Type::INT32) {
+        min_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 2)), sizeof(int32_t));
+        max_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 3)), sizeof(int32_t));
+      } else if (sel.type == parquet::Type::INT64) {
+        int64_t min = INTEGER(VECTOR_ELT(d, 2))[0];
+        int64_t max = INTEGER(VECTOR_ELT(d, 3))[0];
+        min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
+        max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
+      } else {
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot convert an integer vector to Parquet type %s.",
+          parquet::_Type_VALUES_TO_NAMES.at(sel.type)
+        );
+      }
+    } else if (TYPEOF(VECTOR_ELT(d, 2)) == REALSXP) {
+      double factor;
+      bool istime = is_time(sel, factor);
+      if (istime) {
+        if (sel.type == parquet::Type::INT32) {
+          int32_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
+          int32_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
+          min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
+          max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
+        } else {
+          int64_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
+          int64_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
+          min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
+          max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
+        }
+      } else if (sel.type == parquet::Type::INT32) {
+        int32_t min = REAL(VECTOR_ELT(d, 2))[0];
+        int32_t max = REAL(VECTOR_ELT(d, 3))[0];
+        min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
+        max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
+      } else if (sel.type == parquet::Type::DOUBLE) {
+        min_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 2)), sizeof(double));
+        max_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 3)), sizeof(double));
+      } else if (sel.type == parquet::Type::FLOAT) {
+        float min = REAL(VECTOR_ELT(d, 2))[0];
+        float max = REAL(VECTOR_ELT(d, 3))[0];
+        min_values[idx] = std::string((const char*) &min, sizeof(float));
+        max_values[idx] = std::string((const char*) &max, sizeof(float));
+      } else if (sel.type == parquet::Type::INT64) {
+        int64_t min = REAL(VECTOR_ELT(d, 2))[0];
+        int64_t max = REAL(VECTOR_ELT(d, 3))[0];
+        min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
+        max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
+      } else {
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot convert a double vector to Parquet type %s.",
+          parquet::_Type_VALUES_TO_NAMES.at(sel.type)
+        );
+      }
+    } else if (TYPEOF(VECTOR_ELT(d, 2)) == CHARSXP) {
+      const char *min = CHAR(VECTOR_ELT(d, 2));
+      const char *max = CHAR(VECTOR_ELT(d, 3));
+      min_values[idx] = std::string(min, strlen(min));
+      max_values[idx] = std::string(max, strlen(min));
+    } else {
+      Rf_error("Unknown R type when writing out min/max values, internal error");
+    }
+  }
 }
 
 static const char *enc_[] = {
@@ -492,6 +626,14 @@ static const char *type_names[] = {
   "an S4 object"
 };
 
+void RParquetOutFile::write_row_group(uint32_t group) {
+  if (write_minmax_values) {
+    std::fill(min_values.begin(), min_values.end(), std::string());
+    std::fill(max_values.begin(), max_values.end(), std::string());
+    std::fill(has_minmax_value.begin(), has_minmax_value.end(), false);
+  }
+}
+
 static bool is_decimal(parquet::SchemaElement &sel, int32_t &precision,
                        int32_t &scale) {
   if (sel.__isset.logicalType && sel.logicalType.__isset.DECIMAL) {
@@ -518,30 +660,6 @@ static bool is_decimal(parquet::SchemaElement &sel, int32_t &precision,
   } else {
     return false;
   }
-}
-
-static bool is_time(parquet::SchemaElement &sel, double &factor) {
-  factor = 1.0;
-  if (sel.__isset.logicalType && sel.logicalType.__isset.TIME) {
-    auto unit = sel.logicalType.TIME.unit;
-    if (unit.__isset.MILLIS) {
-      factor = 1000;
-    } else if (unit.__isset.MICROS) {
-      factor = 1000 * 1000;
-    } else if (unit.__isset.NANOS) {
-      factor = 1000 * 1000 * 1000;
-    }
-    return true;
-  } else if (sel.__isset.converted_type) {
-    if (sel.converted_type == parquet::ConvertedType::TIME_MILLIS) {
-      factor = 1000;
-      return true;
-    } else if (sel.converted_type == parquet::ConvertedType::TIME_MICROS) {
-      factor = 1000 * 1000;
-      return true;
-    }
-  }
-  return false;
 }
 
 void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
@@ -577,23 +695,48 @@ void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
   }
 }
 
-void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
-                         uint64_t from, uint64_t until,
-                         parquet::SchemaElement &sel) {
+#define GRAB_MIN(idx, t) ((t*) min_values[idx].data())
+#define GRAB_MAX(idx, t) ((t*) max_values[idx].data())
+#define SAVE_MIN(idx, val, t) do {                               \
+  min_values[idx] = std::string((const char*) &val, sizeof(t));  \
+  min_value = (t*) min_values[idx].data(); } while (0)
+#define SAVE_MAX(idx, val, t) do {                               \
+  max_values[idx] = std::string((const char*) &val, sizeof(t));  \
+  max_value = (t*) max_values[idx].data(); } while (0)
+
+void RParquetOutFile::write_integer_int32(std::ostream &file, SEXP col,
+                                          uint32_t idx,
+                                          uint64_t from, uint64_t until,
+                                          parquet::SchemaElement &sel) {
   bool is_signed = TRUE;
   int bit_width = 32;
   if (sel.__isset.logicalType && sel.logicalType.__isset.INTEGER) {
     is_signed = sel.logicalType.INTEGER.isSigned;
     bit_width = sel.logicalType.INTEGER.bitWidth;
   }
+
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  int32_t *min_value = 0, *max_value = 0;
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, int32_t);
+    max_value = GRAB_MAX(idx, int32_t);
+  }
+
   if (bit_width == 32) {
-    if (sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
+    if (!minmax &&
+        sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
       uint64_t len = until - from;
       file.write((const char *) (INTEGER(col) + from), sizeof(int) * len);
     } else {
       for (uint64_t i = from; i < until; i++) {
         int32_t val = INTEGER(col)[i];
         if (val == NA_INTEGER) continue;
+        if (minmax && (min_value == 0 || val < *min_value)) {
+          SAVE_MIN(idx, val, int32_t);
+        }
+        if (minmax && (max_value == 0 || val > *max_value)) {
+          SAVE_MAX(idx, val, int32_t);
+        }
         file.write((const char*) &val, sizeof(int32_t));
       }
     }
@@ -622,9 +765,16 @@ void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
           w, (is_signed ? "" : "U"), bit_width, val, idx + 1, i + 1
         );
       }
+      if (minmax && (min_value == 0 || val < *min_value)) {
+        SAVE_MIN(idx, val, int32_t);
+      }
+      if (minmax && (max_value == 0 || val > *max_value)) {
+        SAVE_MAX(idx, val, int32_t);
+      }
       file.write((const char *) &val, sizeof(int32_t));
     }
   }
+  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
 }
 
 void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
@@ -660,20 +810,37 @@ void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
   }
 }
 
-void write_double_int32_time(std::ostream &file, SEXP col, uint32_t idx,
-                             uint64_t from, uint64_t until,
-                             parquet::SchemaElement &sel, double factor) {
+void RParquetOutFile::write_double_int32_time(std::ostream &file, SEXP col,
+                                              uint32_t idx, uint64_t from,
+                                              uint64_t until,
+                                              parquet::SchemaElement &sel,
+                                              double factor) {
+  int32_t *min_value = 0, *max_value = 0;
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, int32_t);
+    max_value = GRAB_MAX(idx, int32_t);
+  }
+
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
     if (R_IsNA(val)) continue;
     int32_t ival = val * factor;
+    if (minmax && (min_value == 0 || ival < *min_value)) {
+      SAVE_MIN(idx, ival, int32_t);
+    }
+    if (minmax && (max_value == 0 || ival > *max_value)) {
+      SAVE_MAX(idx, ival, int32_t);
+    }
     file.write((const char *)&ival, sizeof(int32_t));
   }
+  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
 }
 
-void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
-                        uint64_t from, uint64_t until,
-                        parquet::SchemaElement &sel) {
+void RParquetOutFile::write_double_int32(std::ostream &file, SEXP col,
+                                         uint32_t idx, uint64_t from,
+                                         uint64_t until,
+                                         parquet::SchemaElement &sel) {
   bool is_signed = TRUE;
   int bit_width = 32;
   if (sel.__isset.logicalType && sel.logicalType.__isset.INTEGER) {
@@ -681,6 +848,13 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
     bit_width = sel.logicalType.INTEGER.bitWidth;
   }
   if (is_signed) {
+    int32_t *min_value = 0, *max_value = 0;
+    bool minmax = write_minmax_values && is_minmax_supported[idx];
+    if (minmax && has_minmax_value[idx]) {
+      min_value = GRAB_MIN(idx, int32_t);
+      max_value = GRAB_MAX(idx, int32_t);
+    }
+
     int32_t min, max;
     switch (bit_width) {
     case 8:
@@ -709,9 +883,23 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
         );
       }
       int32_t ival = val;
+      if (minmax && (min_value == 0 || ival < *min_value)) {
+        SAVE_MIN(idx, ival, int32_t);
+      }
+      if (minmax && (max_value == 0 || ival > *max_value)) {
+        SAVE_MAX(idx, ival, int32_t);
+      }
       file.write((const char *)&ival, sizeof(int32_t));
     }
+    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
   } else {
+    uint32_t *min_value = 0, *max_value = 0;
+    bool minmax = write_minmax_values && is_minmax_supported[idx];
+    if (minmax && has_minmax_value[idx]) {
+      min_value = GRAB_MIN(idx, uint32_t);
+      max_value = GRAB_MAX(idx, uint32_t);
+    }
+
     uint32_t max;
     switch (bit_width) {
     case 8:
@@ -748,13 +936,21 @@ void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
           val, idx + 1, i + 1
         );
       }
-      int32_t ival = val;
-      file.write((const char *)&ival, sizeof(int32_t));
+      uint32_t uival = val;
+      if (minmax && (min_value == 0 || uival < *min_value)) {
+        SAVE_MIN(idx, uival, uint32_t);
+      }
+      if (minmax && (max_value == 0 || uival > *max_value)) {
+        SAVE_MAX(idx, uival, uint32_t);
+      }
+      file.write((const char *)&uival, sizeof(uint32_t));
     }
+    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
   }
 }
 
 void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
+                                  uint32_t group, uint32_t page,
                                   uint64_t from, uint64_t until,
                                   parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -831,16 +1027,31 @@ void write_integer_int64_dec(std::ostream &file, SEXP col, uint64_t from,
   }
 }
 
-void write_integer_int64(std::ostream &file, SEXP col, uint64_t from,
-                         uint64_t until) {
+void RParquetOutFile::write_integer_int64(std::ostream &file, SEXP col,
+                                          uint32_t idx,
+                                          uint64_t from, uint64_t until) {
+
+  int64_t *min_value = 0, *max_value = 0;
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, int64_t);
+    max_value = GRAB_MAX(idx, int64_t);
+  }
 
   for (uint64_t i = from; i < until; i++) {
     int32_t val = INTEGER(col)[i];
     if (val == NA_INTEGER) continue;
     int64_t el = val;
+    if (minmax && (min_value == 0 || el < *min_value)) {
+      SAVE_MIN(idx, el, int64_t);
+    }
+    if (minmax && (max_value == 0 || el > *max_value)) {
+      SAVE_MAX(idx, el, int64_t);
+    }
     file.write((const char*) &el, sizeof(int64_t));
    }
- }
+  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+}
 
  void write_double_int64_dec(std::ostream &file, SEXP col, uint64_t from,
                              uint64_t until, int32_t precision,
@@ -874,20 +1085,44 @@ void write_integer_int64(std::ostream &file, SEXP col, uint64_t from,
   }
 }
 
-void write_double_int64_time(std::ostream &file, SEXP col, uint32_t idx,
-                             uint64_t from, uint64_t until,
-                             parquet::SchemaElement &sel, double factor) {
+void RParquetOutFile::write_double_int64_time(std::ostream &file, SEXP col,
+                                              uint32_t idx, uint64_t from,
+                                              uint64_t until,
+                                              parquet::SchemaElement &sel,
+                                              double factor) {
+  int64_t *min_value = 0, *max_value = 0;
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, int64_t);
+    max_value = GRAB_MAX(idx, int64_t);
+  }
+
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
     if (R_IsNA(val)) continue;
     int64_t ival = val * factor;
+    if (minmax && (min_value == 0 || ival < *min_value)) {
+      SAVE_MIN(idx, ival, int64_t);
+    }
+    if (minmax && (max_value == 0 || ival > *max_value)) {
+      SAVE_MAX(idx, ival, int64_t);
+    }
     file.write((const char *)&ival, sizeof(int64_t));
   }
+  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
 }
 
-void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
-                        uint64_t from, uint64_t until,
-                        parquet::SchemaElement &sel) {
+void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
+                                         uint32_t idx, uint64_t from,
+                                         uint64_t until,
+                                         parquet::SchemaElement &sel) {
+  int64_t *min_value = 0, *max_value = 0;
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, int64_t);
+    max_value = GRAB_MAX(idx, int64_t);
+  }
+
   if (Rf_inherits(col, "POSIXct")) {
     int64_t fact = 1;
     if (sel.__isset.logicalType && sel.logicalType.__isset.TIMESTAMP) {
@@ -910,15 +1145,29 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
       int64_t el = val * fact;
+      if (minmax && (min_value == 0 || el < *min_value)) {
+        SAVE_MIN(idx, el, int64_t);
+      }
+      if (minmax && (max_value == 0 || el > *max_value)) {
+        SAVE_MAX(idx, el, int64_t);
+      }
       file.write((const char *)&el, sizeof(int64_t));
     }
+    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
   } else if (Rf_inherits(col, "difftime")) {
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
       int64_t el = val * 1000 * 1000 * 1000;
+      if (minmax && (min_value == 0 || el < *min_value)) {
+        SAVE_MIN(idx, el, int64_t);
+      }
+      if (minmax && (max_value == 0 || el > *max_value)) {
+        SAVE_MAX(idx, el, int64_t);
+      }
       file.write((const char *)&el, sizeof(int64_t));
     }
+    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
   } else {
     bool is_signed = TRUE;
     int bit_width = 64;
@@ -947,10 +1196,23 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
           );
         }
         int64_t el = val;
+        if (minmax && (min_value == 0 || el < *min_value)) {
+          SAVE_MIN(idx, el, int64_t);
+        }
+        if (minmax && (max_value == 0 || el > *max_value)) {
+          SAVE_MAX(idx, el, int64_t);
+        }
         file.write((const char *)&el, sizeof(int64_t));
       }
+      has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
     } else {
       double max = pow(2, 64) - 1;
+      uint64_t *min_value = 0, *max_value = 0;
+      bool minmax = write_minmax_values && is_minmax_supported[idx];
+      if (minmax && has_minmax_value[idx]) {
+        min_value = GRAB_MIN(idx, uint64_t);
+        max_value = GRAB_MAX(idx, uint64_t);
+      }
       for (uint64_t i = from; i < until; i++) {
         double val = REAL(col)[i];
         if (R_IsNA(val)) continue;
@@ -971,13 +1233,21 @@ void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
           );
         }
         uint64_t el = val;
+        if (minmax && (min_value == 0 || el < *min_value)) {
+          SAVE_MIN(idx, el, uint64_t);
+        }
+        if (minmax && (max_value == 0 || el > *max_value)) {
+          SAVE_MAX(idx, el, uint64_t);
+        }
         file.write((const char *)&el, sizeof(uint64_t));
       }
+      has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
     }
   }
 }
 
 void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
+                                  uint32_t group, uint32_t page,
                                   uint64_t from, uint64_t until,
                                   parquet::SchemaElement &sel) {
   // This is double in R, so we need to convert
@@ -997,7 +1267,7 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
     if (isdec) {
       write_integer_int64_dec(file, col, from, until, precision, scale);
     } else {
-      write_integer_int64(file, col, from, until);
+      write_integer_int64(file, col, idx, from, until);
     }
     break;
   case REALSXP:
@@ -1019,6 +1289,7 @@ void RParquetOutFile::write_int64(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_int96(std::ostream &file, uint32_t idx,
+                                  uint32_t group, uint32_t page,
                                   uint64_t from, uint64_t until,
                                   parquet::SchemaElement &sel) {
   // This is double in R, so we need to convert
@@ -1058,6 +1329,7 @@ void RParquetOutFile::write_int96(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
+                                  uint32_t group, uint32_t page,
                                   uint64_t from, uint64_t until,
                                   parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -1074,15 +1346,31 @@ void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
       "Internal nanoparquet error, row index too large"
     );
   }
+
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  float *min_value = 0, *max_value = 0;
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, float);
+    max_value = GRAB_MAX(idx, float);
+  }
+
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
     if (R_IsNA(val)) continue;
     float el = val;
+    if (minmax && (min_value == 0 || el< *min_value)) {
+      SAVE_MIN(idx, el, float);
+    }
+    if (minmax && (max_value == 0 || el > *max_value)) {
+      SAVE_MAX(idx, el, float);
+    }
     file.write((const char*) &el, sizeof(float));
   }
+  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
 }
 
 void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
+                                   uint32_t group, uint32_t page,
                                    uint64_t from, uint64_t until,
                                    parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -1099,19 +1387,63 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
       "Internal nanoparquet error, row index too large"
     );
   }
-  if (sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
+
+  bool minmax = write_minmax_values && is_minmax_supported[idx];
+  double *min_value = 0, *max_value = 0;
+  if (minmax && has_minmax_value[idx]) {
+    min_value = GRAB_MIN(idx, double);
+    max_value = GRAB_MAX(idx, double);
+  }
+
+  if (!minmax &&
+      sel.repetition_type == parquet::FieldRepetitionType::REQUIRED) {
     uint64_t len = until - from;
     file.write((const char *) (REAL(col) + from), sizeof(double) * len);
   } else {
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
+      if (minmax && (min_value == 0 || val < *min_value)) {
+        SAVE_MIN(idx, val, double);
+      }
+      if (minmax && (max_value == 0 || val > *max_value)) {
+        SAVE_MAX(idx, val, double);
+      }
       file.write((const char*) &val, sizeof(double));
     }
+    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
   }
 }
 
+static inline bool STR_LESS(const char *c, size_t l, std::string &etalon) {
+  size_t el = etalon.size();
+  // "" is less than anything but ""
+  if (l == 0) return el > 0;
+  // otherwise anything is more than ""
+  if (el == 0) return false;
+  int res = memcmp(c, etalon.data(), l < el ? l : el);
+  return res < 0 || (res == 0 && l < el);
+}
+
+static inline bool STR_MORE(const char *c, size_t l, std::string &etalon) {
+  size_t el = etalon.size();
+  // "" is not more than anything
+  if (l == 0) return false;
+  // othwrwise anything is more than ""
+  if (el == 0) return true;
+  int res = memcmp(c, etalon.data(), l < el ? l : el);
+  return res > 0 || (res == 0 && l > el);
+}
+
+#define SAVE_MIN_STR(idx, c, l) do {          \
+  min_values[idx] = std::string((c), (l));    \
+  min_value = &min_values[idx]; } while (0)
+#define SAVE_MAX_STR(idx, c, l) do {          \
+  max_values[idx] = std::string((c), (l));    \
+  max_value = &max_values[idx]; } while (0)
+
 void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
+                                       uint32_t group, uint32_t page,
                                        uint64_t from, uint64_t until,
                                        parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -1124,6 +1456,13 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
 
   switch (TYPEOF(col)) {
   case STRSXP: {
+    bool minmax = write_minmax_values && is_minmax_supported[idx];
+    std::string *min_value = nullptr, *max_value = nullptr;
+    if (minmax && has_minmax_value[idx]) {
+      min_value = &min_values[idx];
+      max_value = &max_values[idx];
+    }
+
     for (uint64_t i = from; i < until; i++) {
       SEXP el = STRING_ELT(col, i);
       if (el == NA_STRING) {
@@ -1131,9 +1470,16 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
       }
       const char *c = CHAR(el);
       uint32_t len1 = strlen(c);
+      if (minmax && (min_value == nullptr || STR_LESS(c, len1, *min_value))) {
+        SAVE_MIN_STR(idx, c, len1);
+      }
+      if (minmax && (max_value == nullptr || STR_MORE(c, len1, *max_value))) {
+        SAVE_MAX_STR(idx, c, len1);
+      }
       file.write((const char *)&len1, 4);
       file.write(c, len1);
     }
+    has_minmax_value[idx] = has_minmax_value[idx] || min_value != nullptr;
     break;
   }
   case VECSXP: {
@@ -1153,15 +1499,6 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
       file.write((const char*) &len1, sizeof(uint32_t));
       file.write((const char*) RAW(el), len1);
     }
-    break;
-  }
-  case INTSXP: {
-    int32_t precision, scale;
-    bool isdec = is_decimal(sel, precision, scale);
-
-    break;
-  }
-  case REALSXP: {
     break;
   }
   default:
@@ -1259,6 +1596,7 @@ static bool parse_uuid(const char *c, char *u, char *t) {
 void RParquetOutFile::write_fixed_len_byte_array(
   std::ostream &file,
   uint32_t idx,
+  uint32_t group, uint32_t page,
   uint64_t from, uint64_t until,
   parquet::SchemaElement &sel) {
 
@@ -1399,6 +1737,7 @@ void write_boolean_impl(std::ostream &file, SEXP col,
 }
 
 void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx,
+                                    uint32_t group, uint32_t page,
                                     uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   if (TYPEOF(col) != LGLSXP) {
@@ -1413,6 +1752,8 @@ void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx,
 
 void RParquetOutFile::write_boolean_as_int(std::ostream &file,
                                            uint32_t idx,
+                                           uint32_t group,
+                                           uint32_t page,
                                            uint64_t from,
                                            uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -1551,13 +1892,14 @@ void RParquetOutFile::write_present_boolean(
 
 uint32_t RParquetOutFile::get_num_values_dictionary(
     uint32_t idx,
+    parquet::SchemaElement &sel,
     int64_t from,
     int64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
   if (Rf_inherits(col, "factor")) {
     return Rf_nlevels(col);
   } else {
-    create_dictionary(idx, from, until);
+    create_dictionary(idx, from, until, sel);
     return Rf_length(VECTOR_ELT(VECTOR_ELT(dicts, idx), 0));
   }
 }
@@ -1584,7 +1926,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
       UNPROTECT(1);
       return size;
     } else {
-      create_dictionary(idx, from, until);
+      create_dictionary(idx, from, until, sel);
       SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
       if (type == parquet::Type::INT32) {
         return Rf_xlength(dictidx) * sizeof(int);
@@ -1603,7 +1945,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
     break;
   }
   case REALSXP: {
-    create_dictionary(idx, from, until);
+    create_dictionary(idx, from, until, sel);
     SEXP dict = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     if (type == parquet::Type::DOUBLE) {
       return Rf_xlength(dict) * sizeof(double);
@@ -1628,7 +1970,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
   }
   case STRSXP: {
     // need to count the length of the stings that are indexed in dict
-    create_dictionary(idx, from, until);
+    create_dictionary(idx, from, until, sel);
     SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     R_xlen_t len = Rf_xlength(dictidx);
     bool is_uuid = sel.__isset.logicalType && sel.logicalType.__isset.UUID;
@@ -1649,7 +1991,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
   }
   case LGLSXP: {
     // this does not happen, no dictionaries for BOOLEAN, makes no sense
-    create_dictionary(idx, from, until);                     // # nocov
+    create_dictionary(idx, from, until, sel);                // # nocov
     SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);    // # nocov
     R_xlen_t l = Rf_xlength(dictidx);                        // # nocov
     return l / 8 + (l % 8 > 0);                              // # nocov
@@ -2173,6 +2515,23 @@ void RParquetOutFile::write_dictionary_indices(
   }
 }
 
+bool RParquetOutFile::get_group_minmax_values(uint32_t idx, uint32_t group,
+                                              parquet::SchemaElement &sel,
+                                              std::string &min_value,
+                                              std::string &max_value) {
+
+  if (!is_minmax_supported[idx]) {
+    return false;
+  } else if (!has_minmax_value[idx]) {
+    // maybe all values are missing
+    return false;
+  } else {
+    min_value = min_values[idx];
+    max_value = max_values[idx];
+    return true;
+  }
+}
+
 void nanoparquet_map_to_parquet_type(
   SEXP x,
   SEXP options,
@@ -2417,6 +2776,13 @@ void RParquetOutFile::write(
   R_xlen_t nr = INTEGER(dim)[0];
   set_num_rows(nr);
   R_xlen_t nc = INTEGER(dim)[1];
+
+  write_minmax_values = LOGICAL(get_list_element(options, "write_minmax_values"))[0];
+  is_minmax_supported = std::vector<bool>(nc, false);
+  has_minmax_value.resize(nc);
+  min_values.resize(nc);
+  max_values.resize(nc);
+
   for (R_xlen_t idx = 0; idx < nc; idx++) {
     SEXP col = VECTOR_ELT(dfsxp, idx);
     bool req = LOGICAL(required)[idx];
@@ -2450,6 +2816,33 @@ void RParquetOutFile::write(
       }
       if (precision[idx] != NA_INTEGER) {
         sel.__set_precision(precision[idx]);
+      }
+    }
+
+    if (!write_minmax_values) {
+      // nothing to do
+    } if (sel.__isset.logicalType) {
+      parquet::LogicalType &lt = sel.logicalType;
+      is_minmax_supported[idx] = lt.__isset.DATE || lt.__isset.INTEGER ||
+        lt.__isset.TIME || lt.__isset.STRING || lt.__isset.ENUM ||
+        lt.__isset.JSON || lt.__isset.BSON || lt.__isset.TIMESTAMP;
+      // TODO: support the rest
+      // is_minmax_supported[idx] = lt.__isset.UUID ||
+      //   lt.__isset.DECIMAL || lt.isset.FLOAT16;
+    } else {
+      switch(sel.type) {
+      // case parquet::Type::BOOLEAN:
+      case parquet::Type::INT32:
+      case parquet::Type::INT64:
+      case parquet::Type::FLOAT:
+      case parquet::Type::DOUBLE:
+      // case parquet::Type::BYTE_ARRAY;
+      // case parquet::Type::FIXED_LEN_BYTE_ARRAY;
+        is_minmax_supported[idx] = true;
+        break;
+      default:
+        is_minmax_supported[idx] = false;
+        break;
       }
     }
 

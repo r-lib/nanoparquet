@@ -18,7 +18,7 @@ test_that("parquet_metadata", {
     as.data.frame(mtd$file_meta_data)
     as.data.frame(mtd$schema)
     as.data.frame(mtd$row_groups)
-    as.data.frame(mtd$column_chunks)
+    as.data.frame(mtd$column_chunks[, 1:20])
   })
 
   sch <- read_parquet_schema("test.parquet")

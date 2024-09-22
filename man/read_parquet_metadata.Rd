@@ -53,6 +53,22 @@ additional entries, e.g. \code{bit_width}, \code{is_signed}, etc.
 integer for the root node, and \code{NA} for a leaf node.
 }
 \item \verb{$row_groups}: a data frame, information about the row groups.
+Some important columns:
+\itemize{
+\item \code{file_name}: file name.
+\item \code{id}: row group id, integer from zero to number of row groups
+minus one.
+\item \code{total_byte_size}: total uncompressed size of all column data.
+\item \code{num_rows}: number of rows.
+\item \code{file_offset}: where the row group starts in the file. This is
+optional, so it might be \code{NA}.
+\item \code{total_compressed_size}: total byte size of all compressed
+(and potentially encrypted) column data in this row group.
+This is optional, so it might be \code{NA}.
+\item \code{ordinal}: ordinal position of the row group in the file, starting
+from zero. This is optional, so it might be \code{NA}. If \code{NA}, then
+the order of the row groups is as they appear in the metadata.
+}
 \item \verb{$column_chunks}: a data frame, information about all column chunks,
 across all row groups. Some important columns:
 \itemize{
@@ -83,6 +99,18 @@ the column chunk in the file, or \code{NA} if there are no index pages.
 \item \code{dictionary_page_offset}: absolute position of the first
 dictionary page of the column chunk in the file, or \code{NA} if there
 are no dictionary pages.
+\item \code{null_count}: the number of missing values in the column chunk.
+It may be \code{NA}.
+\item \code{min_value}: list column of raw vectors, the minimum value of the
+column, in binary. If \code{NULL}, then then it is not specified.
+This column is experimental.
+\item \code{max_value}: list column of raw vectors, the maximum value of the
+column, in binary. If \code{NULL}, then then it is not specified.
+This column is experimental.
+\item \code{is_min_value_exact}: whether the minimum value is an actual
+value of a column, or a bound. It may be \code{NA}.
+\item \code{is_max_value_exact}: whether the maximum value is an actual
+value of a column, or a bound. It may be \code{NA}.
 }
 }
 }

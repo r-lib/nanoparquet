@@ -1,3 +1,5 @@
+#include <cstdint>
+
 #include <Rdefines.h>
 
 extern "C" {
@@ -55,6 +57,18 @@ SEXP zstd_compress_raw(SEXP x);
 SEXP zstd_uncompress_raw(SEXP x, SEXP ucl);
 
 SEXP test_memstream();
+
+SEXP read_float(SEXP x) {
+  float *f = (float*) RAW(x);
+  double d = *f;
+  return Rf_ScalarReal(d);
+}
+
+SEXP read_int64(SEXP x) {
+  int64_t *f = (int64_t*) RAW(x);
+  double d = *f;
+  return Rf_ScalarReal(d);
+}
 
 SEXP is_asan_() {
 #if defined(__has_feature)
@@ -122,6 +136,8 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(zstd_uncompress_raw, 2),
 
   CALLDEF(test_memstream, 0),
+  CALLDEF(read_float, 1),
+  CALLDEF(read_int64, 1),
 
   CALLDEF(is_asan_, 0),
   CALLDEF(is_ubsan_, 0),

@@ -33,27 +33,40 @@ public:
   void add_key_value_metadata(std::string key, std::string value);
   void write();
 
+  // This makes the write inherently sequential and we might remove it
+  // latest. Currently, it makes it easier to keep track of minimume and
+  // maximum values per row group.
+  virtual void write_row_group(uint32_t group) = 0;
+
   // write out various parquet types, these must be implemented in
   // the subclass
-  virtual void write_int32(std::ostream &file, uint32_t idx, uint64_t from,
-                           uint64_t until, parquet::SchemaElement &sel) = 0;
-  virtual void write_int64(std::ostream &file, uint32_t idx, uint64_t from,
-                           uint64_t until, parquet::SchemaElement &sel) = 0;
-  virtual void write_int96(std::ostream &file, uint32_t idx, uint64_t from,
-                           uint64_t until, parquet::SchemaElement &sel) = 0;
-  virtual void write_float(std::ostream &file, uint32_t idx, uint64_t from,
-                           uint64_t until, parquet::SchemaElement &sel) = 0;
-  virtual void write_double(std::ostream &file, uint32_t idx, uint64_t from,
-                            uint64_t until, parquet::SchemaElement &sel) = 0;
+  virtual void write_int32(std::ostream &file, uint32_t idx, uint32_t group,
+                           uint32_t page, uint64_t from, uint64_t until,
+                           parquet::SchemaElement &sel) = 0;
+  virtual void write_int64(std::ostream &file, uint32_t idx, uint32_t group,
+                           uint32_t page, uint64_t from, uint64_t until,
+                           parquet::SchemaElement &sel) = 0;
+  virtual void write_int96(std::ostream &file, uint32_t idx, uint32_t group,
+                           uint32_t page, uint64_t from, uint64_t until,
+                           parquet::SchemaElement &sel) = 0;
+  virtual void write_float(std::ostream &file, uint32_t idx, uint32_t group,
+                           uint32_t page, uint64_t from, uint64_t until,
+                           parquet::SchemaElement &sel) = 0;
+  virtual void write_double(std::ostream &file, uint32_t idx, uint32_t group,
+                            uint32_t page, uint64_t from, uint64_t until,
+                            parquet::SchemaElement &sel) = 0;
   virtual void write_byte_array(std::ostream &file, uint32_t idx,
-                                uint64_t from, uint64_t until,
+                                uint32_t group, uint32_t page, uint64_t from,
+                                uint64_t until,
                                 parquet::SchemaElement &sel) = 0;
   virtual void write_fixed_len_byte_array(std::ostream &file, uint32_t idx,
+                                          uint32_t group, uint32_t page,
                                           uint64_t from, uint64_t until,
                                           parquet::SchemaElement &sel) = 0;
-  virtual void write_boolean(std::ostream &file, uint32_t idx,
-                             uint64_t from, uint64_t until) = 0;
+  virtual void write_boolean(std::ostream &file, uint32_t idx, uint32_t group,
+                             uint32_t page, uint64_t from, uint64_t until) = 0;
   virtual void write_boolean_as_int(std::ostream &file, uint32_t idx,
+                                    uint32_t group, uint32_t page,
                                     uint64_t from, uint64_t until) = 0;
 
   // callbacks for missing values
@@ -72,7 +85,9 @@ public:
   virtual uint32_t get_size_byte_array(uint32_t idx,
                                        uint32_t num_present,
                                        uint64_t from, uint64_t until) = 0;
-  virtual uint32_t get_num_values_dictionary(uint32_t idx, int64_t from,
+  virtual uint32_t get_num_values_dictionary(uint32_t idx,
+                                             parquet::SchemaElement &sel,
+                                             int64_t from,
                                              int64_t until) = 0;
   virtual uint32_t get_size_dictionary(uint32_t idx,
                                        parquet::SchemaElement &sel,
@@ -86,6 +101,11 @@ public:
                                         int64_t rg_from, int64_t rg_until,
                                         uint64_t page_from,
                                         uint64_t page_until) = 0;
+
+  virtual bool get_group_minmax_values(uint32_t idx, uint32_t group,
+                                       parquet::SchemaElement &sel,
+                                       std::string &min_value,
+                                       std::string &max_value) = 0;
 
   int data_page_version = 1;
 
@@ -113,19 +133,24 @@ private:
 
   void init_column_meta_data();
   // return total size
-  int64_t write_columns(int64_t from, int64_t until);
-  void write_column(uint32_t idx, int64_t from, int64_t until);
+  int64_t write_columns(uint32_t group, int64_t from, int64_t until);
+  void write_column(uint32_t idx, uint32_t group, int64_t from,
+                    int64_t until);
   void write_dictionary_page(uint32_t idx, int64_t from, int64_t until);
-  void write_data_pages(uint32_t idx, int64_t from, int64_t until);
-  void write_data_page(uint32_t idx, int64_t rg_from, int64_t rg_until,
+  void write_data_pages(uint32_t idx, uint32_t group, int64_t from,
+                        int64_t until);
+  void write_data_page(uint32_t idx, uint32_t group, uint32_t page,
+                       int64_t rg_from, int64_t rg_until,
                        uint64_t from, uint64_t until);
   void write_page_header(uint32_t idx, parquet::PageHeader &ph);
   void write_footer();
 
   void write_data_(std::ostream &file, uint32_t idx, uint32_t size,
-                   uint64_t from, uint64_t until);
+                   uint32_t group, uint32_t page, uint64_t from,
+                   uint64_t until);
   void write_present_data_(std::ostream &file, uint32_t idx,
                            uint32_t size, uint32_t num_present,
+                           uint32_t group, uint32_t page,
                            uint64_t from, uint64_t until);
   void write_dictionary_(std::ostream &file, uint32_t idx, uint32_t size,
                          parquet::SchemaElement &sel, int64_t from,

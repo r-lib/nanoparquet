@@ -126,6 +126,21 @@ format_schema_result <- function(mtd, sch, options) {
 #'       integer for the root node, and `NA` for a leaf node.
 # -------------------------------------------------------------------------
 #'   * `$row_groups`: a data frame, information about the row groups.
+#'     Some important columns:
+#'     - `file_name`: file name.
+#'     - `id`: row group id, integer from zero to number of row groups
+#'       minus one.
+#'     - `total_byte_size`: total uncompressed size of all column data.
+#'     - `num_rows`: number of rows.
+#'     - `file_offset`: where the row group starts in the file. This is
+#'       optional, so it might be `NA`.
+#'     - `total_compressed_size`: total byte size of all compressed
+#'       (and potentially encrypted) column data in this row group.
+#'       This is optional, so it might be `NA`.
+#'     - `ordinal`: ordinal position of the row group in the file, starting
+#'       from zero. This is optional, so it might be `NA`. If `NA`, then
+#'       the order of the row groups is as they appear in the metadata.
+# -------------------------------------------------------------------------
 #'   * `$column_chunks`: a data frame, information about all column chunks,
 #'     across all row groups. Some important columns:
 #'     - `file_name`: file name.
@@ -155,6 +170,18 @@ format_schema_result <- function(mtd, sch, options) {
 #'     - `dictionary_page_offset`: absolute position of the first
 #'       dictionary page of the column chunk in the file, or `NA` if there
 #'       are no dictionary pages.
+#'     - `null_count`: the number of missing values in the column chunk.
+#'       It may be `NA`.
+#'     - `min_value`: list column of raw vectors, the minimum value of the
+#'       column, in binary. If `NULL`, then then it is not specified.
+#'       This column is experimental.
+#'     - `max_value`: list column of raw vectors, the maximum value of the
+#'       column, in binary. If `NULL`, then then it is not specified.
+#'       This column is experimental.
+#'     - `is_min_value_exact`: whether the minimum value is an actual
+#'       value of a column, or a bound. It may be `NA`.
+#'     - `is_max_value_exact`: whether the maximum value is an actual
+#'       value of a column, or a bound. It may be `NA`.
 #'
 #' @export
 #' @seealso [read_parquet_info()] for a much shorter summary.
@@ -191,6 +218,8 @@ read_parquet_metadata <- function(file, options = parquet_options()) {
 	res$column_chunks$codec <- names(codecs)[res$column_chunks$codec + 1L]
 	res$column_chunks$encodings <- I(res$column_chunks$encodings)
 	res$column_chunks$path_in_schema <- I(res$column_chunks$path_in_schema)
+	res$column_chunks$min_value <- I(res$column_chunks$min_value)
+	res$column_chunks$max_value <- I(res$column_chunks$max_value)
 	res$column_chunks <- as.data.frame(res$column_chunks)
 	class(res$column_chunks) <- c("tbl", class(res$column_chunks))
 

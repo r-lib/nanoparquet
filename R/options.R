@@ -34,6 +34,13 @@
 #'   metadata to the file [write_parquet()].
 #' @param write_data_page_version Data version to write by default.
 #'   Possible values are 1 and 2. Default is 1.
+#' @param write_minmax_values Whether to write minimum and maximum values
+#'   per row group, for data types that support this in [write_parquet()].
+#'   However, nanoparquet currently does not support minimum and maximum
+#'   values for the `DECIMAL`, `UUID` and `FLOAT16` logical types and the
+#'   `BOOLEAN`, `BYTE_ARRAY` and `FIXED_LEN_BYTE_ARRAY` primitive types
+#'   if they are writing without a logical type. Currently the default
+#'   is `TRUE`.
 #'
 #' @return List of nanoparquet options.
 #'
@@ -55,7 +62,8 @@ parquet_options <- function(
   num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
-  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L)
+  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L),
+  write_minmax_values = getOption("nanoparquet.write_minmax_values", TRUE)
 ) {
   stopifnot(is.character(class))
   stopifnot(is_flag(use_arrow_metadata))
@@ -66,6 +74,7 @@ parquet_options <- function(
     identical(write_data_page_version, 1L) ||
     identical(write_data_page_version, 2L)
   )
+  stopifnot(is_flag(write_minmax_values))
   num_rows_per_row_group <- as_count(
     num_rows_per_row_group,
     "num_rows_per_row_group"
@@ -86,6 +95,7 @@ parquet_options <- function(
     num_rows_per_row_group = num_rows_per_row_group,
     use_arrow_metadata = use_arrow_metadata,
     write_arrow_metadata = write_arrow_metadata,
-    write_data_page_version = as.integer(write_data_page_version)
+    write_data_page_version = as.integer(write_data_page_version),
+    write_minmax_values = write_minmax_values
   )
 }

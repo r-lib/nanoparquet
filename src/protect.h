@@ -46,6 +46,7 @@ void throw_error(void *err, Rboolean jump);
 
 SEXP wrapped_rawsxp(void *len);
 SEXP wrapped_intsxp(void *len);
+SEXP wrapped_lglsxp(void *len);
 SEXP wrapped_realsxp(void *len);
 SEXP wrapped_strsxp(void *len);
 SEXP wrapped_vecsxp(void *len);
@@ -64,6 +65,10 @@ inline SEXP safe_allocvector_raw(R_xlen_t len, SEXP *uwt) {
 
 inline SEXP safe_allocvector_int(R_xlen_t len, SEXP *uwt) {
   return R_UnwindProtect(wrapped_intsxp, &len, throw_error, uwt, *uwt);
+}
+
+inline SEXP safe_allocvector_lgl(R_xlen_t len, SEXP *uwt) {
+  return R_UnwindProtect(wrapped_lglsxp, &len, throw_error, uwt, *uwt);
 }
 
 inline SEXP safe_allocvector_real(R_xlen_t len, SEXP *uwt) {
