@@ -41,8 +41,12 @@
     <div class="section level2">
     <h2 id="r-s-data-types">R's data types<a class="anchor" aria-label="anchor" href="#r-s-data-types"></a></h2>
     <p>When writing out a data frame, nanoparquet maps R's data types to Parquet
-logical types. This is how the mapping is performed.</p>
-<p>These rules will likely change until nanoparquet reaches version 1.0.0.</p><ol><li><p>Factors (i.e. vectors that inherit the <em>factor</em> class) are converted
+logical types. The following table is a summary of the mapping. For the
+details see below.</p><table class="table table"><tr><td>R type</td><td>Parquet type</td><td>Default</td><td>Notes</td></tr><tr><td>character</td><td>STRING (BYTE_ARRAY)</td><td>x</td><td>I.e. STRSXP. Converted to UTF-8.</td></tr><tr><td>"</td><td>BYTE_ARRAY</td><td></td><td></td></tr><tr><td>"</td><td>FIXED_LEN_BYTE_ARRAY</td><td></td><td></td></tr><tr><td>"</td><td>ENUM</td><td></td><td></td></tr><tr><td>"</td><td>UUID</td><td></td><td></td></tr><tr><td>Date</td><td>DATE</td><td>x</td><td></td></tr><tr><td>difftime</td><td>INT64</td><td>x</td><td>If not hms::hms. Arrow metadata marks it as Duration(NS).</td></tr><tr><td>factor</td><td>STRING</td><td>x</td><td>Arrow metadata marks it as a factor.</td></tr><tr><td>"</td><td>ENUM</td><td></td><td></td></tr><tr><td>hms::hms</td><td>TIME(true, MILLIS)</td><td>x</td><td>Sub-milliseconds precision is lost.</td></tr><tr><td>integer</td><td>INT(32, true)</td><td>x</td><td>I.e. INTSXP.</td></tr><tr><td>"</td><td>INT64</td><td></td><td></td></tr><tr><td>"</td><td>INT96</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL (INT32)</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL (INT64)</td><td></td><td></td></tr><tr><td>"</td><td>INT(8, *)</td><td></td><td></td></tr><tr><td>"</td><td>INT(16, *)</td><td></td><td></td></tr><tr><td>"</td><td>INT(32, signed)</td><td></td><td></td></tr><tr><td>list</td><td>BYTE_ARRAY</td><td></td><td>Must be a list of raw vectors. Messing values are <code>NULL</code>.</td></tr><tr><td>"</td><td>FIXED_LEN_BYTE_ARRAY</td><td></td><td>Must be a list of raw vectors of the same length. Missing values are <code>NULL</code>.</td></tr><tr><td>logical</td><td>BOOLEAN</td><td>x</td><td>I.e. LGLSXP.</td></tr><tr><td>numeric</td><td>DOUBLE</td><td>x</td><td>I.e. REALSXP.</td></tr><tr><td>"</td><td>INT96</td><td></td><td></td></tr><tr><td>"</td><td>FLOAT</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL (INT32)</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL (INT64)</td><td></td><td></td></tr><tr><td>"</td><td>INT(*, *)</td><td></td><td></td></tr><tr><td>"</td><td>FLOAT16</td><td></td><td></td></tr><tr><td>POSIXct</td><td>TIMESTAMP(true, MICROS)</td><td>x</td><td>Sub-microsecond precision is lost.</td></tr></table><p>The non-default mappings can be selected via the <code>schema</code> argument. E.g.
+to write out a factor column called 'name' as <code>ENUM</code>, use</p>
+<p></p><div class="sourceCode r"><pre><code><span><span class="fu"><a href="../reference/write_parquet.html">write_parquet</a></span><span class="op">(</span><span class="va">...</span>, schema <span class="op">=</span> <span class="fu"><a href="../reference/parquet_schema.html">parquet_schema</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"ENUM"</span><span class="op">)</span><span class="op">)</span></span></code></pre><p></p></div>
+<p>The detailed mapping rules are listed below, in order of preference.
+These rules will likely change until nanoparquet reaches version 1.0.0.</p><ol><li><p>Factors (i.e. vectors that inherit the <em>factor</em> class) are converted
 to character vectors using <code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code>, then written as a
 <code>STRSXP</code> (character vector) type. The fact that a column is a factor
 is stored in the Arrow metadata (see below), unless the
@@ -94,8 +98,9 @@ non-default mappings are:</p><ul><li><p><code>integer</code> to <code>INT64</cod
     <h2 id="parquet-s-data-types">Parquet's data types<a class="anchor" aria-label="anchor" href="#parquet-s-data-types"></a></h2>
     <p>When reading a Parquet file nanoparquet also relies on logical types and
 the Arrow metadata (if present, see below) in addition to the low level
-data types. The exact rules are below.</p>
-<p>These rules will likely change until nanoparquet reaches version 1.0.0.</p><ol><li><p>The <code>BOOLEAN</code> type is read as a logical vector (<code>LGLSXP</code>).</p></li>
+data types. The following table summarizes the mappings. See more details
+below.</p><table class="table table"><tr><td>Parquet type</td><td>R type</td><td>Notes</td></tr><tr><td><em>Logical types</em></td><td></td><td></td></tr><tr><td>BSON</td><td>character</td><td></td></tr><tr><td>DATE</td><td>Date</td><td></td></tr><tr><td>DECIMAL</td><td>numeric</td><td>REALSXP, potentially losing precision.</td></tr><tr><td>ENUM</td><td>character</td><td></td></tr><tr><td>FLOAT16</td><td>numeric</td><td>REALSXP</td></tr><tr><td>INT(8, *)</td><td>integer</td><td></td></tr><tr><td>INT(16, *)</td><td>integer</td><td></td></tr><tr><td>INT(32, *)</td><td>integer</td><td>Large unsigned values may overflow!</td></tr><tr><td>INT(64, *)</td><td>numeric</td><td>REALSXP</td></tr><tr><td>INTERVAL</td><td>list(raw)</td><td>Missing values are <code>NULL</code>.</td></tr><tr><td>JSON</td><td>character</td><td></td></tr><tr><td>LIST</td><td></td><td>Not supported.</td></tr><tr><td>MAP</td><td></td><td>Not supported.</td></tr><tr><td>STRING</td><td>factor</td><td>If Arrow metadata says it is a factor. Also UTF8.</td></tr><tr><td>"</td><td>character</td><td>Otherwise. Also UTF8.</td></tr><tr><td>TIME</td><td>hms::hms</td><td>Also TIME_MILLIS and TIME_MICROS.</td></tr><tr><td>TIMESTAMP</td><td>POSIXct</td><td>Also TIMESTAMP_MILLIS and TIMESTAMP_MICROS.</td></tr><tr><td>UUID</td><td>character</td><td>In <code>00112233-4455-6677-8899-aabbccddeeff</code> form.</td></tr><tr><td>UNKNOWN</td><td></td><td>Not supported.</td></tr><tr><td><em>Primitive types</em></td><td></td><td></td></tr><tr><td>BOOLEAN</td><td>logical</td><td></td></tr><tr><td>BYTE_ARRAY</td><td>factor</td><td>If Arrow metadata says it is a factor.</td></tr><tr><td>"</td><td>list(raw)</td><td>Otherwise. Missing values are <code>NULL</code>.</td></tr><tr><td>DOUBLE</td><td>numeric</td><td>REALSXP</td></tr><tr><td>FIXED_LEN_BYTE_ARRAY</td><td>list(raw)</td><td>Missing values are <code>NULL</code>.</td></tr><tr><td>FLOAT</td><td>numeric</td><td>REALSXP</td></tr><tr><td>INT32</td><td>integer</td><td></td></tr><tr><td>INT64</td><td>numeric</td><td>REALSXP</td></tr><tr><td>INT96</td><td>POSIXct</td><td></td></tr></table><p>The exact rules are below. These rules will likely change until nanoparquet
+reaches version 1.0.0.</p><ol><li><p>The <code>BOOLEAN</code> type is read as a logical vector (<code>LGLSXP</code>).</p></li>
 <li><p>The <code>STRING</code> logical type and the <code>UTF8</code> converted type is read as
 a character vector with UTF-8 encoding.</p></li>
 <li><p>The <code>DATE</code> logical type and the <code>DATE</code> converted type are read as a
@@ -117,7 +122,7 @@ precision.</p></li>
 <li><p>The <code>ENUM</code> logical type is read as a character vector.</p></li>
 <li><p>The <code>UUID</code> logical type is read as a character vector that uses the
 <code>00112233-4455-6677-8899-aabbccddeeff</code> form.</p></li>
-<li><p>The <code>FLOAT16</code> logical type is read as a real vector (<code>READLSXP</code>).</p></li>
+<li><p>The <code>FLOAT16</code> logical type is read as a real vector (<code>REALSXP</code>).</p></li>
 <li><p><code>BYTE_ARRAY</code> is read as a <em>factor</em> object if the file was written
 by Arrow and the original data type of the column was a factor.
 (See 'The Arrow metadata below.)</p></li>
@@ -180,7 +185,7 @@ mappings.</p></div>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
   </div></footer></body></html>
