@@ -16,6 +16,8 @@
     `read_parquet_schema()` or the new `infer_parquet_schema()` function
     instead.
 
+* Other improvements:
+
   - The new `parquet_schema()` function creates a Parquet schema from
     scratch. You can use this schema as the new `schema` argument of
     `write_parquet()`, to specify how the columns of a data frame should
@@ -24,6 +26,10 @@
   - `write_parquet()` can now write multiple row groups. By default it puts
     at most 10 million rows into a single row group. You can choose the
     row groups manually with the `row_groups` argument.
+
+  - `write_parquet()` now writes minimum and maximum values per row group
+    for most types. See `?parquet_options()` for turning this off. It also
+    writes out the number of non-missing values.
 
   - Newly supported type conversions in `write_parquet()` via the
     schema argument:
