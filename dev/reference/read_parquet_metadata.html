@@ -95,7 +95,21 @@ additional entries, e.g. <code>bit_width</code>, <code>is_signed</code>, etc.</p
 <li><p><code>num_children</code>: number of child nodes. Should be a non-negative
 integer for the root node, and <code>NA</code> for a leaf node.</p></li>
 </ul></li>
-<li><p><code>$row_groups</code>: a data frame, information about the row groups.</p></li>
+<li><p><code>$row_groups</code>: a data frame, information about the row groups.
+Some important columns:</p><ul><li><p><code>file_name</code>: file name.</p></li>
+<li><p><code>id</code>: row group id, integer from zero to number of row groups
+minus one.</p></li>
+<li><p><code>total_byte_size</code>: total uncompressed size of all column data.</p></li>
+<li><p><code>num_rows</code>: number of rows.</p></li>
+<li><p><code>file_offset</code>: where the row group starts in the file. This is
+optional, so it might be <code>NA</code>.</p></li>
+<li><p><code>total_compressed_size</code>: total byte size of all compressed
+(and potentially encrypted) column data in this row group.
+This is optional, so it might be <code>NA</code>.</p></li>
+<li><p><code>ordinal</code>: ordinal position of the row group in the file, starting
+from zero. This is optional, so it might be <code>NA</code>. If <code>NA</code>, then
+the order of the row groups is as they appear in the metadata.</p></li>
+</ul></li>
 <li><p><code>$column_chunks</code>: a data frame, information about all column chunks,
 across all row groups. Some important columns:</p><ul><li><p><code>file_name</code>: file name.</p></li>
 <li><p><code>row_group</code>: which row group this chunk belongs to.</p></li>
@@ -124,6 +138,18 @@ the column chunk in the file, or <code>NA</code> if there are no index pages.</p
 <li><p><code>dictionary_page_offset</code>: absolute position of the first
 dictionary page of the column chunk in the file, or <code>NA</code> if there
 are no dictionary pages.</p></li>
+<li><p><code>null_count</code>: the number of missing values in the column chunk.
+It may be <code>NA</code>.</p></li>
+<li><p><code>min_value</code>: list column of raw vectors, the minimum value of the
+column, in binary. If <code>NULL</code>, then then it is not specified.
+This column is experimental.</p></li>
+<li><p><code>max_value</code>: list column of raw vectors, the maximum value of the
+column, in binary. If <code>NULL</code>, then then it is not specified.
+This column is experimental.</p></li>
+<li><p><code>is_min_value_exact</code>: whether the minimum value is an actual
+value of a column, or a bound. It may be <code>NA</code>.</p></li>
+<li><p><code>is_max_value_exact</code>: whether the maximum value is an actual
+value of a column, or a bound. It may be <code>NA</code>.</p></li>
 </ul></li>
 </ul></div>
     <div class="section level2">
@@ -173,7 +199,7 @@ are no dictionary pages.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 2 more variables: total_compressed_size &lt;dbl&gt;, ordinal &lt;int&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $column_chunks</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 13 × 19</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 13 × 24</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    file_name    row_group column file_path file_offset offset_index_offset</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> /home/runne…         0      0 <span style="color: #BB0000;">NA</span>                  4                  <span style="color: #BB0000;">NA</span></span>
@@ -189,12 +215,13 @@ are no dictionary pages.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span> /home/runne…         0     10 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">59</span>312                  <span style="color: #BB0000;">NA</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> /home/runne…         0     11 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">67</span>026                  <span style="color: #BB0000;">NA</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span> /home/runne…         0     12 <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">71</span>089                  <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 13 more variables: offset_index_length &lt;int&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 18 more variables: offset_index_length &lt;int&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   column_index_offset &lt;dbl&gt;, column_index_length &lt;int&gt;, type &lt;chr&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   encodings &lt;I&lt;list&gt;&gt;, path_in_schema &lt;I&lt;list&gt;&gt;, codec &lt;chr&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   num_values &lt;dbl&gt;, total_uncompressed_size &lt;dbl&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   total_compressed_size &lt;dbl&gt;, data_page_offset &lt;dbl&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   index_page_offset &lt;dbl&gt;, dictionary_page_offset &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   index_page_offset &lt;dbl&gt;, dictionary_page_offset &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   null_count &lt;dbl&gt;, min_value &lt;I&lt;list&gt;&gt;, max_value &lt;I&lt;list&gt;&gt;, …</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

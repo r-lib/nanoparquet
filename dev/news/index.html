@@ -40,8 +40,12 @@
 <li><p><code><a href="../reference/read_parquet_info.html">parquet_info()</a></code> is now called <code><a href="../reference/read_parquet_info.html">read_parquet_info()</a></code>. <code>parquet_info(</code> still works for now, with a warning.</p></li>
 <li><p><code><a href="../reference/read_parquet_metadata.html">parquet_metadata()</a></code> is now called <code><a href="../reference/read_parquet_metadata.html">read_parquet_metadata()</a></code>. <code><a href="../reference/read_parquet_metadata.html">parquet_metadata()</a></code> still works, with a warning.</p></li>
 <li><p><code><a href="../reference/parquet_column_types.html">parquet_column_types()</a></code> is now deprecated, and issues a warning. Use <code><a href="../reference/read_parquet_schema.html">read_parquet_schema()</a></code> or the new <code><a href="../reference/infer_parquet_schema.html">infer_parquet_schema()</a></code> function instead.</p></li>
-<li><p>The new <code><a href="../reference/parquet_schema.html">parquet_schema()</a></code> function creates a Parquet schema from scratch. You can use this schema as the new <code>schema</code> argument of <code><a href="../reference/write_parquet.html">write_parquet()</a></code>, to specify how the columns of a data frame should be mapped to Parquet types.</p></li>
+</ul></li>
+<li>
+<p>Other improvements:</p>
+<ul><li><p>The new <code><a href="../reference/parquet_schema.html">parquet_schema()</a></code> function creates a Parquet schema from scratch. You can use this schema as the new <code>schema</code> argument of <code><a href="../reference/write_parquet.html">write_parquet()</a></code>, to specify how the columns of a data frame should be mapped to Parquet types.</p></li>
 <li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> can now write multiple row groups. By default it puts at most 10 million rows into a single row group. You can choose the row groups manually with the <code>row_groups</code> argument.</p></li>
+<li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now writes minimum and maximum values per row group for most types. See <code>?parquet_options()</code> for turning this off. It also writes out the number of non-missing values.</p></li>
 <li>
 <p>Newly supported type conversions in <code><a href="../reference/write_parquet.html">write_parquet()</a></code> via the schema argument:</p>
 <ul><li>

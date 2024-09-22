@@ -45,7 +45,8 @@
 <span>  num_rows_per_row_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.num_rows_per_row_group"</span>, <span class="fl">10000000L</span><span class="op">)</span>,</span>
 <span>  use_arrow_metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.use_arrow_metadata"</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>  write_arrow_metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.write_arrow_metadata"</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>  write_data_page_version <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.write_data_page_version"</span>, <span class="fl">1L</span><span class="op">)</span></span>
+<span>  write_data_page_version <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.write_data_page_version"</span>, <span class="fl">1L</span><span class="op">)</span>,</span>
+<span>  write_minmax_values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.write_minmax_values"</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -101,6 +102,16 @@ metadata to the file <code><a href="write_parquet.html">write_parquet()</a></cod
 <dt id="arg-write-data-page-version">write_data_page_version<a class="anchor" aria-label="anchor" href="#arg-write-data-page-version"></a></dt>
 <dd><p>Data version to write by default.
 Possible values are 1 and 2. Default is 1.</p></dd>
+
+
+<dt id="arg-write-minmax-values">write_minmax_values<a class="anchor" aria-label="anchor" href="#arg-write-minmax-values"></a></dt>
+<dd><p>Whether to write minimum and maximum values
+per row group, for data types that support this in <code><a href="write_parquet.html">write_parquet()</a></code>.
+However, nanoparquet currently does not support minimum and maximum
+values for the <code>DECIMAL</code>, <code>UUID</code> and <code>FLOAT16</code> logical types and the
+<code>BOOLEAN</code>, <code>BYTE_ARRAY</code> and <code>FIXED_LEN_BYTE_ARRAY</code> primitive types
+if they are writing without a logical type. Currently the default
+is <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
