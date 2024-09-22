@@ -37,8 +37,10 @@
 #' @param write_minmax_values Whether to write minimum and maximum values
 #'   per row group, for data types that support this in [write_parquet()].
 #'   However, nanoparquet currently does not support minimum and maximum
-#'   values for the `DECIMAL` and `FLOAT16` logical types. Currently the
-#'   default is `TRUE`.
+#'   values for the `DECIMAL`, `UUID` and `FLOAT16` logical types and the
+#'   `BOOLEAN`, `BYTE_ARRAY` and `FIXED_LEN_BYTE_ARRAY` primitive types
+#'   if they are writing without a logical type. Currently the default
+#'   is `TRUE`.
 #'
 #' @return List of nanoparquet options.
 #'
