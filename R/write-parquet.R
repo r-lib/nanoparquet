@@ -84,6 +84,8 @@ write_parquet <- function(
 
   dim <- as.integer(dim(x))
 
+  x <- prepare_df(x)
+
   schema <- map_schema_to_df(schema, x, options)
 
   if (is.null(metadata)) {
@@ -105,47 +107,6 @@ write_parquet <- function(
     }
   }
 
-  # convert strings to UTF-8
-  strs <- which(vapply(x, is.character, logical(1)))
-  for (idx in strs) {
-    x[[idx]] <- enc2utf8(x[[idx]])
-  }
-  # factor levels as well
-  fctrs <- which(vapply(x, "inherits", "factor", FUN.VALUE = logical(1)))
-  for (idx in fctrs) {
-    levels(x[[idx]]) <- enc2utf8(levels(x[[idx]]))
-  }
-
-  # Date must be integer
-  dates <- which(vapply(x, "inherits", "Date", FUN.VALUE = logical(1)))
-  for (idx in dates) {
-    # this keeps the class
-    mode(x[[idx]]) <- "integer"
-  }
-
-  # Convert hms to double
-  hmss <- which(vapply(x, "inherits", "hms", FUN.VALUE = logical(1)))
-  for (idx in hmss) {
-    # this keeps the class
-    mode(x[[idx]]) <- "double"
-  }
-
-  # Make sure POSIXct is double
-  posixcts <- which(vapply(x, "inherits", "POSIXct", FUN.VALUE = logical(1)))
-  for (idx in posixcts) {
-    # keeps the class
-    mode(x[[idx]]) <- "double"
-  }
-
-  # difftime must be saved in seconds
-  difftimes <- which(vapply(x, "inherits", "difftime", FUN.VALUE = logical(1)))
-  for (idx in setdiff(difftimes, hmss)) {
-    x[[idx]] <- as.difftime(
-      as.double(x[[idx]], units = "secs"),
-      units = "secs"
-    )
-  }
-
   # if schema has REQUIRED, but the column has NAs, that's an error
   rt <- schema[["repetition_type"]]
   req <- !is.na(rt) & rt == "REQUIRED"
@@ -161,16 +122,15 @@ write_parquet <- function(
     ifelse(hasna[is.na(rt)], "OPITONAL", "REQUIRED")
   required <- schema[["repetition_type"]] == "REQUIRED"
 
-encoding <- parse_encoding(encoding, x)
+  encoding <- parse_encoding(encoding, x)
 
-row_groups <- row_groups %||%
-  default_row_groups(x, schema, compression, encoding, options)
+  row_groups <- row_groups %||%
+    default_row_groups(x, schema, compression, encoding, options)
+  row_group_starts <- parse_row_groups(x, row_groups)
+  x <- row_group_starts[[1]]
+  row_group_starts <- row_group_starts[[2]]
 
-row_group_starts <- parse_row_groups(x, row_groups)
-x <- row_group_starts[[1]]
-row_group_starts <- row_group_starts[[2]]
-
-res <- .Call(
+  res <- .Call(
     nanoparquet_write,
     x,
     file,
@@ -240,4 +200,49 @@ parse_row_groups <- function(x, rg) {
     )
   }
   list(x = x, row_groups = rg)
+}
+
+prepare_df <- function(x) {
+  # convert strings to UTF-8
+  strs <- which(vapply(x, is.character, logical(1)))
+  for (idx in strs) {
+    x[[idx]] <- enc2utf8(x[[idx]])
+  }
+  # factor levels as well
+  fctrs <- which(vapply(x, "inherits", "factor", FUN.VALUE = logical(1)))
+  for (idx in fctrs) {
+    levels(x[[idx]]) <- enc2utf8(levels(x[[idx]]))
+  }
+
+  # Date must be integer
+  dates <- which(vapply(x, "inherits", "Date", FUN.VALUE = logical(1)))
+  for (idx in dates) {
+    # this keeps the class
+    mode(x[[idx]]) <- "integer"
+  }
+
+  # Convert hms to double
+  hmss <- which(vapply(x, "inherits", "hms", FUN.VALUE = logical(1)))
+  for (idx in hmss) {
+    # this keeps the class
+    mode(x[[idx]]) <- "double"
+  }
+
+  # Make sure POSIXct is double
+  posixcts <- which(vapply(x, "inherits", "POSIXct", FUN.VALUE = logical(1)))
+  for (idx in posixcts) {
+    # keeps the class
+    mode(x[[idx]]) <- "double"
+  }
+
+  # difftime must be saved in seconds
+  difftimes <- which(vapply(x, "inherits", "difftime", FUN.VALUE = logical(1)))
+  for (idx in setdiff(difftimes, hmss)) {
+    x[[idx]] <- as.difftime(
+      as.double(x[[idx]], units = "secs"),
+      units = "secs"
+    )
+  }
+
+  x
 }
