@@ -63,12 +63,10 @@ See \link{parquet-encodings} for more about encodings.}
 This must be a named character vector, or a data frame with columns
 character columns called \code{key} and \code{value}.}
 
-\item{row_groups}{Row groups of the Parquet file. If \code{NULL}, and \code{x}
-is a grouped data frame, then the groups are used as row groups.
-The rows will be reordered to match groups. If \code{NULL}, and \code{x} is
-not a grouped data frame, then the \code{num_rows_per_row_group} option is
-used from the \code{options} argument, see \code{\link[=parquet_options]{parquet_options()}}. Otherwise
-it must be an integer vector, specifying the starts of the row groups.}
+\item{row_groups}{Row groups of the Parquet file. If \code{NULL}, then the
+\code{num_rows_per_row_group} option is used from the \code{options} argument,
+see \code{\link[=parquet_options]{parquet_options()}}. Otherwise it must be an integer vector,
+specifying the starts of the row groups.}
 
 \item{options}{Nanoparquet options, see \code{\link[=parquet_options]{parquet_options()}}.}
 }
