@@ -167,6 +167,26 @@ test_that("write_parquet() to memory 2", {
   expect_equal(r1, r2)
 })
 
+test_that("write_parquet() to stdout", {
+  skip_on_cran()
+  tmp1 <- tempfile(fileext = ".parquet")
+  tmp2 <- tempfile(fileext = ".parquet")
+  script <- tempfile(fileext = ".R")
+  on.exit(unlink(c(tmp1, tmp2, script)), add = TRUE)
+
+  txt <- c(
+    if (!is_rcmd_check()) "pkgload::load_all()",
+    "nanoparquet::write_parquet(mtcars, \":stdout:\")"
+  )
+  writeLines(txt, script)
+  processx::run(rscript(), script, stdout = tmp1, stderr = NULL)
+  r1 <- readBin(tmp1, "raw", file.size(tmp1))
+  write_parquet(mtcars, tmp2)
+  r2 <- readBin(tmp2, "raw", file.size(tmp2))
+  expect_equal(file.size(tmp1), file.size(tmp2))
+  expect_equal(r1, r2)
+})
+
 test_that("gzip compression", {
   d <- test_df(missing = TRUE)
   tmp <- tempfile(fileext = ".parquet")

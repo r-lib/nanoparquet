@@ -39,3 +39,11 @@ test_write <- function(d, schema = NULL, encoding = NULL) {
     as.data.frame(read_parquet(tmp))
   })
 }
+
+rscript <- function() {
+  if (.Platform$OS.type == "windows") {
+    file.path(R.home("bin"), "Rscript.exe")
+  } else {
+    file.path(R.home("bin"), "Rscript")
+  }
+}

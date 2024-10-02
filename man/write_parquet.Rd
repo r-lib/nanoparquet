@@ -20,7 +20,10 @@ write_parquet(
 
 \item{file}{Path to the output file. If this is the string \code{":raw:"},
 then the data frame is written to a memory buffer, and the memory
-buffer is returned as a raw vector.}
+buffer is returned as a raw vector. If \code{":stdout:"}, then it is
+written to the standard output. (When writing to the standard output,
+special care is needed to make sure no regular R output gets mixed
+up with the Parquet bytes!)}
 
 \item{schema}{Parquet schema. Specify a schema to tweak the default
 nanoparquet R -> Parquet type mappings. Use \code{\link[=parquet_schema]{parquet_schema()}} to
