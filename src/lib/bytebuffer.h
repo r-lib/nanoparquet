@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 #include <cstring>
+#include <cstdint>
 #include <vector>
 
 class ByteBuffer : public std::streambuf {
