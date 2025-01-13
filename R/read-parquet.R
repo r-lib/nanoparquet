@@ -24,6 +24,7 @@
 read_parquet <- function(file, options = parquet_options()) {
 	if (inherits(file, "connection")) {
 		tmp <- tempfile(fileext = ".parquet")
+		on.exit(unlink(tmp), add = TRUE)
 		dump_connection(file, tmp)
 		file <- tmp
 	}
