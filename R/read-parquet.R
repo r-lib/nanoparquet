@@ -24,11 +24,16 @@
 read_parquet <- function(file, options = parquet_options()) {
 	if (inherits(file, "connection")) {
 		tmp <- tempfile(fileext = ".parquet")
+		on.exit(unlink(tmp), add = TRUE)
 		dump_connection(file, tmp)
 		file <- tmp
 	}
   file <- path.expand(file)
   res <- .Call(nanoparquet_read2, file, options, sys.call())
+	post_process_read_result(res, file, options)
+}
+
+post_process_read_result <- function(res, file, options) {
 	dicts <- res[[2]]
 	types <- res[[3]]
 	res <- res[[1]]
@@ -74,4 +79,33 @@ dump_connection <- function(con, path) {
 		writeBin(buf, path)
 	}
 	close(ocon)
+}
+
+read_parquet_row_group <- function(file, row_group,
+																	 options = parquet_options()) {
+	if (inherits(file, "connection")) {
+		tmp <- tempfile(fileext = ".parquet")
+		on.exit(unlink(tmp), add = TRUE)
+		dump_connection(file, tmp)
+		file <- tmp
+	}
+  file <- path.expand(file)
+  res <- .Call(nanoparquet_read_row_group, file, row_group,
+							 options, sys.call())
+	post_process_read_result(res, file, options)
+}
+
+# TODO: this does not work currently
+read_parquet_column_chunk <- function(file, row_group = 0L, column = 0L,
+																			options = parquet_options()) {
+	if (inherits(file, "connection")) {
+		tmp <- tempfile(fileext = ".parquet")
+		on.exit(unlink(tmp), add = TRUE)
+		dump_connection(file, tmp)
+		file <- tmp
+	}
+  file <- path.expand(file)
+  res <- .Call(nanoparquet_read_column_chunk, file, row_group, column,
+							 options, sys.call())
+	post_process_read_result(res, file, options)
 }
