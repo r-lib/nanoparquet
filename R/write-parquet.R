@@ -84,6 +84,8 @@ write_parquet <- function(
 
   dim <- as.integer(dim(x))
 
+  x <- prepare_write_df(x)
+
   schema <- map_schema_to_df(schema, x, options)
 
   if (is.null(metadata)) {
@@ -105,7 +107,54 @@ write_parquet <- function(
     }
   }
 
-  # convert strings to UTF-8
+  # if schema has REQUIRED, but the column has NAs, that's an error
+  rt <- schema[["repetition_type"]]
+  req <- !is.na(rt) & rt == "REQUIRED"
+  hasna <- vapply(x, any_na, logical(1))
+  bad <- which(req & hasna)
+  if (length(bad) > 0) {
+    stop(
+      "Parquet schema does not allow missing values for column",
+      if (length(bad) > 1) "s", ":", paste(names(x)[bad], collapse = ", ")
+    )
+  }
+  schema[["repetition_type"]][is.na(rt)] <-
+    ifelse(hasna[is.na(rt)], "OPITONAL", "REQUIRED")
+  required <- schema[["repetition_type"]] == "REQUIRED"
+
+  encoding <- parse_encoding(encoding, x)
+
+  row_groups <- row_groups %||%
+    default_row_groups(x, schema, compression, encoding, options)
+
+  row_group_starts <- parse_row_groups(x, row_groups)
+  x <- row_group_starts[[1]]
+  row_group_starts <- row_group_starts[[2]]
+
+  res <- .Call(
+    nanoparquet_write,
+    x,
+    file,
+    dim,
+    compression,
+    metadata,
+    required,
+    options,
+    schema,
+    encodings[encoding],
+    row_group_starts,
+    sys.call()
+  )
+
+  if (is.null(res)) {
+    invisible()
+  } else {
+    res
+  }
+}
+
+prepare_write_df <- function(x) {
+    # convert strings to UTF-8
   strs <- which(vapply(x, is.character, logical(1)))
   for (idx in strs) {
     x[[idx]] <- enc2utf8(x[[idx]])
@@ -146,50 +195,7 @@ write_parquet <- function(
     )
   }
 
-  # if schema has REQUIRED, but the column has NAs, that's an error
-  rt <- schema[["repetition_type"]]
-  req <- !is.na(rt) & rt == "REQUIRED"
-  hasna <- vapply(x, any_na, logical(1))
-  bad <- which(req & hasna)
-  if (length(bad) > 0) {
-    stop(
-      "Parquet schema does not allow missing values for column",
-      if (length(bad) > 1) "s", ":", paste(names(x)[bad], collapse = ", ")
-    )
-  }
-  schema[["repetition_type"]][is.na(rt)] <-
-    ifelse(hasna[is.na(rt)], "OPITONAL", "REQUIRED")
-  required <- schema[["repetition_type"]] == "REQUIRED"
-
-encoding <- parse_encoding(encoding, x)
-
-row_groups <- row_groups %||%
-  default_row_groups(x, schema, compression, encoding, options)
-
-row_group_starts <- parse_row_groups(x, row_groups)
-x <- row_group_starts[[1]]
-row_group_starts <- row_group_starts[[2]]
-
-res <- .Call(
-    nanoparquet_write,
-    x,
-    file,
-    dim,
-    compression,
-    metadata,
-    required,
-    options,
-    schema,
-    encodings[encoding],
-    row_group_starts,
-    sys.call()
-  )
-
-  if (is.null(res)) {
-    invisible()
-  } else {
-    res
-  }
+  x
 }
 
 parse_encoding <- function(encoding, x) {
