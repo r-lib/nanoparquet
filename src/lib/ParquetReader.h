@@ -128,6 +128,8 @@ public:
   void read_all_columns();
   void read_selected_columns(std::vector<uint32_t> sel);
   void read_column(uint32_t idx);
+  void read_row_group(uint32_t row_group);
+  void read_column_chunk(uint32_t row_group, uint32_t column);
 
   // API to be implemented by the embedding software
 
@@ -163,7 +165,7 @@ protected:
   void init_file_on_disk();
   void check_meta_data();
 
-  void read_column_chunk(ColumnChunk &cc);
+  void read_column_chunk_int(ColumnChunk &cc);
 
   void read_dict_page(
     ColumnChunk &cc,

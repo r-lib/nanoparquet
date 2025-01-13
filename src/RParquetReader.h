@@ -79,12 +79,20 @@ public:
   std::vector<uint8_t> map;
 };
 
+class RParquetFilter {
+public:
+  RParquetFilter() : filter_row_groups(false) { };
+  bool filter_row_groups;
+  std::vector<uint32_t> row_groups;
+};
+
 class RParquetReader : public ParquetReader {
 public:
   RParquetReader(std::string filename);
+  RParquetReader(std::string filename, RParquetFilter &filter);
   ~RParquetReader();
 
-  void create_metadata();
+  void create_metadata(RParquetFilter &filter);
   void convert_columns_to_r();
   void create_df();
 
@@ -105,4 +113,7 @@ public:
   std::vector<std::vector<std::vector<tmpbytes>>> byte_arrays;
   std::vector<std::vector<presentmap>> present;
   rmetadata metadata;
+
+protected:
+  void init(RParquetFilter &filter);
 };

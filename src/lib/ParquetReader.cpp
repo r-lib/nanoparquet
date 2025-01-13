@@ -176,6 +176,36 @@ void ParquetReader::read_selected_columns(std::vector<uint32_t> sel) {
   }
 }
 
+void ParquetReader::read_row_group(uint32_t row_group) {
+  if (!has_file_meta_data_) {
+    throw runtime_error("Cannot read column, metadata is not known");
+  }
+  for (uint32_t col = 1; col < file_meta_data_.schema.size(); col++) {
+    SchemaElement &sel = file_meta_data_.schema[col];
+    if (!sel.__isset.type) {
+      throw runtime_error("Invalid Parquet file, column type is not set");
+    }
+    vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
+    parquet::ColumnChunk pcc = rgs[row_group].columns[leaf_cols[col]];
+    ColumnChunk cc(pcc, sel, col, row_group, rgs[row_group].num_rows);
+    read_column_chunk_int(cc);
+  }
+}
+
+void ParquetReader::read_column_chunk(uint32_t row_group, uint32_t column) {
+  if (!has_file_meta_data_) {
+    throw runtime_error("Cannot read column, metadata is not known");
+  }
+  SchemaElement &sel = file_meta_data_.schema[column];
+  if (!sel.__isset.type) {
+    throw runtime_error("Invalid Parquet file, column type is not set");
+  }
+  vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
+  parquet::ColumnChunk pcc = rgs[row_group].columns[leaf_cols[column]];
+  ColumnChunk cc(pcc, sel, column, row_group, rgs[row_group].num_rows);
+  read_column_chunk_int(cc);
+}
+
 void ParquetReader::read_column(uint32_t column) {
   if (!has_file_meta_data_) {
     throw runtime_error("Cannot read column, metadata is not known");
@@ -189,11 +219,11 @@ void ParquetReader::read_column(uint32_t column) {
   for (uint32_t rgi = 0; rgi < rgs.size(); rgi++) {
     parquet::ColumnChunk pcc = rgs[rgi].columns[leaf_cols[column]];
     ColumnChunk cc(pcc, sel, column, rgi, rgs[rgi].num_rows);
-    read_column_chunk(cc);
+    read_column_chunk_int(cc);
   }
 }
 
-void ParquetReader::read_column_chunk(ColumnChunk &cc) {
+void ParquetReader::read_column_chunk_int(ColumnChunk &cc) {
   parquet::ColumnMetaData cmd = cc.cc.meta_data;
   int64_t dictionary_page_offset =
     cc.has_dictionary ? cmd.dictionary_page_offset : -1;

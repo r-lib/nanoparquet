@@ -51,9 +51,19 @@ static double float16_to_double(uint16_t x) {
 
 RParquetReader::RParquetReader(std::string filename)
   : ParquetReader(filename) {
+  RParquetFilter filter;
+  init(filter);
+}
 
+RParquetReader::RParquetReader(std::string filename, RParquetFilter &filter)
+  : ParquetReader(filename) {
+
+  init(filter);
+}
+
+void RParquetReader::init(RParquetFilter &filter) {
   // metadata
-  create_metadata();
+  create_metadata(filter);
 
   // columns
   columns = Rf_allocVector(VECSXP, metadata.num_leaf_cols);
@@ -100,7 +110,7 @@ RParquetReader::~RParquetReader() {
 
 // ------------------------------------------------------------------------
 
-void RParquetReader::create_metadata() {
+void RParquetReader::create_metadata(RParquetFilter &filter) {
   parquet::FileMetaData fmt = get_file_meta_data();
   metadata.num_rows = fmt.num_rows;
   metadata.num_cols = fmt.schema.size();
@@ -116,6 +126,20 @@ void RParquetReader::create_metadata() {
     if (i > 0) {
       metadata.row_group_offsets[i] =
         metadata.row_group_offsets[i-1] + metadata.row_group_num_rows[i-1];
+    }
+  }
+
+  // only a subset of row groups? Then calculate number of rows and
+  // row group offsets
+  if (filter.filter_row_groups) {
+    metadata.num_rows = 0;
+    int64_t offs = 0;
+    for (auto i = 0; i < filter.row_groups.size(); i++) {
+      uint32_t rg = filter.row_groups[i];
+      int64_t rgs = metadata.row_group_num_rows[rg];
+      metadata.num_rows += rgs;
+      metadata.row_group_offsets[rg] = offs;
+      offs += rgs;
     }
   }
 
