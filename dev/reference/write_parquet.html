@@ -108,12 +108,10 @@ character columns called <code>key</code> and <code>value</code>.</p></dd>
 
 
 <dt id="arg-row-groups">row_groups<a class="anchor" aria-label="anchor" href="#arg-row-groups"></a></dt>
-<dd><p>Row groups of the Parquet file. If <code>NULL</code>, and <code>x</code>
-is a grouped data frame, then the groups are used as row groups.
-The rows will be reordered to match groups. If <code>NULL</code>, and <code>x</code> is
-not a grouped data frame, then the <code>num_rows_per_row_group</code> option is
-used from the <code>options</code> argument, see <code><a href="parquet_options.html">parquet_options()</a></code>. Otherwise
-it must be an integer vector, specifying the starts of the row groups.</p></dd>
+<dd><p>Row groups of the Parquet file. If <code>NULL</code>, then the
+<code>num_rows_per_row_group</code> option is used from the <code>options</code> argument,
+see <code><a href="parquet_options.html">parquet_options()</a></code>. Otherwise it must be an integer vector,
+specifying the starts of the row groups.</p></dd>
 
 
 <dt id="arg-options">options<a class="anchor" aria-label="anchor" href="#arg-options"></a></dt>
