@@ -44,6 +44,7 @@
 <li>
 <p>Other improvements:</p>
 <ul><li><p>The new <code><a href="../reference/parquet_schema.html">parquet_schema()</a></code> function creates a Parquet schema from scratch. You can use this schema as the new <code>schema</code> argument of <code><a href="../reference/write_parquet.html">write_parquet()</a></code>, to specify how the columns of a data frame should be mapped to Parquet types.</p></li>
+<li><p>New <code><a href="../reference/append_parquet.html">append_parquet()</a></code> function to append a data frame to an existing Parquet file.</p></li>
 <li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> can now write multiple row groups. By default it puts at most 10 million rows into a single row group. You can choose the row groups manually with the <code>row_groups</code> argument.</p></li>
 <li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now writes minimum and maximum values per row group for most types. See <code>?parquet_options()</code> for turning this off. It also writes out the number of non-missing values.</p></li>
 <li>

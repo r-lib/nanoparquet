@@ -42,6 +42,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">parquet_options</span><span class="op">(</span></span>
 <span>  class <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.class"</span>, <span class="st">"tbl"</span><span class="op">)</span>,</span>
 <span>  compression_level <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.compression_level"</span>, <span class="cn">NA_integer_</span><span class="op">)</span>,</span>
+<span>  keep_row_groups <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  num_rows_per_row_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.num_rows_per_row_group"</span>, <span class="fl">10000000L</span><span class="op">)</span>,</span>
 <span>  use_arrow_metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.use_arrow_metadata"</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>  write_arrow_metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.write_arrow_metadata"</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span>
@@ -73,6 +74,15 @@ more memory. Negative levels are also allowed, the lower the level,
 the faster the speed, at the cost of compression. Currently the
 smallest level is -131072. The default level is 3.</p></li>
 </ul></dd>
+
+
+<dt id="arg-keep-row-groups">keep_row_groups<a class="anchor" aria-label="anchor" href="#arg-keep-row-groups"></a></dt>
+<dd><p>This option is used when appending to a Parquet
+file with <code><a href="append_parquet.html">append_parquet()</a></code>. If <code>TRUE</code> then the existing row groups
+of the file are always kept as is and nanoparquet creates new row
+groups for the new data. If <code>FALSE</code> (the default), then the last row
+group of the file will be overwritten if it is smaller than the
+default row group size, i.e. <code>num_rows_per_row_group</code>.</p></dd>
 
 
 <dt id="arg-num-rows-per-row-group">num_rows_per_row_group<a class="anchor" aria-label="anchor" href="#arg-num-rows-per-row-group"></a></dt>
