@@ -37,7 +37,8 @@ ParquetOutFile::ParquetOutFile(
   int compression_level,
   vector<int64_t> &row_group_starts)
   : pfile(pfile_), num_rows(0), num_cols(0), num_rows_set(false),
-    codec(codec), compression_level(compression_level),
+    num_total_rows_set(false), codec(codec),
+    compression_level(compression_level),
     row_group_starts(row_group_starts),
     mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
@@ -49,7 +50,8 @@ ParquetOutFile::ParquetOutFile(
   int compression_level,
   vector<int64_t> &row_group_starts) :
     pfile(pfile_), num_rows(0), num_cols(0), num_rows_set(false),
-    codec(codec), compression_level(compression_level),
+    num_total_rows_set(false), codec(codec),
+    compression_level(compression_level),
     row_group_starts(row_group_starts),
     mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
