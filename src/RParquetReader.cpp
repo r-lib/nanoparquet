@@ -158,6 +158,7 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
   for (auto i = 0; i < metadata.num_cols; i++) {
     if (fmt.schema[i].__isset.num_children &&
         fmt.schema[i].num_children > 0) {
+      metadata.r_types[i].type = NILSXP;
       continue;
     }
     rtype rt(fmt.schema[i]);
