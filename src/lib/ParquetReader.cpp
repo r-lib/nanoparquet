@@ -51,10 +51,9 @@ ParquetReader::ParquetReader(std::string filename, bool readwrite)
 
 void ParquetReader::init_file_on_disk(bool readwrite) {
   ByteBuffer buf;
-  pfile.open(
-    filename_,
-    std::ios::binary | std::ios_base::in | (readwrite ? std::ios_base::out : 0)
-  );
+  auto mode =
+    readwrite ? std::ios_base::out | std::ios_base::in : std::ios_base::in;
+  pfile.open(filename_, std::ios::binary | mode);
   if (pfile.fail()) {
     std::stringstream ss;
     ss << "Can't open Parquet file at '" << filename_ << "' @ "
