@@ -487,6 +487,7 @@ uint32_t ParquetReader::read_data_page(DataPage &dp, uint8_t *buf, int32_t len) 
 
 void ParquetReader::update_data_page_size(DataPage &dp, uint8_t *buf, int32_t len) {
   if (dp.encoding != Encoding::DELTA_BYTE_ARRAY) {
+    dp.strs.total_len = len;
     return;
   }
   dp.prelen.resize(dp.num_present);
