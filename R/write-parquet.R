@@ -277,6 +277,59 @@ parse_row_groups <- function(x, rg) {
   list(x = x, row_groups = rg)
 }
 
+#' Append a data frame to an existing Parquet file
+#'
+#' The schema of the data frame must be compatible with the schema of
+#' the file.
+#'
+#' @section Warning:
+#' This function is **not** atomic! If it is interrupted, it may leave
+#' the file in a corrupt state. To work around this create a copy of the
+#' original file, append the new data to the copy, and then rename the
+#' new, extended file to the original one.
+#'
+#' @section About row groups:
+#' A Parquet file may be partitioned into multiple row groups, and indeed
+#' most large Parquet files are. `append_parquet()` is only able to update
+#' the existing file along the row group boundaries. There are two
+#' possibilities:
+#'
+#' - `append_parquet()` keeps all existing row groups in `file`, and
+#'   creates new row groups for the new data. This mode can be forced by
+#'   the `keep_row_groups` option in `options`, see [parquet_options()].
+#' - Alternatively, `write_parquet` will overwrite the _last_ row group in
+#'   file, with its existing contents plus the (beginning of) the new data.
+#'   This mode makes more sense if the last row group is small, because
+#'   many small row groups are inefficient.
+#'
+#' By default `append_parquet` chooses between the two modes automatically,
+#' aiming to create row groups with at least `num_rows_per_row_group`
+#' (see [parquet_options()]) rows. You can customize this behavior with
+#' the `keep_row_groups` options and the `row_groups` argument.
+#'
+#' @param x Data frame to append.
+#' @param file Path to the output file.
+#' @param compression Compression algorithm to use for the newly written
+#'   data. See [write_parquet()].
+#' @param encoding Encoding to use for the newly written data. It does not
+#'   have to be the same as the encoding of data in `file`. See
+#'   [write_parquet()] for possible values.
+#' @param row_groups Row groups of the new, extended Parquet file.
+#'   [append_parquet()] can only change the last existing row group, and
+#'   if `row_groups` is specified, it has respect this. I.e. if the
+#'   existing file has `n` rows, and the last row group starts at `k`
+#'   (`k <= n`), then the first row group in `row_groups` that refers to
+#'   the new data must start at `k` or `n+1`.
+#'   (It is simpler to specify `num_rows_per_row_group` in `options`, see
+#'   [parquet_options()] instead of `row_groups`. Only use `row_groups` if
+#'   you need complete control.)
+#' @param options Nanoparquet options, for the new data, see
+#'   [parquet_options()]. The `keep_row_groups` option also affects whether
+#'   `append_parquet()` overwrites existing row groups in `file`.
+#'
+#' @export
+#' @seealso [write_parquet()].
+
 append_parquet <- function(
   x,
   file,
@@ -298,20 +351,21 @@ append_parquet <- function(
   required <- schema[["repetition_type"]] == "REQUIRED"
   encoding <- parse_encoding(encoding, x)
 
-  row_groups <- row_groups %||% default_append_row_groups(
-    x,
-    mtd,
-    schema,
-    compression,
-    encoding,
-    options
-  )
+  nrow_file <- as.integer(mtd$file_meta_data$num_rows)
+  row_groups <- row_groups %||% if (options[["keep_row_groups"]]) {
+    c(1L, nrow_file + default_row_groups(
+      x, schema, compression, encoding, options
+    ))
+  } else {
+    default_append_row_groups(
+      x, mtd, schema, compression, encoding, options
+    )
+  }
   row_group_starts <- parse_row_groups(x, row_groups)
   x <- row_group_starts[[1]]
   row_group_starts <- row_group_starts[[2]]
 
   # check if we are extending the last row group of the original file
-  nrow_file <- mtd$file_meta_data$num_rows
   nrow_total <- nrow_file + nrow(x)
   extend_last_row_group <- ! (nrow_file + 1L) %in% row_group_starts
 
