@@ -31,9 +31,9 @@ void RParquetAppender::init_metadata(
     int last_rg_size = last_rg.total_byte_size;
     // drop last row group from existing metadata, we are overwriting it
     reader.file_meta_data_.row_groups.pop_back();
-    pfile.seekg(-(reader.footer_len + 8 + last_rg_size), std::ios_base::end);
+    pfile.seekp(-(reader.footer_len + 8 + last_rg_size), std::ios_base::end);
   } else {
-    pfile.seekg(-(reader.footer_len + 8), std::ios_base::end);
+    pfile.seekp(-(reader.footer_len + 8), std::ios_base::end);
   }
 
   outfile.data_page_version = data_page_version;
