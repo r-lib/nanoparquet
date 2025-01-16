@@ -7,6 +7,9 @@
 
 #include <Rdefines.h>
 
+#include "RParquetOutFile.h"
+#include "RParquetAppender.h"
+
 #include "lib/memstream.h"
 
 #include "protect.h"
@@ -91,126 +94,6 @@ SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until);
 SEXP nanoparquet_avg_run_length(SEXP x, SEXP rlen);
 static SEXP get_list_element(SEXP list, const char *str);
 }
-
-class RParquetOutFile : public ParquetOutFile {
-public:
-  RParquetOutFile(
-    std::string filename,
-    parquet::CompressionCodec::type codec,
-    int compression_level,
-    std::vector<int64_t> &row_groups
-  );
-  RParquetOutFile(
-    std::ostream &stream,
-    parquet::CompressionCodec::type codec,
-    int compsession_level,
-    std::vector<int64_t> &row_groups
-  );
-  void write_row_group(uint32_t group);
-  void write_int32(std::ostream &file, uint32_t idx, uint32_t group,
-                   uint32_t page, uint64_t from, uint64_t until,
-                   parquet::SchemaElement &sel);
-  void write_int64(std::ostream &file, uint32_t idx, uint32_t group,
-                   uint32_t page, uint64_t from, uint64_t until,
-                   parquet::SchemaElement &sel);
-  void write_int96(std::ostream &file, uint32_t idx, uint32_t group,
-                   uint32_t page, uint64_t from, uint64_t until,
-                   parquet::SchemaElement &sel);
-  void write_float(std::ostream &file, uint32_t idx, uint32_t group,
-                   uint32_t page, uint64_t from, uint64_t until,
-                   parquet::SchemaElement &sel);
-  void write_double(std::ostream &file, uint32_t idx, uint32_t group,
-                    uint32_t page, uint64_t from, uint64_t until,
-                    parquet::SchemaElement &sel);
-  void write_byte_array(std::ostream &file, uint32_t idx, uint32_t group,
-                        uint32_t page, uint64_t from, uint64_t until,
-                        parquet::SchemaElement &sel);
-  void write_fixed_len_byte_array(std::ostream &file, uint32_t id,
-                                  uint32_t group, uint32_t page, uint64_t from,
-                                  uint64_t until, parquet::SchemaElement &sel);
-  uint32_t get_size_byte_array(uint32_t idx, uint32_t num_present,
-                               uint64_t from, uint64_t until);
-  void write_boolean(std::ostream &file, uint32_t idx, uint32_t group,
-                     uint32_t page, uint64_t from, uint64_t until);
-  void write_boolean_as_int(std::ostream &file, uint32_t idx, uint32_t group,
-                            uint32_t page, uint64_t from, uint64_t until);
-
-  uint32_t write_present(std::ostream &file, uint32_t idx, uint64_t from,
-                         uint64_t until);
-  void write_present_boolean(std::ostream &file, uint32_t idx,
-                             uint32_t num_present, uint64_t from,
-                             uint64_t until);
-  void write_present_boolean_as_int(std::ostream &file, uint32_t idx,
-                                    uint32_t num_present, uint64_t from,
-                                    uint64_t until);
-
-  // for dictionaries
-  uint32_t get_num_values_dictionary(uint32_t idx,
-                                     parquet::SchemaElement &sel,
-                                     int64_t form, int64_t until);
-  uint32_t get_size_dictionary(uint32_t idx, parquet::SchemaElement &type,
-                               int64_t from, int64_t until);
-  void write_dictionary(std::ostream &file, uint32_t idx,
-                        parquet::SchemaElement &sel, int64_t from,
-                        int64_t until);
-  void write_dictionary_indices(std::ostream &file, uint32_t idx,
-                                int64_t rg_from, int64_t rg_until,
-                                uint64_t page_from, uint64_t page_until);
-
-  // statistics
-  bool get_group_minmax_values(uint32_t idx, uint32_t group,
-                               parquet::SchemaElement &sel,
-                               std::string &min_value,
-                               std::string &max_value);
-
-  void write(
-    SEXP dfsxp,
-    SEXP dim,
-    SEXP metadata,
-    SEXP rrequired,
-    SEXP options,
-    SEXP schema,
-    SEXP encoding
-  );
-
-private:
-  SEXP df = R_NilValue;
-  SEXP required = R_NilValue;
-  SEXP dicts = R_NilValue;
-  SEXP dicts_from = R_NilValue;
-  ByteBuffer present;
-
-  bool write_minmax_values;
-  std::vector<bool> is_minmax_supported;
-  std::vector<std::string> min_values;
-  std::vector<std::string> max_values;
-  std::vector<bool> has_minmax_value;
-
-  void create_dictionary(uint32_t idx, int64_t from, int64_t until,
-                         parquet::SchemaElement &sel);
-  // for LGLSXP this mean RLE encoding
-  bool should_use_dict_encoding(uint32_t idx);
-  parquet::Encoding::type
-  detect_encoding(uint32_t idx, parquet::SchemaElement &sel, int32_t renc);
-
-  void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
-                           uint64_t from, uint64_t until,
-                           parquet::SchemaElement &sel);
-  void write_double_int32_time(std::ostream &file, SEXP col, uint32_t idx,
-                               uint64_t from, uint64_t until,
-                               parquet::SchemaElement &sel, double factor);
-  void write_double_int32(std::ostream &file, SEXP col, uint32_t idx,
-                          uint64_t from, uint64_t until,
-                          parquet::SchemaElement &sel);
-  void write_integer_int64(std::ostream &file, SEXP col, uint32_t idx,
-                           uint64_t from, uint64_t until);
-  void write_double_int64(std::ostream &file, SEXP col, uint32_t idx,
-                          uint64_t from, uint64_t until,
-                          parquet::SchemaElement &sel);
-  void write_double_int64_time(std::ostream &file, SEXP col, uint32_t idx,
-                               uint64_t from, uint64_t until,
-                               parquet::SchemaElement &sel, double factor);
-};
 
 RParquetOutFile::RParquetOutFile(
   std::string filename,
@@ -2752,7 +2635,7 @@ void r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
   }
 }
 
-void RParquetOutFile::write(
+void RParquetOutFile::init_metadata(
   SEXP dfsxp,
   SEXP dim,
   SEXP metadata,
@@ -2763,6 +2646,9 @@ void RParquetOutFile::write(
 
   df = dfsxp;
   required = rrequired;
+  R_xlen_t nr = INTEGER(dim)[0];
+  set_num_rows(nr);
+
   dicts = PROTECT(Rf_allocVector(VECSXP, Rf_length(df)));
   dicts_from = PROTECT(Rf_allocVector(INTSXP, Rf_length(df)));
   SEXP nms = PROTECT(Rf_getAttrib(dfsxp, R_NamesSymbol));
@@ -2773,10 +2659,7 @@ void RParquetOutFile::write(
   int *scale = INTEGER(VECTOR_ELT(schema, 9));
   int *precision = INTEGER(VECTOR_ELT(schema, 10));
 
-  R_xlen_t nr = INTEGER(dim)[0];
-  set_num_rows(nr);
   R_xlen_t nc = INTEGER(dim)[1];
-
   write_minmax_values = LOGICAL(get_list_element(options, "write_minmax_values"))[0];
   is_minmax_supported = std::vector<bool>(nc, false);
   has_minmax_value.resize(nc);
@@ -2862,10 +2745,84 @@ void RParquetOutFile::write(
       );
     }
   }
-
-  ParquetOutFile::write();
-
   UNPROTECT(3);
+};
+
+void RParquetOutFile::init_append_metadata(
+  SEXP dfsxp,
+  SEXP dim,
+  SEXP rrequired,
+  SEXP options,
+  vector<parquet::SchemaElement> &schema,
+  SEXP encoding,
+  std::vector<parquet::RowGroup> &row_groups,
+  std::vector<parquet::KeyValue> &key_value_metadata) {
+
+  set_row_groups(row_groups);
+  set_key_value_metadata(key_value_metadata);
+
+  df = dfsxp;
+  required = rrequired;
+  R_xlen_t nr = INTEGER(dim)[0];
+  R_xlen_t ntotal = INTEGER(dim)[2];
+  set_num_rows(nr, ntotal);
+
+  dicts = PROTECT(Rf_allocVector(VECSXP, Rf_length(df)));
+  dicts_from = PROTECT(Rf_allocVector(INTSXP, Rf_length(df)));
+
+  R_xlen_t nc = INTEGER(dim)[1];
+  write_minmax_values = LOGICAL(get_list_element(options, "write_minmax_values"))[0];
+  is_minmax_supported = std::vector<bool>(nc, false);
+  has_minmax_value.resize(nc);
+  min_values.resize(nc);
+  max_values.resize(nc);
+
+  // root schema element is already there
+  for (R_xlen_t idx = 0; idx < nc; idx++) {
+    parquet::SchemaElement &sel = schema[idx+1];
+
+    // TODO: DRY
+    if (!write_minmax_values) {
+      // nothing to do
+    } if (sel.__isset.logicalType) {
+      parquet::LogicalType &lt = sel.logicalType;
+      is_minmax_supported[idx] = lt.__isset.DATE || lt.__isset.INTEGER ||
+        lt.__isset.TIME || lt.__isset.STRING || lt.__isset.ENUM ||
+        lt.__isset.JSON || lt.__isset.BSON || lt.__isset.TIMESTAMP;
+      // TODO: support the rest
+      // is_minmax_supported[idx] = lt.__isset.UUID ||
+      //   lt.__isset.DECIMAL || lt.isset.FLOAT16;
+    } else {
+      switch(sel.type) {
+      // case parquet::Type::BOOLEAN:
+      case parquet::Type::INT32:
+      case parquet::Type::INT64:
+      case parquet::Type::FLOAT:
+      case parquet::Type::DOUBLE:
+      // case parquet::Type::BYTE_ARRAY;
+      // case parquet::Type::FIXED_LEN_BYTE_ARRAY;
+        is_minmax_supported[idx] = true;
+        break;
+      default:
+        is_minmax_supported[idx] = false;
+        break;
+      }
+    }
+
+    int32_t ienc = INTEGER(encoding)[idx];
+    parquet::Encoding::type enc = detect_encoding(idx, sel, ienc);
+    schema_add_column(sel, enc);
+  }
+
+  UNPROTECT(2);
+}
+
+void RParquetOutFile::write() {
+  ParquetOutFile::write();
+}
+
+void RParquetOutFile::append() {
+  ParquetOutFile::append();
 }
 
 extern "C" {
@@ -2931,7 +2888,8 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
     std::ostream &os = ms.stream();
     RParquetOutFile of(os, codec, comp_level, row_groups);
     of.data_page_version = dp_ver;
-    of.write(dfsxp, dim, metadata, required, options, schema, encoding);
+    of.init_metadata(dfsxp, dim, metadata, required, options, schema, encoding);
+    of.write();
     R_xlen_t bufsize = ms.size();
     SEXP res = Rf_allocVector(RAWSXP, bufsize);
     ms.copy(RAW(res), bufsize);
@@ -2939,7 +2897,8 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
   } else {
     RParquetOutFile of(fname, codec, comp_level, row_groups);
     of.data_page_version = dp_ver;
-    of.write(dfsxp, dim, metadata, required, options, schema, encoding);
+    of.init_metadata(dfsxp, dim, metadata, required, options, schema, encoding);
+    of.write();
     return R_NilValue;
   }
 }
@@ -2955,6 +2914,7 @@ struct nanoparquet_write_data {
   SEXP schema;
   SEXP encoding;
   SEXP row_group_starts;
+  SEXP overwrite_last_row_group;
 };
 
 SEXP nanoparquet_write_wrapped(void *data) {
@@ -3089,6 +3049,134 @@ SEXP nanoparquet_any_na(SEXP x) {
   }
 
   return Rf_ScalarLogical(0);
+}
+
+SEXP nanoparquet_append_(
+  SEXP dfsxp,
+  SEXP filesxp,
+  SEXP dim,
+  SEXP compression,
+  SEXP required,
+  SEXP options,
+  SEXP schema,
+  SEXP encoding,
+  SEXP row_group_starts,
+  SEXP overwrite_last_row_group
+) {
+
+  if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
+    Rf_errorcall(nanoparquet_call,
+                 "nanoparquet_write: filename must be a string");
+  }
+
+  int c_compression = INTEGER(compression)[0];
+  parquet::CompressionCodec::type codec;
+  switch (c_compression) {
+  case 0:
+    codec = parquet::CompressionCodec::UNCOMPRESSED;
+    break;
+  case 1:
+    codec = parquet::CompressionCodec::SNAPPY;
+    break;
+  case 2:
+    codec = parquet::CompressionCodec::GZIP;
+    break;
+  case 6:
+    codec = parquet::CompressionCodec::ZSTD;
+    break;
+  default:
+    Rf_errorcall(nanoparquet_call, "Invalid compression type code: %d", // # nocov
+                 c_compression);                                        // # nocov
+    break;
+  }
+
+  int dp_ver = INTEGER(get_list_element(options, "write_data_page_version"))[0];
+  int comp_level = INTEGER(get_list_element(options, "compression_level"))[0];
+
+  R_xlen_t nrg = Rf_xlength(row_group_starts);
+  std::vector<int64_t> row_groups(nrg);
+  for (R_xlen_t i = 0; i < nrg; i++) {
+    // convert to zero-based
+    row_groups[i] = INTEGER(row_group_starts)[i] - 1;
+  }
+
+  std::string fname = (char*) CHAR(STRING_ELT(filesxp, 0));
+
+  try {
+    R_xlen_t nrg = Rf_xlength(row_group_starts);
+    std::vector<int64_t> row_groups(nrg);
+    for (R_xlen_t i = 0; i < nrg; i++) {
+      // convert to zero-based
+      row_groups[i] = INTEGER(row_group_starts)[i] - 1;
+    }
+
+    RParquetAppender appender(
+      fname,
+      codec,
+      comp_level,
+      row_groups,
+      dp_ver,
+      LOGICAL(overwrite_last_row_group)[0]
+    );
+    appender.init_metadata(dfsxp, dim, required, options, schema, encoding);
+    appender.append();
+    return R_NilValue;
+  } catch (std::exception &ex) {
+    Rf_error("%s", ex.what());
+  }
+}
+
+SEXP nanoparquet_append_wrapped(void *data) {
+  nanoparquet_write_data *rdata = (struct nanoparquet_write_data*) data;
+  SEXP dfsxp = rdata->dfsxp;
+  SEXP filesxp = rdata->filesxp;
+  SEXP dim = rdata->dim;
+  SEXP compression = rdata->compression;
+  SEXP required = rdata->required;
+  SEXP options = rdata->options;
+  SEXP schema = rdata->schema;
+  SEXP encoding = rdata->encoding;
+  SEXP row_group_starts = rdata->row_group_starts;
+  SEXP overwrite_last_row_group = rdata->overwrite_last_row_group;
+
+  return nanoparquet_append_(dfsxp, filesxp, dim, compression,
+                             required, options, schema, encoding,
+                             row_group_starts, overwrite_last_row_group);
+}
+
+SEXP nanoparquet_append(
+  SEXP dfsxp,
+  SEXP filesxp,
+  SEXP dim,
+  SEXP compression,
+  SEXP required,
+  SEXP options,
+  SEXP schema,
+  SEXP encoding,
+  SEXP row_group_starts,
+  SEXP overwrite_last_row_group,
+  SEXP call
+) {
+  struct nanoparquet_write_data data = {
+    dfsxp, filesxp, dim, compression, R_NilValue, required, options,
+    schema, encoding, row_group_starts, overwrite_last_row_group
+  };
+
+  SEXP uwt = PROTECT(R_MakeUnwindCont());
+  R_API_START(call);
+
+  SEXP ret = R_UnwindProtect(
+    nanoparquet_append_wrapped,
+    &data,
+    throw_error,
+    &uwt,
+    uwt
+  );
+
+  UNPROTECT(1);
+  return ret;
+
+  R_API_END();                 // # nocov
 }
 
 } // extern "C"

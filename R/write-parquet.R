@@ -71,18 +71,11 @@ write_parquet <- function(
 
   file <- path.expand(file)
 
-  codecs <- c("uncompressed" = 0L, "snappy" = 1L, "gzip" = 2L, "zstd" = 6L)
-  compression <- codecs[match.arg(compression)]
-  if (is.na(options[["compression_level"]])) {
-    # -1 is an allowed value for zstd, so we set the default here
-    if (compression == "zstd") {
-      options[["compression_level"]] <- 3L
-    } else {
-      options[["compression_level"]] <- -1L
-    }
-  }
+  compression <- parse_compression(compression, options)
 
   dim <- as.integer(dim(x))
+
+  x <- prepare_write_df(x)
 
   schema <- map_schema_to_df(schema, x, options)
 
@@ -105,7 +98,59 @@ write_parquet <- function(
     }
   }
 
-  # convert strings to UTF-8
+  schema <- check_schema_required_cols(x, schema)
+  required <- schema[["repetition_type"]] == "REQUIRED"
+
+  encoding <- parse_encoding(encoding, x)
+
+  row_groups <- row_groups %||%
+    default_row_groups(x, schema, compression, encoding, options)
+
+  row_group_starts <- parse_row_groups(x, row_groups)
+  x <- row_group_starts[[1]]
+  row_group_starts <- row_group_starts[[2]]
+
+  res <- .Call(
+    nanoparquet_write,
+    x,
+    file,
+    dim,
+    compression,
+    metadata,
+    required,
+    options,
+    schema,
+    encodings[encoding],
+    row_group_starts,
+    sys.call()
+  )
+
+  if (is.null(res)) {
+    invisible()
+  } else {
+    res
+  }
+}
+
+parse_compression <- function(
+  compression = c("snappy", "gzip", "zstd", "uncompressed"),
+  options) {
+
+  codecs <- c("uncompressed" = 0L, "snappy" = 1L, "gzip" = 2L, "zstd" = 6L)
+  compression <- codecs[match.arg(compression)]
+  if (is.na(options[["compression_level"]])) {
+    # -1 is an allowed value for zstd, so we set the default here
+    if (compression == "zstd") {
+      options[["compression_level"]] <- 3L
+    } else {
+      options[["compression_level"]] <- -1L
+    }
+  }
+  compression
+}
+
+prepare_write_df <- function(x) {
+    # convert strings to UTF-8
   strs <- which(vapply(x, is.character, logical(1)))
   for (idx in strs) {
     x[[idx]] <- enc2utf8(x[[idx]])
@@ -146,6 +191,10 @@ write_parquet <- function(
     )
   }
 
+  x
+}
+
+check_schema_required_cols <- function(x, schema) {
   # if schema has REQUIRED, but the column has NAs, that's an error
   rt <- schema[["repetition_type"]]
   req <- !is.na(rt) & rt == "REQUIRED"
@@ -159,37 +208,7 @@ write_parquet <- function(
   }
   schema[["repetition_type"]][is.na(rt)] <-
     ifelse(hasna[is.na(rt)], "OPITONAL", "REQUIRED")
-  required <- schema[["repetition_type"]] == "REQUIRED"
-
-encoding <- parse_encoding(encoding, x)
-
-row_groups <- row_groups %||%
-  default_row_groups(x, schema, compression, encoding, options)
-
-row_group_starts <- parse_row_groups(x, row_groups)
-x <- row_group_starts[[1]]
-row_group_starts <- row_group_starts[[2]]
-
-res <- .Call(
-    nanoparquet_write,
-    x,
-    file,
-    dim,
-    compression,
-    metadata,
-    required,
-    options,
-    schema,
-    encodings[encoding],
-    row_group_starts,
-    sys.call()
-  )
-
-  if (is.null(res)) {
-    invisible()
-  } else {
-    res
-  }
+  schema
 }
 
 parse_encoding <- function(encoding, x) {
@@ -227,8 +246,24 @@ parse_encoding <- function(encoding, x) {
 
 # we should refine this later
 default_row_groups <- function(x, schema, compression, encoding, options) {
-  n <- options[["num_rows_per_row_group"]]
-  seq(1L, nrow(x), by = n)
+  default_size <- options[["num_rows_per_row_group"]]
+  seq(1L, nrow(x), by = default_size)
+}
+
+# this one as well
+default_append_row_groups <- function(x, crnt_metadata, schema,
+                                      compression, encoding, options) {
+  default_size <- options[["num_rows_per_row_group"]]
+  crnt_sizes <- crnt_metadata$row_groups$num_rows
+  last_size <- utils::tail(crnt_sizes, 1)
+  crnt <- utils::head(c(1L, cumsum(crnt_sizes) + 1L), -1)
+  if (last_size + nrow(x) > default_size) {
+    # create new row group(s)
+    crnt_rows <- crnt_metadata$file_meta_data$num_rows
+    new <- seq(1L, nrow(x) + last_size, by = default_size)[-1] + crnt_rows - last_size
+    crnt <- c(crnt, new)
+  }
+  as.integer(crnt)
 }
 
 parse_row_groups <- function(x, rg) {
@@ -240,4 +275,134 @@ parse_row_groups <- function(x, rg) {
     )
   }
   list(x = x, row_groups = rg)
+}
+
+#' Append a data frame to an existing Parquet file
+#'
+#' The schema of the data frame must be compatible with the schema of
+#' the file.
+#'
+#' @section Warning:
+#' This function is **not** atomic! If it is interrupted, it may leave
+#' the file in a corrupt state. To work around this create a copy of the
+#' original file, append the new data to the copy, and then rename the
+#' new, extended file to the original one.
+#'
+#' @section About row groups:
+#' A Parquet file may be partitioned into multiple row groups, and indeed
+#' most large Parquet files are. `append_parquet()` is only able to update
+#' the existing file along the row group boundaries. There are two
+#' possibilities:
+#'
+#' - `append_parquet()` keeps all existing row groups in `file`, and
+#'   creates new row groups for the new data. This mode can be forced by
+#'   the `keep_row_groups` option in `options`, see [parquet_options()].
+#' - Alternatively, `write_parquet` will overwrite the _last_ row group in
+#'   file, with its existing contents plus the (beginning of) the new data.
+#'   This mode makes more sense if the last row group is small, because
+#'   many small row groups are inefficient.
+#'
+#' By default `append_parquet` chooses between the two modes automatically,
+#' aiming to create row groups with at least `num_rows_per_row_group`
+#' (see [parquet_options()]) rows. You can customize this behavior with
+#' the `keep_row_groups` options and the `row_groups` argument.
+#'
+#' @param x Data frame to append.
+#' @param file Path to the output file.
+#' @param compression Compression algorithm to use for the newly written
+#'   data. See [write_parquet()].
+#' @param encoding Encoding to use for the newly written data. It does not
+#'   have to be the same as the encoding of data in `file`. See
+#'   [write_parquet()] for possible values.
+#' @param row_groups Row groups of the new, extended Parquet file.
+#'   [append_parquet()] can only change the last existing row group, and
+#'   if `row_groups` is specified, it has respect this. I.e. if the
+#'   existing file has `n` rows, and the last row group starts at `k`
+#'   (`k <= n`), then the first row group in `row_groups` that refers to
+#'   the new data must start at `k` or `n+1`.
+#'   (It is simpler to specify `num_rows_per_row_group` in `options`, see
+#'   [parquet_options()] instead of `row_groups`. Only use `row_groups` if
+#'   you need complete control.)
+#' @param options Nanoparquet options, for the new data, see
+#'   [parquet_options()]. The `keep_row_groups` option also affects whether
+#'   `append_parquet()` overwrites existing row groups in `file`.
+#'
+#' @export
+#' @seealso [write_parquet()].
+
+append_parquet <- function(
+  x,
+  file,
+  compression = c("snappy", "gzip", "zstd", "uncompressed"),
+  encoding = NULL,
+  row_groups = NULL,
+  options = parquet_options()
+) {
+
+  file <- path.expand(file)
+  compression <- parse_compression(compression, options)
+
+  x <- prepare_write_df(x)
+
+  mtd <- read_parquet_metadata(file)
+  schema <- read_parquet_schema(file)
+  schema <- map_schema_to_df(schema, x, list())
+  schema <- check_schema_required_cols(x, schema)
+  required <- schema[["repetition_type"]] == "REQUIRED"
+  encoding <- parse_encoding(encoding, x)
+
+  nrow_file <- as.integer(mtd$file_meta_data$num_rows)
+  row_groups <- row_groups %||% if (options[["keep_row_groups"]]) {
+    c(1L, nrow_file + default_row_groups(
+      x, schema, compression, encoding, options
+    ))
+  } else {
+    default_append_row_groups(
+      x, mtd, schema, compression, encoding, options
+    )
+  }
+  row_group_starts <- parse_row_groups(x, row_groups)
+  x <- row_group_starts[[1]]
+  row_group_starts <- row_group_starts[[2]]
+
+  # check if we are extending the last row group of the original file
+  nrow_total <- nrow_file + nrow(x)
+  extend_last_row_group <- ! (nrow_file + 1L) %in% row_group_starts
+
+  # if yes, prepend the last row group of the file to the new data
+  if (extend_last_row_group) {
+    num_rgs_file <- nrow(mtd$row_groups)
+    x_prep <- read_parquet_row_group(file, num_rgs_file - 1L)
+    x <- rbind(x_prep, x)
+    nrow_keep <- nrow_file - nrow(x_prep)
+  } else {
+    nrow_keep <- nrow_file
+  }
+
+  # these indices refer to the new data
+  row_group_starts <- row_group_starts[row_group_starts > nrow_keep] -
+    nrow_keep
+
+  dim <- c(dim(x), nrow_total)
+
+  res <- .Call(
+    nanoparquet_append,
+    x,
+    file,
+    as.integer(dim),
+    compression,
+    required,
+    options,
+    schema,
+    encodings[encoding],
+    as.integer(row_group_starts),
+    extend_last_row_group,
+    sys.call()
+  )
+
+  if (is.null(res)) {
+    invisible()
+  } else {
+    res
+  }
 }

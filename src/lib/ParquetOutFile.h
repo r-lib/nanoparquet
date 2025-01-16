@@ -1,8 +1,10 @@
+#pragma once
 #include <fstream>
 #include <protocol/TCompactProtocol.h>
 #include <transport/TBufferTransports.h>
 
 #include "parquet/parquet_types.h"
+#include "bytebuffer.h"
 
 struct Int96 {
   uint32_t value[3];
@@ -10,9 +12,12 @@ struct Int96 {
 
 namespace nanoparquet {
 
-
 class ParquetOutFile {
 public:
+  ParquetOutFile(
+    parquet::CompressionCodec::type codec,
+    int compression_level,
+    std::vector<int64_t> &row_group_starts);
   ParquetOutFile(
     std::string filename,
     parquet::CompressionCodec::type codec,
@@ -26,12 +31,17 @@ public:
     std::vector<int64_t> &row_group_starts
   );
   void set_num_rows(uint32_t nr);
+  void set_num_rows(uint32_t nr, uint32_t ntotal);
   void schema_add_column(
     parquet::SchemaElement &sel,
     parquet::Encoding::type encoding
   );
   void add_key_value_metadata(std::string key, std::string value);
+  void set_key_value_metadata(std::vector<parquet::KeyValue> &kv2);
   void write();
+
+  void set_row_groups(std::vector<parquet::RowGroup> &row_groups);
+  void append();
 
   // This makes the write inherently sequential and we might remove it
   // latest. Currently, it makes it easier to keep track of minimume and
@@ -112,8 +122,8 @@ public:
 private:
   std::ofstream pfile_;
   std::ostream &pfile;
-  uint32_t num_rows, num_cols;
-  bool num_rows_set;
+  uint32_t num_rows, num_cols, num_total_rows;
+  bool num_rows_set, num_total_rows_set;
   parquet::CompressionCodec::type codec;
   int compression_level;
 

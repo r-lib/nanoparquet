@@ -16,6 +16,12 @@
 #'     more memory. Negative levels are also allowed, the lower the level,
 #'     the faster the speed, at the cost of compression. Currently the
 #'     smallest level is -131072. The default level is 3.
+#' @param keep_row_groups This option is used when appending to a Parquet
+#'   file with [append_parquet()]. If `TRUE` then the existing row groups
+#'   of the file are always kept as is and nanoparquet creates new row
+#'   groups for the new data. If `FALSE` (the default), then the last row
+#'   group of the file will be overwritten if it is smaller than the
+#'   default row group size, i.e. `num_rows_per_row_group`.
 #' @param num_rows_per_row_group The number of rows to put into a row
 #'   group, if row groups are not specified explicitly. It should be
 #'   an integer scalar. Defaults to 10 million.
@@ -59,6 +65,7 @@
 parquet_options <- function(
   class = getOption("nanoparquet.class", "tbl"),
   compression_level = getOption("nanoparquet.compression_level", NA_integer_),
+  keep_row_groups = FALSE,
   num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
@@ -66,6 +73,7 @@ parquet_options <- function(
   write_minmax_values = getOption("nanoparquet.write_minmax_values", TRUE)
 ) {
   stopifnot(is.character(class))
+  stopifnot(is_flag(keep_row_groups))
   stopifnot(is_flag(use_arrow_metadata))
   stopifnot(is_flag(write_arrow_metadata))
   stopifnot(
@@ -92,6 +100,7 @@ parquet_options <- function(
   list(
     class = class,
     compression_level = compression_level,
+    keep_row_groups = keep_row_groups,
     num_rows_per_row_group = num_rows_per_row_group,
     use_arrow_metadata = use_arrow_metadata,
     write_arrow_metadata = write_arrow_metadata,

@@ -40,18 +40,20 @@ static void thrift_unpack(const uint8_t *buf, uint32_t *len,
   *len = *len - bytes_left;
 }
 
-ParquetReader::ParquetReader(std::string filename)
+ParquetReader::ParquetReader(std::string filename, bool readwrite)
   : file_type_(FILE_ON_DISK), filename_(filename) {
   // set nuber of threads here, assuming each thread needs k buffers
   bufman_cc = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_na = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_pg = std::unique_ptr<BufferManager>(new BufferManager(1));
-  init_file_on_disk();
+  init_file_on_disk(readwrite);
 }
 
-void ParquetReader::init_file_on_disk() {
+void ParquetReader::init_file_on_disk(bool readwrite) {
   ByteBuffer buf;
-  pfile.open(filename_, std::ios::binary);
+  auto mode =
+    readwrite ? std::ios_base::out | std::ios_base::in : std::ios_base::in;
+  pfile.open(filename_, std::ios::binary | mode);
   if (pfile.fail()) {
     std::stringstream ss;
     ss << "Can't open Parquet file at '" << filename_ << "' @ "
@@ -85,7 +87,7 @@ void ParquetReader::init_file_on_disk() {
   // read four-byte footer length from just before the end magic bytes
   pfile.seekg(-8, ios_base::end);
   pfile.read(buf.ptr, 4);
-  int32_t footer_len = *(uint32_t *)buf.ptr;
+  footer_len = *(uint32_t *)buf.ptr;
   if (footer_len == 0) {
     std::stringstream ss;
     ss << "Footer length is zero, invalid Parquet file at '" << filename_
@@ -230,7 +232,6 @@ void ParquetReader::read_column_chunk_int(ColumnChunk &cc) {
   int64_t data_page_offset = cmd.data_page_offset;
   int64_t chunk_start =
     cc.has_dictionary ? dictionary_page_offset : data_page_offset;
-  int64_t chunk_end = chunk_start + cmd.total_compressed_size;
 
   // Give a chance to R to allocate memory for the column chunk
   alloc_column_chunk(cc);

@@ -7,6 +7,7 @@
 parquet_options(
   class = getOption("nanoparquet.class", "tbl"),
   compression_level = getOption("nanoparquet.compression_level", NA_integer_),
+  keep_row_groups = FALSE,
   num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
@@ -33,6 +34,13 @@ more memory. Negative levels are also allowed, the lower the level,
 the faster the speed, at the cost of compression. Currently the
 smallest level is -131072. The default level is 3.
 }}
+
+\item{keep_row_groups}{This option is used when appending to a Parquet
+file with \code{\link[=append_parquet]{append_parquet()}}. If \code{TRUE} then the existing row groups
+of the file are always kept as is and nanoparquet creates new row
+groups for the new data. If \code{FALSE} (the default), then the last row
+group of the file will be overwritten if it is smaller than the
+default row group size, i.e. \code{num_rows_per_row_group}.}
 
 \item{num_rows_per_row_group}{The number of rows to put into a row
 group, if row groups are not specified explicitly. It should be

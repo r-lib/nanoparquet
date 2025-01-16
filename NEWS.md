@@ -23,6 +23,9 @@
     `write_parquet()`, to specify how the columns of a data frame should
     be mapped to Parquet types.
 
+  - New `append_parquet()` function to append a data frame to an
+    existing Parquet file.
+
   - `write_parquet()` can now write multiple row groups. By default it puts
     at most 10 million rows into a single row group. You can choose the
     row groups manually with the `row_groups` argument.

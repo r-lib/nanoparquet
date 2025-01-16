@@ -110,7 +110,7 @@ public:
 
 class ParquetReader {
 public:
-  ParquetReader(std::string filename);
+  ParquetReader(std::string filename, bool readwrite = false);
 
   // meta data
   const parquet::FileMetaData &get_file_meta_data() {
@@ -142,10 +142,12 @@ public:
   std::pair<parquet::PageHeader, int64_t> read_page_header(int64_t pos);
   void read_chunk(int64_t offset, int64_t size, int8_t *buffer);
 
+  std::fstream pfile;
+  int32_t footer_len;
+
 protected:
   enum parquet_input_type file_type_;
   std::string filename_;
-  std::ifstream pfile;
   size_t file_size;
 
   bool has_file_meta_data_;
@@ -162,7 +164,7 @@ protected:
   // smaller than the whole column chunks.
   std::unique_ptr<BufferManager> bufman_pg = nullptr;
 
-  void init_file_on_disk();
+  void init_file_on_disk(bool readwrite);
   void check_meta_data();
 
   void read_column_chunk_int(ColumnChunk &cc);

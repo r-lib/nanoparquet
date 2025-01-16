@@ -28,6 +28,7 @@ reference:
 
 - title: Write Parquet files
   contents:
+  - append_parquet
   - write_parquet
 
 - title: Extract Parquet metadata
