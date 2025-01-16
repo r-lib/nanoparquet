@@ -49,15 +49,20 @@ static double float16_to_double(uint16_t x) {
 
 // ------------------------------------------------------------------------
 
-RParquetReader::RParquetReader(std::string filename)
-  : ParquetReader(filename) {
-  RParquetFilter filter;
-  init(filter);
+// readwrite == true is for appending
+RParquetReader::RParquetReader(std::string filename, bool readwrite)
+  : ParquetReader(filename, readwrite) {
+   RParquetFilter filter;
+   if (readwrite) {
+     filter.filter_row_groups = true;
+     create_metadata(filter);
+   } else {
+    init(filter);
+   }
 }
 
 RParquetReader::RParquetReader(std::string filename, RParquetFilter &filter)
   : ParquetReader(filename) {
-
   init(filter);
 }
 

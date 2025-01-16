@@ -33,6 +33,17 @@ static string type_to_string(Type::type t) {
 // # nocov end
 
 ParquetOutFile::ParquetOutFile(
+  parquet::CompressionCodec::type codec,
+  int compression_level,
+  vector<int64_t> &row_group_starts)
+  : pfile(pfile_), num_rows(0), num_cols(0), num_rows_set(false),
+    codec(codec), compression_level(compression_level),
+    row_group_starts(row_group_starts),
+    mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
+    tproto(tproto_factory.getProtocol(mem_buffer)) {
+}
+
+ParquetOutFile::ParquetOutFile(
   std::string filename,
   parquet::CompressionCodec::type codec,
   int compression_level,
@@ -59,7 +70,8 @@ ParquetOutFile::ParquetOutFile(
   int compression_level,
   vector<int64_t> &row_group_starts) :
     pfile(stream), num_rows(0), num_cols(0), num_rows_set(false),
-    codec(codec), compression_level(compression_level),
+    num_total_rows_set(false), codec(codec),
+    compression_level(compression_level),
     row_group_starts(row_group_starts),
     mem_buffer(new TMemoryBuffer(1024 * 1024)), // 1MB, what if not enough?
     tproto(tproto_factory.getProtocol(mem_buffer)) {
@@ -74,6 +86,13 @@ ParquetOutFile::ParquetOutFile(
 void ParquetOutFile::set_num_rows(uint32_t nr) {
   num_rows = nr;
   num_rows_set = true;
+}
+
+void ParquetOutFile::set_num_rows(uint32_t nr, uint32_t ntotal) {
+  num_rows = nr;
+  num_total_rows = ntotal;
+  num_rows_set = true;
+  num_total_rows_set = true;
 }
 
 void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
@@ -124,6 +143,16 @@ void ParquetOutFile::add_key_value_metadata(
   kv0.__set_key(key);
   kv0.__set_value(value);
   kv.push_back(kv0);
+}
+
+void ParquetOutFile::set_key_value_metadata(
+  std::vector<parquet::KeyValue> &kv2) {
+
+  kv = kv2;
+}
+
+void ParquetOutFile::set_row_groups(std::vector<RowGroup> &row_groups_) {
+  row_groups = row_groups_;
 }
 
 namespace nanoparquet {
@@ -507,6 +536,10 @@ void ParquetOutFile::write() {
     throw runtime_error("Need to set the number of rows before writing"); // # nocov
   }
   pfile.write("PAR1", 4);
+  append();
+}
+
+void ParquetOutFile::append() {
   for (int idx = 0; idx < row_group_starts.size(); idx++) {
     // init for row group
     init_column_meta_data();
@@ -519,10 +552,10 @@ void ParquetOutFile::write() {
 
     // row group metadata
     vector<ColumnChunk> ccs;
-    for (uint32_t idx = 0; idx < num_cols; idx++) {
+    for (uint32_t col = 0; col < num_cols; col++) {
       ColumnChunk cc;
-      cc.__set_file_offset(column_meta_data[idx].data_page_offset);
-      cc.__set_meta_data(column_meta_data[idx]);
+      cc.__set_file_offset(column_meta_data[col].data_page_offset);
+      cc.__set_meta_data(column_meta_data[col]);
       ccs.push_back(cc);
     }
     RowGroup rg;
@@ -1259,7 +1292,7 @@ void ParquetOutFile::write_footer() {
   FileMetaData fmd;
   fmd.__set_version(1);
   fmd.__set_schema(schemas);
-  fmd.__set_num_rows(num_rows);
+  fmd.__set_num_rows(num_total_rows_set ? num_total_rows : num_rows);
   fmd.__set_row_groups(row_groups);
   fmd.__set_key_value_metadata(kv);
   fmd.__set_created_by("https://github.com/gaborcsardi/nanoparquet");

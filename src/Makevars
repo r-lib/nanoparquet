@@ -1,4 +1,4 @@
-OBJECTS= lib/ParquetReader.o RParquetReader.o \
+OBJECTS= lib/ParquetReader.o RParquetReader.o RParquetAppender.o \
   rwrapper.o protect.o read2.o write.o \
   read-metadata.o read-pages.o \
   arrow-schema.o base64.o r-base64.o snappy.o encodings.o \

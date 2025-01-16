@@ -88,7 +88,7 @@ public:
 
 class RParquetReader : public ParquetReader {
 public:
-  RParquetReader(std::string filename);
+  RParquetReader(std::string filename, bool readwrite = false);
   RParquetReader(std::string filename, RParquetFilter &filter);
   ~RParquetReader();
 
