@@ -21,7 +21,7 @@ uint32_t RleBpEncode(const T *input, uint32_t input_len,
                      uint8_t bit_width, uint8_t *output,
                      uint32_t output_len) {
   uint32_t iidx = 0;
-  int min_reps = bit_width > 4 ? 2 : 9 / (bit_width > 0 ? bit_width : 1);
+  int min_reps = bit_width > 4 ? 3 : 9 / (bit_width > 0 ? bit_width : 1);
 
   if (input_len == 0) return 0;
 
@@ -40,14 +40,14 @@ uint32_t RleBpEncode(const T *input, uint32_t input_len,
       if (reps >= min_reps) {
         // we have a repeat from rleidx. until then it is BP, then RLE
         if (rleidx > iidx) {
-          // cerr << "@ " << iidx << " bp x " << rleidx - iidx << endl;
+          // std::cerr << "@ " << iidx << " bp x " << rleidx - iidx << std::endl;
           bp.pack_varint(((rleidx - iidx) / 8) << 1 | 1);
           for (; iidx < rleidx; iidx++) {
             bp.pack(input[iidx]);
           }
           bp.flush();
         }
-        // cerr << "@ " << rleidx << " rep " << val << " x " << reps << endl;
+        // std::cerr << "@ " << rleidx << " rep " << val << " x " << reps << std::endl;
         bp.pack_varint(reps << 1);
         bp.pack_value(val);
         iidx += reps;
@@ -61,7 +61,7 @@ uint32_t RleBpEncode(const T *input, uint32_t input_len,
       // we need to pad it to a multiple of eight
       // (This is not actually mentioned in the specs, but it is
       // what arrow does.)
-      // cerr << "@ " << iidx << " bp x " << input_len - iidx << endl;
+      // std::cerr << "@ " << iidx << " bp x " << input_len - iidx << std::endl;
       uint32_t num = input_len - iidx;
       // we need pad values to get to a multiple of 8
       int pad = (8 - num % 8) % 8;
