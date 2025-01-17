@@ -2883,7 +2883,7 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
   }
 
   std::string fname = (char *)CHAR(STRING_ELT(filesxp, 0));
-  if (fname == ":raw:") {
+  if (fname == ":raw:" || fname == ":stdout:") {
     MemStream ms;
     std::ostream &os = ms.stream();
     RParquetOutFile of(os, codec, comp_level, row_groups);
@@ -2893,7 +2893,13 @@ SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
     R_xlen_t bufsize = ms.size();
     SEXP res = Rf_allocVector(RAWSXP, bufsize);
     ms.copy(RAW(res), bufsize);
-    return res;
+    if (fname == ":raw:") {
+      return res;
+    } else {
+      std::cout.write((const char*) RAW(res), bufsize);
+      std::cout << std::flush;
+      return R_NilValue;
+    }
   } else {
     RParquetOutFile of(fname, codec, comp_level, row_groups);
     of.data_page_version = dp_ver;
