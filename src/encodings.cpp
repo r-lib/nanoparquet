@@ -43,11 +43,17 @@ SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
   R_API_START(R_NilValue);
   size_t os = MaxRleBpSize(input, input_len, bw);
-  SEXP res = PROTECT(safe_allocvector_raw(os, &uwtoken));
+  // Over-allocate, so we can report errors, because the main purpose
+  // of this function is testing
+  SEXP res = PROTECT(safe_allocvector_raw(os * 2, &uwtoken));
   uint8_t *output = (uint8_t *) RAW(res);
   size_t rs = RleBpEncode(input, input_len, bw, output, os);
 
-  if (rs < os) {
+  if (rs > os) {
+    Rf_error("RLE integer overflow by %d bytes", (int) (rs - os));
+  }
+
+  if (rs < os * 2) {
     res = Rf_lengthgets(res, rs);
   }
 

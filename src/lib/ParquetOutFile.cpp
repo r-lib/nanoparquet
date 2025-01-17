@@ -508,6 +508,7 @@ uint32_t ParquetOutFile::rle_encode(
   uint32_t skip) {
 
   size_t tgt_size_est = MaxRleBpSize((int*) src.ptr, src_size, bit_width);
+  // std::cerr << "Estimated size: " << tgt_size_est << std::endl;
   tgt.reset(
     skip + tgt_size_est + (add_bit_width ? 1 : 0) + (add_size ? 4 : 0),
     true

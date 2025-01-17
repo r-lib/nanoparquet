@@ -15,7 +15,7 @@
       as.data.frame(read_parquet_metadata(tmp)$row_groups)[-1]
     Output
         id total_byte_size num_rows file_offset total_compressed_size ordinal
-      1  0             991       10          NA                    NA      NA
+      1  0             992       10          NA                    NA      NA
       2  1            1029       10          NA                    NA      NA
       3  2            1091       10          NA                    NA      NA
       4  3             606        2          NA                    NA      NA
@@ -37,7 +37,7 @@
       as.data.frame(read_parquet_metadata(tmp)$row_groups)[-1]
     Output
         id total_byte_size num_rows file_offset total_compressed_size ordinal
-      1  0             991       10          NA                    NA      NA
+      1  0             992       10          NA                    NA      NA
       2  1            1029       10          NA                    NA      NA
       3  2            1091       10          NA                    NA      NA
       4  3             606        2          NA                    NA      NA
