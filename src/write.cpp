@@ -214,7 +214,7 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
       const char *min = CHAR(VECTOR_ELT(d, 2));
       const char *max = CHAR(VECTOR_ELT(d, 3));
       min_values[idx] = std::string(min, strlen(min));
-      max_values[idx] = std::string(max, strlen(min));
+      max_values[idx] = std::string(max, strlen(max));
     } else {
       Rf_error("Unknown R type when writing out min/max values, internal error");
     }
