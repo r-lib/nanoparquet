@@ -1,6 +1,8 @@
 #pragma once
-#include <Rdefines.h>
 #include "lib/nanoparquet.h"
+// defines Realloc etc., which are also picked up by lib/nanoparquet.h
+// from thrift & winsock2.h, so it has to be after that
+#include <Rdefines.h>
 
 using namespace nanoparquet;
 

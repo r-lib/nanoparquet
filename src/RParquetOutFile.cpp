@@ -1,8 +1,8 @@
 #include <cinttypes>
 #include <cmath>
 
-#include "RParquetOutFile.h"
 #include "r-nanoparquet.h"
+#include "RParquetOutFile.h"
 
 extern SEXP nanoparquet_call;
 

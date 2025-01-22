@@ -1,6 +1,5 @@
-#include <Rdefines.h>
-#include "r-nanoparquet.h"
 #include "lib/nanoparquet.h"
+#include "r-nanoparquet.h"
 
 using namespace nanoparquet;
 

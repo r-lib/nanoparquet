@@ -1,8 +1,10 @@
-#include "unwind.h"
+#include "lib/memstream.h"
+// R headers last, because they define Realloc, Free, etc., and
+// winsock2.h does as well.
 #include "RParquetOutFile.h"
 #include "RParquetAppender.h"
 #include "r-nanoparquet.h"
-#include "lib/memstream.h"
+#include "unwind.h"
 
 using namespace nanoparquet;
 
