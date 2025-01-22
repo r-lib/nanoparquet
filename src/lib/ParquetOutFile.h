@@ -1,5 +1,6 @@
 #pragma once
 #include <fstream>
+#undef TYPE_BITS
 #include <protocol/TCompactProtocol.h>
 #include <transport/TBufferTransports.h>
 

@@ -2,7 +2,7 @@
 #include <Rdefines.h>
 #include "lib/nanoparquet.h"
 
-namespace nanoparquet {
+using namespace nanoparquet;
 
 class RParquetOutFile : public ParquetOutFile {
 public:
@@ -137,5 +137,3 @@ private:
                                uint64_t from, uint64_t until,
                                parquet::SchemaElement &sel, double factor);
 };
-
-} // namespace nanoparquet

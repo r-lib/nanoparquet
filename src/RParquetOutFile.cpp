@@ -1,99 +1,18 @@
-#include <cmath>
-#define __STDC_FORMAT_MACROS 1
-#include <inttypes.h>
-
-#include "lib/nanoparquet.h"
-#include "lib/bitpacker.h"
-
-#include <Rdefines.h>
+#include <cinttypes>
 
 #include "RParquetOutFile.h"
-#include "RParquetAppender.h"
-
-#include "lib/memstream.h"
-
-#include "protect.h"
-
-using namespace nanoparquet;
-using namespace std;
+#include "r-nanoparquet.h"
 
 extern SEXP nanoparquet_call;
 
-inline Int96 int32_to_int96(int32_t x) {
-  if (x >= 0) {
-    Int96 r = { 0, 0, 0 };
-    int32_t *p = (int32_t*) r.value;
-    *p = x;
-    return r;
-  } else {
-    Int96 r = { 0, 0xffffffff, 0xffffffff };
-    int32_t *p = (int32_t*) r.value;
-    *p = x;
-    return r;
-  }
-}
-
-inline Int96 double_to_int96(double x) {
-  x = trunc(x);
-  Int96 r = { 0, 0, 0 };
-  bool neg = x < 0;
-  x = neg ? -x : x;
-
-  // absolute value first
-  // TODO: what to do if too big?
-  r.value[0] = fmod(x, 0xffffffff);
-  x = trunc(x / 0xffffffff);
-  r.value[1] = fmod(x, 0xffffffff);
-  x = trunc(x / 0xffffffff);
-  r.value[2] = x;
-
-  // TODO: what to do if too small?
-  if (neg) {
-    r.value[0] = ~r.value[0] + 1;
-    r.value[1] = ~r.value[1];
-    r.value[2] = ~r.value[2];
-    if (r.value[0] == 0) {
-      r.value[1] += 1;
-      if (r.value[1] == 0) {
-        r.value[2] += 1;
-      }
-    }
-  }
-  return r;
-}
-
-static uint16_t double_to_float16(double x) {
-  if (x == R_PosInf) {
-    return 0x7c00;
-  } else if (x == R_NegInf) {
-    return 0xfc00;
-  } else if (R_IsNaN(x)) {
-    return 0x7C80;
-  } else if (x > 65504) {
-    return 0x7c00;
-  } else if (x < -65504) {
-    return 0xfc00;
-  } else if (x >= 0 && x < 0.000000059604645) {
-    return 0x0000;
-  } else if (x <= 0 && x > -0.000000059604645) {
-    return 0x0000;
-  }
-  float f = x;
-  uint32_t fi32 = *((uint32_t*) &f);
-  uint16_t fi16 = (fi32 >> 31) << 5;
-  uint16_t tmp = (fi32 >> 23) & 0xff;
-  tmp = (tmp - 0x70) & ((uint32_t)((int32_t)(0x70 - tmp) >> 4) >> 27);
-  fi16 = (fi16 | tmp) << 10;
-  fi16 |= (fi32 >> 13) & 0x3ff;
-  return fi16;
-}
-
+// TODO
 extern "C" {
 SEXP nanoparquet_create_dict(SEXP x, SEXP rlen);
 SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until);
 SEXP nanoparquet_avg_run_length(SEXP x, SEXP rlen);
-static SEXP get_list_element(SEXP list, const char *str);
 }
+
+using namespace nanoparquet;
 
 RParquetOutFile::RParquetOutFile(
   std::string filename,
@@ -109,116 +28,6 @@ RParquetOutFile::RParquetOutFile(
   int compression_level,
   std::vector<int64_t> &row_groups) :
     ParquetOutFile(stream, codec, compression_level, row_groups) {
-}
-
-static bool is_time(parquet::SchemaElement &sel, double &factor) {
-  factor = 1.0;
-  if (sel.__isset.logicalType && sel.logicalType.__isset.TIME) {
-    auto unit = sel.logicalType.TIME.unit;
-    if (unit.__isset.MILLIS) {
-      factor = 1000;
-    } else if (unit.__isset.MICROS) {
-      factor = 1000 * 1000;
-    } else if (unit.__isset.NANOS) {
-      factor = 1000 * 1000 * 1000;
-    }
-    return true;
-  } else if (sel.__isset.converted_type) {
-    if (sel.converted_type == parquet::ConvertedType::TIME_MILLIS) {
-      factor = 1000;
-      return true;
-    } else if (sel.converted_type == parquet::ConvertedType::TIME_MICROS) {
-      factor = 1000 * 1000;
-      return true;
-    }
-  }
-  return false;
-}
-
-void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
-                                        int64_t until,
-                                        parquet::SchemaElement &sel) {
-  if (!Rf_isNull(VECTOR_ELT(dicts, idx)) &&
-      INTEGER(dicts_from)[idx] == from) {
-    return;
-  }
-
-  SEXP col = VECTOR_ELT(df, idx);
-  SEXP sfrom = PROTECT(Rf_ScalarInteger(from));
-  SEXP suntil = PROTECT(Rf_ScalarInteger(until));
-  SEXP d = PROTECT(nanoparquet_create_dict_idx_(col, sfrom, suntil));
-  SET_VECTOR_ELT(dicts, idx, d);
-  INTEGER(dicts_from)[idx] = from;
-  UNPROTECT(3);
-  if (write_minmax_values && Rf_length(d) == 4 &&
-      is_minmax_supported[idx] && Rf_xlength(col) > 0 &&
-      !Rf_isNull(VECTOR_ELT(d, 2)) && !Rf_isNull(VECTOR_ELT(d, 3))) {
-    has_minmax_value[idx] = true;
-    if (TYPEOF(VECTOR_ELT(d, 2)) == INTSXP) {
-      if (sel.type == parquet::Type::INT32) {
-        min_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 2)), sizeof(int32_t));
-        max_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 3)), sizeof(int32_t));
-      } else if (sel.type == parquet::Type::INT64) {
-        int64_t min = INTEGER(VECTOR_ELT(d, 2))[0];
-        int64_t max = INTEGER(VECTOR_ELT(d, 3))[0];
-        min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
-        max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
-      } else {
-        Rf_errorcall(
-          nanoparquet_call,
-          "Cannot convert an integer vector to Parquet type %s.",
-          parquet::_Type_VALUES_TO_NAMES.at(sel.type)
-        );
-      }
-    } else if (TYPEOF(VECTOR_ELT(d, 2)) == REALSXP) {
-      double factor;
-      bool istime = is_time(sel, factor);
-      if (istime) {
-        if (sel.type == parquet::Type::INT32) {
-          int32_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
-          int32_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
-          min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
-          max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
-        } else {
-          int64_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
-          int64_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
-          min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
-          max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
-        }
-      } else if (sel.type == parquet::Type::INT32) {
-        int32_t min = REAL(VECTOR_ELT(d, 2))[0];
-        int32_t max = REAL(VECTOR_ELT(d, 3))[0];
-        min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
-        max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
-      } else if (sel.type == parquet::Type::DOUBLE) {
-        min_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 2)), sizeof(double));
-        max_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 3)), sizeof(double));
-      } else if (sel.type == parquet::Type::FLOAT) {
-        float min = REAL(VECTOR_ELT(d, 2))[0];
-        float max = REAL(VECTOR_ELT(d, 3))[0];
-        min_values[idx] = std::string((const char*) &min, sizeof(float));
-        max_values[idx] = std::string((const char*) &max, sizeof(float));
-      } else if (sel.type == parquet::Type::INT64) {
-        int64_t min = REAL(VECTOR_ELT(d, 2))[0];
-        int64_t max = REAL(VECTOR_ELT(d, 3))[0];
-        min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
-        max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
-      } else {
-        Rf_errorcall(
-          nanoparquet_call,
-          "Cannot convert a double vector to Parquet type %s.",
-          parquet::_Type_VALUES_TO_NAMES.at(sel.type)
-        );
-      }
-    } else if (TYPEOF(VECTOR_ELT(d, 2)) == CHARSXP) {
-      const char *min = CHAR(VECTOR_ELT(d, 2));
-      const char *max = CHAR(VECTOR_ELT(d, 3));
-      min_values[idx] = std::string(min, strlen(min));
-      max_values[idx] = std::string(max, strlen(max));
-    } else {
-      Rf_error("Unknown R type when writing out min/max values, internal error");
-    }
-  }
 }
 
 static const char *enc_[] = {
@@ -480,35 +289,6 @@ bool RParquetOutFile::should_use_dict_encoding(uint32_t idx) {
   }
 }
 
-static const char *type_names[] = {
-  "NULL",
-  "a symbol",
-  "a pairlist",
-  "a closure",
-  "an environment",
-  "a promise",
-  "a language object",
-  "a special function",
-  "a builtin function",
-  "an internal character string",
-  "a logical vector",
-  "",
-  "",
-  "an integer vector",
-  "a double vector",
-  "a complex vector",
-  "a character vector",
-  "a dot-dot-dot object",
-  "an \"any\" object",
-  "a list",
-  "an expression",
-  "a byte code object",
-  "an external pointer",
-  "a weak reference",
-  "a raw vector",
-  "an S4 object"
-};
-
 void RParquetOutFile::write_row_group(uint32_t group) {
   if (write_minmax_values) {
     std::fill(min_values.begin(), min_values.end(), std::string());
@@ -544,6 +324,117 @@ static bool is_decimal(parquet::SchemaElement &sel, int32_t &precision,
     return false;
   }
 }
+
+static bool is_time(parquet::SchemaElement &sel, double &factor) {
+  factor = 1.0;
+  if (sel.__isset.logicalType && sel.logicalType.__isset.TIME) {
+    auto unit = sel.logicalType.TIME.unit;
+    if (unit.__isset.MILLIS) {
+      factor = 1000;
+    } else if (unit.__isset.MICROS) {
+      factor = 1000 * 1000;
+    } else if (unit.__isset.NANOS) {
+      factor = 1000 * 1000 * 1000;
+    }
+    return true;
+  } else if (sel.__isset.converted_type) {
+    if (sel.converted_type == parquet::ConvertedType::TIME_MILLIS) {
+      factor = 1000;
+      return true;
+    } else if (sel.converted_type == parquet::ConvertedType::TIME_MICROS) {
+      factor = 1000 * 1000;
+      return true;
+    }
+  }
+  return false;
+}
+
+void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
+                                        int64_t until,
+                                        parquet::SchemaElement &sel) {
+  if (!Rf_isNull(VECTOR_ELT(dicts, idx)) &&
+      INTEGER(dicts_from)[idx] == from) {
+    return;
+  }
+
+  SEXP col = VECTOR_ELT(df, idx);
+  SEXP sfrom = PROTECT(Rf_ScalarInteger(from));
+  SEXP suntil = PROTECT(Rf_ScalarInteger(until));
+  SEXP d = PROTECT(nanoparquet_create_dict_idx_(col, sfrom, suntil));
+  SET_VECTOR_ELT(dicts, idx, d);
+  INTEGER(dicts_from)[idx] = from;
+  UNPROTECT(3);
+  if (write_minmax_values && Rf_length(d) == 4 &&
+      is_minmax_supported[idx] && Rf_xlength(col) > 0 &&
+      !Rf_isNull(VECTOR_ELT(d, 2)) && !Rf_isNull(VECTOR_ELT(d, 3))) {
+    has_minmax_value[idx] = true;
+    if (TYPEOF(VECTOR_ELT(d, 2)) == INTSXP) {
+      if (sel.type == parquet::Type::INT32) {
+        min_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 2)), sizeof(int32_t));
+        max_values[idx] = std::string((const char*) INTEGER(VECTOR_ELT(d, 3)), sizeof(int32_t));
+      } else if (sel.type == parquet::Type::INT64) {
+        int64_t min = INTEGER(VECTOR_ELT(d, 2))[0];
+        int64_t max = INTEGER(VECTOR_ELT(d, 3))[0];
+        min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
+        max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
+      } else {
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot convert an integer vector to Parquet type %s.",
+          parquet::_Type_VALUES_TO_NAMES.at(sel.type)
+        );
+      }
+    } else if (TYPEOF(VECTOR_ELT(d, 2)) == REALSXP) {
+      double factor;
+      bool istime = is_time(sel, factor);
+      if (istime) {
+        if (sel.type == parquet::Type::INT32) {
+          int32_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
+          int32_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
+          min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
+          max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
+        } else {
+          int64_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
+          int64_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
+          min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
+          max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
+        }
+      } else if (sel.type == parquet::Type::INT32) {
+        int32_t min = REAL(VECTOR_ELT(d, 2))[0];
+        int32_t max = REAL(VECTOR_ELT(d, 3))[0];
+        min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
+        max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
+      } else if (sel.type == parquet::Type::DOUBLE) {
+        min_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 2)), sizeof(double));
+        max_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 3)), sizeof(double));
+      } else if (sel.type == parquet::Type::FLOAT) {
+        float min = REAL(VECTOR_ELT(d, 2))[0];
+        float max = REAL(VECTOR_ELT(d, 3))[0];
+        min_values[idx] = std::string((const char*) &min, sizeof(float));
+        max_values[idx] = std::string((const char*) &max, sizeof(float));
+      } else if (sel.type == parquet::Type::INT64) {
+        int64_t min = REAL(VECTOR_ELT(d, 2))[0];
+        int64_t max = REAL(VECTOR_ELT(d, 3))[0];
+        min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
+        max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
+      } else {
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot convert a double vector to Parquet type %s.",
+          parquet::_Type_VALUES_TO_NAMES.at(sel.type)
+        );
+      }
+    } else if (TYPEOF(VECTOR_ELT(d, 2)) == CHARSXP) {
+      const char *min = CHAR(VECTOR_ELT(d, 2));
+      const char *max = CHAR(VECTOR_ELT(d, 3));
+      min_values[idx] = std::string(min, strlen(min));
+      max_values[idx] = std::string(max, strlen(max));
+    } else {
+      Rf_error("Unknown R type when writing out min/max values, internal error");
+    }
+  }
+}
+
 
 void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
                              uint64_t until, int32_t precision,
@@ -1881,7 +1772,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
     break;
   }
   default:
-    throw runtime_error("Uninmplemented R type");  // # nocov
+    throw std::runtime_error("Uninmplemented R type");  // # nocov
   }
 }
 
@@ -2359,7 +2250,7 @@ void RParquetOutFile::write_dictionary(
     break;
   }                                                        // # nocov end
   default:
-    throw runtime_error("Uninmplemented R type");          // # nocov
+    throw std::runtime_error("Uninmplemented R type");          // # nocov
   }
 }
 
@@ -2415,226 +2306,6 @@ bool RParquetOutFile::get_group_minmax_values(uint32_t idx, uint32_t group,
   }
 }
 
-void nanoparquet_map_to_parquet_type(
-  SEXP x,
-  SEXP options,
-  parquet::SchemaElement &sel,
-  std::string &rtype) {
-
-  switch (TYPEOF(x)) {
-  case INTSXP: {
-    if (Rf_isFactor(x)) {
-      rtype = "factor";
-      parquet::StringType st;
-      parquet::LogicalType lt;
-      lt.__set_STRING(st);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-    } else if (Rf_inherits(x, "Date")) {
-      rtype = "integer";
-      parquet::DateType dt;
-      parquet::LogicalType lt;
-      lt.__set_DATE(dt);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-    } else if (Rf_inherits(x, "hms")) {
-      rtype = "hms";
-      parquet::TimeType tt;
-      tt.__set_isAdjustedToUTC(true);
-      parquet::TimeUnit tu;
-      tu.__set_MILLIS(parquet::MilliSeconds());
-      tt.__set_unit(tu);
-      parquet::LogicalType lt;
-      lt.__set_TIME(tt);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-    } else {
-      rtype = "integer";
-      parquet::IntType it;
-      it.__set_bitWidth(32);
-      it.__set_isSigned(true);
-      parquet::LogicalType lt;
-      lt.__set_INTEGER(it);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-    }
-    break;
-  }
-  case REALSXP: {
-    if (Rf_inherits(x, "POSIXct")) {
-      rtype = "POSIXct";
-      parquet::TimestampType tt;
-      tt.__set_isAdjustedToUTC(true);
-      parquet::TimeUnit tu;
-      tu.__set_MICROS(parquet::MicroSeconds());
-      tt.__set_unit(tu);
-      parquet::LogicalType lt;
-      lt.__set_TIMESTAMP(tt);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-
-    } else if (Rf_inherits(x, "hms")) {
-      rtype = "hms";
-      parquet::TimeType tt;
-      tt.__set_isAdjustedToUTC(true);
-      parquet::TimeUnit tu;
-      tu.__set_MILLIS(parquet::MilliSeconds());
-      tt.__set_unit(tu);
-      parquet::LogicalType lt;
-      lt.__set_TIME(tt);
-      sel.__set_logicalType(lt);
-      sel.__set_type(get_type_from_logical_type(lt));
-      sel.__set_type(parquet::Type::INT32);
-
-    } else if (Rf_inherits(x, "difftime")) {
-      rtype = "difftime";
-      sel.__set_type(parquet::Type::INT64);
-
-    } else {
-      rtype = "double";
-      sel.__set_type(parquet::Type::DOUBLE);
-    }
-    break;
-  }
-  case STRSXP: {
-    rtype = "character";
-    parquet::StringType st;
-    parquet::LogicalType lt;
-    lt.__set_STRING(st);
-    sel.__set_logicalType(lt);
-    sel.__set_type(get_type_from_logical_type(lt));
-    break;
-  }
-  case LGLSXP: {
-    rtype = "logical";
-    sel.__set_type(parquet::Type::BOOLEAN);
-    break;
-  }
-  case VECSXP: {
-    // assume a list of RAW vectors, for now
-    rtype = "raw";
-    sel.__set_type(parquet::Type::BYTE_ARRAY);
-    break;
-  }
-  default:
-    Rf_errorcall(
-      nanoparquet_call,
-      "Cannot map %s to any Parquet type",
-      type_names[TYPEOF(x)]
-    );
-  }
-
-  fill_converted_type_for_logical_type(sel);
-}
-
-#define NUMERIC_SCALAR(x) \
-  (TYPEOF(x) == INTSXP ? INTEGER(x)[0] : REAL(x)[0])
-
-void r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
-  const char *ctype = CHAR(STRING_ELT(VECTOR_ELT(logical_type, 0), 0));
-  parquet::LogicalType lt;
-  if (!strcmp(ctype, "STRING")) {
-    lt.__set_STRING(parquet::StringType());
-    sel.__set_logicalType(lt);
-
-  } else if (!strcmp(ctype, "ENUM")) {
-    lt.__set_ENUM(parquet::EnumType());
-    sel.__set_logicalType(lt);
-
-  } else if (!strcmp(ctype, "DECIMAL")) {
-    parquet::DecimalType dt;
-    if (Rf_length(logical_type) != 3) {
-      Rf_errorcall(
-        nanoparquet_call,
-        "Parquet decimal logical type needs scale and precision"
-      );
-    }
-    if (!Rf_isNull(VECTOR_ELT(logical_type, 1))) {
-      dt.__set_scale(NUMERIC_SCALAR(VECTOR_ELT(logical_type, 1)));
-      sel.__set_scale(dt.scale);
-    }
-    dt.__set_precision(NUMERIC_SCALAR(VECTOR_ELT(logical_type, 2)));
-    sel.__set_precision(dt.precision);
-    lt.__set_DECIMAL(dt);
-    sel.__set_logicalType(lt);
-
-  } else if (!strcmp(ctype, "DATE")) {
-    lt.__set_DATE(parquet::DateType());
-    sel.__set_logicalType(lt);
-
-  } else if (!strcmp(ctype, "TIME")) {
-    parquet::TimeUnit tu;
-    parquet::TimeType tt;
-    tt.__set_isAdjustedToUTC(LOGICAL(VECTOR_ELT(logical_type, 1))[0]);
-    const char *unit = CHAR(STRING_ELT(VECTOR_ELT(logical_type, 2), 0));
-    if (!strcmp(unit, "MILLIS")) {
-      tu.__set_MILLIS(parquet::MilliSeconds());
-    } else if (!strcmp(unit, "MICROS")) {
-      tu.__set_MICROS(parquet::MicroSeconds());
-    } else if (!strcmp(unit, "NANOS")) {
-      tu.__set_NANOS(parquet::NanoSeconds());
-    } else {
-      Rf_errorcall(nanoparquet_call, "Unknown TIME time unit: %s", unit);
-    }
-    tt.__set_unit(tu);
-    lt.__set_TIME(tt);
-    sel.__set_logicalType(lt);
-
-  } else if (!strcmp(ctype, "TIMESTAMP")) {
-    parquet::TimeUnit tu;
-    parquet::TimestampType tt;
-    tt.__set_isAdjustedToUTC(LOGICAL(VECTOR_ELT(logical_type, 1))[0]);
-    const char *unit = CHAR(STRING_ELT(VECTOR_ELT(logical_type, 2), 0));
-    if (!strcmp(unit, "MILLIS")) {
-      tu.__set_MILLIS(parquet::MilliSeconds());
-    } else if (!strcmp(unit, "MICROS")) {
-      tu.__set_MICROS(parquet::MicroSeconds());
-    } else if (!strcmp(unit, "NANOS")) {
-      tu.__set_NANOS(parquet::NanoSeconds());
-    } else {
-      Rf_errorcall(nanoparquet_call, "Unknown TIMESTAMP time unit: %s", unit);
-    }
-    tt.__set_unit(tu);
-    lt.__set_TIMESTAMP(tt);
-    sel.__set_logicalType(lt);
-
-  } else if (!strcmp(ctype, "INT") || !strcmp(ctype, "INTEGER")) {
-    parquet::IntType it;
-    if (Rf_xlength(logical_type) != 3) {
-      Rf_errorcall(
-        nanoparquet_call,
-        "Parquet integer logical type needs bit width and signedness"
-      );
-    }
-    it.__set_bitWidth(NUMERIC_SCALAR(VECTOR_ELT(logical_type, 1)));
-    it.__set_isSigned(LOGICAL(VECTOR_ELT(logical_type, 2))[0]);
-    lt.__set_INTEGER(it);
-    sel.__set_logicalType(lt);
-
-  } else if (!strcmp(ctype, "JSON")) {
-    lt.__set_JSON(parquet::JsonType());
-    sel.__set_logicalType(lt);
-
-  } else if (!strcmp(ctype, "BSON")) {
-    lt.__set_BSON(parquet::BsonType());
-    sel.__set_logicalType(lt);
-
-  } else if (!strcmp(ctype, "UUID")) {
-    lt.__set_UUID(parquet::UUIDType());
-    sel.__set_logicalType(lt);
-
-  } else if (!strcmp(ctype, "FLOAT16")) {
-    lt.__set_FLOAT16(parquet::Float16Type());
-    sel.__set_logicalType(lt);
-
-  } else {
-    Rf_errorcall(
-      nanoparquet_call,
-      "Unknown Parquet logical type: %s", ctype
-    );
-  }
-}
-
 void RParquetOutFile::init_metadata(
   SEXP dfsxp,
   SEXP dim,
@@ -2660,7 +2331,7 @@ void RParquetOutFile::init_metadata(
   int *precision = INTEGER(VECTOR_ELT(schema, 10));
 
   R_xlen_t nc = INTEGER(dim)[1];
-  write_minmax_values = LOGICAL(get_list_element(options, "write_minmax_values"))[0];
+  write_minmax_values = LOGICAL(rf_get_list_element(options, "write_minmax_values"))[0];
   is_minmax_supported = std::vector<bool>(nc, false);
   has_minmax_value.resize(nc);
   min_values.resize(nc);
@@ -2753,7 +2424,7 @@ void RParquetOutFile::init_append_metadata(
   SEXP dim,
   SEXP rrequired,
   SEXP options,
-  vector<parquet::SchemaElement> &schema,
+  std::vector<parquet::SchemaElement> &schema,
   SEXP encoding,
   std::vector<parquet::RowGroup> &row_groups,
   std::vector<parquet::KeyValue> &key_value_metadata) {
@@ -2771,7 +2442,7 @@ void RParquetOutFile::init_append_metadata(
   dicts_from = PROTECT(Rf_allocVector(INTSXP, Rf_length(df)));
 
   R_xlen_t nc = INTEGER(dim)[1];
-  write_minmax_values = LOGICAL(get_list_element(options, "write_minmax_values"))[0];
+  write_minmax_values = LOGICAL(rf_get_list_element(options, "write_minmax_values"))[0];
   is_minmax_supported = std::vector<bool>(nc, false);
   has_minmax_value.resize(nc);
   min_values.resize(nc);
@@ -2824,359 +2495,3 @@ void RParquetOutFile::write() {
 void RParquetOutFile::append() {
   ParquetOutFile::append();
 }
-
-extern "C" {
-
-static SEXP get_list_element(SEXP list, const char *str) {
-  SEXP elmt = R_NilValue;
-  SEXP names = PROTECT(Rf_getAttrib(list, R_NamesSymbol));
-
-  for (R_xlen_t i = 0; i < Rf_xlength(list); i++) {
-    if (strcmp(CHAR(STRING_ELT(names, i)), str) == 0) {
-       elmt = VECTOR_ELT(list, i);
-       break;
-    }
-  }
-  UNPROTECT(1);
-  return elmt;
-}
-
-SEXP nanoparquet_write_(SEXP dfsxp, SEXP filesxp, SEXP dim, SEXP compression,
-                        SEXP metadata, SEXP required, SEXP options,
-                        SEXP schema, SEXP encoding,
-                        SEXP row_group_starts) {
-
-  if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_errorcall(nanoparquet_call,
-                 "nanoparquet_write: filename must be a string");
-  }
-
-  int c_compression = INTEGER(compression)[0];
-  parquet::CompressionCodec::type codec;
-  switch (c_compression) {
-  case 0:
-    codec = parquet::CompressionCodec::UNCOMPRESSED;
-    break;
-  case 1:
-    codec = parquet::CompressionCodec::SNAPPY;
-    break;
-  case 2:
-    codec = parquet::CompressionCodec::GZIP;
-    break;
-  case 6:
-    codec = parquet::CompressionCodec::ZSTD;
-    break;
-  default:
-    Rf_errorcall(nanoparquet_call, "Invalid compression type code: %d", // # nocov
-                 c_compression);                                        // # nocov
-    break;
-  }
-
-  int dp_ver = INTEGER(get_list_element(options, "write_data_page_version"))[0];
-  int comp_level = INTEGER(get_list_element(options, "compression_level"))[0];
-
-  R_xlen_t nrg = Rf_xlength(row_group_starts);
-  std::vector<int64_t> row_groups(nrg);
-  for (R_xlen_t i = 0; i < nrg; i++) {
-    // convert to zero-based
-    row_groups[i] = INTEGER(row_group_starts)[i] - 1;
-  }
-
-  std::string fname = (char *)CHAR(STRING_ELT(filesxp, 0));
-  if (fname == ":raw:") {
-    MemStream ms;
-    std::ostream &os = ms.stream();
-    RParquetOutFile of(os, codec, comp_level, row_groups);
-    of.data_page_version = dp_ver;
-    of.init_metadata(dfsxp, dim, metadata, required, options, schema, encoding);
-    of.write();
-    R_xlen_t bufsize = ms.size();
-    SEXP res = Rf_allocVector(RAWSXP, bufsize);
-    ms.copy(RAW(res), bufsize);
-    return res;
-  } else {
-    RParquetOutFile of(fname, codec, comp_level, row_groups);
-    of.data_page_version = dp_ver;
-    of.init_metadata(dfsxp, dim, metadata, required, options, schema, encoding);
-    of.write();
-    return R_NilValue;
-  }
-}
-
-struct nanoparquet_write_data {
-  SEXP dfsxp;
-  SEXP filesxp;
-  SEXP dim;
-  SEXP compression;
-  SEXP metadata;
-  SEXP required;
-  SEXP options;
-  SEXP schema;
-  SEXP encoding;
-  SEXP row_group_starts;
-  SEXP overwrite_last_row_group;
-};
-
-SEXP nanoparquet_write_wrapped(void *data) {
-
-  nanoparquet_write_data *rdata = (struct nanoparquet_write_data*) data;
-  SEXP dfsxp = rdata->dfsxp;
-  SEXP filesxp = rdata->filesxp;
-  SEXP dim = rdata->dim;
-  SEXP compression = rdata->compression;
-  SEXP metadata = rdata->metadata;
-  SEXP required = rdata->required;
-  SEXP options = rdata->options;
-  SEXP schema = rdata->schema;
-  SEXP encoding = rdata->encoding;
-  SEXP row_group_starts = rdata->row_group_starts;
-
-  return nanoparquet_write_(dfsxp, filesxp, dim, compression, metadata,
-                            required, options, schema, encoding,
-                            row_group_starts);
-}
-
-SEXP nanoparquet_write(
-  SEXP dfsxp,
-  SEXP filesxp,
-  SEXP dim,
-  SEXP compression,
-  SEXP metadata,
-  SEXP required,
-  SEXP options,
-  SEXP schema,
-  SEXP encoding,
-  SEXP row_group_starts,
-  SEXP call) {
-
-  struct nanoparquet_write_data data = {
-    dfsxp, filesxp, dim, compression, metadata, required, options, schema,
-    encoding, row_group_starts
-  };
-
-  SEXP uwt = PROTECT(R_MakeUnwindCont());
-  R_API_START(call);
-
-  SEXP ret = R_UnwindProtect(
-    nanoparquet_write_wrapped,
-    &data,
-    throw_error,
-    &uwt,
-    uwt
-  );
-
-  UNPROTECT(1);
-  return ret;
-
-  R_API_END();                 // # nocov
-}
-
-extern SEXP convert_logical_type(parquet::LogicalType ltype, SEXP *uwt);
-
-SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options) {
-  SEXP uwtoken = PROTECT(R_MakeUnwindCont());
-  R_API_START(R_NilValue);
-  R_xlen_t nc = Rf_xlength(df);
-  SEXP res = PROTECT(Rf_allocVector(VECSXP, nc));
-  for (R_xlen_t cl = 0; cl < nc; cl++) {
-    SEXP col = VECTOR_ELT(df, cl);
-    parquet::SchemaElement sel;
-    std::string rtype;
-    nanoparquet_map_to_parquet_type(col, options, sel, rtype);
-    SEXP typ = Rf_allocVector(VECSXP, 3);
-    SET_VECTOR_ELT(res, cl, typ);
-    SET_VECTOR_ELT(typ, 0, Rf_mkString(to_string(sel.type).c_str()));
-    SET_VECTOR_ELT(typ, 1, Rf_mkString(rtype.c_str()));
-    if (sel.__isset.logicalType) {
-      SET_VECTOR_ELT(typ, 2, convert_logical_type(sel.logicalType, &uwtoken));
-    } else {
-      SET_VECTOR_ELT(typ, 2, R_NilValue);
-    }
-  }
-
-  UNPROTECT(2);
-  return res;
-  R_API_END();             // # nocov
-}
-
-SEXP nanoparquet_logical_to_converted(SEXP logical_type) {
-  const char *nms[] = { "converted_type", "scale", "precision", "" };
-  SEXP res = PROTECT(Rf_mkNamed(VECSXP, nms));
-  SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(NA_INTEGER));
-  SET_VECTOR_ELT(res, 1, Rf_ScalarInteger(NA_INTEGER));
-  SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(NA_INTEGER));
-
-  parquet::SchemaElement sel;
-  r_to_logical_type(logical_type, sel);
-
-  R_API_START(R_NilValue);
-  fill_converted_type_for_logical_type(sel);
-
-  if (sel.__isset.converted_type) {
-    INTEGER(VECTOR_ELT(res, 0))[0] = sel.converted_type;
-  }
-  if (sel.__isset.scale) {
-    INTEGER(VECTOR_ELT(res, 1))[0] = sel.scale;
-  }
-  if (sel.__isset.precision) {
-    INTEGER(VECTOR_ELT(res, 2))[0] = sel.precision;
-  }
-
-  UNPROTECT(1);
-  return res;
-  R_API_END();           // # nocov
-}
-
-SEXP nanoparquet_any_null(SEXP x) {
-  R_xlen_t l = Rf_xlength(x);
-  for (R_xlen_t i = 0; i < l; i++) {
-    if (Rf_isNull(VECTOR_ELT(x, i))) {
-      return Rf_ScalarLogical(1);
-    }
-  }
-
-  return Rf_ScalarLogical(0);
-}
-
-SEXP nanoparquet_any_na(SEXP x) {
-  R_xlen_t l = Rf_xlength(x);
-  double *ptr = REAL(x);
-  double *end = ptr + l;
-  for (; ptr < end; ptr++) {
-    if (R_IsNA(*ptr)) {
-      return Rf_ScalarLogical(1);
-    }
-  }
-
-  return Rf_ScalarLogical(0);
-}
-
-SEXP nanoparquet_append_(
-  SEXP dfsxp,
-  SEXP filesxp,
-  SEXP dim,
-  SEXP compression,
-  SEXP required,
-  SEXP options,
-  SEXP schema,
-  SEXP encoding,
-  SEXP row_group_starts,
-  SEXP overwrite_last_row_group
-) {
-
-  if (TYPEOF(filesxp) != STRSXP || LENGTH(filesxp) != 1) {
-    Rf_errorcall(nanoparquet_call,
-                 "nanoparquet_write: filename must be a string");
-  }
-
-  int c_compression = INTEGER(compression)[0];
-  parquet::CompressionCodec::type codec;
-  switch (c_compression) {
-  case 0:
-    codec = parquet::CompressionCodec::UNCOMPRESSED;
-    break;
-  case 1:
-    codec = parquet::CompressionCodec::SNAPPY;
-    break;
-  case 2:
-    codec = parquet::CompressionCodec::GZIP;
-    break;
-  case 6:
-    codec = parquet::CompressionCodec::ZSTD;
-    break;
-  default:
-    Rf_errorcall(nanoparquet_call, "Invalid compression type code: %d", // # nocov
-                 c_compression);                                        // # nocov
-    break;
-  }
-
-  int dp_ver = INTEGER(get_list_element(options, "write_data_page_version"))[0];
-  int comp_level = INTEGER(get_list_element(options, "compression_level"))[0];
-
-  R_xlen_t nrg = Rf_xlength(row_group_starts);
-  std::vector<int64_t> row_groups(nrg);
-  for (R_xlen_t i = 0; i < nrg; i++) {
-    // convert to zero-based
-    row_groups[i] = INTEGER(row_group_starts)[i] - 1;
-  }
-
-  std::string fname = (char*) CHAR(STRING_ELT(filesxp, 0));
-
-  try {
-    R_xlen_t nrg = Rf_xlength(row_group_starts);
-    std::vector<int64_t> row_groups(nrg);
-    for (R_xlen_t i = 0; i < nrg; i++) {
-      // convert to zero-based
-      row_groups[i] = INTEGER(row_group_starts)[i] - 1;
-    }
-
-    RParquetAppender appender(
-      fname,
-      codec,
-      comp_level,
-      row_groups,
-      dp_ver,
-      LOGICAL(overwrite_last_row_group)[0]
-    );
-    appender.init_metadata(dfsxp, dim, required, options, schema, encoding);
-    appender.append();
-    return R_NilValue;
-  } catch (std::exception &ex) {
-    Rf_error("%s", ex.what());
-  }
-}
-
-SEXP nanoparquet_append_wrapped(void *data) {
-  nanoparquet_write_data *rdata = (struct nanoparquet_write_data*) data;
-  SEXP dfsxp = rdata->dfsxp;
-  SEXP filesxp = rdata->filesxp;
-  SEXP dim = rdata->dim;
-  SEXP compression = rdata->compression;
-  SEXP required = rdata->required;
-  SEXP options = rdata->options;
-  SEXP schema = rdata->schema;
-  SEXP encoding = rdata->encoding;
-  SEXP row_group_starts = rdata->row_group_starts;
-  SEXP overwrite_last_row_group = rdata->overwrite_last_row_group;
-
-  return nanoparquet_append_(dfsxp, filesxp, dim, compression,
-                             required, options, schema, encoding,
-                             row_group_starts, overwrite_last_row_group);
-}
-
-SEXP nanoparquet_append(
-  SEXP dfsxp,
-  SEXP filesxp,
-  SEXP dim,
-  SEXP compression,
-  SEXP required,
-  SEXP options,
-  SEXP schema,
-  SEXP encoding,
-  SEXP row_group_starts,
-  SEXP overwrite_last_row_group,
-  SEXP call
-) {
-  struct nanoparquet_write_data data = {
-    dfsxp, filesxp, dim, compression, R_NilValue, required, options,
-    schema, encoding, row_group_starts, overwrite_last_row_group
-  };
-
-  SEXP uwt = PROTECT(R_MakeUnwindCont());
-  R_API_START(call);
-
-  SEXP ret = R_UnwindProtect(
-    nanoparquet_append_wrapped,
-    &data,
-    throw_error,
-    &uwt,
-    uwt
-  );
-
-  UNPROTECT(1);
-  return ret;
-
-  R_API_END();                 // # nocov
-}
-
-} // extern "C"

@@ -111,7 +111,7 @@ write_parquet <- function(
   row_group_starts <- row_group_starts[[2]]
 
   res <- .Call(
-    nanoparquet_write,
+    rf_nanoparquet_write,
     x,
     file,
     dim,
@@ -386,7 +386,7 @@ append_parquet <- function(
   dim <- c(dim(x), nrow_total)
 
   res <- .Call(
-    nanoparquet_append,
+    rf_nanoparquet_append,
     x,
     file,
     as.integer(dim),
