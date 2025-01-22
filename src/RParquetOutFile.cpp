@@ -1,4 +1,5 @@
 #include <cinttypes>
+#include <cmath>
 
 #include "RParquetOutFile.h"
 #include "r-nanoparquet.h"
