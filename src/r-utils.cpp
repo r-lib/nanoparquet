@@ -88,7 +88,7 @@ SEXP rf_get_list_element(SEXP list, const char *str) noexcept {
   return elmt;
 }
 
-SEXP nanoparquet_any_na(SEXP x) noexcept {
+SEXP rf_nanoparquet_any_na(SEXP x) noexcept {
   R_xlen_t l = Rf_xlength(x);
   double *ptr = REAL(x);
   double *end = ptr + l;
@@ -101,7 +101,7 @@ SEXP nanoparquet_any_na(SEXP x) noexcept {
   return Rf_ScalarLogical(0);
 }
 
-SEXP nanoparquet_any_null(SEXP x) noexcept {
+SEXP rf_nanoparquet_any_null(SEXP x) noexcept {
   R_xlen_t l = Rf_xlength(x);
   for (R_xlen_t i = 0; i < l; i++) {
     if (Rf_isNull(VECTOR_ELT(x, i))) {

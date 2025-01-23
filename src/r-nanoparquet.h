@@ -47,9 +47,11 @@ static const char *type_names[] = {
 Int96 int32_to_int96(int32_t x) noexcept;
 Int96 double_to_int96(double x) noexcept;
 uint16_t double_to_float16(double x) noexcept;
+
+// these use the R API
 SEXP rf_get_list_element(SEXP list, const char *str) noexcept;
-SEXP nanoparquet_any_na(SEXP x) noexcept;
-SEXP nanoparquet_any_null(SEXP x) noexcept;
+SEXP rf_nanoparquet_any_na(SEXP x) noexcept;
+SEXP rf_nanoparquet_any_null(SEXP x) noexcept;
 SEXP rf_convert_logical_type(parquet::LogicalType ltype) noexcept;
 
 } // extern "C"
