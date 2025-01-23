@@ -44,10 +44,10 @@ static double float16_to_double(uint16_t x) {
 #   endif
 #endif
 #ifdef __SANITIZE_ADDRESS__
-    const uint32_t shift = v < 118 ? 32 : 150 - v;
+    const uint32_t m0 = v < 118 ? 0 : (m << (150-v));
     float f = as_float((x & 0x8000) << 16 |
       (e != 0) * ((e + 112) << 23 | m) |
-      ((e == 0) & (m != 0)) * ((v - 37) << 23 | ((m << shift) & 0x007FE000)));
+      ((e == 0) & (m != 0)) * ((v - 37) << 23 | (m0 & 0x007FE000)));
     return f;
 #else
     float f = as_float((x & 0x8000) << 16 |
