@@ -94,7 +94,8 @@ SEXP rf_nanoparquet_write(
 
   CPP_END; // -------------------------------------------------------------
 
-  // never reached
+  // never reached, need the UNPROTECT for rchk
+  UNPROTECT(1);
   return R_NilValue;
 }
 
@@ -170,7 +171,8 @@ SEXP rf_nanoparquet_append(
 
   CPP_END; // -------------------------------------------------------------
 
-  // never reached
+  // never reached, need the UNPROTECT for rchk
+  UNPROTECT(1);
   return R_NilValue;
 }
 
