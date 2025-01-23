@@ -12,7 +12,7 @@
 #' @export
 
 infer_parquet_schema <- function(df, options = parquet_options()) {
-	types <- .Call(nanoparquet_map_to_parquet_types, df, options)
+	types <- .Call(rf_nanoparquet_map_to_parquet_types, df, options)
 	lt <- unname(lapply(types, function(x) x[[3]]))
 	ct <- lapply(lt, function(x) if (!is.null(x)) logical_to_converted(x))
 	type_tab <- data.frame(

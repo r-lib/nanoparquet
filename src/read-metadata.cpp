@@ -12,7 +12,7 @@ extern "C" {
 
 extern SEXP nanoparquet_call;
 
-SEXP convert_logical_type(parquet::LogicalType ltype) noexcept {
+SEXP rf_convert_logical_type(parquet::LogicalType ltype) noexcept {
   SEXP rtype = R_NilValue;
   int prot = 0;
   if (ltype.__isset.STRING) {
@@ -201,7 +201,7 @@ SEXP convert_schema(const char *cfile_name,
     INTEGER(converted_type)[idx] =
     sch.__isset.converted_type ? sch.converted_type : NA_INTEGER;
     if (sch.__isset.logicalType) {
-      SET_VECTOR_ELT(logical_type, idx, convert_logical_type(sch.logicalType));
+      SET_VECTOR_ELT(logical_type, idx, rf_convert_logical_type(sch.logicalType));
     }
     INTEGER(num_children)[idx] =
       sch.__isset.num_children ? sch.num_children : NA_INTEGER;

@@ -382,7 +382,7 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
 }
 
 logical_to_converted <- function(logical_type) {
-  res <- .Call(nanoparquet_logical_to_converted, logical_type)
+  res <- .Call(rf_nanoparquet_logical_to_converted, logical_type)
   res[["converted_type"]] <- names(ctype_names)[res[["converted_type"]] + 1 ]
   res
 }

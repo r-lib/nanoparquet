@@ -50,7 +50,7 @@ uint16_t double_to_float16(double x) noexcept;
 SEXP rf_get_list_element(SEXP list, const char *str) noexcept;
 SEXP nanoparquet_any_na(SEXP x) noexcept;
 SEXP nanoparquet_any_null(SEXP x) noexcept;
-SEXP convert_logical_type(parquet::LogicalType ltype) noexcept;
+SEXP rf_convert_logical_type(parquet::LogicalType ltype) noexcept;
 
 } // extern "C"
 
