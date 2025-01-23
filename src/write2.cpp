@@ -174,37 +174,47 @@ SEXP rf_nanoparquet_append(
   return R_NilValue;
 }
 
-// TODO: unwind
 SEXP nanoparquet_logical_to_converted(SEXP logical_type) noexcept {
   const char *nms[] = { "converted_type", "scale", "precision", "" };
   SEXP res = PROTECT(Rf_mkNamed(VECSXP, nms));
   SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(NA_INTEGER));
   SET_VECTOR_ELT(res, 1, Rf_ScalarInteger(NA_INTEGER));
   SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(NA_INTEGER));
+  int *res0 = INTEGER(VECTOR_ELT(res, 0));
+  int *res1 = INTEGER(VECTOR_ELT(res, 1));
+  int *res2 = INTEGER(VECTOR_ELT(res, 2));
+
+  CPP_INIT;
+  CPP_BEGIN;
 
   parquet::SchemaElement sel;
   r_to_logical_type(logical_type, sel);
-
   fill_converted_type_for_logical_type(sel);
 
   if (sel.__isset.converted_type) {
-    INTEGER(VECTOR_ELT(res, 0))[0] = sel.converted_type;
+    res0[0] = sel.converted_type;
   }
   if (sel.__isset.scale) {
-    INTEGER(VECTOR_ELT(res, 1))[0] = sel.scale;
+    res1[0] = sel.scale;
   }
   if (sel.__isset.precision) {
-    INTEGER(VECTOR_ELT(res, 2))[0] = sel.precision;
+    res2[0] = sel.precision;
   }
+
+  CPP_END;
 
   UNPROTECT(1);
   return res;
 }
 
-// TODO: unwind
+// TODO: proper unwind
 SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options) {
   R_xlen_t nc = Rf_xlength(df);
   SEXP res = PROTECT(Rf_allocVector(VECSXP, nc));
+
+  CPP_INIT;
+  CPP_BEGIN;
+
   for (R_xlen_t cl = 0; cl < nc; cl++) {
     SEXP col = VECTOR_ELT(df, cl);
     parquet::SchemaElement sel;
@@ -220,6 +230,8 @@ SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options) {
       SET_VECTOR_ELT(typ, 2, R_NilValue);
     }
   }
+
+  CPP_END;
 
   UNPROTECT(1);
   return res;
