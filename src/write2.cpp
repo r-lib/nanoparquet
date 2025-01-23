@@ -56,8 +56,7 @@ SEXP rf_nanoparquet_write(
   const int *crow_group_starts = INTEGER(row_group_starts);
   R_xlen_t nrg = Rf_xlength(row_group_starts);
   SEXP res = R_NilValue;
-  PROTECT(nanoparquet_call = call);
-  int prot = 1;
+  nanoparquet_call = call; // TODO: reset on error
 
   CPP_INIT;
   CPP_BEGIN; // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -77,10 +76,9 @@ SEXP rf_nanoparquet_write(
     of.init_metadata(dfsxp, dim, metadata, required, options, schema, encoding);
     of.write();
     R_xlen_t bufsize = ms.size();
-    res = r_eval([bufsize] {
-      return Rf_allocVector(RAWSXP, bufsize);
+    r_call([&] {
+      res = Rf_allocVector(RAWSXP, bufsize);
     });
-    PROTECT(res); prot++;
     ms.copy(RAW(res), bufsize);
   } else {
     RParquetOutFile of(fname, codec, comp_level, row_groups);
@@ -92,7 +90,6 @@ SEXP rf_nanoparquet_write(
   CPP_END; // -------------------------------------------------------------
 
   nanoparquet_call = R_NilValue;
-  UNPROTECT(prot);
   return res;
 }
 
