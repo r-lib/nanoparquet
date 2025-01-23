@@ -878,6 +878,8 @@ void ParquetReader::unpack_plain_boolean(uint32_t *res, uint8_t *buf, uint32_t n
 }
 
 void ParquetReader::scan_byte_array_plain(StringSet &strs, uint8_t *buf) {
+  // need this to avoid memcpy with a null pointer
+  if (strs.len == 0) return;
   uint8_t *start = buf;
   memcpy((void*) strs.buf, buf, strs.total_len);
   // TODO: check for overflow
