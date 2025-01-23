@@ -57,6 +57,7 @@ SEXP rf_nanoparquet_write(
   R_xlen_t nrg = Rf_xlength(row_group_starts);
   SEXP res = R_NilValue;
   PROTECT(nanoparquet_call = call);
+  int prot = 1;
 
   CPP_INIT;
   CPP_BEGIN; // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -79,6 +80,7 @@ SEXP rf_nanoparquet_write(
     res = r_eval([bufsize] {
       return Rf_allocVector(RAWSXP, bufsize);
     });
+    PROTECT(res); prot++;
     ms.copy(RAW(res), bufsize);
   } else {
     RParquetOutFile of(fname, codec, comp_level, row_groups);
@@ -90,7 +92,7 @@ SEXP rf_nanoparquet_write(
   CPP_END; // -------------------------------------------------------------
 
   nanoparquet_call = R_NilValue;
-  UNPROTECT(1);
+  UNPROTECT(prot);
   return res;
 }
 
