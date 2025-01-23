@@ -5,14 +5,12 @@
 
 constexpr int64_t kJulianToUnixEpochDays = 2440588LL;
 constexpr int64_t kMillisecondsInADay = 86400000LL;
-constexpr int64_t kNanosecondsInADay = kMillisecondsInADay * 1000LL * 1000LL;
 
 static int64_t impala_timestamp_to_milliseconds(const int96_t &impala_timestamp) {
   int64_t days_since_epoch = impala_timestamp.value[2] - kJulianToUnixEpochDays;
-
   int64_t nanoseconds;
   memcpy(&nanoseconds, impala_timestamp.value, sizeof(nanoseconds));
-  return (days_since_epoch * kNanosecondsInADay + nanoseconds) / 1000000;
+  return days_since_epoch * kMillisecondsInADay + nanoseconds / 1000000LL;
 }
 
 static uint32_t as_uint(const float x) {
