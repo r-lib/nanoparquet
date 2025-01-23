@@ -55,8 +55,9 @@ SEXP rf_nanoparquet_write(
   const char *cfname = CHAR(STRING_ELT(filesxp, 0));
   const int *crow_group_starts = INTEGER(row_group_starts);
   R_xlen_t nrg = Rf_xlength(row_group_starts);
-
+  SEXP res = R_NilValue;
   PROTECT(nanoparquet_call = call);
+
   CPP_INIT;
   CPP_BEGIN; // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -75,28 +76,22 @@ SEXP rf_nanoparquet_write(
     of.init_metadata(dfsxp, dim, metadata, required, options, schema, encoding);
     of.write();
     R_xlen_t bufsize = ms.size();
-    SEXP res = r_eval([bufsize] {
+    res = r_eval([bufsize] {
       return Rf_allocVector(RAWSXP, bufsize);
     });
     ms.copy(RAW(res), bufsize);
-    UNPROTECT(1);
-    nanoparquet_call = R_NilValue;
-    return res;
   } else {
     RParquetOutFile of(fname, codec, comp_level, row_groups);
     of.data_page_version = dp_ver;
     of.init_metadata(dfsxp, dim, metadata, required, options, schema, encoding);
     of.write();
-    UNPROTECT(1);
-    nanoparquet_call = R_NilValue;
-    return R_NilValue;
   }
 
   CPP_END; // -------------------------------------------------------------
 
-  // never reached, need the UNPROTECT for rchk
+  nanoparquet_call = R_NilValue;
   UNPROTECT(1);
-  return R_NilValue;
+  return res;
 }
 
 SEXP rf_nanoparquet_append(
@@ -143,8 +138,8 @@ SEXP rf_nanoparquet_append(
   const char *cfname = CHAR(STRING_ELT(filesxp, 0));
   const int *prow_group_starts = INTEGER(row_group_starts);
   int coverwrite_last_row_group = LOGICAL(overwrite_last_row_group)[0];
-
   PROTECT(nanoparquet_call = call);
+
   CPP_INIT;
   CPP_BEGIN; // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -165,14 +160,11 @@ SEXP rf_nanoparquet_append(
   );
   appender.init_metadata(dfsxp, dim, required, options, schema, encoding);
   appender.append();
-  UNPROTECT(1);
-  nanoparquet_call = R_NilValue;
-  return R_NilValue;
 
   CPP_END; // -------------------------------------------------------------
 
-  // never reached, need the UNPROTECT for rchk
   UNPROTECT(1);
+  nanoparquet_call = R_NilValue;
   return R_NilValue;
 }
 
