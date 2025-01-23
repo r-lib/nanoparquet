@@ -37,10 +37,24 @@ static double float16_to_double(uint16_t x) {
     const uint32_t e = (x & 0x7C00) >> 10;
     const uint32_t m = (x & 0x03FF) << 13;
     const uint32_t v = as_uint((float) m) >> 23;
+    // ASAN does not like the large << shift, which is ok and faster
+#if defined(__has_feature)
+#   if __has_feature(address_sanitizer) // for clang
+#       define __SANITIZE_ADDRESS__ // GCC already sets this
+#   endif
+#endif
+#ifdef __SANITIZE_ADDRESS__
+    const uint32_t shift = v < 118 ? 32 : 150 - v;
+    float f = as_float((x & 0x8000) << 16 |
+      (e != 0) * ((e + 112) << 23 | m) |
+      ((e == 0) & (m != 0)) * ((v - 37) << 23 | ((m << shift) & 0x007FE000)));
+    return f;
+#else
     float f = as_float((x & 0x8000) << 16 |
       (e != 0) * ((e + 112) << 23 | m) |
       ((e == 0) & (m != 0)) * ((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)));
     return f;
+#endif
   }
   return 0;
 }
