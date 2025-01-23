@@ -12,6 +12,8 @@ extern SEXP nanoparquet_call;
 
 extern "C" {
 
+static char _np_error[4096];
+
 SEXP nanoparquet_read_(SEXP filesxp, SEXP options) {
   const char *sfname = CHAR(STRING_ELT(filesxp, 0));
   SEXP res = R_NilValue;
@@ -29,8 +31,10 @@ SEXP nanoparquet_read_(SEXP filesxp, SEXP options) {
     UNPROTECT(1);
     return res;
   } catch (std::exception &ex) {
-    Rf_error("%s", ex.what());
+    strncpy(_np_error, ex.what(), sizeof(_np_error) - 1);
+    _np_error[sizeof(_np_error) - 1] = '\0';
   }
+  Rf_error("%s", _np_error);
 }
 
 struct nanoparquet_read_data {

@@ -2,7 +2,7 @@ test_that("errors", {
   options <- parquet_options()
   expect_snapshot(error = TRUE, {
    .Call(
-      nanoparquet_write, mtcars, tempfile(), dim(mtcars), 0L,
+      rf_nanoparquet_write, mtcars, tempfile(), dim(mtcars), 0L,
       list(character(), character()), rep(FALSE, ncol(mtcars)),
       options, map_schema_to_df(NULL, mtcars), rep(10L, ncol(mtcars)), 1L,
       sys.call()

@@ -1,8 +1,10 @@
 #pragma once
-#include <Rdefines.h>
 #include "lib/nanoparquet.h"
+// defines Realloc etc., which are also picked up by lib/nanoparquet.h
+// from thrift & winsock2.h, so it has to be after that
+#include <Rdefines.h>
 
-namespace nanoparquet {
+using namespace nanoparquet;
 
 class RParquetOutFile : public ParquetOutFile {
 public:
@@ -137,5 +139,3 @@ private:
                                uint64_t from, uint64_t until,
                                parquet::SchemaElement &sel, double factor);
 };
-
-} // namespace nanoparquet

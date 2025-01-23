@@ -20,7 +20,7 @@ SEXP nanoparquet_read_column_chunk(
   SEXP options,
   SEXP call
 );
-SEXP nanoparquet_write(
+SEXP rf_nanoparquet_write(
   SEXP dfsxp,
   SEXP filesxp,
   SEXP dim,
@@ -33,7 +33,7 @@ SEXP nanoparquet_write(
   SEXP row_group_starts,
   SEXP mycall
 );
-SEXP nanoparquet_append(
+SEXP rf_nanoparquet_append(
   SEXP dfsxp,
   SEXP filesxp,
   SEXP dim,
@@ -46,8 +46,8 @@ SEXP nanoparquet_append(
   SEXP overwrite_last_row_group,
   SEXP mycall
 );
-SEXP nanoparquet_map_to_parquet_types(SEXP df, SEXP options);
-SEXP nanoparquet_logical_to_converted(SEXP logical_type);
+SEXP rf_nanoparquet_map_to_parquet_types(SEXP df, SEXP options);
+SEXP rf_nanoparquet_logical_to_converted(SEXP logical_type);
 SEXP nanoparquet_read_metadata(SEXP filesxp);
 SEXP nanoparquet_read_schema(SEXP filesxp);
 SEXP nanoparquet_read_pages(SEXP filesxp);
@@ -55,8 +55,8 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page);
 SEXP nanoparquet_parse_arrow_schema(SEXP rbuf);
 SEXP nanoparquet_encode_arrow_schema(SEXP schema);
 
-SEXP nanoparquet_any_null(SEXP x);
-SEXP nanoparquet_any_na(SEXP x);
+SEXP rf_nanoparquet_any_null(SEXP x);
+SEXP rf_nanoparquet_any_na(SEXP x);
 
 SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width, SEXP
                                 includes_length, SEXP length);
@@ -132,18 +132,18 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_read2, 3),
   CALLDEF(nanoparquet_read_row_group, 4),
   CALLDEF(nanoparquet_read_column_chunk, 5),
-  CALLDEF(nanoparquet_write, 11),
-  CALLDEF(nanoparquet_append, 11),
-  CALLDEF(nanoparquet_map_to_parquet_types, 2),
-  CALLDEF(nanoparquet_logical_to_converted, 1),
+  CALLDEF(rf_nanoparquet_write, 11),
+  CALLDEF(rf_nanoparquet_append, 11),
+  CALLDEF(rf_nanoparquet_map_to_parquet_types, 2),
+  CALLDEF(rf_nanoparquet_logical_to_converted, 1),
   CALLDEF(nanoparquet_read_metadata, 1),
   CALLDEF(nanoparquet_read_schema, 1),
   CALLDEF(nanoparquet_read_pages, 1),
   CALLDEF(nanoparquet_read_page, 2),
   CALLDEF(nanoparquet_parse_arrow_schema, 1),
   CALLDEF(nanoparquet_encode_arrow_schema, 1),
-  CALLDEF(nanoparquet_any_null, 1),
-  CALLDEF(nanoparquet_any_na, 1),
+  CALLDEF(rf_nanoparquet_any_null, 1),
+  CALLDEF(rf_nanoparquet_any_na, 1),
   CALLDEF(nanoparquet_rle_decode_int, 4),
   CALLDEF(nanoparquet_rle_encode_int, 2),
   CALLDEF(nanoparquet_dbp_decode_int32, 1),

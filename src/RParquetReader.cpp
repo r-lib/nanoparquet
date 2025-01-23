@@ -5,14 +5,12 @@
 
 constexpr int64_t kJulianToUnixEpochDays = 2440588LL;
 constexpr int64_t kMillisecondsInADay = 86400000LL;
-constexpr int64_t kNanosecondsInADay = kMillisecondsInADay * 1000LL * 1000LL;
 
 static int64_t impala_timestamp_to_milliseconds(const int96_t &impala_timestamp) {
   int64_t days_since_epoch = impala_timestamp.value[2] - kJulianToUnixEpochDays;
-
   int64_t nanoseconds;
   memcpy(&nanoseconds, impala_timestamp.value, sizeof(nanoseconds));
-  return (days_since_epoch * kNanosecondsInADay + nanoseconds) / 1000000;
+  return days_since_epoch * kMillisecondsInADay + nanoseconds / 1000000LL;
 }
 
 static uint32_t as_uint(const float x) {
@@ -39,10 +37,24 @@ static double float16_to_double(uint16_t x) {
     const uint32_t e = (x & 0x7C00) >> 10;
     const uint32_t m = (x & 0x03FF) << 13;
     const uint32_t v = as_uint((float) m) >> 23;
+    // ASAN does not like the large << shift, which is ok and faster
+#if defined(__has_feature)
+#   if __has_feature(address_sanitizer) // for clang
+#       define __SANITIZE_ADDRESS__ // GCC already sets this
+#   endif
+#endif
+#ifdef __SANITIZE_ADDRESS__
+    const uint32_t m0 = v < 118 ? 0 : (m << (150-v));
+    float f = as_float((x & 0x8000) << 16 |
+      (e != 0) * ((e + 112) << 23 | m) |
+      ((e == 0) & (m != 0)) * ((v - 37) << 23 | (m0 & 0x007FE000)));
+    return f;
+#else
     float f = as_float((x & 0x8000) << 16 |
       (e != 0) * ((e + 112) << 23 | m) |
       ((e == 0) & (m != 0)) * ((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)));
     return f;
+#endif
   }
   return 0;
 }

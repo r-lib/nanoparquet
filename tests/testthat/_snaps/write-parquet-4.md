@@ -1,7 +1,7 @@
 # errors
 
     Code
-      .Call(nanoparquet_write, mtcars, tempfile(), dim(mtcars), 0L, list(character(),
+      .Call(rf_nanoparquet_write, mtcars, tempfile(), dim(mtcars), 0L, list(character(),
       character()), rep(FALSE, ncol(mtcars)), options, map_schema_to_df(NULL, mtcars),
       rep(10L, ncol(mtcars)), 1L, sys.call())
     Condition
@@ -457,7 +457,7 @@
     Code
       infer_parquet_schema(d)
     Condition
-      Error:
+      Error in `write_parquet()`:
       ! Cannot map a raw vector to any Parquet type
 
 # argument errors

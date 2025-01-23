@@ -75,9 +75,9 @@ map_int <- function(.x, .f, ...) {
 any_na <- function(x) {
   t <- typeof(x)
   if (t == "list") {
-    .Call(nanoparquet_any_null, x)
+    .Call(rf_nanoparquet_any_null, x)
   } else if (t == "double") {
-    .Call(nanoparquet_any_na, x)
+    .Call(rf_nanoparquet_any_na, x)
   } else {
     anyNA(x)
   }
