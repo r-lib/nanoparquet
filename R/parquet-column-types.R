@@ -51,7 +51,7 @@ parquet_column_types_file <- function(file, options) {
 	add_r_type_to_schema(mtd, sch, options)
 }
 
-add_r_type_to_schema <- function(mtd, sch, options) {
+add_r_type_to_schema <- function(mtd, sch, options, col_select = NULL) {
 	kv <- mtd$file_meta_data$key_value_metadata[[1]]
 
 	type_map <- c(

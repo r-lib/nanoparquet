@@ -8,6 +8,8 @@
 #'   deletes it. The connection might be open, it which case it must be
 #'   a binary connection. If it is not open, then `read_parquet()` will
 #'   open it and also close it in the end.
+#' @param col_select Columns to read. It can be a numeric vector of column
+#'   indices.
 #' @param options Nanoparquet options, see [parquet_options()].
 #' @return A `data.frame` with the file's contents.
 #' @export
@@ -21,7 +23,8 @@
 #' parquet_df <- nanoparquet::read_parquet(file_name)
 #' print(str(parquet_df))
 
-read_parquet <- function(file, options = parquet_options()) {
+read_parquet <- function(file, col_select = NULL,
+												 options = parquet_options()) {
 	if (inherits(file, "connection")) {
 		tmp <- tempfile(fileext = ".parquet")
 		on.exit(unlink(tmp), add = TRUE)
@@ -29,16 +32,25 @@ read_parquet <- function(file, options = parquet_options()) {
 		file <- tmp
 	}
   file <- path.expand(file)
-  res <- .Call(nanoparquet_read2, file, options, sys.call())
-	post_process_read_result(res, file, options)
+
+	if (!is.null(col_select)) {
+		stopifnot(is.numeric(col_select))
+		col_select <- as.integer(col_select)
+		col_select <- col_select[!is.na(col_select)]
+		col_select <- unique(col_select)
+		stopifnot(all(col_select >= 1L))
+	}
+
+  res <- .Call(nanoparquet_read2, file, options, col_select, sys.call())
+	post_process_read_result(res, file, options, col_select)
 }
 
-post_process_read_result <- function(res, file, options) {
+post_process_read_result <- function(res, file, options, col_select) {
 	dicts <- res[[2]]
 	types <- res[[3]]
 	res <- res[[1]]
 	if (options[["use_arrow_metadata"]]) {
-		res <- apply_arrow_schema(res, file, dicts, types)
+		res <- apply_arrow_schema(res, file, dicts, types, col_select)
 	}
 
 	# convert hms from milliseconds to seconds, also integer -> double
@@ -92,7 +104,7 @@ read_parquet_row_group <- function(file, row_group,
   file <- path.expand(file)
   res <- .Call(nanoparquet_read_row_group, file, row_group,
 							 options, sys.call())
-	post_process_read_result(res, file, options)
+	post_process_read_result(res, file, options, col_select = NULL)
 }
 
 # TODO: this does not work currently
