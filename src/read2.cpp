@@ -14,14 +14,23 @@ extern "C" {
 
 static char _np_error[4096];
 
-SEXP nanoparquet_read_(SEXP filesxp, SEXP options) {
+SEXP nanoparquet_read_(SEXP filesxp, SEXP rcols, SEXP options) {
   const char *sfname = CHAR(STRING_ELT(filesxp, 0));
   SEXP res = R_NilValue;
 
   try {
     std::string fname = sfname;
-    RParquetReader reader(fname);
-    reader.read_all_columns();
+    RParquetFilter filter;
+    if (!Rf_isNull(rcols)) {
+      filter.filter_columns = true;
+      R_xlen_t nc = Rf_length(rcols);
+      filter.columns.resize(nc);
+      for (auto i = 0; i < nc; i++) {
+        filter.columns[i] = INTEGER(rcols)[i] - 1;
+      }
+    }
+    RParquetReader reader(fname, filter);
+    reader.read_columns();
     reader.convert_columns_to_r();
     reader.create_df();
     PROTECT(res = Rf_allocVector(VECSXP, 3));
@@ -39,6 +48,7 @@ SEXP nanoparquet_read_(SEXP filesxp, SEXP options) {
 
 struct nanoparquet_read_data {
   SEXP filesxp;
+  SEXP cols;
   SEXP options;
   SEXP rc;
   SEXP col;
@@ -47,11 +57,13 @@ struct nanoparquet_read_data {
 SEXP nanoparquet_read_wrapped(void *data) {
   nanoparquet_read_data *rdata = (struct nanoparquet_read_data*) data;
   SEXP filesxp = rdata->filesxp;
+  SEXP cols = rdata->cols;
   SEXP options = rdata->options;
-  return nanoparquet_read_(filesxp, options);
+  return nanoparquet_read_(filesxp, cols, options);
 }
 
 SEXP nanoparquet_read2(SEXP filesxp,
+                       SEXP cols,
                        SEXP options,
                        SEXP call) {
 
@@ -59,7 +71,7 @@ SEXP nanoparquet_read2(SEXP filesxp,
   R_API_START(call);
 
   struct nanoparquet_read_data data = {
-    filesxp, options
+    filesxp, options, cols
   };
 
   SEXP ret = R_UnwindProtect(
@@ -124,7 +136,7 @@ SEXP nanoparquet_read_row_group(
   R_API_START(call);
 
   struct nanoparquet_read_data data = {
-    filesxp, options, rg
+    filesxp, /* cols */ R_NilValue, options, rg
   };
 
   SEXP ret = R_UnwindProtect(
@@ -193,7 +205,7 @@ SEXP nanoparquet_read_column_chunk(
   R_API_START(call);
 
   struct nanoparquet_read_data data = {
-    filesxp, options, rg, col
+    filesxp, /* cols */ R_NilValue, options, rg, col
   };
 
   SEXP ret = R_UnwindProtect(

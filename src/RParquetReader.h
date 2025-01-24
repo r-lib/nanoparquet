@@ -48,6 +48,7 @@ public:
   int64_t num_rows;
   size_t num_cols;
   size_t num_leaf_cols;
+  size_t num_cols_to_read;
   size_t num_row_groups;
   std::vector<int64_t> row_group_num_rows;
   std::vector<int64_t> row_group_offsets;
@@ -81,9 +82,11 @@ public:
 
 class RParquetFilter {
 public:
-  RParquetFilter() : filter_row_groups(false) { };
+  RParquetFilter() : filter_row_groups(false), filter_columns(false) { };
   bool filter_row_groups;
   std::vector<uint32_t> row_groups;
+  bool filter_columns;
+  std::vector<uint32_t> columns;
 };
 
 class RParquetReader : public ParquetReader {
@@ -93,6 +96,7 @@ public:
   ~RParquetReader();
 
   void create_metadata(RParquetFilter &filter);
+  void read_columns();
   void convert_columns_to_r();
   void create_df();
 
@@ -115,5 +119,7 @@ public:
   rmetadata metadata;
 
 protected:
+  RParquetFilter filter;
   void init(RParquetFilter &filter);
+  std::vector<uint32_t> colmap;
 };

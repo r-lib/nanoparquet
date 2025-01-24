@@ -9,13 +9,19 @@ parquet_arrow_metadata <- function(file) {
   parse_arrow_schema(amd)
 }
 
-apply_arrow_schema <- function(tab, file, dicts, types) {
+apply_arrow_schema <- function(tab, file, dicts, types, col_select) {
+  # we don't need to recursively deal with this here, we only need the
+  # key-value metadata, so we could read just that (TODO)
+  opt <- options(nanoparquet.use_arrow_metadata = FALSE)
+  on.exit(options(opt), add = TRUE)
   mtd <- read_parquet_metadata(file)
+
   kv <- mtd$file_meta_data$key_value_metadata[[1]]
   if ("ARROW:schema" %in% kv$key) {
     spec <- arrow_find_special(
       kv$value[match("ARROW:schema", kv$key)],
-      file
+      file,
+      col_select
     )
     for (idx in spec$factor) {
       clevels <- Reduce(union, dicts[[idx]])
@@ -38,7 +44,7 @@ apply_arrow_schema <- function(tab, file, dicts, types) {
   tab
 }
 
-arrow_find_special <- function(asch, file) {
+arrow_find_special <- function(asch, file, col_select = NULL) {
   amd <- tryCatch(
     parse_arrow_schema(asch)$columns,
     error = function(e) {
@@ -51,6 +57,10 @@ arrow_find_special <- function(asch, file) {
   )
   if (is.null(amd)) {
     return(list())
+  }
+  # Subset of columns?
+  if (!is.null(col_select)) {
+    amd <- amd[col_select, , drop = FALSE]
   }
   # If the type is Utf8 and it is a dictionary, then it is a factor
   fct <- which(

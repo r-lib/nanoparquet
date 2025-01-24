@@ -172,12 +172,6 @@ void ParquetReader::read_all_columns() {
   }
 }
 
-void ParquetReader::read_selected_columns(std::vector<uint32_t> sel) {
-  for (uint32_t i = 0; i < sel.size(); i++) {
-    read_column(sel[i]);
-  }
-}
-
 void ParquetReader::read_row_group(uint32_t row_group) {
   if (!has_file_meta_data_) {
     throw runtime_error("Cannot read column, metadata is not known");

@@ -6,7 +6,7 @@ extern "C" {
 
 SEXP nanoparquet_call = R_NilValue;
 
-SEXP nanoparquet_read2(SEXP filesxp, SEXP options, SEXP call);
+SEXP nanoparquet_read2(SEXP filesxp, SEXP options, SEXP cols, SEXP call);
 SEXP nanoparquet_read_row_group(
   SEXP filesxp,
   SEXP rc,
@@ -129,7 +129,7 @@ SEXP is_ubsan_() {
   { #name, (DL_FUNC)&name, n }
 
 static const R_CallMethodDef R_CallDef[] = {
-  CALLDEF(nanoparquet_read2, 3),
+  CALLDEF(nanoparquet_read2, 4),
   CALLDEF(nanoparquet_read_row_group, 4),
   CALLDEF(nanoparquet_read_column_chunk, 5),
   CALLDEF(rf_nanoparquet_write, 11),
