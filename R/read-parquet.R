@@ -71,6 +71,10 @@ post_process_read_result <- function(res, file, options, col_select) {
 		)
 	}
 
+	if (length(options[["class"]]) > 0) {
+		class(res) <- unique(c(options[["class"]], class(res)))
+	}
+
   res
 }
 

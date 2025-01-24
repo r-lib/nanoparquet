@@ -51,3 +51,20 @@ test_that("read a subset, factor to test Arrow metadata", {
     df[, 14, drop = FALSE]
   )
 })
+
+test_that("class", {
+  withr::local_options(nanoparquet.class = NULL)
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  write_parquet(test_df(), tmp)
+  expect_equal(class(read_parquet(tmp)), c("tbl", "data.frame"))
+  expect_equal(
+    class(read_parquet(
+      tmp,
+      options = parquet_options(class = c("foo", "bar", "data.frame"))
+    )),
+    c("foo", "bar", "data.frame")
+  )
+  withr::local_options(nanoparquet.class = "foobar")
+  expect_equal(class(read_parquet(tmp)), c("foobar", "data.frame"))
+})

@@ -2065,9 +2065,8 @@ void RParquetReader::create_df() {
   Rf_setAttrib(columns, R_RowNamesSymbol, rnms);
   UNPROTECT(1);
 
-  SEXP cls = PROTECT(Rf_allocVector(STRSXP, 2));
-  SET_STRING_ELT(cls, 0, Rf_mkCharCE("tbl", CE_UTF8));
-  SET_STRING_ELT(cls, 1, Rf_mkCharCE("data.frame", CE_UTF8));
+  SEXP cls = PROTECT(Rf_allocVector(STRSXP, 1));
+  SET_STRING_ELT(cls, 0, Rf_mkCharCE("data.frame", CE_UTF8));
   Rf_setAttrib(columns, R_ClassSymbol, cls);
   UNPROTECT(1);
 }

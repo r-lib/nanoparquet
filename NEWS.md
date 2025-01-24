@@ -79,6 +79,9 @@
 * `read_parquet()` now reads the `FLOAT16` logical type as a real (double)
   vector.
 
+* The `class` argument of `parquet_options()` and the `nanoparquet.class`
+  option now work again (#104).
+
 # nanoparquet 0.3.1
 
 * This version fixes a `write_parquet()` crash (#73).
