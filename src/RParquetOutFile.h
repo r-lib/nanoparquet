@@ -20,6 +20,16 @@ public:
     int compsession_level,
     std::vector<int64_t> &row_groups
   );
+  ~RParquetOutFile() {
+    if (!Rf_isNull(dicts)) {
+      R_ReleaseObject(dicts);
+      dicts = R_NilValue;
+    }
+    if (!Rf_isNull(dicts_from)) {
+      R_ReleaseObject(dicts_from);
+      dicts = R_NilValue;
+    }
+  }
   void write_row_group(uint32_t group);
   void write_int32(std::ostream &file, uint32_t idx, uint32_t group,
                    uint32_t page, uint64_t from, uint64_t until,

@@ -2539,8 +2539,10 @@ void RParquetOutFile::init_metadata(
   R_xlen_t nr = INTEGER(dim)[0];
   set_num_rows(nr);
 
-  dicts = PROTECT(Rf_allocVector(VECSXP, Rf_length(df)));
-  dicts_from = PROTECT(Rf_allocVector(INTSXP, Rf_length(df)));
+  dicts = Rf_allocVector(VECSXP, Rf_length(df));
+  R_PreserveObject(dicts);
+  dicts_from = Rf_allocVector(INTSXP, Rf_length(df));
+  R_PreserveObject(dicts_from);
   SEXP nms = PROTECT(Rf_getAttrib(dfsxp, R_NamesSymbol));
   int *type = INTEGER(VECTOR_ELT(schema, 3));
   int *type_length = INTEGER(VECTOR_ELT(schema, 4));
@@ -2635,7 +2637,7 @@ void RParquetOutFile::init_metadata(
       );
     }
   }
-  UNPROTECT(3);
+  UNPROTECT(1);
 };
 
 void RParquetOutFile::init_append_metadata(
