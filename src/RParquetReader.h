@@ -96,6 +96,7 @@ public:
   ~RParquetReader();
 
   void create_metadata(RParquetFilter &filter);
+  void read_arrow_metadata();
   void read_columns();
   void convert_columns_to_r();
   void create_df();
@@ -111,6 +112,7 @@ public:
   SEXP columns = R_NilValue;
   SEXP facdicts = R_NilValue;
   SEXP types = R_NilValue;
+  SEXP arrow_metadata = R_NilValue;
 
   std::vector<std::vector<uint8_t>> tmpdata;
   std::vector<std::vector<tmpdict>> dicts;

@@ -48,9 +48,10 @@ read_parquet <- function(file, col_select = NULL,
 post_process_read_result <- function(res, file, options, col_select) {
 	dicts <- res[[2]]
 	types <- res[[3]]
+	arrow_schema <- res[[4]]
 	res <- res[[1]]
-	if (options[["use_arrow_metadata"]]) {
-		res <- apply_arrow_schema(res, file, dicts, types, col_select)
+	if (options[["use_arrow_metadata"]] && !is.na(arrow_schema)) {
+		res <- apply_arrow_schema(res, file, arrow_schema, dicts, types, col_select)
 	}
 
 	# convert hms from milliseconds to seconds, also integer -> double

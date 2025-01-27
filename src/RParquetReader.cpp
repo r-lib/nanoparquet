@@ -88,6 +88,8 @@ void RParquetReader::init(RParquetFilter &filter) {
   R_PreserveObject(facdicts);
   types = Rf_allocVector(INTSXP, metadata.num_cols_to_read);
   R_PreserveObject(types);
+  arrow_metadata = Rf_allocVector(STRSXP, 1);
+  R_PreserveObject(arrow_metadata);
 
   tmpdata.resize(metadata.num_cols_to_read);
   dicts.resize(metadata.num_cols_to_read);
@@ -124,6 +126,9 @@ RParquetReader::~RParquetReader() {
   }
   if (!Rf_isNull(types)) {
     R_ReleaseObject(types);
+  }
+  if (!Rf_isNull(arrow_metadata)) {
+    R_ReleaseObject(arrow_metadata);
   }
 }
 
@@ -2069,4 +2074,23 @@ void RParquetReader::create_df() {
   SET_STRING_ELT(cls, 0, Rf_mkCharCE("data.frame", CE_UTF8));
   Rf_setAttrib(columns, R_ClassSymbol, cls);
   UNPROTECT(1);
+}
+
+// ------------------------------------------------------------------------
+
+void RParquetReader::read_arrow_metadata() {
+  if (file_meta_data_.__isset.key_value_metadata) {
+    std::vector<parquet::KeyValue> &kvm = file_meta_data_.key_value_metadata;
+    for (auto i = 0; i < kvm.size(); i++) {
+      parquet::KeyValue &kv = kvm[i];
+      if (kv.__isset.value) {
+        if (kv.key == "ARROW:schema") {
+          SET_STRING_ELT(arrow_metadata, 0, Rf_mkChar(kv.value.c_str()));
+          return;
+        }
+      }
+    }
+  }
+  SET_STRING_ELT(arrow_metadata, 0, R_NaString);
+  return;
 }

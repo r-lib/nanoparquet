@@ -1,45 +1,25 @@
-# read Arrow metadata from a file
-parquet_arrow_metadata <- function(file) {
-  fmd <- read_parquet_metadata(file)$file_meta_data
-  kv <- fmd$key_value_metadata[[1]]
-  if (! "ARROW:schema" %in% kv$key) {
-    stop("No Arrow metadata in file")
+apply_arrow_schema <- function(tab, file, arrow_schema, dicts, types,
+                               col_select) {
+  if (is.na(arrow_schema)) {
+    return(tab)
   }
-  amd <- kv$value[match("ARROW:schema", kv$key)]
-  parse_arrow_schema(amd)
-}
-
-apply_arrow_schema <- function(tab, file, dicts, types, col_select) {
-  # we don't need to recursively deal with this here, we only need the
-  # key-value metadata, so we could read just that (TODO)
-  opt <- options(nanoparquet.use_arrow_metadata = FALSE)
-  on.exit(options(opt), add = TRUE)
-  mtd <- read_parquet_metadata(file)
-
-  kv <- mtd$file_meta_data$key_value_metadata[[1]]
-  if ("ARROW:schema" %in% kv$key) {
-    spec <- arrow_find_special(
-      kv$value[match("ARROW:schema", kv$key)],
-      file,
-      col_select
+  spec <- arrow_find_special(arrow_schema, file, col_select)
+  for (idx in spec$factor) {
+    clevels <- Reduce(union, dicts[[idx]])
+    tab[[idx]] <- factor(tab[[idx]], levels = clevels)
+  }
+  for (idx in spec$difftime) {
+    # only if INT64, otherwise hms, probably
+    if (types[[idx]] != 2) next
+    mult <- switch(
+      spec$columns$type[[idx]]$unit,
+      SECOND = 1,
+      MILLISECOND = 1000,
+      MICROSECOND = 1000 * 1000,
+      NANOSECOND = 1000 * 1000 * 1000,
+      stop("Unknown Arrow time unit")
     )
-    for (idx in spec$factor) {
-      clevels <- Reduce(union, dicts[[idx]])
-      tab[[idx]] <- factor(tab[[idx]], levels = clevels)
-    }
-    for (idx in spec$difftime) {
-      # only if INT64, otherwise hms, probably
-      if (types[[idx]] != 2) next
-      mult <- switch(
-        spec$columns$type[[idx]]$unit,
-        SECOND = 1,
-        MILLISECOND = 1000,
-        MICROSECOND = 1000 * 1000,
-        NANOSECOND = 1000 * 1000 * 1000,
-        stop("Unknown Arrow time unit")
-      )
-      tab[[idx]] <- as.difftime(tab[[idx]] / mult, units = "secs")
-    }
+    tab[[idx]] <- as.difftime(tab[[idx]] / mult, units = "secs")
   }
   tab
 }
