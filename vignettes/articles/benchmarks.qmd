@@ -1,0 +1,339 @@
+---
+title: "Benchmarks"
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
+---
+
+## Goals
+
+First, we want to measure nanoparquet's speed relative to good quality
+CSV readers and writers.
+
+Second, we want to see how nanoparquet fares relative to other Parquet
+implementations available from R.
+
+```{r, setup, include = FALSE}
+knitr::opts_chunk$set(
+  comment = "#>"
+)
+me <- normalizePath(
+  if (Sys.getenv("QUARTO_DOCUMENT_PATH") != "") {
+    Sys.getenv("QUARTO_DOCUMENT_PATH")
+  } else if (file.exists("benchmarks-funcs.R")) {
+    getwd()
+  } else if (file.exists("articles/benchmarks-funcs.R")) {
+    "articles"
+  } else {
+    "vignettes/articles"
+  })
+writeLines(me, "/tmp/me")
+source(file.path(me, "benchmarks-funcs.R"))
+```
+
+```{r, include = FALSE}
+library(dplyr)
+library(gt)
+library(gtExtras)
+```
+
+```r
+library(dplyr)
+library(gt)
+library(gtExtras)
+```
+
+## Data sets
+
+I will use three data sets: small, medium and large. The small data set is
+the `nycflights13::flights` data set, as is. The medium data set contains
+20 copies of the small data set. The large data set containes 200 copies
+of the small data set. See the `gen_data()` function in the
+`benchmark-funcs.R` file.
+
+Some basic information about each data set:
+```{r, info}
+if (file.exists(file.path(me, "data-info.parquet"))) {
+  info_tab <- nanoparquet::read_parquet(file.path(me, "data-info.parquet"))
+} else {
+  get_data_info <- function(x) {
+    list(dim = dim(x), size = object.size(x))
+  }
+  info <- lapply(data_sizes, function(s) get_data_info(gen_data(s)))
+  info_tab <- data.frame(
+    check.names = FALSE,
+    name = data_sizes,
+    rows = sapply(info, "[[", "dim")[1,],
+    columns = sapply(info, "[[", "dim")[2,],
+    "size in memory" = sapply(info, "[[", "size")
+  )
+  nanoparquet::write_parquet(info_tab, file.path(me, "data-info.parquet"))
+}
+info_tab |>
+  gt() |>
+  tab_header(title = "Data sets") |>
+  tab_options(table.align = "left") |>
+  fmt_integer() |>
+  fmt_bytes(columns = "size in memory")
+```
+
+A quick look at the data:
+```{r}
+head(nycflights13::flights)
+dplyr::glimpse(nycflights13::flights)
+```
+
+## Parquet implementations
+
+I am going to run nanoparquet, Arrow and DuckDB. I'll also run data.table
+without and with compression, and also readr, to read/write CSV files.
+
+We run each benchmark three times and record the results of the third run.
+This is to make sure that the data and the software is not swapped out by
+the OS. (Except for readr on the large data set, because it would take too
+long.)
+
+```{r, benchmark}
+if (file.exists(file.path(me, "results.parquet"))) {
+  results <- nanoparquet::read_parquet(file.path(me, "results.parquet"))
+} else {
+  results <- NULL
+  lapply(data_sizes[1:2], function(s) {
+    lapply(variants, function(v) {
+      r <- if (v == "readr" && s == "large") {
+        measure(v, s)
+      } else {
+        measure(v, s)
+        measure(v, s)
+        measure(v, s)
+      }
+      results <<- rbind(results, r)
+    })
+  })
+  nanoparquet::write_parquet(results, file.path(me, "results.parquet"))
+}
+```
+These are the raw results:
+```{r results}
+#| R.options = list(width = 500)
+print(results, n = Inf)
+```
+
+Notes:
+
+* User time (`time_user`) plus system time (`time_system`) can be larger
+  than the elapsed time (`time_elapsed`), for multithreaded
+  implementations and it indeed is for all tool, except for nanoparquet.
+* All memory columns are in bytes. `mem_before` is the RSS size before
+  reading/writing. `mem_max_before` is the maximum RSS size of the process
+  until then. `mem_max_after` is the maximum RSS size of the process
+  _after_ the read/write operation.
+* So we can calculate (estimate) the memory usage of the tool by
+  subtracting `mem_before` from `mem_max_after`. This could overestimate
+  the memory usage if `mem_max_after` is the same as `mem_max_before`, but
+  this never happens in practice.
+* When reading the file, `mem_max_after` includes the memory needed to
+  store the data set itself. (See data sizes above.)
+* For arrow, I turned off ALTREP using `options(arrow.use_altrep = FALSE)`,
+  see the `benchmarks-funcs.R` file.
+
+## Parquet vs CSV
+
+For most use cases the Parquet format is superior to CSV files:
+
+- Parquet has a rich type system, including native support for missing
+  values.
+- Parquet is binary, (possibly) efficiently encoded, (usually) compressed,
+  so Parquet files are typicallly smaller, and faster to read and write.
+- Parquet better supports reading subsets of rows or columns from a file,
+  even through HTTP if you like.
+
+One (the only?) great advantage of CSV files is that they are line-oriented
+text files, so you can view and manipulate them with a lot of tools.
+(As long as they can operate on large files, if your files are large.)
+
+Being a simple format, CSV is also easy and fast to write, even
+concurrently. Here is a better view of the raw results.
+
+```{r, parquet-vs-csv-read}
+csv_tab_read <- results |>
+  filter(software %in% c("nanoparquet", "data.table", "data.table.gz", "readr")) |>
+  filter(direction == "read") |>
+  mutate(software = case_when(
+    software ==  "data.table.gz" ~ "data.table (compressed)",
+    .default = software
+  )) |>
+  rename(`data size` = data_size, time = time_elapsed) |>
+  mutate(memory = mem_max_after - mem_before) |>
+  mutate(base = head(time, 1), .by = `data size`) |>
+  mutate(speedup = time / base, x = round(speedup, digits = 1)) |>
+  select(`data size`, software, time, x, speedup, memory) |>
+  mutate(rawtime = time, time = prettyunits::pretty_sec(time))
+
+csv_tab_read |>
+  gt() |>
+  tab_header(title = "Parquet vs CSV, reading") |>
+  tab_options(table.align = "left") |>
+  tab_row_group(md("**small data**"), rows = `data size` == "small", "s") |>
+  tab_row_group(md("**medium data**"), rows = `data size` == "medium", "m") |>
+  tab_row_group(md("**large data**"), rows = `data size` == "large", "l") |>
+  row_group_order(c("s", "m", "l")) |>
+  cols_hide(columns = c(`data size`, rawtime)) |>
+  cols_align(columns = time, align = "right") |>
+  fmt_bytes(columns = memory) |>
+  gt_plt_bar(column = speedup)
+```
+
+Notes:
+
+* The single-threaded nanoparquet Parquet-reader is competitive. It can
+  read a compressed Parquet file just as fast as the state of the art
+  uncompressed CSV reader that uses at least 2 threads.
+
+The Parquet vs CSV results when writing Parquet or CSV files:
+
+```{r, parquet-vs-csv-write}
+csv_tab_write <- results |>
+  filter(software %in% c("nanoparquet", "data.table", "data.table.gz", "readr")) |>
+  filter(direction == "write") |>
+  mutate(software = case_when(
+    software ==  "data.table.gz" ~ "data.table (compressed)",
+    .default = software
+  )) |>
+  rename(`data size` = data_size, time = time_elapsed, `file size` = file_size) |>
+  mutate(memory = mem_max_after - mem_before) |>
+  mutate(base = head(time, 1), .by = `data size`) |>
+  mutate(speedup = time / base, x = round(speedup, digits = 1)) |>
+  select(`data size`, software, time, x, speedup, memory, `file size`) |>
+  mutate(rawtime = time, time = prettyunits::pretty_sec(time))
+
+csv_tab_write |>
+  gt() |>
+  tab_header(title = "Parquet vs CSV, writing") |>
+  tab_options(table.align = "left") |>
+  tab_row_group(md("**small data**"), rows = `data size` == "small", "s") |>
+  tab_row_group(md("**medium data**"), rows = `data size` == "medium", "m") |>
+  tab_row_group(md("**large data**"), rows = `data size` == "large", "l") |>
+  row_group_order(c("s", "m", "l")) |>
+  cols_hide(columns = c(`data size`, rawtime)) |>
+  cols_align(columns = time, align = "right") |>
+  fmt_bytes(columns = c(memory, `file size`)) |>
+  gt_plt_bar(column = speedup)
+```
+
+Notes:
+
+* The data.table CSV writer is about 3 times as fast as the nanoparquet
+  Parquet writer, if the CSV file is uncompressed. The CSV writer uses at
+  least 4 threads, the Parquet write is single-threaded.
+* The nanoparquet Parquet writer is 2-5 times faster than the data.table
+  CSV writer if the CSV file is compressed.
+* The Parquet files are about 5-6 times smaller than the uncompressed CSV
+  files and about 30-35% smaller than the compressed CSV files.
+
+## Parquet implementations
+
+This is the summary of the Parquet readers, for the same three files.
+
+```{r, parquet-read}
+pq_tab_read <- results |>
+  filter(software %in% c("nanoparquet", "arrow", "duckdb")) |>
+  filter(direction == "read") |>
+  mutate(software = case_when(
+    software ==  "arrow" ~ "Arrow",
+    software == "duckdb" ~ "DuckDB",
+    .default = software
+  )) |>
+  rename(`data size` = data_size, time = time_elapsed) |>
+  mutate(memory = mem_max_after - mem_before) |>
+  mutate(base = head(time, 1), .by = `data size`) |>
+  mutate(speedup = time / base, x = round(speedup, digits = 1)) |>
+  select(`data size`, software, time, x, speedup, memory) |>
+  mutate(rawtime = time, time = prettyunits::pretty_sec(time))
+
+pq_tab_read |>
+  gt() |>
+  tab_header(title = "Parquet implementations, reading") |>
+  tab_options(table.align = "left") |>
+  tab_row_group(md("**small data**"), rows = `data size` == "small", "s") |>
+  tab_row_group(md("**medium data**"), rows = `data size` == "medium", "m") |>
+  tab_row_group(md("**large data**"), rows = `data size` == "large", "l") |>
+  row_group_order(c("s", "m", "l")) |>
+  cols_hide(columns = c(`data size`, rawtime)) |>
+  cols_align(columns = time, align = "right") |>
+  fmt_bytes(columns = memory) |>
+  gt_plt_bar(column = speedup)
+```
+
+Notes:
+
+* In general, all three implementations perform similarly. nanoparquet is
+  very competitive for these three data sets in terms of speed and also
+  tends to use the least amount of memory.
+* As I mentioned above, I turned off ALTREP in arrow, so that it reads the
+  data into memory.
+
+The summary for the Parquet writers:
+
+```{r, parquet-write}
+pq_tab_write <- results |>
+  filter(software %in% c("nanoparquet", "arrow", "duckdb")) |>
+  filter(direction == "write") |>
+  mutate(software = case_when(
+    software ==  "arrow" ~ "Arrow",
+    software == "duckdb" ~ "DuckDB",
+    .default = software
+  )) |>
+  rename(`data size` = data_size, time = time_elapsed, `file size` = file_size) |>
+  mutate(memory = mem_max_after - mem_before) |>
+  mutate(base = head(time, 1), .by = `data size`) |>
+  mutate(speedup = time / base, x = round(speedup, digits = 1)) |>
+  select(`data size`, software, time, x, speedup, memory, `file size`) |>
+  mutate(rawtime = time, time = prettyunits::pretty_sec(time))
+
+pq_tab_write |>
+  gt() |>
+  tab_header(title = "Parquet implementations, writing") |>
+  tab_options(table.align = "left") |>
+  tab_row_group(md("**small data**"), rows = `data size` == "small", "s") |>
+  tab_row_group(md("**medium data**"), rows = `data size` == "medium", "m") |>
+  tab_row_group(md("**large data**"), rows = `data size` == "large", "l") |>
+  row_group_order(c("s", "m", "l")) |>
+  cols_hide(columns = c(`data size`, rawtime)) |>
+  cols_align(columns = time, align = "right") |>
+  fmt_bytes(columns = c(memory, `file size`)) |>
+  gt_plt_bar(column = speedup)
+```
+
+Notes:
+
+* nanoparquet is again very competitive in terms of speed, it is slightly
+  faster than the other two implementations, for these data sets.
+* DuckDB seems to waste space when writing out Parquet files. This
+  could be possibly fine tuned by forcing a different encoding.
+
+<!-- ## ALTREP vs subsets -->
+
+## Conclusions
+
+Based on these benchmarks we have good reasons to trust that nanoparquet
+Parquet reader and writer is competitive with the other implementations
+available from R, both in terms of speed and memory use.
+
+## About
+
+See the `benchmark-funcs.R` file in the nanoparquet repository for the
+code of the benchmarks.
+
+We ran each measurement in its own subprocess, to make it easier to measure
+memory usage.
+
+We did _not_ include the package loading time in the benchmarks.
+nanoparquet has no dependencies and loads very quickly. Both the arrow and
+duckdb packages might take up to 200ms to load of the test system,
+because they need to load their dependencies and they are also bigger.
+
+```{r session-info}
+sessioninfo::session_info()
+```

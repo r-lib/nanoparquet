@@ -3,9 +3,20 @@
 # need to load their dependencies as well, and it might take up to 200ms,
 # which is significant for the small data set.
 
-library(nanoparquet)
-library(arrow)
-library(duckdb)
+loadNamespace("nanoparquet")
+loadNamespace("arrow")
+loadNamespace("duckdb")
+
+me <- normalizePath(
+  if (Sys.getenv("QUARTO_DOCUMENT_PATH") != "") {
+    Sys.getenv("QUARTO_DOCUMENT_PATH")
+  } else if (file.exists("benchmarks-funcs.R")) {
+    getwd()
+  } else if (file.exists("articles/benchmarks-funcs.R")) {
+    "articles"
+  } else {
+    "vignettes/articles"
+  })
 
 data_sizes <- c("small", "medium", "large")
 variants <- c(
@@ -23,7 +34,6 @@ gen_data <- function(size) {
 }
 
 read_nanoparquet <- function(path) {
-  options(nanoparquet.use_arrow_metadata = FALSE)
   nanoparquet::read_parquet(path)
 }
 
@@ -93,10 +103,10 @@ measure <- function(
   on.exit(unlink(tmp), add = TRUE)
 
   write_result <- callr::r(
-    args = list(variant, size, tmp),
-    function(variant, size, tmp) {
+    args = list(variant, size, tmp, me),
+    function(variant, size, tmp, me) {
 
-    source("benchmarks-funcs.R")
+    source(file.path(me, "benchmarks-funcs.R"))
     test_data <- gen_data(size)
 
     write <- switch(variant,
@@ -114,8 +124,11 @@ measure <- function(
     list(mem_before = mem_before, mem_after = mem_after, timing = timing)
     })
 
-  read_result <- callr::r(args = list(variant, tmp), function(variant, tmp) {
-    source("benchmarks-funcs.R")
+  read_result <- callr::r(
+    args = list(variant, tmp, me),
+    function(variant, tmp, me) {
+
+    source(file.path(me, "benchmarks-funcs.R"))
     read <- switch(variant,
       nanoparquet = read_nanoparquet,
       arrow = read_arrow,
