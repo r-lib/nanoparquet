@@ -38,5 +38,16 @@ Suggests:
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2.9000
 Config/testthat/edition: 3
-Config/Needs/website: tidyverse/tidytemplate, r-lib/pkgdown, rmarkdown, knitr
+Config/Needs/website:
+    tidyverse/tidytemplate,
+    r-lib/pkgdown,
+    dplyr,
+    gt,
+    gtExtras,
+    knitr,
+    nycflights13,
+    prettyunits,
+    quarto,
+    rmarkdown,
+    sessioninfo
 Language: en-US
