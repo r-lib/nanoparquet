@@ -9,3 +9,4 @@
 ^vignettes$
 ^docs$
 ^_pkgdown.yml$
+^vignettes/articles$
