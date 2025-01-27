@@ -1,0 +1,60 @@
+---
+title: "Benchmarks"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(nanoparquet)
+source("benchmarks-funcs.R")
+```
+
+## Data sets
+
+I will use three data sets: small, medium and large. The small data set is
+the `nycflights13::flights` data set, as is. The medium data set contains
+20 copies of the small data set. The large data set containes 200 copies
+of the small data set.
+
+Some basic information about each data set and a quick look at the data:
+```{r}
+info <- function(x) {
+  list(dim = dim(x), size = object.size(x))
+}
+lapply(data_sizes, function(s) info(gen_data(s)))
+head(nycflights13::flights)
+dplyr::glimpse(nycflights13::flights)
+```
+
+## Parquet implementations
+
+I am going to run nanoparquet, Arrow and DuckDB. I'll also run
+data.table and readr to read/write CSV files.
+
+```{r}
+if (file.exists("results.parquet")) {
+  results <- read_parquet("results.parquet")
+} else {
+  results <- NULL
+  lapply(data_sizes[1:2], function(s) {
+    lapply(variants, function(v) {
+      r <- if (v == "readr" && s == "large") {
+        measure(v, s)
+      } else {
+        measure(v, s)
+        measure(v, s)
+        measure(v, s)
+      }
+      results <<- rbind(results, r)
+    })
+  })
+  write_parquet(results, "results.parquet")
+}
+```
+
+```{r}
+```
