@@ -49,5 +49,6 @@ Config/Needs/website:
     prettyunits,
     quarto,
     rmarkdown,
-    sessioninfo
+    sessioninfo,
+    svglite
 Language: en-US
