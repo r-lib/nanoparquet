@@ -8,10 +8,11 @@ format:
 
 ## Goals
 
-First, we want to measure nanoparquet's speed relative to good quality
-CSV readers and writers.
+First, I want to measure nanoparquet's speed relative to good quality
+CSV readers and writers, and also look at the sizes of the Parquet and
+CSV files.
 
-Second, we want to see how nanoparquet fares relative to other Parquet
+Second, I want to see how nanoparquet fares relative to other Parquet
 implementations available from R.
 
 ```{r, setup, include = FALSE}
@@ -46,11 +47,13 @@ library(gtExtras)
 
 ## Data sets
 
-I will use three data sets: small, medium and large. The small data set is
+I used use three data sets: small, medium and large. The small data set is
 the `nycflights13::flights` data set, as is. The medium data set contains
 20 copies of the small data set. The large data set containes 200 copies
 of the small data set. See the `gen_data()` function in the
-`benchmark-funcs.R` file.
+[`benchmark-funcs.R` file](
+  https://github.com/r-lib/nanoparquet/blob/main/vignettes/articles/benchmarks-funcs.R)
+in the nanoparquet GitHub repository.
 
 Some basic information about each data set:
 ```{r, info}
@@ -86,13 +89,14 @@ dplyr::glimpse(nycflights13::flights)
 
 ## Parquet implementations
 
-I am going to run nanoparquet, Arrow and DuckDB. I'll also run data.table
-without and with compression, and also readr, to read/write CSV files.
+I ran nanoparquet, Arrow and DuckDB. I also ran data.table without and with
+compression and readr, to read/write CSV files. I used the running time of
+readr as the baseline.
 
-We run each benchmark three times and record the results of the third run.
-This is to make sure that the data and the software is not swapped out by
-the OS. (Except for readr on the large data set, because it would take too
-long.)
+I ran each benchmark three times and record the results of the third
+run. This is to make sure that the data and the software is not swapped out
+by the OS. (Except for readr on the large data set, because it would take
+too long.)
 
 ```{r, benchmark}
 if (file.exists(file.path(me, "results.parquet"))) {
@@ -123,24 +127,26 @@ print(results, n = Inf)
 Notes:
 
 * User time (`time_user`) plus system time (`time_system`) can be larger
-  than the elapsed time (`time_elapsed`), for multithreaded
-  implementations and it indeed is for all tool, except for nanoparquet.
+  than the elapsed time (`time_elapsed`) for multithreaded
+  implementations and it indeed is for all tools, except for nanoparquet,
+  which is single-threaded.
 * All memory columns are in bytes. `mem_before` is the RSS size before
   reading/writing. `mem_max_before` is the maximum RSS size of the process
   until then. `mem_max_after` is the maximum RSS size of the process
   _after_ the read/write operation.
-* So we can calculate (estimate) the memory usage of the tool by
+* So I can calculate (estimate) the memory usage of the tool by
   subtracting `mem_before` from `mem_max_after`. This could overestimate
-  the memory usage if `mem_max_after` is the same as `mem_max_before`, but
-  this never happens in practice.
+  the memory usage if `mem_max_after` were the same as `mem_max_before`,
+  but this never happens in practice.
 * When reading the file, `mem_max_after` includes the memory needed to
   store the data set itself. (See data sizes above.)
 * For arrow, I turned off ALTREP using `options(arrow.use_altrep = FALSE)`,
-  see the `benchmarks-funcs.R` file.
+  see the `benchmarks-funcs.R` file. Otherwise arrow does not actually
+  read all the data into memory.
 
 ## Parquet vs CSV
 
-For most use cases the Parquet format is superior to CSV files:
+<!-- For most use cases the Parquet format is superior to CSV files:
 
 - Parquet has a rich type system, including native support for missing
   values.
@@ -154,7 +160,10 @@ text files, so you can view and manipulate them with a lot of tools.
 (As long as they can operate on large files, if your files are large.)
 
 Being a simple format, CSV is also easy and fast to write, even
-concurrently. Here is a better view of the raw results.
+concurrently. -->
+
+Here is a better view of the raw results, focusing on the CSV readers and
+nanoparquet:
 
 ```{r, parquet-vs-csv-read}
 csv_tab_read <- results |>
@@ -192,7 +201,7 @@ Notes:
   read a compressed Parquet file just as fast as the state of the art
   uncompressed CSV reader that uses at least 2 threads.
 
-The Parquet vs CSV results when writing Parquet or CSV files:
+The nanoparquet vs CSV results when writing Parquet or CSV files:
 
 ```{r, parquet-vs-csv-write}
 csv_tab_write <- results |>
@@ -317,25 +326,41 @@ Notes:
 * nanoparquet is again very competitive in terms of speed, it is slightly
   faster than the other two implementations, for these data sets.
 * DuckDB seems to waste space when writing out Parquet files. This
-  could be possibly fine tuned by forcing a different encoding.
+  could be possibly fine tuned by forcing a different encoding. This
+  behavior will improve with the forthcoming DuckDB 1.2.0 release, see also
+  <https://github.com/duckdb/duckdb/issues/3316>.
 
 <!-- ## ALTREP vs subsets -->
 
 ## Conclusions
 
-Based on these benchmarks we have good reasons to trust that nanoparquet
-Parquet reader and writer is competitive with the other implementations
-available from R, both in terms of speed and memory use.
+These results will probably change for a different data sets, or on a
+different system. In particular, Arrow and DuckDB are probably faster on
+larger systems, where the data is stored on multiple physical disks.
+
+Both Arrow and DuckDB let you run queries on the data without loading it
+all into memory first. This is especially important if the data does not
+fit into memory at all, not even the columns needed for the analysis.
+nanoparquet cannot do this.
+
+However, in general, based on these benchmarks I have good reasons to
+trust that the nanoparquet Parquet reader and writer is competitive with
+the other implementations available from R, both in terms of speed and
+memory use.
+
+If the limitations of nanoparquet are not prohibitive for your
+use case, it is a good choice for Parquet I/O.
 
 ## About
 
-See the `benchmark-funcs.R` file in the nanoparquet repository for the
-code of the benchmarks.
+See the [`benchmark-funcs.R`](
+  https://github.com/r-lib/nanoparquet/blob/main/vignettes/articles/benchmarks-funcs.R)
+file in the nanoparquet repository for the code of the benchmarks.
 
-We ran each measurement in its own subprocess, to make it easier to measure
+I ran each measurement in its own subprocess, to make it easier to measure
 memory usage.
 
-We did _not_ include the package loading time in the benchmarks.
+I did _not_ include the package loading time in the benchmarks.
 nanoparquet has no dependencies and loads very quickly. Both the arrow and
 duckdb packages might take up to 200ms to load of the test system,
 because they need to load their dependencies and they are also bigger.
