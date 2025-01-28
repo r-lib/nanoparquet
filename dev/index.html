@@ -68,9 +68,13 @@
 <ul>
 <li>Read and write flat (i.e. non-nested) Parquet files.</li>
 <li>Can read most <a href="https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html" class="external-link">Parquet data types</a>.</li>
+<li>Can read a subset of columns from a Parquet file.</li>
 <li>Can write many R data types, including factors and temporal types to Parquet.</li>
+<li>Can append a data frame to a Parquet file without first reading and then rewriting the whole file.</li>
 <li>Completely dependency free.</li>
 <li>Supports Snappy, Gzip and Zstd compression.</li>
+<li>
+<a href="https://nanoparquet.r-lib.org/dev/articles/benchmarks.html">Competitive</a> with other tools in terms of speed, memory use and file size.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -82,7 +86,7 @@
 <li>Only Snappy, Gzip and Zstd compression is supported.</li>
 <li>Encryption is not supported.</li>
 <li>Reading files from URLs is not supported.</li>
-<li>Being single-threaded and not fully optimized, nanoparquet is probably not suited well for large data sets. It should be fine for a couple of gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro. For larger files, use Apache Arrow or DuckDB.</li>
+<li>nanoparquet always reads the data (or the selected subset of it) into memory. It does not work with out-of-memory data in Parquet files like Apache Arrow and DuckDB does.</li>
 </ul>
 </div>
 <div class="section level2">
