@@ -166,10 +166,11 @@ csv_tab_read <- results |>
   )) |>
   rename(`data size` = data_size, time = time_elapsed) |>
   mutate(memory = mem_max_after - mem_before) |>
-  mutate(base = head(time, 1), .by = `data size`) |>
-  mutate(speedup = time / base, x = round(speedup, digits = 1)) |>
+  mutate(base = tail(time, 1), .by = `data size`) |>
+  mutate(speedup = base / time, x = round(speedup, digits = 1)) |>
   select(`data size`, software, time, x, speedup, memory) |>
-  mutate(rawtime = time, time = prettyunits::pretty_sec(time))
+  mutate(rawtime = time, time = prettyunits::pretty_sec(time)) |>
+  rename(`speedup from CSV` = speedup)
 
 csv_tab_read |>
   gt() |>
@@ -182,7 +183,7 @@ csv_tab_read |>
   cols_hide(columns = c(`data size`, rawtime)) |>
   cols_align(columns = time, align = "right") |>
   fmt_bytes(columns = memory) |>
-  gt_plt_bar(column = speedup)
+  gt_plt_bar(column = `speedup from CSV`)
 ```
 
 Notes:
@@ -203,10 +204,11 @@ csv_tab_write <- results |>
   )) |>
   rename(`data size` = data_size, time = time_elapsed, `file size` = file_size) |>
   mutate(memory = mem_max_after - mem_before) |>
-  mutate(base = head(time, 1), .by = `data size`) |>
-  mutate(speedup = time / base, x = round(speedup, digits = 1)) |>
+  mutate(base = tail(time, 1), .by = `data size`) |>
+  mutate(speedup = base / time, x = round(speedup, digits = 1)) |>
   select(`data size`, software, time, x, speedup, memory, `file size`) |>
-  mutate(rawtime = time, time = prettyunits::pretty_sec(time))
+  mutate(rawtime = time, time = prettyunits::pretty_sec(time)) |>
+  rename(`speedup from CSV` = speedup)
 
 csv_tab_write |>
   gt() |>
@@ -219,7 +221,7 @@ csv_tab_write |>
   cols_hide(columns = c(`data size`, rawtime)) |>
   cols_align(columns = time, align = "right") |>
   fmt_bytes(columns = c(memory, `file size`)) |>
-  gt_plt_bar(column = speedup)
+  gt_plt_bar(column = `speedup from CSV`)
 ```
 
 Notes:
@@ -238,19 +240,21 @@ This is the summary of the Parquet readers, for the same three files.
 
 ```{r, parquet-read}
 pq_tab_read <- results |>
-  filter(software %in% c("nanoparquet", "arrow", "duckdb")) |>
+  filter(software %in% c("nanoparquet", "arrow", "duckdb", "readr")) |>
   filter(direction == "read") |>
+  rename(`data size` = data_size, time = time_elapsed) |>
+  mutate(memory = mem_max_after - mem_before) |>
+  mutate(base = tail(time, 1), .by = `data size`) |>
+  mutate(speedup = base / time, x = round(speedup, digits = 1)) |>
+  select(`data size`, software, time, x, speedup, memory) |>
+  mutate(rawtime = time, time = prettyunits::pretty_sec(time)) |>
+  filter(software %in% c("nanoparquet", "arrow", "duckdb")) |>
   mutate(software = case_when(
     software ==  "arrow" ~ "Arrow",
     software == "duckdb" ~ "DuckDB",
     .default = software
   )) |>
-  rename(`data size` = data_size, time = time_elapsed) |>
-  mutate(memory = mem_max_after - mem_before) |>
-  mutate(base = head(time, 1), .by = `data size`) |>
-  mutate(speedup = time / base, x = round(speedup, digits = 1)) |>
-  select(`data size`, software, time, x, speedup, memory) |>
-  mutate(rawtime = time, time = prettyunits::pretty_sec(time))
+  rename(`speedup from CSV` = speedup)
 
 pq_tab_read |>
   gt() |>
@@ -263,7 +267,7 @@ pq_tab_read |>
   cols_hide(columns = c(`data size`, rawtime)) |>
   cols_align(columns = time, align = "right") |>
   fmt_bytes(columns = memory) |>
-  gt_plt_bar(column = speedup)
+  gt_plt_bar(column = `speedup from CSV`)
 ```
 
 Notes:
@@ -278,19 +282,21 @@ The summary for the Parquet writers:
 
 ```{r, parquet-write}
 pq_tab_write <- results |>
-  filter(software %in% c("nanoparquet", "arrow", "duckdb")) |>
+  filter(software %in% c("nanoparquet", "arrow", "duckdb", "readr")) |>
   filter(direction == "write") |>
+  rename(`data size` = data_size, time = time_elapsed, `file size` = file_size) |>
+  mutate(memory = mem_max_after - mem_before) |>
+  mutate(base = tail(time, 1), .by = `data size`) |>
+  mutate(speedup = base / time, x = round(speedup, digits = 1)) |>
+  select(`data size`, software, time, x, speedup, memory, `file size`) |>
+  mutate(rawtime = time, time = prettyunits::pretty_sec(time)) |>
+  filter(software %in% c("nanoparquet", "arrow", "duckdb", "readr")) |>
   mutate(software = case_when(
     software ==  "arrow" ~ "Arrow",
     software == "duckdb" ~ "DuckDB",
     .default = software
   )) |>
-  rename(`data size` = data_size, time = time_elapsed, `file size` = file_size) |>
-  mutate(memory = mem_max_after - mem_before) |>
-  mutate(base = head(time, 1), .by = `data size`) |>
-  mutate(speedup = time / base, x = round(speedup, digits = 1)) |>
-  select(`data size`, software, time, x, speedup, memory, `file size`) |>
-  mutate(rawtime = time, time = prettyunits::pretty_sec(time))
+  rename(`speedup from CSV` = speedup)
 
 pq_tab_write |>
   gt() |>
@@ -303,7 +309,7 @@ pq_tab_write |>
   cols_hide(columns = c(`data size`, rawtime)) |>
   cols_align(columns = time, align = "right") |>
   fmt_bytes(columns = c(memory, `file size`)) |>
-  gt_plt_bar(column = speedup)
+  gt_plt_bar(column = `speedup from CSV`)
 ```
 
 Notes:
