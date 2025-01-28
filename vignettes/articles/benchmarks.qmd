@@ -118,31 +118,8 @@ if (file.exists(file.path(me, "results.parquet"))) {
   nanoparquet::write_parquet(results, file.path(me, "results.parquet"))
 }
 ```
-These are the raw results:
-```{r results}
-#| R.options = list(width = 500)
-print(results, n = Inf)
-```
 
-Notes:
-
-* User time (`time_user`) plus system time (`time_system`) can be larger
-  than the elapsed time (`time_elapsed`) for multithreaded
-  implementations and it indeed is for all tools, except for nanoparquet,
-  which is single-threaded.
-* All memory columns are in bytes. `mem_before` is the RSS size before
-  reading/writing. `mem_max_before` is the maximum RSS size of the process
-  until then. `mem_max_after` is the maximum RSS size of the process
-  _after_ the read/write operation.
-* So I can calculate (estimate) the memory usage of the tool by
-  subtracting `mem_before` from `mem_max_after`. This could overestimate
-  the memory usage if `mem_max_after` were the same as `mem_max_before`,
-  but this never happens in practice.
-* When reading the file, `mem_max_after` includes the memory needed to
-  store the data set itself. (See data sizes above.)
-* For arrow, I turned off ALTREP using `options(arrow.use_altrep = FALSE)`,
-  see the `benchmarks-funcs.R` file. Otherwise arrow does not actually
-  read all the data into memory.
+I include the complete raw results at the end of this article.
 
 ## Parquet vs CSV
 
@@ -162,8 +139,7 @@ text files, so you can view and manipulate them with a lot of tools.
 Being a simple format, CSV is also easy and fast to write, even
 concurrently. -->
 
-Here is a better view of the raw results, focusing on the CSV readers and
-nanoparquet:
+The results, focusing on the CSV readers and nanoparquet:
 
 ```{r, parquet-vs-csv-read}
 csv_tab_read <- results |>
@@ -284,8 +260,7 @@ Notes:
 * In general, all three implementations perform similarly. nanoparquet is
   very competitive for these three data sets in terms of speed and also
   tends to use the least amount of memory.
-* As I mentioned above, I turned off ALTREP in arrow, so that it reads the
-  data into memory.
+* I turned off ALTREP in arrow, so that it reads the data into memory.
 
 The summary for the Parquet writers:
 
@@ -350,6 +325,36 @@ memory use.
 
 If the limitations of nanoparquet are not prohibitive for your
 use case, it is a good choice for Parquet I/O.
+
+## Raw benchmark results
+
+These are the raw results. You can scroll to the right if your screen is
+not wide enough for the whole table.
+
+```{r results}
+#| R.options = list(width = 500)
+print(results, n = Inf)
+```
+
+Notes:
+
+* User time (`time_user`) plus system time (`time_system`) can be larger
+  than the elapsed time (`time_elapsed`) for multithreaded
+  implementations and it indeed is for all tools, except for nanoparquet,
+  which is single-threaded.
+* All memory columns are in bytes. `mem_before` is the RSS size before
+  reading/writing. `mem_max_before` is the maximum RSS size of the process
+  until then. `mem_max_after` is the maximum RSS size of the process
+  _after_ the read/write operation.
+* So I can calculate (estimate) the memory usage of the tool by
+  subtracting `mem_before` from `mem_max_after`. This could overestimate
+  the memory usage if `mem_max_after` were the same as `mem_max_before`,
+  but this never happens in practice.
+* When reading the file, `mem_max_after` includes the memory needed to
+  store the data set itself. (See data sizes above.)
+* For arrow, I turned off ALTREP using `options(arrow.use_altrep = FALSE)`,
+  see the `benchmarks-funcs.R` file. Otherwise arrow does not actually
+  read all the data into memory.
 
 ## About
 
