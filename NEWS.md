@@ -1,4 +1,4 @@
-# nanoparquet (development version)
+# nanoparquet 0.4.0
 
 * API changes:
 
