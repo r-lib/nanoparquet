@@ -2659,8 +2659,10 @@ void RParquetOutFile::init_append_metadata(
   R_xlen_t ntotal = INTEGER(dim)[2];
   set_num_rows(nr, ntotal);
 
-  dicts = PROTECT(Rf_allocVector(VECSXP, Rf_length(df)));
-  dicts_from = PROTECT(Rf_allocVector(INTSXP, Rf_length(df)));
+  dicts = Rf_allocVector(VECSXP, Rf_length(df));
+  R_PreserveObject(dicts);
+  dicts_from = Rf_allocVector(INTSXP, Rf_length(df));
+  R_PreserveObject(dicts_from);
 
   R_xlen_t nc = INTEGER(dim)[1];
   write_minmax_values = LOGICAL(rf_get_list_element(options, "write_minmax_values"))[0];
@@ -2705,8 +2707,6 @@ void RParquetOutFile::init_append_metadata(
     parquet::Encoding::type enc = detect_encoding(idx, sel, ienc);
     schema_add_column(sel, enc);
   }
-
-  UNPROTECT(2);
 }
 
 void RParquetOutFile::write() {
