@@ -4,6 +4,7 @@
 #include <memory>
 #include <cstring>
 #include <vector>
+#include <cstdint>
 
 // A growing buffer that can be used as an output stream.
 // It stores that data in an array of buffers, each bigger than
