@@ -121,7 +121,7 @@ dump_connection <- function(con, path) {
 		if (length(buf) == 0) {
 			break
 		}
-		writeBin(buf, path)
+		writeBin(buf, ocon)
 	}
 	close(ocon)
 }
