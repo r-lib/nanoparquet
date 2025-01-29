@@ -13,7 +13,7 @@ Self-sufficient reader and writer for flat 'Parquet' files. Can read most 'Parqu
 \subsection{Features:}{
 \itemize{
 \item Read and write flat (i.e. non-nested) Parquet files.
-\item Can read most \href{https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html}{Parquet data types}.
+\item Can read most \href{https://nanoparquet.r-lib.org/reference/nanoparquet-types.html}{Parquet data types}.
 \item Can read a subset of columns from a Parquet file.
 \item Can write many R data types, including factors and temporal types
 to Parquet.
@@ -138,7 +138,7 @@ MIT
 Useful links:
 \itemize{
   \item \url{https://github.com/r-lib/nanoparquet}
-  \item \url{https://r-lib.github.io/nanoparquet/}
+  \item \url{https://nanoparquet.r-lib.org/}
   \item Report bugs at \url{https://github.com/r-lib/nanoparquet/issues}
 }
 

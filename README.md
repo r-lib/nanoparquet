@@ -11,7 +11,7 @@
 ## Features:
 
 * Read and write flat (i.e. non-nested) Parquet files.
-* Can read most [Parquet data types](https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html).
+* Can read most [Parquet data types](https://nanoparquet.r-lib.org/reference/nanoparquet-types.html).
 * Can read a subset of columns from a Parquet file.
 * Can write many R data types, including factors and temporal types
   to Parquet.
