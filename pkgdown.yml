@@ -3,7 +3,7 @@ pkgdown: 2.1.1.9000
 pkgdown_sha: 74fda8cdb8bbbcd215faf2a2079f4eb98db586c6
 articles:
   articles/benchmarks: benchmarks.html
-last_built: 2025-01-29T15:21Z
+last_built: 2025-01-29T15:25Z
 urls:
   reference: https://nanoparquet.r-lib.org/reference
   article: https://nanoparquet.r-lib.org/articles
