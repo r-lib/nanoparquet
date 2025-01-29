@@ -16,6 +16,17 @@ test_that("read a subset", {
     as.data.frame(read_parquet(tmp, col_select = 10:13)),
     df[, 10:13]
   )
+  expect_equal(
+    as.data.frame(read_parquet(tmp, col_select = c("cyl", "mpg", "nam"))),
+    df[, c("cyl", "mpg", "nam")]
+  )
+  expect_equal(
+    as.data.frame(read_parquet(
+      tmp,
+      col_select = c("am", "gear", "carb", "large"))
+    ),
+    df[, c("am", "gear", "carb", "large")]
+  )
 })
 
 test_that("read a subset, edge cases", {
@@ -32,8 +43,13 @@ test_that("read a subset, edge cases", {
     as.data.frame(read_parquet(tmp, col_select = 13)),
     df[, 13, drop = FALSE]
   )
+  expect_equal(
+    as.data.frame(read_parquet(tmp, col_select = "nam")),
+    df[, "nam", drop = FALSE]
+  )
   expect_snapshot({
     read_parquet(tmp, col_select = integer())
+    read_parquet(tmp, col_select = character())
   })
 })
 
@@ -62,6 +78,10 @@ test_that("subset column order", {
     as.data.frame(read_parquet(tmp, col_select = 3:1)),
     df[, 3:1]
   )
+  expect_equal(
+    as.data.frame(read_parquet(tmp, col_select = c("cyl", "mpg", "nam"))),
+    df[, c("cyl", "mpg", "nam")]
+  )
 })
 
 test_that("error if a column is requested multiple times", {
@@ -74,6 +94,11 @@ test_that("error if a column is requested multiple times", {
     read_parquet(tmp, col_select = c(1, 1))
     read_parquet(tmp, col_select = c(3,4,5,3))
     read_parquet(tmp, col_select = c(3:4,4:3))
+    read_parquet(tmp, col_select = "foo")
+    read_parquet(tmp, col_select = c("foo", "bar"))
+    read_parquet(tmp, col_select = c("nam", "nam"))
+    read_parquet(tmp, col_select = c("cyl", "disp", "hp", "cyl"))
+    read_parquet(tmp, col_select = c("cyl", "disp", "disp", "cyl"))
   })
 })
 

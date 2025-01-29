@@ -9,9 +9,9 @@
 #'   a binary connection. If it is not open, then `read_parquet()` will
 #'   open it and also close it in the end.
 #' @param col_select Columns to read. It can be a numeric vector of column
-#'   indices. It is an error to select the same column multiple times.
-#'   The order of the columns in the result is the same as the order in
-#'   `col_select`.
+#'   indices, or a character vector of column names. It is an error to
+#'   select the same column multiple times. The order of the columns in
+#'   the result is the same as the order in `col_select`.
 #' @param options Nanoparquet options, see [parquet_options()].
 #' @return A `data.frame` with the file's contents.
 #' @export
@@ -36,10 +36,10 @@ read_parquet <- function(file, col_select = NULL,
   file <- path.expand(file)
 
 	if (!is.null(col_select)) {
-		stopifnot(is.numeric(col_select))
-		col_select <- as.integer(col_select)
+		stopifnot(is.numeric(col_select) || is.character(col_select))
 		col_select <- col_select[!is.na(col_select)]
 		col_select_mtpl <- col_select
+
 		col_select <- unique(col_select)
 		if (length(col_select) != length(col_select_mtpl)) {
 			dpl <- sort(unique(col_select_mtpl[duplicated(col_select_mtpl)]))
@@ -48,6 +48,23 @@ read_parquet <- function(file, col_select = NULL,
 				paste(dpl, collapse = ", "),
 				" selected multiple times in `read_parquet()`."
 			)
+		}
+
+		if (is.numeric(col_select)) {
+			col_select <- as.integer(col_select)
+		} else {
+			pq_col_names <- .Call(nanoparquet_read_col_names, file)
+			col_match <- match(col_select, pq_col_names)
+			if (anyNA(col_match)) {
+				bad <- unique(col_select[is.na(col_match)])
+				stop(
+					"Column", if (length(bad) > 1) "s", " ",
+					paste(bad, collapse = ", "),
+					if (length(bad) == 1) " does " else " do ",
+					"not exist in Parquet file"
+				)
+			}
+			col_select <- col_match
 		}
 		stopifnot(all(col_select >= 1L))
 	}

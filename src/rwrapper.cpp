@@ -13,6 +13,7 @@ SEXP nanoparquet_read_row_group(
   SEXP options,
   SEXP call
 );
+SEXP nanoparquet_read_col_names(SEXP filesxp);
 SEXP nanoparquet_read_column_chunk(
   SEXP filesxp,
   SEXP rc,
@@ -131,6 +132,7 @@ SEXP is_ubsan_() {
 static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_read2, 4),
   CALLDEF(nanoparquet_read_row_group, 4),
+  CALLDEF(nanoparquet_read_col_names, 1),
   CALLDEF(nanoparquet_read_column_chunk, 5),
   CALLDEF(rf_nanoparquet_write, 11),
   CALLDEF(rf_nanoparquet_append, 11),

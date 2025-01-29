@@ -226,4 +226,39 @@ SEXP nanoparquet_read_column_chunk(
   R_API_END();
 }
 
+SEXP nanoparquet_read_col_names(SEXP filesxp) {
+  const char *sfname = CHAR(STRING_ELT(filesxp, 0));
+  SEXP res = R_NilValue;
+
+  try {
+    std::string fname = sfname;
+    RParquetReader reader(fname);
+    reader.read_arrow_metadata();
+    parquet::FileMetaData &fmt = reader.file_meta_data_;
+    uint32_t ncols = fmt.schema.size();
+    uint32_t nleafs = 0;
+    for (auto i = 0; i < ncols; i++) {
+      if (! fmt.schema[i].__isset.num_children ||
+          fmt.schema[i].num_children == 0) {
+        nleafs++;
+      }
+    }
+    res = PROTECT(Rf_allocVector(STRSXP, nleafs));
+    for (auto i = 0, idx = 0; i < ncols; i++) {
+      if (! fmt.schema[i].__isset.num_children ||
+          fmt.schema[i].num_children == 0) {
+        SET_STRING_ELT(
+          res,
+          idx++,
+          Rf_mkCharCE(fmt.schema[i].name.c_str(), CE_UTF8)
+        );
+      }
+    }
+    UNPROTECT(1);
+    return res;
+  } catch (std::exception &ex) {
+    Rf_error("%s", ex.what());
+  }
+}
+
 } // extern "C"
