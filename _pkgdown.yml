@@ -54,3 +54,10 @@ reference:
   - nanoparquet-package
   - nanoparquet
   - parquet_column_types
+
+news:
+  releases:
+    - text: "Version 0.4.0"
+      href: https://www.tidyverse.org/blog/2025/01/nanoparquet-0-4-0/
+    - text: "Version 0.3.0"
+      href: https://www.tidyverse.org/blog/2024/06/nanoparquet-0-3-0/
