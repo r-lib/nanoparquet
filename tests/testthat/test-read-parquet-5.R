@@ -64,6 +64,19 @@ test_that("subset column order", {
   )
 })
 
+test_that("error if a column is requested multiple times", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- as.data.frame(test_df(missing = TRUE, factor = TRUE))
+  write_parquet(df, tmp)
+
+  expect_snapshot(error = TRUE, {
+    read_parquet(tmp, col_select = c(1, 1))
+    read_parquet(tmp, col_select = c(3,4,5,3))
+    read_parquet(tmp, col_select = c(3:4,4:3))
+  })
+})
+
 test_that("class", {
   withr::local_options(nanoparquet.class = NULL)
   tmp <- tempfile(fileext = ".parquet")

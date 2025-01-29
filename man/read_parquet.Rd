@@ -15,7 +15,9 @@ a binary connection. If it is not open, then \code{read_parquet()} will
 open it and also close it in the end.}
 
 \item{col_select}{Columns to read. It can be a numeric vector of column
-indices.}
+indices. It is an error to select the same column multiple times.
+The order of the columns in the result is the same as the order in
+\code{col_select}.}
 
 \item{options}{Nanoparquet options, see \code{\link[=parquet_options]{parquet_options()}}.}
 }

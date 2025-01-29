@@ -9,7 +9,9 @@
 #'   a binary connection. If it is not open, then `read_parquet()` will
 #'   open it and also close it in the end.
 #' @param col_select Columns to read. It can be a numeric vector of column
-#'   indices.
+#'   indices. It is an error to select the same column multiple times.
+#'   The order of the columns in the result is the same as the order in
+#'   `col_select`.
 #' @param options Nanoparquet options, see [parquet_options()].
 #' @return A `data.frame` with the file's contents.
 #' @export
@@ -37,7 +39,16 @@ read_parquet <- function(file, col_select = NULL,
 		stopifnot(is.numeric(col_select))
 		col_select <- as.integer(col_select)
 		col_select <- col_select[!is.na(col_select)]
+		col_select_mtpl <- col_select
 		col_select <- unique(col_select)
+		if (length(col_select) != length(col_select_mtpl)) {
+			dpl <- sort(unique(col_select_mtpl[duplicated(col_select_mtpl)]))
+			stop(
+				"Column", if (length(dpl) > 1) "s", " ",
+				paste(dpl, collapse = ", "),
+				" selected multiple times in `read_parquet()`."
+			)
+		}
 		stopifnot(all(col_select >= 1L))
 	}
 
