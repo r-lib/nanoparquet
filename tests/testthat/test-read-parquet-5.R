@@ -52,6 +52,18 @@ test_that("read a subset, factor to test Arrow metadata", {
   )
 })
 
+test_that("subset column order", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- as.data.frame(test_df(missing = TRUE, factor = TRUE))
+  write_parquet(df, tmp)
+
+  expect_equal(
+    as.data.frame(read_parquet(tmp, col_select = 3:1)),
+    df[, 3:1]
+  )
+})
+
 test_that("class", {
   withr::local_options(nanoparquet.class = NULL)
   tmp <- tempfile(fileext = ".parquet")

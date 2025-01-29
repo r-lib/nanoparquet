@@ -178,9 +178,9 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
     }
   }
 
-  // Map Parquet columns to R columns, if we only read a subset
+  // Map leaf Parquet columns to R columns, the ones we actually read
+  colmap.resize(metadata.num_cols, 0);
   if (filter.filter_columns) {
-    colmap.resize(metadata.num_cols, 0);
     for (auto i = 0; i < filter.columns.size(); i++) {
       if (filter.columns[i] >= num_leaf_cols) {
         throw std::runtime_error(
@@ -189,23 +189,25 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
       }
       colmap[filter.columns[i] + 1] = i + 1;
     }
+  } else {
+    for (auto i = 1, idx = 0; i < metadata.num_cols; i++) {
+      if (fmt.schema[i].__isset.num_children &&
+          fmt.schema[i].num_children > 0) {
+        continue;
+      }
+      colmap[i] = idx++ + 1;
+    }
   }
 
   // Only consider R types of columns that we read, the rest is NILSXP
   metadata.r_types.resize(metadata.num_cols_to_read);
-  for (auto i = 0, idx = 0; i < metadata.num_cols; i++) {
-    // skip internal nodes
-    if (fmt.schema[i].__isset.num_children &&
-        fmt.schema[i].num_children > 0) {
-      continue;
-    }
-    // skips columns the reader does not want
-    if (filter.filter_columns && colmap[i] == 0) {
+  for (auto i = 0; i < metadata.num_cols; i++) {
+    // skips internals plus columns the reader does not want
+    if (colmap[i] == 0) {
       continue;
     }
     rtype rt(fmt.schema[i]);
-    metadata.r_types[idx] = rt;
-    idx++;
+    metadata.r_types[colmap[i] - 1] = rt;
   }
 }
 
@@ -404,7 +406,7 @@ rtype::rtype(parquet::SchemaElement &sel) {
 // can run concurrently for column chunks.
 
 void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
-  uint32_t cl = filter.filter_columns ? colmap[cc.column] - 1 : cc.column - 1;
+  uint32_t cl = colmap[cc.column] - 1;
   if (metadata.r_types[cl].byte_array) {
     if (byte_arrays[cl].size() == 0) {
       byte_arrays[cl].resize(metadata.num_row_groups);
@@ -421,7 +423,7 @@ void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
 }
 
 void RParquetReader::alloc_dict_page(DictPage &dict) {
-  auto cl = filter.filter_columns ? colmap[dict.cc.column] - 1: dict.cc.column - 1;
+  auto cl = colmap[dict.cc.column] - 1;
   auto rg = dict.cc.row_group;
 
   if (dicts[cl].size() == 0) {
@@ -446,7 +448,7 @@ void RParquetReader::alloc_dict_page(DictPage &dict) {
 }
 
 void RParquetReader::alloc_data_page(DataPage &data) {
-  auto cl = filter.filter_columns ? colmap[data.cc.column] - 1: data.cc.column - 1;
+  auto cl = colmap[data.cc.column] - 1;
   auto rg = data.cc.row_group;
   rtype rt = metadata.r_types[cl];
 
@@ -2045,19 +2047,13 @@ void RParquetReader::convert_columns_to_r() {
 
 void RParquetReader::create_df() {
   SEXP nms = PROTECT(Rf_allocVector(STRSXP, metadata.num_cols_to_read));
-
-  for (R_xlen_t i = 0, idx = 0; i < metadata.num_cols; i++) {
-    // skip non-leaf columns
-    if (file_meta_data_.schema[i].__isset.num_children &&
-        file_meta_data_.schema[i].num_children > 0) {
-      continue;
-    }
+  for (R_xlen_t i = 0; i < metadata.num_cols; i++) {
     // skip columns that were not requested
-    if (filter.filter_columns && colmap[i] == 0) {
+    if (colmap[i] == 0) {
       continue;
     }
     SET_STRING_ELT(
-      nms, idx++,
+      nms, colmap[i] - 1,
       Rf_mkCharCE(file_meta_data_.schema[i].name.c_str(), CE_UTF8)
     );
   }
