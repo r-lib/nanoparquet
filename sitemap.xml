@@ -1,60 +1,28 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/404.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/index.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/news/index.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/nanoparquet-package.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_column_types.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_info.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_metadata.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_options.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_pages.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/parquet_schema.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/read_parquet.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/read_parquet_page.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/rle_decode_int.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/rle_encode_int.html</loc>
-  </url>
-  <url>
-    <loc>https://r-lib.github.io/nanoparquet/reference/write_parquet.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://nanoparquet.r-lib.org/404.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/LICENSE-text.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/articles/benchmarks.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/articles/index.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/authors.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/index.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/news/index.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/append_parquet.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/index.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/infer_parquet_schema.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/nanoparquet-package.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/nanoparquet-types.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/parquet-encodings.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/parquet_column_types.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/parquet_options.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/parquet_schema.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/read_parquet.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/read_parquet_info.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/read_parquet_metadata.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/read_parquet_page.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/read_parquet_pages.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/read_parquet_schema.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/rle_decode_int.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/rle_encode_int.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/write_parquet.html</loc></url>
 </urlset>
+

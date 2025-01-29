@@ -1,9 +1,9 @@
 pandoc: 3.1.11
-pkgdown: 2.0.9
-pkgdown_sha: ~
-articles: {}
-last_built: 2024-07-02T08:13Z
+pkgdown: 2.1.1.9000
+pkgdown_sha: 74fda8cdb8bbbcd215faf2a2079f4eb98db586c6
+articles:
+  articles/benchmarks: benchmarks.html
+last_built: 2025-01-29T15:21Z
 urls:
-  reference: https://r-lib.github.io/nanoparquet/reference
-  article: https://r-lib.github.io/nanoparquet/articles
-
+  reference: https://nanoparquet.r-lib.org/reference
+  article: https://nanoparquet.r-lib.org/articles
