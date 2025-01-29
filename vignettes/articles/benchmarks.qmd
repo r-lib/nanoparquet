@@ -49,7 +49,7 @@ library(gtExtras)
 
 I used use three data sets: small, medium and large. The small data set is
 the `nycflights13::flights` data set, as is. The medium data set contains
-20 copies of the small data set. The large data set containes 200 copies
+20 copies of the small data set. The large data set contains 200 copies
 of the small data set. See the `gen_data()` function in the
 [`benchmark-funcs.R` file](
   https://github.com/r-lib/nanoparquet/blob/main/vignettes/articles/benchmarks-funcs.R)
@@ -367,7 +367,7 @@ memory usage.
 
 I did _not_ include the package loading time in the benchmarks.
 nanoparquet has no dependencies and loads very quickly. Both the arrow and
-duckdb packages might take up to 200ms to load of the test system,
+duckdb packages might take up to 200ms to load on the test system,
 because they need to load their dependencies and they are also bigger.
 
 ```{r session-info}

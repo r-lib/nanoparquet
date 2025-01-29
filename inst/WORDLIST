@@ -1,3 +1,4 @@
+ALTREP
 BROTLI
 BSON
 CMD
@@ -12,7 +13,6 @@ LLC
 LZ
 LZO
 MILLIS
-MacBook
 ORCID
 PBC
 POSIXct
@@ -24,6 +24,10 @@ ZSTD
 Zstd
 codec
 difftime
+duckdb
 hms
+multithreaded
 nanoparquet's
+readr
 schemas
+subprocess
