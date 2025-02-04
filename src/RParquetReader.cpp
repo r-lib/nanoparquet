@@ -39,7 +39,7 @@ static double float16_to_double(uint16_t x) {
     const uint32_t v = as_uint((float) m) >> 23;
     // ASAN does not like the large << shift, which is ok and faster
 #if defined(__has_feature)
-#   if __has_feature(address_sanitizer) // for clang
+#   if __has_feature(address_sanitizer) || __has_feature(undefined_behavior_sanitizer) // for clang
 #       define __SANITIZE_ADDRESS__ // GCC already sets this
 #   endif
 #endif
