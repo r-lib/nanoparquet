@@ -878,7 +878,9 @@ void ParquetReader::scan_byte_array_plain(StringSet &strs, uint8_t *buf) {
   memcpy((void*) strs.buf, buf, strs.total_len);
   // TODO: check for overflow
   for (uint32_t i = 0; i < strs.len; i++) {
-    strs.lengths[i] = *((uint32_t*) buf);
+    // we need to do this byte-wise to avoid a misaligned uint32_t address
+    // strs.lengths[i] = *((uint32_t*) buf);
+    memcpy(strs.lengths + i, buf, 4);
     buf += 4;
     strs.offsets[i] = buf - start;
     buf += strs.lengths[i];
