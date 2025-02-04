@@ -416,31 +416,31 @@ void ParquetReader::read_dict_page(
   case Type::INT32: {
     DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
-    memcpy(dict.dict, buf, num_values * sizeof(int32_t));
+    if (num_values > 0) memcpy(dict.dict, buf, num_values * sizeof(int32_t));
     break;
   }
   case Type::INT64: {
     DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
-    memcpy(dict.dict, buf, num_values * sizeof(int64_t));
+    if (num_values > 0) memcpy(dict.dict, buf, num_values * sizeof(int64_t));
     break;
   }
   case Type::INT96: {
     DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
-    memcpy(dict.dict, buf, num_values * sizeof(int96_t));
+    if (num_values > 0) memcpy(dict.dict, buf, num_values * sizeof(int96_t));
     break;
   }
   case Type::FLOAT: {
     DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
-    memcpy(dict.dict, buf, num_values * sizeof(float));
+    if (num_values > 0) memcpy(dict.dict, buf, num_values * sizeof(float));
     break;
   }
   case Type::DOUBLE: {
     DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
-    memcpy(dict.dict, buf, num_values * sizeof(double));
+    if (num_values > 0) memcpy(dict.dict, buf, num_values * sizeof(double));
     break;
   }
   case Type::BYTE_ARRAY: {
@@ -878,7 +878,9 @@ void ParquetReader::scan_byte_array_plain(StringSet &strs, uint8_t *buf) {
   memcpy((void*) strs.buf, buf, strs.total_len);
   // TODO: check for overflow
   for (uint32_t i = 0; i < strs.len; i++) {
-    strs.lengths[i] = *((uint32_t*) buf);
+    // we need to do this byte-wise to avoid a misaligned uint32_t address
+    // strs.lengths[i] = *((uint32_t*) buf);
+    memcpy(strs.lengths + i, buf, 4);
     buf += 4;
     strs.offsets[i] = buf - start;
     buf += strs.lengths[i];

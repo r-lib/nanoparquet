@@ -524,7 +524,8 @@ uint32_t ParquetOutFile::rle_encode(
     tgt_size_est
   );
   if (add_size) {
-    ((uint32_t*) (tgt.ptr + skip +  (add_bit_width ? 1 : 0)))[0] = tgt_size;
+    // need memcpy for alignment
+    memcpy(tgt.ptr + skip +  (add_bit_width ? 1 : 0), &tgt_size, 4);
     tgt_size += 4;
   }
   if (add_bit_width) {
@@ -687,7 +688,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx, uint32_t group,
   } else {
     // estimate the max RLE length
     uint32_t num_values = get_num_values_dictionary(idx, se, from, until);
-    uint8_t bit_width = ceil(log2((double) num_values));
+    uint8_t bit_width = num_values > 0 ? ceil(log2((double) num_values)) : 1;
     total_size = MaxRleBpSizeSimple(rg_num_rows, bit_width);
   }
 
@@ -999,7 +1000,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
 
     // 4. append RLE buf_unc to buf_com
     uint32_t num_dict_values = get_num_values_dictionary(idx, se, rg_from, rg_until);
-    uint8_t bit_width = ceil(log2((double) num_dict_values));
+    uint8_t bit_width = num_dict_values > 0 ? ceil(log2((double) num_dict_values)) : 1;
     uint32_t rle2_size = rle_encode(
       buf_unc,
       num_present,
@@ -1056,7 +1057,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
 
     // 4. append RLE buf_unc to buf_com
     uint32_t num_dict_values = get_num_values_dictionary(idx, se, rg_from, rg_until);
-    uint8_t bit_width = ceil(log2((double) num_dict_values));
+    uint8_t bit_width = num_dict_values > 0 ? ceil(log2((double) num_dict_values)) : 0;
     uint32_t rle2_size = rle_encode(
       buf_unc,
       num_present,

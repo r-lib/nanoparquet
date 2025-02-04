@@ -530,14 +530,14 @@ void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
   }
 }
 
-#define GRAB_MIN(idx, t) ((t*) min_values[idx].data())
-#define GRAB_MAX(idx, t) ((t*) max_values[idx].data())
-#define SAVE_MIN(idx, val, t) do {                               \
-  min_values[idx] = std::string((const char*) &val, sizeof(t));  \
-  min_value = (t*) min_values[idx].data(); } while (0)
-#define SAVE_MAX(idx, val, t) do {                               \
-  max_values[idx] = std::string((const char*) &val, sizeof(t));  \
-  max_value = (t*) max_values[idx].data(); } while (0)
+#define GRAB_MIN2(tgt, idx) memcpy(&tgt, min_values[idx].data(), sizeof(tgt))
+#define GRAB_MAX2(tgt, idx) memcpy(&tgt, max_values[idx].data(), sizeof(tgt))
+#define SAVE_MIN2(tgt, idx, val) do {			          \
+  min_values[idx] = std::string((const char*) &val, sizeof(tgt)); \
+  tgt = val; } while (0)
+#define SAVE_MAX2(tgt, idx, val) do {				  \
+  max_values[idx] = std::string((const char*) &val, sizeof(tgt)); \
+  tgt = val; } while (0)
 
 void RParquetOutFile::write_integer_int32(std::ostream &file, SEXP col,
                                           uint32_t idx,
@@ -551,10 +551,11 @@ void RParquetOutFile::write_integer_int32(std::ostream &file, SEXP col,
   }
 
   bool minmax = write_minmax_values && is_minmax_supported[idx];
-  int32_t *min_value = 0, *max_value = 0;
+  bool has_min = false, has_max = false;
+  int32_t min_value = 0, max_value = 0;
   if (minmax && has_minmax_value[idx]) {
-    min_value = GRAB_MIN(idx, int32_t);
-    max_value = GRAB_MAX(idx, int32_t);
+    GRAB_MIN2(min_value, idx);
+    GRAB_MAX2(max_value, idx);
   }
 
   if (bit_width == 32) {
@@ -566,11 +567,13 @@ void RParquetOutFile::write_integer_int32(std::ostream &file, SEXP col,
       for (uint64_t i = from; i < until; i++) {
         int32_t val = INTEGER(col)[i];
         if (val == NA_INTEGER) continue;
-        if (minmax && (min_value == 0 || val < *min_value)) {
-          SAVE_MIN(idx, val, int32_t);
+        if (minmax && (!has_min || val < min_value)) {
+	  has_min = true;
+          SAVE_MIN2(min_value, idx, val);
         }
-        if (minmax && (max_value == 0 || val > *max_value)) {
-          SAVE_MAX(idx, val, int32_t);
+        if (minmax && (!has_max || val > max_value)) {
+	  has_max = true;
+          SAVE_MAX2(max_value, idx, val);
         }
         file.write((const char*) &val, sizeof(int32_t));
       }
@@ -604,16 +607,18 @@ void RParquetOutFile::write_integer_int32(std::ostream &file, SEXP col,
           );
         });
       }
-      if (minmax && (min_value == 0 || val < *min_value)) {
-        SAVE_MIN(idx, val, int32_t);
+      if (minmax && (!has_min || val < min_value)) {
+	has_min = true;
+        SAVE_MIN2(min_value, idx, val);
       }
-      if (minmax && (max_value == 0 || val > *max_value)) {
-        SAVE_MAX(idx, val, int32_t);
+      if (minmax && (!has_max || val > max_value)) {
+	has_max = true;
+        SAVE_MAX2(max_value, idx, val);
       }
       file.write((const char *) &val, sizeof(int32_t));
     }
   }
-  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+  has_minmax_value[idx] = has_minmax_value[idx] || has_min;
 }
 
 void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
@@ -660,26 +665,29 @@ void RParquetOutFile::write_double_int32_time(std::ostream &file, SEXP col,
                                               uint64_t until,
                                               parquet::SchemaElement &sel,
                                               double factor) {
-  int32_t *min_value = 0, *max_value = 0;
+  bool has_min = false, has_max = false;
+  int32_t min_value = 0, max_value = 0;
   bool minmax = write_minmax_values && is_minmax_supported[idx];
   if (minmax && has_minmax_value[idx]) {
-    min_value = GRAB_MIN(idx, int32_t);
-    max_value = GRAB_MAX(idx, int32_t);
+    GRAB_MIN2(min_value, idx);
+    GRAB_MAX2(max_value, idx);
   }
 
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
     if (R_IsNA(val)) continue;
     int32_t ival = val * factor;
-    if (minmax && (min_value == 0 || ival < *min_value)) {
-      SAVE_MIN(idx, ival, int32_t);
+    if (minmax && (!has_min || ival < min_value)) {
+      has_min = true;
+      SAVE_MIN2(min_value, idx, ival);
     }
-    if (minmax && (max_value == 0 || ival > *max_value)) {
-      SAVE_MAX(idx, ival, int32_t);
+    if (minmax && (!has_max || ival > max_value)) {
+      has_max = true;
+      SAVE_MAX2(max_value, idx, ival);
     }
     file.write((const char *)&ival, sizeof(int32_t));
   }
-  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+  has_minmax_value[idx] = has_minmax_value[idx] || has_min;
 }
 
 void RParquetOutFile::write_double_int32(std::ostream &file, SEXP col,
@@ -693,11 +701,12 @@ void RParquetOutFile::write_double_int32(std::ostream &file, SEXP col,
     bit_width = sel.logicalType.INTEGER.bitWidth;
   }
   if (is_signed) {
-    int32_t *min_value = 0, *max_value = 0;
+    int32_t min_value = 0, max_value = 0;
+    bool has_min = false, has_max = false;
     bool minmax = write_minmax_values && is_minmax_supported[idx];
     if (minmax && has_minmax_value[idx]) {
-      min_value = GRAB_MIN(idx, int32_t);
-      max_value = GRAB_MAX(idx, int32_t);
+      GRAB_MIN2(min_value, idx);
+      GRAB_MAX2(max_value, idx);
     }
 
     int32_t min, max = 0;
@@ -732,21 +741,24 @@ void RParquetOutFile::write_double_int32(std::ostream &file, SEXP col,
         });
       }
       int32_t ival = val;
-      if (minmax && (min_value == 0 || ival < *min_value)) {
-        SAVE_MIN(idx, ival, int32_t);
+      if (minmax && (!has_min || ival < min_value)) {
+	has_min = true;
+        SAVE_MIN2(min_value, idx, ival);
       }
-      if (minmax && (max_value == 0 || ival > *max_value)) {
-        SAVE_MAX(idx, ival, int32_t);
+      if (minmax && (!has_max || ival > max_value)) {
+	has_max = true;
+        SAVE_MAX2(max_value, idx, ival);
       }
       file.write((const char *)&ival, sizeof(int32_t));
     }
-    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+    has_minmax_value[idx] = has_minmax_value[idx] || has_min;
   } else {
-    uint32_t *min_value = 0, *max_value = 0;
+    uint32_t min_value = 0, max_value = 0;
+    bool has_min = false, has_max = false;
     bool minmax = write_minmax_values && is_minmax_supported[idx];
     if (minmax && has_minmax_value[idx]) {
-      min_value = GRAB_MIN(idx, uint32_t);
-      max_value = GRAB_MAX(idx, uint32_t);
+      GRAB_MIN2(min_value, idx);
+      GRAB_MAX2(max_value, idx);
     }
 
     uint32_t max;
@@ -792,15 +804,17 @@ void RParquetOutFile::write_double_int32(std::ostream &file, SEXP col,
         });
       }
       uint32_t uival = val;
-      if (minmax && (min_value == 0 || uival < *min_value)) {
-        SAVE_MIN(idx, uival, uint32_t);
+      if (minmax && (!has_min || uival < min_value)) {
+	has_min = true;
+        SAVE_MIN2(min_value, idx, uival);
       }
-      if (minmax && (max_value == 0 || uival > *max_value)) {
-        SAVE_MAX(idx, uival, uint32_t);
+      if (minmax && (!has_max || uival > max_value)) {
+	has_max = true;
+        SAVE_MAX2(max_value, idx, uival);
       }
       file.write((const char *)&uival, sizeof(uint32_t));
     }
-    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+    has_minmax_value[idx] = has_minmax_value[idx] || has_min;
   }
 }
 
@@ -896,26 +910,29 @@ void RParquetOutFile::write_integer_int64(std::ostream &file, SEXP col,
                                           uint32_t idx,
                                           uint64_t from, uint64_t until) {
 
-  int64_t *min_value = 0, *max_value = 0;
+  int64_t min_value = 0, max_value = 0;
+  bool has_min = false, has_max = false;
   bool minmax = write_minmax_values && is_minmax_supported[idx];
   if (minmax && has_minmax_value[idx]) {
-    min_value = GRAB_MIN(idx, int64_t);
-    max_value = GRAB_MAX(idx, int64_t);
+    GRAB_MIN2(min_value, idx);
+    GRAB_MAX2(max_value, idx);
   }
 
   for (uint64_t i = from; i < until; i++) {
     int32_t val = INTEGER(col)[i];
     if (val == NA_INTEGER) continue;
     int64_t el = val;
-    if (minmax && (min_value == 0 || el < *min_value)) {
-      SAVE_MIN(idx, el, int64_t);
+    if (minmax && (!has_min || el < min_value)) {
+      has_min = true;
+      SAVE_MIN2(min_value, idx, el);
     }
-    if (minmax && (max_value == 0 || el > *max_value)) {
-      SAVE_MAX(idx, el, int64_t);
+    if (minmax && (!has_max || el > max_value)) {
+      has_max = true;
+      SAVE_MAX2(max_value, idx, el);
     }
     file.write((const char*) &el, sizeof(int64_t));
    }
-  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+  has_minmax_value[idx] = has_minmax_value[idx] || has_min;
 }
 
  void write_double_int64_dec(std::ostream &file, SEXP col, uint64_t from,
@@ -961,37 +978,41 @@ void RParquetOutFile::write_double_int64_time(std::ostream &file, SEXP col,
                                               uint64_t until,
                                               parquet::SchemaElement &sel,
                                               double factor) {
-  int64_t *min_value = 0, *max_value = 0;
+  int64_t min_value = 0, max_value = 0;
+  bool has_min = false, has_max = false;
   bool minmax = write_minmax_values && is_minmax_supported[idx];
   if (minmax && has_minmax_value[idx]) {
-    min_value = GRAB_MIN(idx, int64_t);
-    max_value = GRAB_MAX(idx, int64_t);
+    GRAB_MIN2(min_value, idx);
+    GRAB_MAX2(max_value, idx);
   }
 
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
     if (R_IsNA(val)) continue;
     int64_t ival = val * factor;
-    if (minmax && (min_value == 0 || ival < *min_value)) {
-      SAVE_MIN(idx, ival, int64_t);
+    if (minmax && (!has_min || ival < min_value)) {
+      has_min = true;
+      SAVE_MIN2(min_value, idx, ival);
     }
-    if (minmax && (max_value == 0 || ival > *max_value)) {
-      SAVE_MAX(idx, ival, int64_t);
+    if (minmax && (!has_max || ival > max_value)) {
+      has_max = true;
+      SAVE_MAX2(max_value, idx, ival);
     }
     file.write((const char *)&ival, sizeof(int64_t));
   }
-  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+  has_minmax_value[idx] = has_minmax_value[idx] || has_min;
 }
 
 void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
                                          uint32_t idx, uint64_t from,
                                          uint64_t until,
                                          parquet::SchemaElement &sel) {
-  int64_t *min_value = 0, *max_value = 0;
+  int64_t min_value = 0, max_value = 0;
+  bool has_min = false, has_max = false;
   bool minmax = write_minmax_values && is_minmax_supported[idx];
   if (minmax && has_minmax_value[idx]) {
-    min_value = GRAB_MIN(idx, int64_t);
-    max_value = GRAB_MAX(idx, int64_t);
+    GRAB_MIN2(min_value, idx);
+    GRAB_MAX2(max_value, idx);
   }
 
   if (Rf_inherits(col, "POSIXct")) {
@@ -1016,29 +1037,33 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
       int64_t el = val * fact;
-      if (minmax && (min_value == 0 || el < *min_value)) {
-        SAVE_MIN(idx, el, int64_t);
+      if (minmax && (!has_min || el < min_value)) {
+	has_min = true;
+        SAVE_MIN2(min_value, idx, el);
       }
-      if (minmax && (max_value == 0 || el > *max_value)) {
-        SAVE_MAX(idx, el, int64_t);
+      if (minmax && (!has_max || el > max_value)) {
+	has_max = true;
+        SAVE_MAX2(max_value, idx, el);
       }
       file.write((const char *)&el, sizeof(int64_t));
     }
-    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+    has_minmax_value[idx] = has_minmax_value[idx] || has_min;
   } else if (Rf_inherits(col, "difftime")) {
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
       int64_t el = val * 1000 * 1000 * 1000;
-      if (minmax && (min_value == 0 || el < *min_value)) {
-        SAVE_MIN(idx, el, int64_t);
+      if (minmax && (!has_min || el < min_value)) {
+	has_min = true;
+        SAVE_MIN2(min_value, idx, el);
       }
-      if (minmax && (max_value == 0 || el > *max_value)) {
-        SAVE_MAX(idx, el, int64_t);
+      if (minmax && (!has_max || el > max_value)) {
+	has_max = true;
+        SAVE_MAX2(max_value, idx, el);
       }
       file.write((const char *)&el, sizeof(int64_t));
     }
-    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+    has_minmax_value[idx] = has_minmax_value[idx] || has_min;
   } else {
     bool is_signed = TRUE;
     int bit_width = 64;
@@ -1055,11 +1080,12 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
       });
     }
     if (is_signed) {
-      double min = -pow(2, 63), max = -(min+1);
+      // smallest & largest double that can be put into an int64_t
+      double min = -9223372036854774272.0, max = 9223372036854774272.0;
       for (uint64_t i = from; i < until; i++) {
         double val = REAL(col)[i];
         if (R_IsNA(val)) continue;
-        const char *w = val < min ? "small" : (val > max ? "large" : "");
+        const char *w = val <= min ? "small" : (val >= max ? "large" : "");
         if (w[0]) {
           r_call([&] {
             Rf_errorcall(
@@ -1071,27 +1097,31 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
           });
         }
         int64_t el = val;
-        if (minmax && (min_value == 0 || el < *min_value)) {
-          SAVE_MIN(idx, el, int64_t);
+        if (minmax && (!has_min || el < min_value)) {
+	  has_min = true;
+          SAVE_MIN2(min_value, idx, el);
         }
-        if (minmax && (max_value == 0 || el > *max_value)) {
-          SAVE_MAX(idx, el, int64_t);
+        if (minmax && (!has_max || el > max_value)) {
+	  has_max = true;
+          SAVE_MAX2(max_value, idx, el);
         }
         file.write((const char *)&el, sizeof(int64_t));
       }
-      has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+      has_minmax_value[idx] = has_minmax_value[idx] || has_min;
     } else {
-      double max = pow(2, 64) - 1;
-      uint64_t *min_value = 0, *max_value = 0;
+      // largest double that can be put into an uint64_t
+      double max = 18446744073709550592.0;
+      uint64_t min_value = 0, max_value = 0;
+      bool has_min = false, has_max = false;
       bool minmax = write_minmax_values && is_minmax_supported[idx];
       if (minmax && has_minmax_value[idx]) {
-        min_value = GRAB_MIN(idx, uint64_t);
-        max_value = GRAB_MAX(idx, uint64_t);
+	GRAB_MIN2(min_value, idx);
+	GRAB_MAX2(max_value, idx);
       }
       for (uint64_t i = from; i < until; i++) {
         double val = REAL(col)[i];
         if (R_IsNA(val)) continue;
-        if (val > max) {
+        if (val >= max) {
           r_call([&] {
             Rf_errorcall(
               nanoparquet_call,
@@ -1112,15 +1142,17 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
           });
         }
         uint64_t el = val;
-        if (minmax && (min_value == 0 || el < *min_value)) {
-          SAVE_MIN(idx, el, uint64_t);
+        if (minmax && (!has_min || el < min_value)) {
+	  has_min = true;
+          SAVE_MIN2(min_value, idx, el);
         }
-        if (minmax && (max_value == 0 || el > *max_value)) {
-          SAVE_MAX(idx, el, uint64_t);
+        if (minmax && (!has_max || el > max_value)) {
+	  has_max = true;
+          SAVE_MAX2(max_value, idx, el);
         }
         file.write((const char *)&el, sizeof(uint64_t));
       }
-      has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+      has_minmax_value[idx] = has_minmax_value[idx] || has_min;
     }
   }
 }
@@ -1239,25 +1271,28 @@ void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
   }
 
   bool minmax = write_minmax_values && is_minmax_supported[idx];
-  float *min_value = 0, *max_value = 0;
+  float min_value = 0, max_value = 0;
+  bool has_min = false, has_max = false;
   if (minmax && has_minmax_value[idx]) {
-    min_value = GRAB_MIN(idx, float);
-    max_value = GRAB_MAX(idx, float);
+    GRAB_MIN2(min_value, idx);
+    GRAB_MAX2(max_value, idx);
   }
 
   for (uint64_t i = from; i < until; i++) {
     double val = REAL(col)[i];
     if (R_IsNA(val)) continue;
     float el = val;
-    if (minmax && (min_value == 0 || el< *min_value)) {
-      SAVE_MIN(idx, el, float);
+    if (minmax && (!has_min || el< min_value)) {
+      has_min = true;
+      SAVE_MIN2(min_value, idx, el);
     }
-    if (minmax && (max_value == 0 || el > *max_value)) {
-      SAVE_MAX(idx, el, float);
+    if (minmax && (!has_max || el > max_value)) {
+      has_max = true;
+      SAVE_MAX2(max_value, idx, el);
     }
     file.write((const char*) &el, sizeof(float));
   }
-  has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+  has_minmax_value[idx] = has_minmax_value[idx] || has_min;
 }
 
 void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
@@ -1284,10 +1319,11 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
   }
 
   bool minmax = write_minmax_values && is_minmax_supported[idx];
-  double *min_value = 0, *max_value = 0;
+  double min_value = 0, max_value = 0;
+  bool has_min = false, has_max = false;
   if (minmax && has_minmax_value[idx]) {
-    min_value = GRAB_MIN(idx, double);
-    max_value = GRAB_MAX(idx, double);
+    GRAB_MIN2(min_value, idx);
+    GRAB_MAX2(max_value, idx);
   }
 
   if (!minmax &&
@@ -1298,15 +1334,17 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
     for (uint64_t i = from; i < until; i++) {
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
-      if (minmax && (min_value == 0 || val < *min_value)) {
-        SAVE_MIN(idx, val, double);
+      if (minmax && (!has_min || val < min_value)) {
+	has_min = true;
+        SAVE_MIN2(min_value, idx, val);
       }
-      if (minmax && (max_value == 0 || val > *max_value)) {
-        SAVE_MAX(idx, val, double);
+      if (minmax && (!has_max || val > max_value)) {
+	has_max = true;
+        SAVE_MAX2(max_value, idx, val);
       }
       file.write((const char*) &val, sizeof(double));
     }
-    has_minmax_value[idx] = has_minmax_value[idx] || min_value != 0;
+    has_minmax_value[idx] = has_minmax_value[idx] || has_min;
   }
 }
 
@@ -1480,13 +1518,16 @@ static bool parse_uuid(const char *c, char *u, char *t) {
   uint16_t *p2 = (uint16_t*) (t + 4);
   uint16_t *p3 = (uint16_t*) (t + 6);
   uint16_t *p4 = (uint16_t*) (t + 8);
-  uint64_t *p5 = (uint64_t*) (t + 10);
+  // cannot do it directly, alignment is not right
+  // uint64_t *p5 = (uint64_t*) (t + 10);
 
   *p1 = std::strtoul(c, NULL, 16);
   *p2 = std::strtoul(c + 9, NULL, 16);
   *p3 = std::strtoul(c + 14, NULL, 16);
   *p4 = std::strtoul(c + 19, NULL, 16);
-  *p5 = std::strtoull(c + 24, NULL, 16);
+  // need to do it in two steps for proper alignment
+  uint64_t tmp = std::strtoull(c + 24, NULL, 16);
+  memcpy(t + 10, &tmp, sizeof(tmp));
 
   // TODO: fix for big endian, this is little endian swap
   u[0] = t[3]; u[1] = t[2]; u[2] = t[1]; u[3] = t[0];
