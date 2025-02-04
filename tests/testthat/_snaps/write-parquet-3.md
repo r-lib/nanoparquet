@@ -1629,7 +1629,7 @@
       write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
     Condition
       Error in `write_parquet()`:
-      ! Integer value too large for unsigned INT with bit width 64: 18446744073709551616.000000 at column 1, row 1.
+      ! Integer value too large for unsigned INT with bit width 64: 18446744073709551616.000000 at column 1, row 2.
 
 ---
 

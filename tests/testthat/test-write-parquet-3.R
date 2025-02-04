@@ -564,11 +564,11 @@ test_that("double to INT(64, *)", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = c(9223372036854774899, 9223372036854774900))
+  d <- data.frame(d = c(9223372036854770000, 9223372036854774273))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("INT_64"))
   }, transform = redact_maxint64)
-  d <- data.frame(d = -c(9223372036854774899, 9223372036854774900))
+  d <- data.frame(d = -c(9223372036854770000, 9223372036854774273))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("INT_64"))
   }, transform = redact_maxint64)
@@ -580,7 +580,7 @@ test_that("double to INT(64, *)", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = c(18446744073709550591.0, 18446744073709550592.0))
+  d <- data.frame(d = c(18446744073709450591.0, 18446744073709550592.0))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
   })

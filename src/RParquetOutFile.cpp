@@ -1081,7 +1081,7 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
     }
     if (is_signed) {
       // smallest & largest double that can be put into an int64_t
-      double min = -9223372036854774900.0, max = 9223372036854774900.0;
+      double min = -9223372036854774272.0, max = 9223372036854774272.0;
       for (uint64_t i = from; i < until; i++) {
         double val = REAL(col)[i];
         if (R_IsNA(val)) continue;
