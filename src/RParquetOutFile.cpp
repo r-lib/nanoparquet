@@ -1518,13 +1518,16 @@ static bool parse_uuid(const char *c, char *u, char *t) {
   uint16_t *p2 = (uint16_t*) (t + 4);
   uint16_t *p3 = (uint16_t*) (t + 6);
   uint16_t *p4 = (uint16_t*) (t + 8);
-  uint64_t *p5 = (uint64_t*) (t + 10);
+  // cannot do it directly, alignment is not right
+  // uint64_t *p5 = (uint64_t*) (t + 10);
 
   *p1 = std::strtoul(c, NULL, 16);
   *p2 = std::strtoul(c + 9, NULL, 16);
   *p3 = std::strtoul(c + 14, NULL, 16);
   *p4 = std::strtoul(c + 19, NULL, 16);
-  *p5 = std::strtoull(c + 24, NULL, 16);
+  // need to do it in two steps for proper alignment
+  uint64_t tmp = std::strtoull(c + 24, NULL, 16);
+  memcpy(t + 10, &tmp, sizeof(tmp));
 
   // TODO: fix for big endian, this is little endian swap
   u[0] = t[3]; u[1] = t[2]; u[2] = t[1]; u[3] = t[0];
