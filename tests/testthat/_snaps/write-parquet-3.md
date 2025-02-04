@@ -1590,7 +1590,7 @@
       write_parquet(d, tmp, schema = parquet_schema("INT_64"))
     Condition
       Error in `write_parquet()`:
-      ! Integer value too large for INT with bit width 64: 9223372036854775808.000000 at column 1, row 1.
+      ! Integer value too large for INT with bit width 64: 9223372036854775808.000000 at column 1, row 2.
 
 ---
 
@@ -1598,7 +1598,7 @@
       write_parquet(d, tmp, schema = parquet_schema("INT_64"))
     Condition
       Error in `write_parquet()`:
-      ! Integer value too small for INT with bit width 64: -9223372036854775808.000000 at column 1, row 1.
+      ! Integer value too small for INT with bit width 64: -9223372036854775808.000000 at column 1, row 2.
 
 ---
 
