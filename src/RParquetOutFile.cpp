@@ -1081,11 +1081,11 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
     }
     if (is_signed) {
       // smallest & largest double that can be put into an int64_t
-      double min = -9223372036854775295.0, max = 9223372036854775295.0;
+      double min = -9223372036854774900.0, max = 9223372036854774900.0;
       for (uint64_t i = from; i < until; i++) {
         double val = REAL(col)[i];
         if (R_IsNA(val)) continue;
-        const char *w = val < min ? "small" : (val > max ? "large" : "");
+        const char *w = val <= min ? "small" : (val >= max ? "large" : "");
         if (w[0]) {
           r_call([&] {
             Rf_errorcall(
@@ -1110,7 +1110,7 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
       has_minmax_value[idx] = has_minmax_value[idx] || has_min;
     } else {
       // largest double that can be put into an uint64_t
-      double max = 18446744073709550591.0;
+      double max = 18446744073709550592.0;
       uint64_t min_value = 0, max_value = 0;
       bool has_min = false, has_max = false;
       bool minmax = write_minmax_values && is_minmax_supported[idx];
@@ -1121,7 +1121,7 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
       for (uint64_t i = from; i < until; i++) {
         double val = REAL(col)[i];
         if (R_IsNA(val)) continue;
-        if (val > max) {
+        if (val >= max) {
           r_call([&] {
             Rf_errorcall(
               nanoparquet_call,
