@@ -18,4 +18,4 @@ jobs:
     - uses: benc-uk/workflow-dispatch@v1
       with:
         workflow: rhub.yaml
-        inputs: '{ "config": "clang-asan,clang-ubsan,rchk,valgrind" }'
+        inputs: '{ "config": "clang-asan,clang-ubsan,rchk,valgrind", "id": "R-hub CI" }'
