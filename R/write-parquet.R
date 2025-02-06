@@ -162,10 +162,9 @@ prepare_write_df <- function(x) {
   }
 
   # Date must be integer
-  dates <- which(vapply(x, "inherits", "Date", FUN.VALUE = logical(1)))
-  for (idx in dates) {
-    # this keeps the class
-    mode(x[[idx]]) <- "integer"
+  double_dates <- which(vapply(x, function(x) inherits(x, "Date") && is.double(x), FUN.VALUE = logical(1)))
+  for (idx in double_dates) {
+    x[[idx]] <- .Date(as.integer(floor(as.numeric(x[[idx]]))))
   }
 
   # Convert hms to double
