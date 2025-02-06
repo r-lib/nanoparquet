@@ -118,3 +118,17 @@ test_that("class", {
   withr::local_options(nanoparquet.class = "foobar")
   expect_equal(class(read_parquet(tmp)), c("foobar", "data.frame"))
 })
+
+test_that("mixing RLE_DICTIONARY and PLAIN", {
+  # https://github.com/r-lib/nanoparquet/issues/110
+  # import pyarrow as pa
+  # import pyarrow.parquet as pq
+  # table = pa.table({'x': pa.array(range(2000), type=pa.int32())})
+  # pq.write_table(table, 'mixed-int32.parquet', dictionary_pagesize_limit = 400)
+  pf <- test_path("data/mixed-int32.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
+    as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
+  })
+  expect_equal(read_parquet(pf)$x, 0:1999)
+})
