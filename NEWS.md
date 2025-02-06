@@ -1,5 +1,8 @@
 # nanoparquet (development version)
 
+* `write_parquet()` now correctly converts double `Date` columns
+  to integer columns (@eitsupi, #116).
+
 # nanoparquet 0.4.0
 
 * API changes:
