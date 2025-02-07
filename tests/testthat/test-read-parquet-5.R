@@ -121,14 +121,30 @@ test_that("class", {
 
 test_that("mixing RLE_DICTIONARY and PLAIN", {
   # https://github.com/r-lib/nanoparquet/issues/110
-  # import pyarrow as pa
-  # import pyarrow.parquet as pq
-  # table = pa.table({'x': pa.array(range(2000), type=pa.int32())})
-  # pq.write_table(table, 'mixed-int32.parquet', dictionary_pagesize_limit = 400)
-  pf <- test_path("data/mixed-int32.parquet")
+  pf <- test_path("data/mixed.parquet")
   expect_snapshot({
     as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
     as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
   })
-  expect_equal(read_parquet(pf)$x, 0:1999)
+  tab <- read_parquet(pf)
+  expect_equal(tab$x, rep(0:399, 6))
+  expect_equal(tab$y, rep(0:399, 6))
+
+  pf <- test_path("data/mixed2.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
+    as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
+  })
+  tab <- read_parquet(pf)
+  expect_equal(tab$x, rep(0:399, 6))
+  expect_equal(tab$y, rep(0:399, 6))
+
+  pf <- test_path("data/mixed-miss.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
+    as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
+  })
+  tab <- read_parquet(pf)
+  expect_equal(tab$x, 0:2399)
+  expect_equal(tab$y, 0:2399)
 })

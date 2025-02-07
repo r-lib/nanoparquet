@@ -463,8 +463,20 @@ void RParquetReader::alloc_data_page(DataPage &data) {
     data.present = present[cl][rg].map.data() + data.from;
   }
 
-  if (data.cc.has_dictionary) {
-    data.data = (uint8_t*) (dicts[cl][rg].indices.data() + page_off);
+  bool has_dict = data.cc.has_dictionary;
+  bool is_index = has_dict &&
+    (data.encoding == parquet::Encoding::RLE_DICTIONARY ||
+     data.encoding == parquet::Encoding::PLAIN_DICTIONARY);
+
+  // A non-dict-index page in a column chunk that has a
+  // dictionary page. Should be rare, but arrow does write
+  // these: https://github.com/r-lib/nanoparquet/issues/110
+  if (has_dict && !is_index) {
+    notdicts.push_back({ cl, rg, page_off, data.num_values, data.num_present });
+  }
+
+  if (is_index) {
+      data.data = (uint8_t*) (dicts[cl][rg].indices.data() + page_off);
 
   } else if (!rt.byte_array) {
     int64_t off = metadata.row_group_offsets[rg];
@@ -499,6 +511,7 @@ public:
   rmetadata &metadata;
   std::vector<std::vector<uint8_t>> &tmpdata;
   std::vector<std::vector<tmpdict>> &dicts;
+  std::vector<std::vector<std::vector<dict_step>>> &dict_steps;
   std::vector<std::vector<std::vector<tmpbytes>>> &byte_arrays;
   std::vector<std::vector<presentmap>> &present;
 };
@@ -506,125 +519,12 @@ public:
 void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
   if (pp->dicts[cl].size() == 0) return;
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    // In theory some row groups might be non dictionary encoded
-    if (pp->dicts[cl][rg].dict_len == 0) {
-      continue;
-    }
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    int64_t from = pp->metadata.row_group_offsets[rg];
-    SEXP x = VECTOR_ELT(pp->columns, cl);
-    switch (TYPEOF(x)) {
-    case INTSXP: {
-      int *beg = INTEGER(x) + from;
-      int *end = beg + num_values;
-      int *dict = (int*) pp->dicts[cl][rg].buffer.data();
-      uint32_t *idx = (uint32_t*) pp->dicts[cl][rg].indices.data();
-      while (beg < end) {
-        *beg++ = dict[*idx++];
-      }
-      break;
-    }
-    case REALSXP: {
-      double *beg = REAL(x) + from;
-      double *end = beg + num_values;
-      double *dict = (double*) pp->dicts[cl][rg].buffer.data();
-      uint32_t *idx = (uint32_t*) pp->dicts[cl][rg].indices.data();
-      while (beg < end) {
-        *beg++ = dict[*idx++];
-      }
-      break;
-    }
-    case LGLSXP: {                                                     // # nocov start
-      int *beg = LOGICAL(x) + from;
-      int *end = beg + num_values;
-      int *dict = (int*) pp->dicts[cl][rg].buffer.data();
-      uint32_t *idx = (uint32_t*) pp->dicts[cl][rg].indices.data();
-      while (beg < end) {
-        *beg++ = dict[*idx++];
-      }
-      break;                                                           // # nocov end
-    }
-    }
-  }
-}
-
-void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
-  bool hasdict0 = pp->dicts[cl].size() > 0;
-  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    // in theory some row groups might be dict encoded, some not
-    bool hasdict = hasdict0 && pp->dicts[cl][rg].dict_len > 0;
-    uint32_t num_present = pp->present[cl][rg].num_present;
-    bool hasmiss = num_present != num_values;
-    if (!hasdict && !hasmiss) {
-      continue;
-    } else if (!hasdict && hasmiss) {
-      // missing values in place
-      int64_t from = pp->metadata.row_group_offsets[rg];
-      SEXP x = VECTOR_ELT(pp->columns, cl);
-      switch (TYPEOF(x)) {
-      case INTSXP: {
-        int *beg = INTEGER(x) + from;
-        int *endm1 = beg + num_values - 1;
-        int *pendm1 = beg + num_present - 1;
-        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-        uint32_t num_miss = num_values - num_present;
-        while (num_miss > 0) {
-          if (*presm1 != 0) {
-            *endm1-- = *pendm1--;
-            presm1--;
-          } else {
-            *endm1-- = NA_INTEGER;
-            presm1--;
-            num_miss--;
-          }
-        }
-        break;
-      }
-      case REALSXP: {
-        double *beg = REAL(x) + from;
-        double *endm1 = beg + num_values - 1;
-        double *pendm1 = beg + num_present - 1;
-        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-        uint32_t num_miss = num_values - num_present;
-        while (num_miss > 0) {
-          if (*presm1) {
-            *endm1-- = *pendm1--;
-            presm1--;
-          } else {
-            *endm1-- = NA_REAL;
-            presm1--;
-            num_miss--;
-          }
-        }
-        break;
-      }
-      case LGLSXP: {
-        int *beg = LOGICAL(x) + from;
-        int *endm1 = beg + num_values - 1;
-        int *pendm1 = beg + num_present - 1;
-        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-        uint32_t num_miss = num_values - num_present;
-        while (num_miss > 0) {
-          if (*presm1) {
-            *endm1-- = *pendm1--;
-            presm1--;
-          } else {
-            *endm1-- = NA_LOGICAL;
-            presm1--;
-            num_miss--;
-          }
-        }
-        break;
-      }
-      default:
-        throw std::runtime_error("Unknown type when processing dictionaries"); // # nocov
-      }
-    } else if (hasdict && !hasmiss) {
-      // only dict
-      int64_t from = pp->metadata.row_group_offsets[rg];
+    if (pp->dicts[cl][rg].dict_len == 0) continue;
+    std::vector<dict_step> &dss = pp->dict_steps[cl][rg];
+    for (uint32_t dsi = 0; dsi < dss.size(); dsi++) {
+      if (!dss[dsi].dict) continue;
+      int64_t from = dss[dsi].start;
+      int64_t num_values = dss[dsi].num_values;
       SEXP x = VECTOR_ELT(pp->columns, cl);
       switch (TYPEOF(x)) {
       case INTSXP: {
@@ -647,8 +547,7 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         }
         break;
       }
-      case LGLSXP: {                                                   // # nocov start
-        // BOOLEAN dictionaries are not really possible...
+      case LGLSXP: {                                                     // # nocov start
         int *beg = LOGICAL(x) + from;
         int *end = beg + num_values;
         int *dict = (int*) pp->dicts[cl][rg].buffer.data();
@@ -656,73 +555,186 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
         while (beg < end) {
           *beg++ = dict[*idx++];
         }
-        break;                                                         // # nocov end
+        break;                                                           // # nocov end
       }
-      default:
-        throw std::runtime_error("Unknown type when processing dictionaries"); // # nocov
       }
-    } else if (hasdict && hasmiss) {
-      // dict + missing values
-      int64_t from = pp->metadata.row_group_offsets[rg];
-      SEXP x = VECTOR_ELT(pp->columns, cl);
-      switch (TYPEOF(x)) {
-      case INTSXP: {
-        int *beg = INTEGER(x) + from;
-        int *endm1 = beg + num_values - 1;
-        int *dict = (int*) pp->dicts[cl][rg].buffer.data();
-        uint32_t *idxm1 =
-          (uint32_t*) pp->dicts[cl][rg].indices.data() + num_present - 1;
-        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-        while (endm1 >= beg) {
-          if (*presm1) {
-            *endm1-- = dict[*idxm1--];
-            presm1--;
-          } else {
-            *endm1-- = NA_INTEGER;
-            presm1--;
+    }
+  }
+}
+
+void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    std::vector<dict_step> &dss = pp->dict_steps[cl][rg];
+    for (uint32_t dsi = 0; dsi < dss.size(); dsi++) {
+      int64_t from = dss[dsi].start;
+      uint32_t num_values = dss[dsi].num_values;
+      int64_t num_present = dss[dsi].num_present;
+      bool hasmiss = num_present != num_values;
+      bool hasdict = dss[dsi].dict;
+      if (!hasdict && !hasmiss) {
+        continue;
+      } else if (!hasdict && hasmiss) {
+        // missing values in place
+        SEXP x = VECTOR_ELT(pp->columns, cl);
+        switch (TYPEOF(x)) {
+        case INTSXP: {
+          int *beg = INTEGER(x) + from;
+          int *endm1 = beg + num_values - 1;
+          int *pendm1 = beg + num_present - 1;
+          uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+          uint32_t num_miss = num_values - num_present;
+          while (num_miss > 0) {
+            if (*presm1 != 0) {
+              *endm1-- = *pendm1--;
+              presm1--;
+            } else {
+              *endm1-- = NA_INTEGER;
+              presm1--;
+              num_miss--;
+            }
           }
+          break;
         }
-        break;
-      }
-      case REALSXP: {
-        double *beg = REAL(x) + from;
-        double *endm1 = beg + num_values - 1;
-        double *dict = (double*) pp->dicts[cl][rg].buffer.data();
-        uint32_t *idxm1 =
-          (uint32_t*) pp->dicts[cl][rg].indices.data() + num_present - 1;
-        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-        while (endm1 >= beg) {
-          if (*presm1) {
-            *endm1-- = dict[*idxm1--];
-            presm1--;
-          } else {
-            *endm1-- = NA_REAL;
-            presm1--;
+        case REALSXP: {
+          double *beg = REAL(x) + from;
+          double *endm1 = beg + num_values - 1;
+          double *pendm1 = beg + num_present - 1;
+          uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+          uint32_t num_miss = num_values - num_present;
+          while (num_miss > 0) {
+            if (*presm1) {
+              *endm1-- = *pendm1--;
+              presm1--;
+            } else {
+              *endm1-- = NA_REAL;
+              presm1--;
+              num_miss--;
+            }
           }
+          break;
         }
-        break;
-      }
-      case LGLSXP: {
-        // BOOLEAN dictionaries are not really possible... // # nocov start
-        int *beg = LOGICAL(x) + from;
-        int *endm1 = beg + num_values - 1;
-        int *dict = (int*) pp->dicts[cl][rg].buffer.data();
-        uint32_t *idxm1 =
-          (uint32_t*) pp->dicts[cl][rg].indices.data() + num_present - 1;
-        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-        while (endm1 >= beg) {
-          if (*presm1) {
-            *endm1-- = dict[*idxm1--];
-            presm1--;
-          } else {
-            *endm1-- = NA_LOGICAL;
-            presm1--;
+        case LGLSXP: {
+          int *beg = LOGICAL(x) + from;
+          int *endm1 = beg + num_values - 1;
+          int *pendm1 = beg + num_present - 1;
+          uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+          uint32_t num_miss = num_values - num_present;
+          while (num_miss > 0) {
+            if (*presm1) {
+              *endm1-- = *pendm1--;
+              presm1--;
+            } else {
+              *endm1-- = NA_LOGICAL;
+              presm1--;
+              num_miss--;
+            }
           }
+          break;
         }
-        break;                                             // # nocov end
-      }
-      default:
-        throw std::runtime_error("Unknown type when processing dictionaries"); // # nocov
+        default:
+          throw std::runtime_error("Unknown type when processing dictionaries"); // # nocov
+        }
+      } else if (hasdict && !hasmiss) {
+        // only dict
+        SEXP x = VECTOR_ELT(pp->columns, cl);
+        switch (TYPEOF(x)) {
+        case INTSXP: {
+          int *beg = INTEGER(x) + from;
+          int *end = beg + num_values;
+          int *dict = (int*) pp->dicts[cl][rg].buffer.data();
+          uint32_t *idx = (uint32_t*) pp->dicts[cl][rg].indices.data();
+          while (beg < end) {
+            *beg++ = dict[*idx++];
+          }
+          break;
+        }
+        case REALSXP: {
+          double *beg = REAL(x) + from;
+          double *end = beg + num_values;
+          double *dict = (double*) pp->dicts[cl][rg].buffer.data();
+          uint32_t *idx = (uint32_t*) pp->dicts[cl][rg].indices.data();
+          while (beg < end) {
+            *beg++ = dict[*idx++];
+          }
+          break;
+        }
+        case LGLSXP: {                                                   // # nocov start
+          // BOOLEAN dictionaries are not really possible...
+          int *beg = LOGICAL(x) + from;
+          int *end = beg + num_values;
+          int *dict = (int*) pp->dicts[cl][rg].buffer.data();
+          uint32_t *idx = (uint32_t*) pp->dicts[cl][rg].indices.data();
+          while (beg < end) {
+            *beg++ = dict[*idx++];
+          }
+          break;                                                         // # nocov end
+        }
+        default:
+          throw std::runtime_error("Unknown type when processing dictionaries"); // # nocov
+        }
+      } else if (hasdict && hasmiss) {
+        // dict + missing values
+        int64_t from = pp->metadata.row_group_offsets[rg];
+        SEXP x = VECTOR_ELT(pp->columns, cl);
+        switch (TYPEOF(x)) {
+        case INTSXP: {
+          int *beg = INTEGER(x) + from;
+          int *endm1 = beg + num_values - 1;
+          int *dict = (int*) pp->dicts[cl][rg].buffer.data();
+          uint32_t *idxm1 =
+            (uint32_t*) pp->dicts[cl][rg].indices.data() + num_present - 1;
+          uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+          while (endm1 >= beg) {
+            if (*presm1) {
+              *endm1-- = dict[*idxm1--];
+              presm1--;
+            } else {
+              *endm1-- = NA_INTEGER;
+              presm1--;
+            }
+          }
+          break;
+        }
+        case REALSXP: {
+          double *beg = REAL(x) + from;
+          double *endm1 = beg + num_values - 1;
+          double *dict = (double*) pp->dicts[cl][rg].buffer.data();
+          uint32_t *idxm1 =
+            (uint32_t*) pp->dicts[cl][rg].indices.data() + num_present - 1;
+          uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+          while (endm1 >= beg) {
+            if (*presm1) {
+              *endm1-- = dict[*idxm1--];
+              presm1--;
+            } else {
+              *endm1-- = NA_REAL;
+              presm1--;
+            }
+          }
+          break;
+        }
+        case LGLSXP: {
+          // BOOLEAN dictionaries are not really possible... // # nocov start
+          int *beg = LOGICAL(x) + from;
+          int *endm1 = beg + num_values - 1;
+          int *dict = (int*) pp->dicts[cl][rg].buffer.data();
+          uint32_t *idxm1 =
+            (uint32_t*) pp->dicts[cl][rg].indices.data() + num_present - 1;
+          uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+          while (endm1 >= beg) {
+            if (*presm1) {
+              *endm1-- = dict[*idxm1--];
+              presm1--;
+            } else {
+              *endm1-- = NA_LOGICAL;
+              presm1--;
+            }
+          }
+          break;                                             // # nocov end
+        }
+        default:
+          throw std::runtime_error("Unknown type when processing dictionaries"); // # nocov
+        }
       }
     }
   }
@@ -743,30 +755,31 @@ void convert_column_to_r_int64_nodict_nomiss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_int64_dict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    int64_t from = pp->metadata.row_group_offsets[rg];
-    // in theory some row groups might be dict encoded, some not
-    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
-    double *beg = REAL(x) + from;
-    double *end = beg + num_values;
-    if (!hasdict) {
-      int64_t *ibeg = (int64_t*) beg;
-      while (beg < end) {
-        *beg++ = static_cast<double>(*ibeg++);
-      }
-    } else {
-      // first convert tbe dict values
-      double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
-      double *dend = dbeg + pp->dicts[cl][rg].dict_len;
-      int64_t *idbeg = (int64_t *) dbeg;
-      while (dbeg < dend) {
-        *dbeg++ = static_cast<double>(*idbeg++);
-      }
-      double *dict = (double*) pp -> dicts[cl][rg].buffer.data();
-      uint32_t *didx = pp->dicts[cl][rg].indices.data();
-      while (beg < end) {
-        *beg++ = dict[*didx++];
+    std::vector<dict_step> &dss = pp->dict_steps[cl][rg];
+    for (uint32_t dsi = 0; dsi < dss.size(); dsi++) {
+      int64_t from = dss[dsi].start;
+      uint32_t num_values = dss[dsi].num_values;
+      bool hasdict = dss[dsi].dict;
+      double *beg = REAL(x) + from;
+      double *end = beg + num_values;
+      if (!hasdict) {
+        int64_t *ibeg = (int64_t*) beg;
+        while (beg < end) {
+          *beg++ = static_cast<double>(*ibeg++);
+        }
+      } else {
+        // first convert tbe dict values
+        double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
+        double *dend = dbeg + pp->dicts[cl][rg].dict_len;
+        int64_t *idbeg = (int64_t *) dbeg;
+        while (dbeg < dend) {
+          *dbeg++ = static_cast<double>(*idbeg++);
+        }
+        double *dict = (double*) pp -> dicts[cl][rg].buffer.data();
+        uint32_t *didx = pp->dicts[cl][rg].indices.data();
+        while (beg < end) {
+          *beg++ = dict[*didx++];
+        }
       }
     }
   }
@@ -808,64 +821,67 @@ void convert_column_to_r_int64_nodict_miss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_int64_dict_miss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
-    // In theory this happen
-    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
-    if (!hasdict) {
-      int64_t *ibeg = (int64_t *)beg;
-      uint32_t num_present = pp->present[cl][rg].num_present;
+    std::vector<dict_step> &dss = pp->dict_steps[cl][rg];
+    bool rg_dict_converted = false;
+    for (uint32_t dsi = 0; dsi < dss.size(); dsi++) {
+      int64_t from = dss[dsi].start;
+      uint32_t num_values = dss[dsi].num_values;
+      uint32_t num_present = dss[dsi].num_present;
+      bool hasdict = dss[dsi].dict;
       bool hasmiss = num_present != num_values;
-      if (!hasmiss) {
-        double *end = beg + num_values;
-        while (beg < end) {
-          *beg++ = static_cast<double>(*ibeg++);
-        }
-      } else {
-        double *endm1 = beg + num_values - 1;
-        int64_t *pendm1 = ibeg + num_present - 1;
-        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-        while (beg <= endm1) {
-          if (*presm1) {
-            *endm1-- = static_cast<double>(*pendm1--);
-            presm1--;
-          } else {
-            *endm1-- = NA_REAL;
-            presm1--;
+      double *beg = REAL(x) + from;
+      // In theory this happen
+      if (!hasdict) {
+        int64_t *ibeg = (int64_t *)beg;
+        if (!hasmiss) {
+          double *end = beg + num_values;
+          while (beg < end) {
+            *beg++ = static_cast<double>(*ibeg++);
+          }
+        } else {
+          double *endm1 = beg + num_values - 1;
+          int64_t *pendm1 = ibeg + num_present - 1;
+          uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+          while (beg <= endm1) {
+            if (*presm1) {
+              *endm1-- = static_cast<double>(*pendm1--);
+              presm1--;
+            } else {
+              *endm1-- = NA_REAL;
+              presm1--;
+            }
           }
         }
-      }
 
-    } else {
-      // convert dict values first
-      double *dbeg = (double *)pp->dicts[cl][rg].buffer.data();
-      double *dend = dbeg + pp->dicts[cl][rg].dict_len;
-      int64_t *idbeg = (int64_t *)dbeg;
-      while (dbeg < dend) {
-        *dbeg++ = static_cast<double>(*idbeg++);
-      }
-      double *dict = (double *)pp->dicts[cl][rg].buffer.data();
-
-      uint32_t num_present = pp->present[cl][rg].num_present;
-      bool hasmiss = num_present != num_values;
-      if (!hasmiss) {
-        double *end = beg + num_values;
-        uint32_t *didx = pp->dicts[cl][rg].indices.data();
-        while (beg < end) {
-          *beg++ = dict[*didx++];
-        }
       } else {
-        double *endm1 = beg + num_values - 1;
-        uint32_t *dendm1 = pp->dicts[cl][rg].indices.data() + num_present - 1;
-        uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-        while (beg <= endm1) {
-          if (*presm1) {
-            *endm1-- = dict[*dendm1--];
-            presm1--;
-          } else {
-            *endm1-- = NA_REAL;
-            presm1--;
+        // convert dict values first, if not yet done
+        if (!rg_dict_converted) {
+          double *dbeg = (double *)pp->dicts[cl][rg].buffer.data();
+          double *dend = dbeg + pp->dicts[cl][rg].dict_len;
+          int64_t *idbeg = (int64_t *)dbeg;
+          while (dbeg < dend) {
+            *dbeg++ = static_cast<double>(*idbeg++);
+          }
+        }
+        double *dict = (double *)pp->dicts[cl][rg].buffer.data();
+        if (!hasmiss) {
+          double *end = beg + num_values;
+          uint32_t *didx = pp->dicts[cl][rg].indices.data();
+          while (beg < end) {
+            *beg++ = dict[*didx++];
+          }
+        } else {
+          double *endm1 = beg + num_values - 1;
+          uint32_t *dendm1 = pp->dicts[cl][rg].indices.data() + num_present - 1;
+          uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+          while (beg <= endm1) {
+            if (*presm1) {
+              *endm1-- = dict[*dendm1--];
+              presm1--;
+            } else {
+              *endm1-- = NA_REAL;
+              presm1--;
+            }
           }
         }
       }
@@ -2028,8 +2044,67 @@ void convert_columns_to_r_(postprocess *pp) {
   }
 }
 
+void RParquetReader::calculate_dict_steps() {
+  if (notdicts.size() == 0) {
+    calculate_dict_steps_simple();
+  } else {
+    calculate_dict_steps_bad();
+  }
+}
+
+void RParquetReader::calculate_dict_steps_simple() {
+  dict_steps.resize(metadata.num_cols_to_read);
+  for (uint32_t cl = 0; cl < metadata.num_cols_to_read; cl++) {
+    dict_steps[cl].resize(metadata.num_row_groups);
+    bool dict0 = dicts[cl].size() != 0;
+    for (uint32_t rg = 0; rg < metadata.num_row_groups; rg++) {
+      int64_t rgo = metadata.row_group_offsets[rg];
+      int64_t num_values = metadata.row_group_num_rows[rg];
+      uint32_t num_present = present[cl].size() == 0 ?
+        num_values : present[cl][rg].num_present;
+      bool dict = dict0 && dicts[cl][rg].dict_len > 0;
+      dict_step ds = { rgo, num_values, num_present, dict };
+      dict_steps[cl][rg].push_back(ds);
+    }
+  }
+}
+
+void RParquetReader::calculate_dict_steps_bad() {
+  // start with assuming no bad pages (bad = not dict encoded in dict col)
+  calculate_dict_steps_simple();
+  // now post-process this
+  for (page_range &bad: notdicts) {
+    int64_t bad_end = bad.start + bad.num_values;
+    std::vector<dict_step> &dss = dict_steps[bad.column][bad.row_group];
+    // find the dict step it applies to
+    for (auto ds = dss.begin(); ds != dss.end(); ++ds) {
+      int64_t ds_end = ds->start + ds->num_values;
+      if (bad.start >= ds->start && bad.start < ds_end) {
+        if (bad_end > ds_end) {
+          Rf_error("Internal error, impossible mix of dict and non-dict pages");
+        }
+        if (bad_end == ds_end) {
+          ds->num_values -= bad.num_values;
+          ds->num_present -= bad.num_present;
+          dss.insert(++ds, { bad.start, bad.num_values, bad.num_present, false });
+        } else {
+          int64_t num_miss = ds->num_values - ds->num_present;
+          dict_step newsteps[2] = {
+            { bad.start, bad_end - bad.start, bad_end - bad.start, false },
+            { bad_end, ds_end - bad_end, ds_end - bad_end - num_miss, ds->dict }
+          };
+          ds->num_values = bad.start - ds->start;
+          ds->num_present = bad.start - ds->start;
+          dss.insert(++ds, newsteps, newsteps + 2);
+        }
+        break;
+      }
+    }
+  }
+}
+
 void RParquetReader::convert_columns_to_r() {
-  std::vector<uint32_t> col_select;
+  calculate_dict_steps();
   postprocess pp = {
     columns,
     facdicts,
@@ -2037,6 +2112,7 @@ void RParquetReader::convert_columns_to_r() {
     metadata,
     tmpdata,
     dicts,
+    dict_steps,
     byte_arrays,
     present
   };
