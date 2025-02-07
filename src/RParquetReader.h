@@ -96,14 +96,6 @@ struct dict_step {
   bool dict;
 };
 
-struct page_range {
-  uint32_t column;
-  uint32_t row_group;
-  int64_t start;
-  int64_t num_values;
-  int64_t num_present;
-};
-
 class RParquetReader : public ParquetReader {
 public:
   RParquetReader(std::string filename, bool readwrite = false);
@@ -131,7 +123,6 @@ public:
 
   std::vector<std::vector<uint8_t>> tmpdata;
   std::vector<std::vector<tmpdict>> dicts;
-  std::vector<page_range> notdicts;
   std::vector<std::vector<std::vector<dict_step>>> dict_steps;
   std::vector<std::vector<std::vector<tmpbytes>>> byte_arrays;
   std::vector<std::vector<presentmap>> present;

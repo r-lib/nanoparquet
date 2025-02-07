@@ -93,6 +93,7 @@ void RParquetReader::init(RParquetFilter &filter) {
 
   tmpdata.resize(metadata.num_cols_to_read);
   dicts.resize(metadata.num_cols_to_read);
+  dict_steps.resize(metadata.num_cols_to_read);
   byte_arrays.resize(metadata.num_cols_to_read);
   present.resize(metadata.num_cols_to_read);
 
@@ -407,6 +408,15 @@ rtype::rtype(parquet::SchemaElement &sel) {
 
 void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
   uint32_t cl = colmap[cc.column] - 1;
+  uint32_t rg = cc.row_group;
+  if (dict_steps[cl].size() == 0) {
+    // first row group of this column
+    dict_steps[cl].resize(metadata.num_row_groups);
+  }
+  dict_steps[cl][rg].push_back(
+    { metadata.row_group_offsets[rg], 0, 0, cc.has_dictionary }
+  );
+
   if (metadata.r_types[cl].byte_array) {
     if (byte_arrays[cl].size() == 0) {
       byte_arrays[cl].resize(metadata.num_row_groups);
@@ -471,8 +481,18 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   // A non-dict-index page in a column chunk that has a
   // dictionary page. Should be rare, but arrow does write
   // these: https://github.com/r-lib/nanoparquet/issues/110
+  std::vector<dict_step> &dss = dict_steps[cl][rg];
+  dict_step &last = dss.back();
   if (has_dict && !is_index) {
-    notdicts.push_back({ cl, rg, page_off, data.num_values, data.num_present });
+    dss.push_back({ page_off, data.num_values, data.num_present, false });
+  } else {
+    // do we need to add a new dict step?
+    if (last.dict) {
+      last.num_values += data.num_values;
+      last.num_present += data.num_present;
+    } else {
+      dss.push_back({ page_off, data.num_values, data.num_present, is_index });
+    }
   }
 
   if (is_index) {
@@ -2044,67 +2064,7 @@ void convert_columns_to_r_(postprocess *pp) {
   }
 }
 
-void RParquetReader::calculate_dict_steps() {
-  if (notdicts.size() == 0) {
-    calculate_dict_steps_simple();
-  } else {
-    calculate_dict_steps_bad();
-  }
-}
-
-void RParquetReader::calculate_dict_steps_simple() {
-  dict_steps.resize(metadata.num_cols_to_read);
-  for (uint32_t cl = 0; cl < metadata.num_cols_to_read; cl++) {
-    dict_steps[cl].resize(metadata.num_row_groups);
-    bool dict0 = dicts[cl].size() != 0;
-    for (uint32_t rg = 0; rg < metadata.num_row_groups; rg++) {
-      int64_t rgo = metadata.row_group_offsets[rg];
-      int64_t num_values = metadata.row_group_num_rows[rg];
-      uint32_t num_present = present[cl].size() == 0 ?
-        num_values : present[cl][rg].num_present;
-      bool dict = dict0 && dicts[cl][rg].dict_len > 0;
-      dict_step ds = { rgo, num_values, num_present, dict };
-      dict_steps[cl][rg].push_back(ds);
-    }
-  }
-}
-
-void RParquetReader::calculate_dict_steps_bad() {
-  // start with assuming no bad pages (bad = not dict encoded in dict col)
-  calculate_dict_steps_simple();
-  // now post-process this
-  for (page_range &bad: notdicts) {
-    int64_t bad_end = bad.start + bad.num_values;
-    std::vector<dict_step> &dss = dict_steps[bad.column][bad.row_group];
-    // find the dict step it applies to
-    for (auto ds = dss.begin(); ds != dss.end(); ++ds) {
-      int64_t ds_end = ds->start + ds->num_values;
-      if (bad.start >= ds->start && bad.start < ds_end) {
-        if (bad_end > ds_end) {
-          Rf_error("Internal error, impossible mix of dict and non-dict pages");
-        }
-        if (bad_end == ds_end) {
-          ds->num_values -= bad.num_values;
-          ds->num_present -= bad.num_present;
-          dss.insert(++ds, { bad.start, bad.num_values, bad.num_present, false });
-        } else {
-          int64_t num_miss = ds->num_values - ds->num_present;
-          dict_step newsteps[2] = {
-            { bad.start, bad_end - bad.start, bad_end - bad.start, false },
-            { bad_end, ds_end - bad_end, ds_end - bad_end - num_miss, ds->dict }
-          };
-          ds->num_values = bad.start - ds->start;
-          ds->num_present = bad.start - ds->start;
-          dss.insert(++ds, newsteps, newsteps + 2);
-        }
-        break;
-      }
-    }
-  }
-}
-
 void RParquetReader::convert_columns_to_r() {
-  calculate_dict_steps();
   postprocess pp = {
     columns,
     facdicts,
