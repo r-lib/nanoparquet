@@ -1312,49 +1312,58 @@ void convert_column_to_r_ba_string_dict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, lcl);
   SET_VECTOR_ELT(pp->facdicts, lcl, Rf_allocVector(VECSXP, pp->metadata.num_row_groups));
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    int64_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
-    if (!hasdict) {
-      std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
-      for (auto it = rgba.begin(); it != rgba.end(); ++it) {
-        int64_t from = it->from;
-        for (auto i = 0; i < it->offsets.size(); i++) {
-          SEXP xi = Rf_mkCharLenCE(
-            (char*) it->buffer.data() + it->offsets[i],
-            it->lengths[i],
-            CE_UTF8
-          );
-          SET_STRING_ELT(x, from, xi);
-          from++;
-        }
-      }
-    } else {
-      // convert dictionary first
-      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
-      SEXP tmp = PROTECT(Rf_allocVector(STRSXP, dict_len));
-      tmpbytes &ba = pp->dicts[cl][rg].bytes;
-      for (uint32_t i = 0; i < dict_len; i++) {
+    // first the non-dict parts, if any
+    std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
+    for (auto it = rgba.begin(); it != rgba.end(); ++it) {
+      int64_t from = it->from;
+      for (auto i = 0; i < it->offsets.size(); i++) {
         SEXP xi = Rf_mkCharLenCE(
-          (char*) ba.buffer.data() + ba.offsets[i],
-          ba.lengths[i],
+          (char*) it->buffer.data() + it->offsets[i],
+          it->lengths[i],
           CE_UTF8
         );
-        SET_STRING_ELT(tmp, i, xi);
+        SET_STRING_ELT(x, from, xi);
+        from++;
       }
-      SET_VECTOR_ELT(VECTOR_ELT(pp->facdicts, lcl), rg, tmp);
+    }
+
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    bool rg_dict_converted = false;
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    SEXP tmp = R_NilValue;
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t cp_offset = cps[cpi].offset;
+      uint32_t cp_num_present = cps[cpi].num_present;
+      bool hasdict = cps[cpi].dict;
+      if (!hasdict) continue;
+      // convert dictionary first
+      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+      if (!rg_dict_converted && dict_len > 0) {
+        rg_dict_converted = true;
+        tmp = PROTECT(Rf_allocVector(STRSXP, dict_len));
+        tmpbytes &ba = pp->dicts[cl][rg].bytes;
+        for (uint32_t i = 0; i < dict_len; i++) {
+          SEXP xi = Rf_mkCharLenCE(
+            (char*) ba.buffer.data() + ba.offsets[i],
+            ba.lengths[i],
+            CE_UTF8
+          );
+          SET_STRING_ELT(tmp, i, xi);
+        }
+        SET_VECTOR_ELT(VECTOR_ELT(pp->facdicts, lcl), rg, tmp);
+      }
 
       // fill in
-      uint32_t *didx = pp->dicts[cl][rg].indices.data();
-      uint32_t *end = didx + pp->dicts[cl][rg].indices.size();
-      int64_t from = pp->metadata.row_group_offsets[rg];
+      uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+      uint32_t *end = didx + cp_num_present;
+      int64_t from = rg_offset + cp_offset;
       while (didx < end) {
         SET_STRING_ELT(x, from, STRING_ELT(tmp, *didx));
         from++;
         didx++;
       }
-      UNPROTECT(1);
     }
+    if (!Rf_isNull(tmp)) UNPROTECT(1);
   }
 }
 
