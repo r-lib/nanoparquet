@@ -90,7 +90,7 @@ public:
 };
 
 struct chunk_part {
-  int64_t start;
+  int64_t offset;         // within the row group
   int64_t num_values;
   int64_t num_present;
   bool dict;
