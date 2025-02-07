@@ -462,17 +462,6 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   auto rg = data.cc.row_group;
   rtype rt = metadata.r_types[cl];
 
-  // If there are missing values, then the page offset is defined by
-  // the number of present values. I.e. within each column chunk we put the
-  // present values at the beginning of the memory allocated for that
-  // column chunk.
-  uint32_t page_off = data.from;
-  if (data.cc.optional) {
-    page_off = present[cl][rg].num_present;
-    present[cl][rg].num_present += data.num_present;
-    data.present = present[cl][rg].map.data() + data.from;
-  }
-
   bool has_dict = data.cc.has_dictionary;
   bool is_index = has_dict &&
     (data.encoding == parquet::Encoding::RLE_DICTIONARY ||
@@ -481,18 +470,31 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   // A non-dict-index page in a column chunk that has a
   // dictionary page. Should be rare, but arrow does write
   // these: https://github.com/r-lib/nanoparquet/issues/110
+  uint32_t page_off = data.from;
   std::vector<chunk_part> &cps = chunk_parts[cl][rg];
   chunk_part &last = cps.back();
   if (has_dict && !is_index) {
-    cps.push_back({ page_off, data.num_values, data.num_present, false });
+    cps.push_back({ data.from, data.num_values, data.num_present, false });
   } else {
-    // do we need to add a new dict step?
-    if (last.dict) {
+    // do we need to add a new dict step? not if no dicts or last is dict
+    if (!has_dict || last.dict) {
+      if (data.cc.optional) {
+        // If there are missing values, then the page offset is defined by
+        // the number of present values. I.e. within each column chunk we put the
+        // present values at the beginning of the memory allocated for that
+        // column chunk.
+        page_off = present[cl][rg].num_present;
+      }
       last.num_values += data.num_values;
       last.num_present += data.num_present;
     } else {
-      cps.push_back({ page_off, data.num_values, data.num_present, is_index });
+      cps.push_back({ data.from, data.num_values, data.num_present, is_index });
     }
+  }
+
+  if (data.cc.optional) {
+    present[cl][rg].num_present += data.num_present;
+    data.present = present[cl][rg].map.data() + data.from;
   }
 
   if (is_index) {
