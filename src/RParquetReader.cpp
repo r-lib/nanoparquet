@@ -1312,18 +1312,20 @@ void convert_column_to_r_ba_string_dict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, lcl);
   SET_VECTOR_ELT(pp->facdicts, lcl, Rf_allocVector(VECSXP, pp->metadata.num_row_groups));
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    // first the non-dict parts, if any
-    std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
-    for (auto it = rgba.begin(); it != rgba.end(); ++it) {
-      int64_t from = it->from;
-      for (auto i = 0; i < it->offsets.size(); i++) {
-        SEXP xi = Rf_mkCharLenCE(
-          (char*) it->buffer.data() + it->offsets[i],
-          it->lengths[i],
-          CE_UTF8
-        );
-        SET_STRING_ELT(x, from, xi);
-        from++;
+    if (pp->byte_arrays[cl].size() > 0) {
+      // first the non-dict parts, if any
+      std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
+      for (auto it = rgba.begin(); it != rgba.end(); ++it) {
+        int64_t from = it->from;
+        for (auto i = 0; i < it->offsets.size(); i++) {
+          SEXP xi = Rf_mkCharLenCE(
+            (char*) it->buffer.data() + it->offsets[i],
+            it->lengths[i],
+            CE_UTF8
+          );
+          SET_STRING_ELT(x, from, xi);
+          from++;
+        }
       }
     }
 
@@ -1487,10 +1489,8 @@ void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
   int32_t scale = pp->metadata.r_types[cl].scale;
   double fct = std::pow(10.0, scale);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
-    if (!hasdict) {
+    if (pp->byte_arrays[cl].size() > 0) {
+      // first the non-dict parts, if any
       std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
       for (auto it = rgba.begin(); it != rgba.end(); ++it) {
         int64_t from = it->from;
@@ -1499,24 +1499,37 @@ void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
           beg[i] = parse_decimal(it->buffer.data() + it->offsets[i], it->lengths[i]) / fct;
         }
       }
-    } else {
+    }
+
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    bool rg_dict_converted = false;
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    SEXP tmp = R_NilValue;
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t cp_offset = cps[cpi].offset;
+      uint32_t cp_num_present = cps[cpi].num_present;
+      bool hasdict = cps[cpi].dict;
+      if (!hasdict) continue;
       // convert dictionary first
       uint32_t dict_len = pp->dicts[cl][rg].dict_len;
-      SEXP tmp = PROTECT(Rf_allocVector(REALSXP, dict_len));
-      tmpbytes &ba = pp->dicts[cl][rg].bytes;
-      for (uint32_t i = 0; i < dict_len; i++) {
-        REAL(tmp)[i] = parse_decimal(ba.buffer.data() + ba.offsets[i], ba.lengths[i]) / fct;
+      if (!rg_dict_converted && dict_len > 0) {
+        rg_dict_converted = true;
+        tmp = PROTECT(Rf_allocVector(REALSXP, dict_len));
+        tmpbytes &ba = pp->dicts[cl][rg].bytes;
+        for (uint32_t i = 0; i < dict_len; i++) {
+          REAL(tmp)[i] = parse_decimal(ba.buffer.data() + ba.offsets[i], ba.lengths[i]) / fct;
+        }
       }
 
       // fill in
-      uint32_t *didx = pp->dicts[cl][rg].indices.data();
-      uint32_t *end = didx + pp->dicts[cl][rg].indices.size();
-      int64_t from = pp->metadata.row_group_offsets[rg];
+      uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+      uint32_t *end = didx + cp_num_present;
+      int64_t from = rg_offset + cp_offset;
       while (didx < end) {
         REAL(x)[from++] = REAL(tmp)[*didx++];
       }
-      UNPROTECT(1);
     }
+    if (!Rf_isNull(tmp)) UNPROTECT(1);
   }
 }
 
@@ -1567,10 +1580,8 @@ void convert_column_to_r_ba_raw_nodict_nomiss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_ba_raw_dict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
-    if (!hasdict) {
+    if (pp->byte_arrays[cl].size() > 0) {
+      // first the non-dict parts, if any
       std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
       for (auto it = rgba.begin(); it != rgba.end(); ++it) {
         int64_t from = it->from;
@@ -1581,28 +1592,41 @@ void convert_column_to_r_ba_raw_dict_nomiss(postprocess *pp, uint32_t cl) {
           from++;
         }
       }
-    } else {
+    }
+
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    bool rg_dict_converted = false;
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    SEXP tmp = R_NilValue;
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t cp_offset = cps[cpi].offset;
+      uint32_t cp_num_present = cps[cpi].num_present;
+      bool hasdict = cps[cpi].dict;
+      if (!hasdict) continue;
       // convert dictionary first
       uint32_t dict_len = pp->dicts[cl][rg].dict_len;
-      SEXP tmp = PROTECT(Rf_allocVector(VECSXP, dict_len));
-      tmpbytes &ba = pp->dicts[cl][rg].bytes;
-      for (uint32_t i = 0; i < dict_len; i++) {
-        SEXP xi = Rf_allocVector(RAWSXP, ba.lengths[i]);
-        memcpy(RAW(xi), ba.buffer.data() + ba.offsets[i], ba.lengths[i]);
-        SET_VECTOR_ELT(tmp, i, xi);
+      if (!rg_dict_converted && dict_len > 0) {
+        rg_dict_converted = true;
+        tmp = PROTECT(Rf_allocVector(VECSXP, dict_len));
+        tmpbytes &ba = pp->dicts[cl][rg].bytes;
+        for (uint32_t i = 0; i < dict_len; i++) {
+          SEXP xi = Rf_allocVector(RAWSXP, ba.lengths[i]);
+          memcpy(RAW(xi), ba.buffer.data() + ba.offsets[i], ba.lengths[i]);
+          SET_VECTOR_ELT(tmp, i, xi);
+        }
       }
 
       // fill in
-      uint32_t *didx = pp->dicts[cl][rg].indices.data();
-      uint32_t *end = didx + pp->dicts[cl][rg].indices.size();
-      int64_t from = pp->metadata.row_group_offsets[rg];
+      uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+      uint32_t *end = didx + cp_num_present;
+      int64_t from = rg_offset + cp_offset;
       while (didx < end) {
         SET_VECTOR_ELT(x, from, VECTOR_ELT(tmp, *didx));
         from++;
         didx++;
       }
-      UNPROTECT(1);
     }
+    if (!Rf_isNull(tmp)) UNPROTECT(1);
   }
 }
 
@@ -1686,10 +1710,8 @@ void convert_column_to_r_ba_uuid_dict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   char uuid[37];
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
-    if (!hasdict) {
+    if (pp->byte_arrays[cl].size() > 0) {
+      // first the non-dict parts, if any
       std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
       for (auto it = rgba.begin(); it != rgba.end(); ++it) {
         int64_t from = it->from;
@@ -1705,33 +1727,46 @@ void convert_column_to_r_ba_uuid_dict_nomiss(postprocess *pp, uint32_t cl) {
           from++;
         }
       }
-    } else {
+    }
+
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    bool rg_dict_converted = false;
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    SEXP tmp = R_NilValue;
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t cp_offset = cps[cpi].offset;
+      uint32_t cp_num_present = cps[cpi].num_present;
+      bool hasdict = cps[cpi].dict;
+      if (!hasdict) continue;
       // convert dictionary first
       uint32_t dict_len = pp->dicts[cl][rg].dict_len;
-      SEXP tmp = PROTECT(Rf_allocVector(STRSXP, dict_len));
-      tmpbytes &ba = pp->dicts[cl][rg].bytes;
-      for (uint32_t i = 0; i < dict_len; i++) {
-        unsigned char *s = (unsigned char*) ba.buffer.data() + ba.offsets[i];
-        snprintf(
-          uuid, 37,
-          "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-          s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9],
-          s[10], s[11], s[12], s[13], s[14], s[15]
-        );
-        SET_STRING_ELT(tmp, i, Rf_mkCharLenCE(uuid, 36, CE_UTF8));
+      if (!rg_dict_converted && dict_len > 0) {
+        rg_dict_converted = true;
+        tmp = PROTECT(Rf_allocVector(STRSXP, dict_len));
+        tmpbytes &ba = pp->dicts[cl][rg].bytes;
+        for (uint32_t i = 0; i < dict_len; i++) {
+          unsigned char *s = (unsigned char*) ba.buffer.data() + ba.offsets[i];
+          snprintf(
+            uuid, 37,
+            "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+            s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9],
+            s[10], s[11], s[12], s[13], s[14], s[15]
+          );
+          SET_STRING_ELT(tmp, i, Rf_mkCharLenCE(uuid, 36, CE_UTF8));
+        }
       }
 
       // fill in
-      uint32_t *didx = pp->dicts[cl][rg].indices.data();
-      uint32_t *end = didx + pp->dicts[cl][rg].indices.size();
-      int64_t from = pp->metadata.row_group_offsets[rg];
+      uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+      uint32_t *end = didx + cp_num_present;
+      int64_t from = rg_offset + cp_offset;
       while (didx < end) {
         SET_STRING_ELT(x, from, STRING_ELT(tmp, *didx));
         from++;
         didx++;
       }
-      UNPROTECT(1);
     }
+    if (!Rf_isNull(tmp)) UNPROTECT(1);
   }
 }
 
@@ -1781,10 +1816,8 @@ void convert_column_to_r_ba_float16_nodict_nomiss(postprocess *pp, uint32_t cl) 
 void convert_column_to_r_ba_float16_dict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
-    if (!hasdict) {
+    if (pp->byte_arrays[cl].size() > 0) {
+      // first the non-dict parts, if any
       std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
       for (auto it = rgba.begin(); it != rgba.end(); ++it) {
         int64_t from = it->from;
@@ -1794,27 +1827,40 @@ void convert_column_to_r_ba_float16_dict_nomiss(postprocess *pp, uint32_t cl) {
           from++;
         }
       }
-    } else {
+    }
+
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    bool rg_dict_converted = false;
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    SEXP tmp = R_NilValue;
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t cp_offset = cps[cpi].offset;
+      uint32_t cp_num_present = cps[cpi].num_present;
+      bool hasdict = cps[cpi].dict;
+      if (!hasdict) continue;
       // convert dictionary first
       uint32_t dict_len = pp->dicts[cl][rg].dict_len;
-      SEXP tmp = PROTECT(Rf_allocVector(REALSXP, dict_len));
-      tmpbytes &ba = pp->dicts[cl][rg].bytes;
-      for (uint32_t i = 0; i < dict_len; i++) {
-        uint16_t *f = (uint16_t*) (ba.buffer.data() + ba.offsets[i]);
-        REAL(tmp)[i] = float16_to_double(*f);
+      if (!rg_dict_converted && dict_len > 0) {
+        rg_dict_converted = true;
+        tmp = PROTECT(Rf_allocVector(REALSXP, dict_len));
+        tmpbytes &ba = pp->dicts[cl][rg].bytes;
+        for (uint32_t i = 0; i < dict_len; i++) {
+          uint16_t *f = (uint16_t*) (ba.buffer.data() + ba.offsets[i]);
+          REAL(tmp)[i] = float16_to_double(*f);
+        }
       }
 
       // fill in
-      uint32_t *didx = pp->dicts[cl][rg].indices.data();
-      uint32_t *end = didx + pp->dicts[cl][rg].indices.size();
-      int64_t from = pp->metadata.row_group_offsets[rg];
+      uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+      uint32_t *end = didx + cp_num_present;
+      int64_t from = rg_offset + cp_offset;
       while (didx < end) {
         REAL(x)[from] = REAL(tmp)[*didx];
         from++;
         didx++;
       }
-      UNPROTECT(1);
     }
+    if (!Rf_isNull(tmp)) UNPROTECT(1);
   }
 }
 
@@ -1868,34 +1914,40 @@ void convert_column_to_r_int32_decimal_dict_nomiss(postprocess *pp, uint32_t cl)
   int32_t scale = pp->metadata.r_types[cl].scale;
   double fct = std::pow(10.0, scale);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    int64_t off = pp->metadata.row_group_offsets[rg];
-    double *beg = REAL(x) + off;
-    // In theory we might dictionary encode a subset of the columns only
-    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
-    if (!hasdict) {
-      double *end = beg + num_values - 1;
-      int32_t *fend = ((int32_t*) beg) + num_values - 1;
-      while (beg <= end) {
-        *end-- = static_cast<double>(*fend--) / fct;
-      }
-    } else {
-      // Convert the dictionary first
-      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
-      double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
-      double *dend = dbeg + dict_len - 1;
-      int32_t *fdend = ((int32_t*) dbeg) + dict_len - 1;
-      while (dbeg <= dend) {
-        *dend-- = static_cast<double>(*fdend--) / fct;
-      }
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    bool rg_dict_converted = false;
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t cp_offset = cps[cpi].offset;
+      uint32_t cp_num_values = cps[cpi].num_values;
+      bool hasdict = cps[cpi].dict;
+      double *beg = REAL(x) + rg_offset + cp_offset;
+      if (!hasdict) {
+        double *end = beg + cp_num_values - 1;
+        int32_t *fend = ((int32_t*) beg) + cp_num_values - 1;
+        while (beg <= end) {
+          *end-- = static_cast<double>(*fend--) / fct;
+        }
+      } else {
+        // Convert the dictionary first
+        uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+        if (!rg_dict_converted && dict_len > 0) {
+          rg_dict_converted = true;
+          double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
+          double *dend = dbeg + dict_len - 1;
+          int32_t *fdend = ((int32_t*) dbeg) + dict_len - 1;
+          while (dbeg <= dend) {
+            *dend-- = static_cast<double>(*fdend--) / fct;
+          }
+        }
 
-      // fill in the dict
-      double *end = beg + num_values;
-      double *dict = (double*) pp->dicts[cl][rg].buffer.data();
-      uint32_t *didx = pp->dicts[cl][rg].indices.data();
-      while (beg < end) {
-        *beg++ = dict[*didx++];
+        // fill in the dict
+        double *end = beg + cp_num_values;
+        double *dict = (double*) pp->dicts[cl][rg].buffer.data();
+        uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+        while (beg < end) {
+          *beg++ = dict[*didx++];
+        }
       }
     }
   }
@@ -1944,30 +1996,37 @@ void convert_column_to_r_int64_decimal_dict_nomiss(postprocess *pp, uint32_t cl)
   int32_t scale = pp->metadata.r_types[cl].scale;
   double fct = std::pow(10.0, scale);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    int64_t from = pp->metadata.row_group_offsets[rg];
-    // in theory some row groups might be dict encoded, some not
-    bool hasdict = pp->dicts[cl][rg].dict_len > 0;
-    double *beg = REAL(x) + from;
-    double *end = beg + num_values;
-    if (!hasdict) {
-      int64_t *ibeg = (int64_t*) beg;
-      while (beg < end) {
-        *beg++ = static_cast<double>(*ibeg++) / fct;
-      }
-    } else {
-      // convert dictionary first
-      double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
-      double *dend = dbeg + pp->dicts[cl][rg].dict_len;
-      int64_t *idbeg = (int64_t *) dbeg;
-      while (dbeg < dend) {
-        *dbeg++ = static_cast<double>(*idbeg++) / fct;
-      }
-      double *dict = (double*) pp -> dicts[cl][rg].buffer.data();
-      uint32_t *didx = pp->dicts[cl][rg].indices.data();
-      while (beg < end) {
-        *beg++ = dict[*didx++];
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    bool rg_dict_converted = false;
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t cp_offset = cps[cpi].offset;
+      uint32_t cp_num_values = cps[cpi].num_values;
+      bool hasdict = cps[cpi].dict;
+      double *beg = REAL(x) + rg_offset + cp_offset;
+      double *end = beg + cp_num_values;
+      if (!hasdict) {
+        int64_t *ibeg = (int64_t*) beg;
+        while (beg < end) {
+          *beg++ = static_cast<double>(*ibeg++) / fct;
+        }
+      } else {
+        // convert dictionary first
+        uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+        if (!rg_dict_converted && dict_len > 0) {
+          rg_dict_converted = true;
+          double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
+          double *dend = dbeg + dict_len;
+          int64_t *idbeg = (int64_t *) dbeg;
+          while (dbeg < dend) {
+            *dbeg++ = static_cast<double>(*idbeg++) / fct;
+          }
+        }
+        double *dict = (double*) pp -> dicts[cl][rg].buffer.data();
+        uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+        while (beg < end) {
+          *beg++ = dict[*didx++];
+        }
       }
     }
   }
