@@ -89,7 +89,7 @@ public:
   std::vector<uint32_t> columns;
 };
 
-struct dict_step {
+struct chunk_part {
   int64_t start;
   int64_t num_values;
   int64_t num_present;
@@ -123,7 +123,7 @@ public:
 
   std::vector<std::vector<uint8_t>> tmpdata;
   std::vector<std::vector<tmpdict>> dicts;
-  std::vector<std::vector<std::vector<dict_step>>> dict_steps;
+  std::vector<std::vector<std::vector<chunk_part>>> chunk_parts;
   std::vector<std::vector<std::vector<tmpbytes>>> byte_arrays;
   std::vector<std::vector<presentmap>> present;
   rmetadata metadata;

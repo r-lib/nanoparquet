@@ -93,7 +93,7 @@ void RParquetReader::init(RParquetFilter &filter) {
 
   tmpdata.resize(metadata.num_cols_to_read);
   dicts.resize(metadata.num_cols_to_read);
-  dict_steps.resize(metadata.num_cols_to_read);
+  chunk_parts.resize(metadata.num_cols_to_read);
   byte_arrays.resize(metadata.num_cols_to_read);
   present.resize(metadata.num_cols_to_read);
 
@@ -409,11 +409,11 @@ rtype::rtype(parquet::SchemaElement &sel) {
 void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
   uint32_t cl = colmap[cc.column] - 1;
   uint32_t rg = cc.row_group;
-  if (dict_steps[cl].size() == 0) {
+  if (chunk_parts[cl].size() == 0) {
     // first row group of this column
-    dict_steps[cl].resize(metadata.num_row_groups);
+    chunk_parts[cl].resize(metadata.num_row_groups);
   }
-  dict_steps[cl][rg].push_back(
+  chunk_parts[cl][rg].push_back(
     { metadata.row_group_offsets[rg], 0, 0, cc.has_dictionary }
   );
 
@@ -481,17 +481,17 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   // A non-dict-index page in a column chunk that has a
   // dictionary page. Should be rare, but arrow does write
   // these: https://github.com/r-lib/nanoparquet/issues/110
-  std::vector<dict_step> &dss = dict_steps[cl][rg];
-  dict_step &last = dss.back();
+  std::vector<chunk_part> &cps = chunk_parts[cl][rg];
+  chunk_part &last = cps.back();
   if (has_dict && !is_index) {
-    dss.push_back({ page_off, data.num_values, data.num_present, false });
+    cps.push_back({ page_off, data.num_values, data.num_present, false });
   } else {
     // do we need to add a new dict step?
     if (last.dict) {
       last.num_values += data.num_values;
       last.num_present += data.num_present;
     } else {
-      dss.push_back({ page_off, data.num_values, data.num_present, is_index });
+      cps.push_back({ page_off, data.num_values, data.num_present, is_index });
     }
   }
 
@@ -531,7 +531,7 @@ public:
   rmetadata &metadata;
   std::vector<std::vector<uint8_t>> &tmpdata;
   std::vector<std::vector<tmpdict>> &dicts;
-  std::vector<std::vector<std::vector<dict_step>>> &dict_steps;
+  std::vector<std::vector<std::vector<chunk_part>>> &chunk_parts;
   std::vector<std::vector<std::vector<tmpbytes>>> &byte_arrays;
   std::vector<std::vector<presentmap>> &present;
 };
@@ -540,11 +540,11 @@ void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
   if (pp->dicts[cl].size() == 0) return;
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     if (pp->dicts[cl][rg].dict_len == 0) continue;
-    std::vector<dict_step> &dss = pp->dict_steps[cl][rg];
-    for (uint32_t dsi = 0; dsi < dss.size(); dsi++) {
-      if (!dss[dsi].dict) continue;
-      int64_t from = dss[dsi].start;
-      int64_t num_values = dss[dsi].num_values;
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      if (!cps[cpi].dict) continue;
+      int64_t from = cps[cpi].start;
+      int64_t num_values = cps[cpi].num_values;
       SEXP x = VECTOR_ELT(pp->columns, cl);
       switch (TYPEOF(x)) {
       case INTSXP: {
@@ -584,13 +584,13 @@ void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    std::vector<dict_step> &dss = pp->dict_steps[cl][rg];
-    for (uint32_t dsi = 0; dsi < dss.size(); dsi++) {
-      int64_t from = dss[dsi].start;
-      uint32_t num_values = dss[dsi].num_values;
-      int64_t num_present = dss[dsi].num_present;
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t from = cps[cpi].start;
+      uint32_t num_values = cps[cpi].num_values;
+      int64_t num_present = cps[cpi].num_present;
       bool hasmiss = num_present != num_values;
-      bool hasdict = dss[dsi].dict;
+      bool hasdict = cps[cpi].dict;
       if (!hasdict && !hasmiss) {
         continue;
       } else if (!hasdict && hasmiss) {
@@ -775,11 +775,11 @@ void convert_column_to_r_int64_nodict_nomiss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_int64_dict_nomiss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    std::vector<dict_step> &dss = pp->dict_steps[cl][rg];
-    for (uint32_t dsi = 0; dsi < dss.size(); dsi++) {
-      int64_t from = dss[dsi].start;
-      uint32_t num_values = dss[dsi].num_values;
-      bool hasdict = dss[dsi].dict;
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t from = cps[cpi].start;
+      uint32_t num_values = cps[cpi].num_values;
+      bool hasdict = cps[cpi].dict;
       double *beg = REAL(x) + from;
       double *end = beg + num_values;
       if (!hasdict) {
@@ -841,13 +841,13 @@ void convert_column_to_r_int64_nodict_miss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_int64_dict_miss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    std::vector<dict_step> &dss = pp->dict_steps[cl][rg];
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
     bool rg_dict_converted = false;
-    for (uint32_t dsi = 0; dsi < dss.size(); dsi++) {
-      int64_t from = dss[dsi].start;
-      uint32_t num_values = dss[dsi].num_values;
-      uint32_t num_present = dss[dsi].num_present;
-      bool hasdict = dss[dsi].dict;
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t from = cps[cpi].start;
+      uint32_t num_values = cps[cpi].num_values;
+      uint32_t num_present = cps[cpi].num_present;
+      bool hasdict = cps[cpi].dict;
       bool hasmiss = num_present != num_values;
       double *beg = REAL(x) + from;
       // In theory this happen
@@ -2072,7 +2072,7 @@ void RParquetReader::convert_columns_to_r() {
     metadata,
     tmpdata,
     dicts,
-    dict_steps,
+    chunk_parts,
     byte_arrays,
     present
   };
