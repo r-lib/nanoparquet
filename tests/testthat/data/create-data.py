@@ -129,14 +129,104 @@ def do_decimal():
     dictionary_pagesize_limit = 400
   )
 
+def do_binary():
+  import pyarrow as pa
+  import pyarrow.parquet as pq
+  import random
+  random.seed(10)
+  fields = [
+      pa.field(name = 'ba', type = pa.binary(), nullable = False),
+      pa.field(name = 'bam', type = pa.binary()),
+  ]
+  schema = pa.schema(fields = fields)
+  data = [
+    [ str(x) for x in range(400) ] * 3,
+    [ str(x) for x in range(400) ] * 3,
+  ]
+  for i in range(10):
+    data[1][random.randint(0, 1200-1)] = None
+
+  table = pa.table(data = data, schema = schema)
+  pq.write_table(
+    table,
+    'tests/testthat/data/binary.parquet',
+    data_page_size = 400,
+    dictionary_pagesize_limit = 400
+  )
+
+def do_uuid():
+  import pyarrow as pa
+  import pyarrow.parquet as pq
+  import random
+  import uuid
+  random.seed(10)
+  fields = [
+      pa.field(name = 'ba', type = pa.uuid(), nullable = False),
+      pa.field(name = 'bam', type = pa.uuid()),
+  ]
+  schema = pa.schema(fields = fields)
+  data = [
+    [ uuid.uuid4().bytes for x in range(400) ] * 3,
+    [ uuid.uuid4().bytes for x in range(400) ] * 3,
+  ]
+  for i in range(10):
+    data[1][random.randint(0, 1200-1)] = None
+
+  table = pa.table(data = data, schema = schema)
+  pq.write_table(
+    table,
+    'tests/testthat/data/uuid.parquet',
+    version='2.6',
+    data_page_size = 400,
+    dictionary_pagesize_limit = 400
+  )
+
+def do_float16():
+  import pyarrow as pa
+  import pyarrow.parquet as pq
+  import random
+  import numpy as np
+  random.seed(10)
+  fields = [
+      pa.field(name = 'dba', type = pa.float16(), nullable = False),
+      pa.field(name = 'dbam', type = pa.float16()),
+  ]
+  schema = pa.schema(fields = fields)
+  data = [
+    np.array(list(range(400)) * 3, dtype=np.float16),
+    np.array(list(range(400)) * 3, dtype=np.float16)
+  ]
+  for i in range(10):
+    p = random.randint(0, 1200-1)
+    print(p)
+    data[1][p] = None
+
+  table = pa.table(data = data, schema = schema)
+  pq.write_table(
+    table,
+    'tests/testthat/data/float16.parquet',
+    data_page_size = 400,
+    dictionary_pagesize_limit = 400
+  )
+
 if __name__ == "__main__":
   import sys
   if len(sys.argv) == 1:
     do_float()
     do_mixed()
+    do_decimal()
+    do_binary()
+    do_uuid()
+    do_float16()
   elif sys.argv[1] == 'float':
     do_float()
   elif sys.argv[1] == 'mixed':
     do_mixed()
   elif sys.argv[1] == 'decimal':
     do_decimal()
+  elif sys.argv[1] == 'binary':
+    do_binary()
+  elif sys.argv[1] == 'uuid':
+    do_uuid()
+  elif sys.argv[1] == 'float16':
+    do_float16()

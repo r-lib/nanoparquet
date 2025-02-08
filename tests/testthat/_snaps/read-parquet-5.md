@@ -226,3 +226,43 @@
       11       DATA_PAGE       1024 RLE_DICTIONARY
       12       DATA_PAGE        176          PLAIN
 
+# mixing RLE_DICTIONARY and PLAIN, BYTE_ARRAY
+
+    Code
+      as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
+    Output
+              type repetition_type
+      1       <NA>        REQUIRED
+      2 BYTE_ARRAY        REQUIRED
+      3 BYTE_ARRAY        OPTIONAL
+    Code
+      as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
+    Output
+              page_type num_values       encoding
+      1 DICTIONARY_PAGE        400          PLAIN
+      2       DATA_PAGE       1024 RLE_DICTIONARY
+      3       DATA_PAGE        176          PLAIN
+      4 DICTIONARY_PAGE        400          PLAIN
+      5       DATA_PAGE       1024 RLE_DICTIONARY
+      6       DATA_PAGE        176          PLAIN
+
+# mixing RLE_DICTIONARY and PLAIN, FLOAT16
+
+    Code
+      as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
+    Output
+                        type repetition_type
+      1                 <NA>        REQUIRED
+      2 FIXED_LEN_BYTE_ARRAY        REQUIRED
+      3 FIXED_LEN_BYTE_ARRAY        OPTIONAL
+    Code
+      as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
+    Output
+              page_type num_values       encoding
+      1 DICTIONARY_PAGE        400          PLAIN
+      2       DATA_PAGE       1024 RLE_DICTIONARY
+      3       DATA_PAGE        176          PLAIN
+      4 DICTIONARY_PAGE        401          PLAIN
+      5       DATA_PAGE       1024 RLE_DICTIONARY
+      6       DATA_PAGE        176          PLAIN
+
