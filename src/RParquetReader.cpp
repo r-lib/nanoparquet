@@ -1492,8 +1492,8 @@ void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
   int32_t scale = pp->metadata.r_types[cl].scale;
   double fct = std::pow(10.0, scale);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    // first the non-dict parts, if any
     if (pp->byte_arrays[cl].size() > 0) {
-      // first the non-dict parts, if any
       std::vector<tmpbytes> rgba = pp->byte_arrays[cl][rg];
       for (auto it = rgba.begin(); it != rgba.end(); ++it) {
         int64_t from = it->from;
@@ -1504,35 +1504,29 @@ void convert_column_to_r_ba_decimal_dict_nomiss(postprocess *pp, uint32_t cl) {
       }
     }
 
-    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
-    bool rg_dict_converted = false;
-    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
-    SEXP tmp = R_NilValue;
-    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
-      int64_t cp_offset = cps[cpi].offset;
-      uint32_t cp_num_present = cps[cpi].num_present;
-      bool hasdict = cps[cpi].dict;
-      if (!hasdict) continue;
-      // convert dictionary first
-      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
-      if (!rg_dict_converted && dict_len > 0) {
-        rg_dict_converted = true;
-        tmp = PROTECT(Rf_allocVector(REALSXP, dict_len));
-        tmpbytes &ba = pp->dicts[cl][rg].bytes;
-        for (uint32_t i = 0; i < dict_len; i++) {
-          REAL(tmp)[i] = parse_decimal(ba.buffer.data() + ba.offsets[i], ba.lengths[i]) / fct;
-        }
-      }
+    // convert dict, if any
+    if (pp->dicts[cl].size() == 0) continue;
+    uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+    if (dict_len == 0) continue;
+    SEXP tmp = PROTECT(Rf_allocVector(REALSXP, dict_len));
+    tmpbytes &ba = pp->dicts[cl][rg].bytes;
+    for (uint32_t i = 0; i < dict_len; i++) {
+      REAL(tmp)[i] = parse_decimal(ba.buffer.data() + ba.offsets[i], ba.lengths[i]) / fct;
+    }
 
-      // fill in
-      uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
-      uint32_t *end = didx + cp_num_present;
-      int64_t from = rg_offset + cp_offset;
+    // fill in dicts
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    for (auto &cp : cps) {
+      if (!cp.dict) continue;
+      uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp.offset;
+      uint32_t *end = didx + cp.num_present;
+      int64_t from = rg_offset + cp.offset;
       while (didx < end) {
         REAL(x)[from++] = REAL(tmp)[*didx++];
       }
     }
-    if (!Rf_isNull(tmp)) UNPROTECT(1);
+    UNPROTECT(1);
   }
 }
 
