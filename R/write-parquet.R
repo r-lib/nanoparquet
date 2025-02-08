@@ -38,7 +38,7 @@
 #'   error.
 #'
 #'   This version of nanoparquet supports the following encodings:
-#'   `r paste("\u0060", names(nanoparquet:::encodings), "\u0060", collapse = ", ")`.
+#'   `PLAIN`, `PLAIN_DICTIONARY`, `RLE`, and `RLE_DICTIONARY`.
 #'
 #'   See [parquet-encodings] for more about encodings.
 #' @param metadata Additional key-value metadata to add to the file.

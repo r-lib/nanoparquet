@@ -55,7 +55,7 @@ or nanoparquet does not implement it, \code{write_parquet()} throws an
 error.
 
 This version of nanoparquet supports the following encodings:
-\code{PLAIN}, \code{GROUP_VAR_INT}, \code{PLAIN_DICTIONARY}, \code{RLE}, \code{BIT_PACKED}, \code{DELTA_BINARY_PACKED}, \code{DELTA_LENGTH_BYTE_ARRAY}, \code{DELTA_BYTE_ARRAY}, \code{RLE_DICTIONARY}, \code{BYTE_STREAM_SPLIT}.
+\code{PLAIN}, \code{PLAIN_DICTIONARY}, \code{RLE}, and \code{RLE_DICTIONARY}.
 
 See \link{parquet-encodings} for more about encodings.}
 
@@ -79,7 +79,7 @@ Writes the contents of an R data frame into a Parquet file.
 }
 \details{
 \code{write_parquet()} converts string columns to UTF-8 encoding by calling
-\code{\link[base:Encoding]{base::enc2utf8()}}. It does the same for factor levels.
+\code{\link[base:enc2utf8]{base::enc2utf8()}}. It does the same for factor levels.
 }
 \examples{
 \dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
