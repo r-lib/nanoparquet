@@ -32,6 +32,8 @@ public:
   int tmptype = 0;
   // size of tmptype or type in bytes
   int elsize;
+  // size in parquet (with PLAIN encoding)
+  int psize;
   // number of R tmptype elements for 1 Parquet element
   int rsize = 1;
   std::vector<std::string> classes;
