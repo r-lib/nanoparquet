@@ -131,6 +131,7 @@ test_that("mixing RLE_DICTIONARY and PLAIN", {
   expect_equal(tab$y, rep(0:399, 6))
   expect_equal(tab$s, as.character(rep(0:399, 6)))
   expect_equal(tab$f, rep(0:399, 6))
+  expect_equal(tab$d, rep(0:399, 6))
 
   pf <- test_path("data/mixed2.parquet")
   expect_snapshot({
@@ -142,6 +143,7 @@ test_that("mixing RLE_DICTIONARY and PLAIN", {
   expect_equal(tab$y, rep(0:399, 6))
   expect_equal(tab$s, as.character(rep(0:399, 6)))
   expect_equal(tab$f, rep(0:399, 6))
+  expect_equal(tab$d, rep(0:399, 6))
 
   pf <- test_path("data/mixed-miss.parquet")
   expect_snapshot({
@@ -153,4 +155,5 @@ test_that("mixing RLE_DICTIONARY and PLAIN", {
   expect_equal(tab$y, 0:2399)
   expect_equal(tab$s, as.character(0:2399))
   expect_equal(tab$f, 0:2399)
+  expect_equal(tab$d, 0:2399)
 })

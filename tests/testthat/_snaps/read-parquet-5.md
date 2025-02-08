@@ -63,6 +63,7 @@
       3      INT64        REQUIRED
       4 BYTE_ARRAY        REQUIRED
       5      FLOAT        REQUIRED
+      6     DOUBLE        REQUIRED
     Code
       as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
     Output
@@ -83,6 +84,10 @@
       14       DATA_PAGE       1024 RLE_DICTIONARY
       15       DATA_PAGE       1024          PLAIN
       16       DATA_PAGE        352          PLAIN
+      17 DICTIONARY_PAGE        400          PLAIN
+      18       DATA_PAGE       1024 RLE_DICTIONARY
+      19       DATA_PAGE       1024          PLAIN
+      20       DATA_PAGE        352          PLAIN
 
 ---
 
@@ -95,6 +100,7 @@
       3      INT64        REQUIRED
       4 BYTE_ARRAY        REQUIRED
       5      FLOAT        REQUIRED
+      6     DOUBLE        REQUIRED
     Code
       as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
     Output
@@ -115,6 +121,10 @@
       14       DATA_PAGE       1024 RLE_DICTIONARY
       15       DATA_PAGE       1024 RLE_DICTIONARY
       16       DATA_PAGE        352 RLE_DICTIONARY
+      17 DICTIONARY_PAGE        400          PLAIN
+      18       DATA_PAGE       1024 RLE_DICTIONARY
+      19       DATA_PAGE       1024 RLE_DICTIONARY
+      20       DATA_PAGE        352 RLE_DICTIONARY
 
 ---
 
@@ -127,6 +137,7 @@
       3      INT64        OPTIONAL
       4 BYTE_ARRAY        OPTIONAL
       5      FLOAT        OPTIONAL
+      6     DOUBLE        OPTIONAL
     Code
       as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
     Output
@@ -147,4 +158,8 @@
       14       DATA_PAGE       1024 RLE_DICTIONARY
       15       DATA_PAGE       1024          PLAIN
       16       DATA_PAGE        352          PLAIN
+      17 DICTIONARY_PAGE       1024          PLAIN
+      18       DATA_PAGE       1024 RLE_DICTIONARY
+      19       DATA_PAGE       1024          PLAIN
+      20       DATA_PAGE        352          PLAIN
 
