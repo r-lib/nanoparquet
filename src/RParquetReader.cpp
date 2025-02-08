@@ -349,7 +349,7 @@ rtype::rtype(parquet::SchemaElement &sel) {
     tmptype = INTSXP;
     type_conversion = INT96_DOUBLE;
     elsize = sizeof(int) * 3;
-    psize = 8 * 3;
+    psize = 4 * 3;
     rsize = 3;
     classes.push_back("POSIXct");
     classes.push_back("POSIXt");
@@ -1130,14 +1130,11 @@ void convert_column_to_r_int96_dict_nomiss(postprocess *pp, uint32_t cl) {
     std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
     bool rg_dict_converted = false;
     int64_t rg_offset = pp->metadata.row_group_offsets[rg];
-    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
-      int64_t cp_offset = cps[cpi].offset;
-      uint32_t cp_num_values = cps[cpi].num_values;
-      bool hasdict = cps[cpi].dict;
-      double *beg = REAL(x) + rg_offset + cp_offset;
-      double *end = beg + cp_num_values;
-      if (!hasdict) {
-        int96_t *src = src0 + rg_offset + cp_offset;
+    for (auto &cp : cps) {
+      double *beg = REAL(x) + rg_offset + cp.offset;
+      double *end = beg + cp.num_values;
+      if (!cp.dict) {
+        int96_t *src = src0 + rg_offset + cp.offset;
         while (beg < end) {
           *beg++ = impala_timestamp_to_milliseconds(*src++);
         }
@@ -1154,7 +1151,7 @@ void convert_column_to_r_int96_dict_nomiss(postprocess *pp, uint32_t cl) {
           }
         }
         double *dict = (double*) pp->dicts[cl][rg].buffer.data();
-        uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+        uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp.offset;
         while (beg < end) {
           *beg++ = dict[*didx++];
         }
