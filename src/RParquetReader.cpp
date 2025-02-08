@@ -231,10 +231,12 @@ rtype::rtype(parquet::SchemaElement &sel) {
   case parquet::Type::BOOLEAN:
     type = tmptype = LGLSXP;
     elsize = sizeof(int);
+    psize = 0; // not really true or course...
     break;
   case parquet::Type::INT32:
     type = tmptype = INTSXP;
     elsize = sizeof(int);
+    psize = 4;
     if ((sel.__isset.logicalType && sel.logicalType.__isset.DATE) ||
         (sel.__isset.converted_type &&
          sel.converted_type == parquet::ConvertedType::DATE)) {
@@ -280,6 +282,7 @@ rtype::rtype(parquet::SchemaElement &sel) {
     type = tmptype = REALSXP;
     type_conversion = INT64_DOUBLE;
     elsize = sizeof(double);
+    psize = 8;
     if ((sel.__isset.logicalType &&
          sel.logicalType.__isset.TIMESTAMP &&
          (sel.logicalType.TIMESTAMP.unit.__isset.MILLIS ||
@@ -346,6 +349,7 @@ rtype::rtype(parquet::SchemaElement &sel) {
     tmptype = INTSXP;
     type_conversion = INT96_DOUBLE;
     elsize = sizeof(int) * 3;
+    psize = 8 * 3;
     rsize = 3;
     classes.push_back("POSIXct");
     classes.push_back("POSIXt");
@@ -355,10 +359,12 @@ rtype::rtype(parquet::SchemaElement &sel) {
     type = tmptype = REALSXP;
     type_conversion = FLOAT_DOUBLE;
     elsize = sizeof(double);
+    psize = 4;
     break;
   case parquet::Type::DOUBLE:
     type = tmptype = REALSXP;
     elsize = sizeof(double);
+    psize = 8;
     break;
   case parquet::Type::BYTE_ARRAY:
   case parquet::Type::FIXED_LEN_BYTE_ARRAY:
@@ -496,10 +502,10 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   } else if (!rt.byte_array) {
     int64_t off = metadata.row_group_offsets[rg];
     if (tmpdata[cl].size() > 0) {
-      data.data = tmpdata[cl].data() + (off + page_off) * rt.elsize;
+      // only for int96 currently
+      data.data = tmpdata[cl].data() + off * rt.elsize + page_off * rt.psize;
     } else {
-      data.data = metadata.dataptr[cl] +
-        (off + page_off) * (rt.elsize / rt.rsize);
+      data.data = metadata.dataptr[cl] + off * rt.elsize + page_off * rt.psize;
     }
   } else {
     tmpbytes bapage;

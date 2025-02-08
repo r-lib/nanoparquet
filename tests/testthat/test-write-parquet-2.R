@@ -186,3 +186,18 @@ test_that("zstd compression", {
   expect_equal(read_parquet_page(tmp, 4L)$codec, "ZSTD")
   expect_equal(read_parquet(tmp), d);
 })
+
+test_that("Conversion of sub-dates prior Posix origin is correct", {
+  data <- data.frame(
+    days = as.Date(c(-1.1, -0.1, 0, 0.1, 1.1), origin = "1970-01-01")
+  )
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  write_parquet(data, tmp)
+  expect_equal(
+    as.character(as.data.frame(read_parquet(tmp))$date),
+    as.character(data$date)
+  )
+})

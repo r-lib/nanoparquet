@@ -162,10 +162,14 @@ prepare_write_df <- function(x) {
   }
 
   # Date must be integer
-  dates <- which(vapply(x, "inherits", "Date", FUN.VALUE = logical(1)))
-  for (idx in dates) {
-    # this keeps the class
-    mode(x[[idx]]) <- "integer"
+  double_dates <- which(vapply(x, FUN.VALUE = logical(1), function(x) {
+    inherits(x, "Date") && is.double(x)
+  }))
+  for (idx in double_dates) {
+    cls <- class(x[[idx]])
+    xi <- as.integer(floor(as.numeric(x[[idx]])))
+    class(xi) <- cls
+    x[[idx]] <- xi
   }
 
   # Convert hms to double
@@ -192,7 +196,7 @@ prepare_write_df <- function(x) {
   }
 
   x
-}
+  }
 
 check_schema_required_cols <- function(x, schema) {
   # if schema has REQUIRED, but the column has NAs, that's an error

@@ -1,5 +1,11 @@
 # nanoparquet (development version)
 
+* `write_parquet()` now correctly converts double `Date` columns
+  to integer columns (@eitsupi, #116).
+
+* `read_parquet()` now correctly reads `FLOAT` columns from files with
+  multiple row groups.
+
 # nanoparquet 0.4.0
 
 * API changes:
