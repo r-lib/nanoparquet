@@ -43,3 +43,7 @@ test_write <- function(d, schema = NULL, encoding = NULL) {
 redact_maxint64 <- function(x) {
   gsub("922337203685477[0-9][0-9][0-9][0-9]", "922337203685477xxxx", x)
 }
+
+utcts <- function(x) {
+  as.POSIXct(as.POSIXlt(as.Date(x), tz = "UTC"))
+}

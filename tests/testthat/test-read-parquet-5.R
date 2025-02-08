@@ -132,7 +132,7 @@ test_that("mixing RLE_DICTIONARY and PLAIN", {
   expect_equal(tab$s, as.character(rep(0:399, 6)))
   expect_equal(tab$f, rep(0:399, 6))
   expect_equal(tab$d, rep(0:399, 6))
-  expect_equal(tab$i96, rep(as.POSIXct(as.Date(sprintf('%d-01-01', 1800:2199))), 6))
+  expect_equal(tab$i96, rep(utcts(sprintf('%d-01-01', 1800:2199)), 6))
 
   pf <- test_path("data/mixed2.parquet")
   expect_snapshot({
@@ -145,7 +145,7 @@ test_that("mixing RLE_DICTIONARY and PLAIN", {
   expect_equal(tab$s, as.character(rep(0:399, 6)))
   expect_equal(tab$f, rep(0:399, 6))
   expect_equal(tab$d, rep(0:399, 6))
-  expect_equal(tab$i96, rep(as.POSIXct(as.Date(sprintf('%d-01-01', 1800:2199))), 6))
+  expect_equal(tab$i96, rep(utcts(sprintf('%d-01-01', 1800:2199)), 6))
 
   skip_on_cran()
   pf <- test_path("data/mixed-miss.parquet")
@@ -158,7 +158,7 @@ test_that("mixing RLE_DICTIONARY and PLAIN", {
   expect_equal(d1[,1:5], d2[,1:5])
   # arrow does not read INT86 into a time stamp, so compare manually
   expect_equal(is.na(d1[,6]), is.na(d2[,6]))
-  bs6 <- as.POSIXct(as.Date(sprintf('%d-01-01', 1:2400)))
+  bs6 <- utcts(sprintf('%d-01-01', 1:2400))
   bs6[is.na(d1[,6])] <- NA
   expect_equal(d1[,6], bs6)
 })
