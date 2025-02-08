@@ -147,16 +147,45 @@ test_that("mixing RLE_DICTIONARY and PLAIN", {
   expect_equal(tab$d, rep(0:399, 6))
   expect_equal(tab$i96, rep(as.POSIXct(as.Date(sprintf('%d-01-01', 1800:2199))), 6))
 
+  skip_on_cran()
   pf <- test_path("data/mixed-miss.parquet")
   expect_snapshot({
     as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
     as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
   })
-  tab <- read_parquet(pf)
-  expect_equal(tab$x, 0:2399)
-  expect_equal(tab$y, 0:2399)
-  expect_equal(tab$s, as.character(0:2399))
-  expect_equal(tab$f, 0:2399)
-  expect_equal(tab$d, 0:2399)
-  expect_equal(tab$i96, as.POSIXct(as.Date(sprintf('%d-01-01', 1:2400))))
+  d1 <- as.data.frame(read_parquet(pf))
+  d2 <- as.data.frame(arrow::read_parquet(pf))
+  expect_equal(d1[,1:5], d2[,1:5])
+  # arrow does not read INT86 into a time stamp, so compare manually
+  expect_equal(is.na(d1[,6]), is.na(d2[,6]))
+  bs6 <- as.POSIXct(as.Date(sprintf('%d-01-01', 1:2400)))
+  bs6[is.na(d1[,6])] <- NA
+  expect_equal(d1[,6], bs6)
+})
+
+test_that("mixing RLE_DICTIONARY and PLAIN, DECIMAL", {
+  skip_on_cran()
+  pf <- test_path("data/decimal.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
+    as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
+  })
+  t1 <- read_parquet(pf)
+  t2 <- arrow::read_parquet(pf)
+  expect_equal(
+    as.data.frame(t1),
+    as.data.frame(t2)
+  )
+
+  pf <- test_path("data/decimal2.parquet")
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
+    as.data.frame(read_parquet_pages(pf)[, c("page_type", "num_values", "encoding")])
+  })
+  t1 <- as.data.frame(read_parquet(pf))
+  t2 <- as.data.frame(arrow::read_parquet(pf))
+  expect_equal(t1[,1], t2[,1])
+  expect_equal(t1[,2], t2[,2])
+  expect_equal(t1[,3], t2[,3])
+  expect_equal(t1[,4], t2[,4])
 })

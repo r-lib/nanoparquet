@@ -272,6 +272,7 @@ rtype::rtype(parquet::SchemaElement &sel) {
       type = tmptype = REALSXP;
       elsize = sizeof(double);
       type_conversion = INT32_DECIMAL;
+      psize = 4;
       scale = sel.scale;
       if (sel.__isset.logicalType) {
         scale = sel.logicalType.DECIMAL.scale;
@@ -1308,9 +1309,8 @@ void convert_column_to_r_ba_string_nodict_nomiss(postprocess *pp, uint32_t cl) {
 }
 
 void convert_column_to_r_ba_string_dict_nomiss(postprocess *pp, uint32_t cl) {
-  uint32_t lcl = cl;
-  SEXP x = VECTOR_ELT(pp->columns, lcl);
-  SET_VECTOR_ELT(pp->facdicts, lcl, Rf_allocVector(VECSXP, pp->metadata.num_row_groups));
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  SET_VECTOR_ELT(pp->facdicts, cl, Rf_allocVector(VECSXP, pp->metadata.num_row_groups));
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     // first the non-dict parts, if any
     if (pp->byte_arrays[cl].size() > 0) {
@@ -1343,7 +1343,7 @@ void convert_column_to_r_ba_string_dict_nomiss(postprocess *pp, uint32_t cl) {
       );
       SET_STRING_ELT(tmp, i, xi);
     }
-    SET_VECTOR_ELT(VECTOR_ELT(pp->facdicts, lcl), rg, tmp);
+    SET_VECTOR_ELT(VECTOR_ELT(pp->facdicts, cl), rg, tmp);
 
     // fill in dicts
     int64_t rg_offset = pp->metadata.row_group_offsets[rg];
@@ -1366,23 +1366,23 @@ void convert_column_to_r_ba_string_dict_nomiss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_ba_string_miss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    uint32_t num_present = pp->present[cl][rg].num_present;
-    bool hasmiss = num_present != num_values;
-    if (hasmiss) {
-      // need to rewrite
-      int64_t beg = pp->metadata.row_group_offsets[rg];
-      int64_t endm1 = beg + num_values - 1;
-      int64_t pendm1 = beg + num_present -1;
-      uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-      while (beg <= endm1) {
-        if (*presm1) {
-          SET_STRING_ELT(x, endm1--, STRING_ELT(x, pendm1--));
-          presm1--;
-        } else {
-          SET_STRING_ELT(x, endm1--, NA_STRING);
-          presm1--;
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    for (auto &cp : cps) {
+      if (cp.num_present != cp.num_values) {
+        // need to rewrite
+        int64_t beg = rg_offset + cp.offset;
+        int64_t endm1 = beg + cp.num_values - 1;
+        int64_t pendm1 = beg + cp.num_present -1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + cp.offset + cp.num_values - 1;
+        while (beg <= endm1) {
+          if (*presm1) {
+            SET_STRING_ELT(x, endm1--, STRING_ELT(x, pendm1--));
+            presm1--;
+          } else {
+            SET_STRING_ELT(x, endm1--, NA_STRING);
+            presm1--;
+          }
         }
       }
     }
@@ -1455,23 +1455,23 @@ void convert_column_to_r_ba_decimal_nodict_nomiss(postprocess *pp, uint32_t cl) 
 void convert_column_to_r_ba_decimal_miss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    uint32_t num_present = pp->present[cl][rg].num_present;
-    bool hasmiss = num_present != num_values;
-    if (hasmiss) {
-      // need to rewrite
-      double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
-      double *endm1 = beg + num_values - 1;
-      double *pendm1 = beg + num_present -1;
-      uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-      while (beg <= endm1) {
-        if (*presm1) {
-          *endm1-- = *pendm1--;
-          presm1--;
-        } else {
-          *endm1-- = NA_REAL;
-          presm1--;
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    for (auto &cp : cps) {
+      if (cp.num_present != cp.num_values) {
+        // need to rewrite
+        double *beg = REAL(x) + rg_offset + cp.offset;
+        double *endm1 = beg + cp.num_values - 1;
+        double *pendm1 = beg + cp.num_present -1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + cp.offset + cp.num_values - 1;
+        while (beg <= endm1) {
+          if (*presm1) {
+            *endm1-- = *pendm1--;
+            presm1--;
+          } else {
+            *endm1-- = NA_REAL;
+            presm1--;
+          }
         }
       }
     }
@@ -1615,23 +1615,23 @@ void convert_column_to_r_ba_raw_dict_nomiss(postprocess *pp, uint32_t cl) {
 void convert_column_to_r_ba_raw_miss(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
-    if (num_values == 0) continue;
-    uint32_t num_present = pp->present[cl][rg].num_present;
-    bool hasmiss = num_present != num_values;
-    if (hasmiss) {
-      // need to rewrite
-      int64_t beg = pp->metadata.row_group_offsets[rg];
-      int64_t endm1 = beg + num_values - 1;
-      int64_t pendm1 = beg + num_present -1;
-      uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
-      while (beg <= endm1) {
-        if (*presm1) {
-          SET_VECTOR_ELT(x, endm1--, VECTOR_ELT(x, pendm1--));
-          presm1--;
-        } else {
-          SET_VECTOR_ELT(x, endm1--, R_NilValue);
-          presm1--;
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    for (auto &cp : cps) {
+      if (cp.num_present != cp.num_values) {
+        // need to rewrite
+        int64_t beg = rg_offset + cp.offset;
+        int64_t endm1 = beg + cp.num_values - 1;
+        int64_t pendm1 = beg + cp.num_present -1;
+        uint8_t *presm1 = pp->present[cl][rg].map.data() + cp.offset + cp.num_values - 1;
+        while (beg <= endm1) {
+          if (*presm1) {
+            SET_VECTOR_ELT(x, endm1--, VECTOR_ELT(x, pendm1--));
+            presm1--;
+          } else {
+            SET_VECTOR_ELT(x, endm1--, R_NilValue);
+            presm1--;
+          }
         }
       }
     }
@@ -1883,37 +1883,32 @@ void convert_column_to_r_int32_decimal_dict_nomiss(postprocess *pp, uint32_t cl)
   int32_t scale = pp->metadata.r_types[cl].scale;
   double fct = std::pow(10.0, scale);
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
-    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
-    bool rg_dict_converted = false;
+    if (pp->dicts[cl].size() > 0){
+      uint32_t dict_len = pp->dicts[cl][rg].dict_len;
+      if (dict_len > 0) {
+        double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
+        double *dend = dbeg + dict_len - 1;
+        int32_t *fdend = ((int32_t*) dbeg) + dict_len - 1;
+        while (dbeg <= dend) {
+          *dend-- = static_cast<double>(*fdend--) / fct;
+        }
+      }
+    }
     int64_t rg_offset = pp->metadata.row_group_offsets[rg];
-    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
-      int64_t cp_offset = cps[cpi].offset;
-      uint32_t cp_num_values = cps[cpi].num_values;
-      bool hasdict = cps[cpi].dict;
-      double *beg = REAL(x) + rg_offset + cp_offset;
-      if (!hasdict) {
-        double *end = beg + cp_num_values - 1;
-        int32_t *fend = ((int32_t*) beg) + cp_num_values - 1;
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    for (auto cp = cps.rbegin(); cp != cps.rend(); ++cp) {
+      double *beg = REAL(x) + rg_offset + cp->offset;
+      if (!cp->dict) {
+        double *end = beg + cp->num_values - 1;
+        int32_t *fend = ((int32_t*) (REAL(x) + rg_offset)) + cp->offset + cp->num_values - 1;
         while (beg <= end) {
           *end-- = static_cast<double>(*fend--) / fct;
         }
       } else {
-        // Convert the dictionary first
-        uint32_t dict_len = pp->dicts[cl][rg].dict_len;
-        if (!rg_dict_converted && dict_len > 0) {
-          rg_dict_converted = true;
-          double *dbeg = (double*) pp->dicts[cl][rg].buffer.data();
-          double *dend = dbeg + dict_len - 1;
-          int32_t *fdend = ((int32_t*) dbeg) + dict_len - 1;
-          while (dbeg <= dend) {
-            *dend-- = static_cast<double>(*fdend--) / fct;
-          }
-        }
-
         // fill in the dict
-        double *end = beg + cp_num_values;
+        double *end = beg + cp->num_values;
         double *dict = (double*) pp->dicts[cl][rg].buffer.data();
-        uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+        uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp->offset;
         while (beg < end) {
           *beg++ = dict[*didx++];
         }
