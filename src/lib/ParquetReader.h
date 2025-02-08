@@ -98,7 +98,7 @@ public:
   uint8_t *present;
   uint32_t num_values;
   uint32_t num_present;
-  uint64_t from;
+  int64_t from;
   parquet::Encoding::type encoding;
   StringSet strs;
   // these are for DELTA_BYTE_ARRAY pages, these need a bit more

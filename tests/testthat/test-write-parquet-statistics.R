@@ -260,7 +260,7 @@ test_that("min/max for FLOAT", {
       options = parquet_options(num_rows_per_row_group = 5),
       ...
     )
-    expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
+    expect_equal(as.data.frame(read_parquet(tmp)), as.data.frame(df))
     mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
     list(
       as_flt(mtd[["min_value"]]),

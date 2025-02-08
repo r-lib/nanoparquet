@@ -6,6 +6,10 @@
 * `read_parquet()` now correctly reads `FLOAT` columns from files with
   multiple row groups.
 
+* `read_parquet()` now correctly reads Parquet files that have column
+  chunks with both dictionary encoded and not dictionary encoded
+  pages (#110).
+
 # nanoparquet 0.4.0
 
 * API changes:
