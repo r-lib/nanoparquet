@@ -957,15 +957,12 @@ void convert_column_to_r_float_dict_nomiss(postprocess *pp, uint32_t cl) {
     std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
     bool rg_dict_converted = false;
     int64_t rg_offset = pp->metadata.row_group_offsets[rg];
-    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
-      int64_t cp_offset = cps[cpi].offset;
-      uint32_t cp_num_values = cps[cpi].num_values;
-      bool hasdict = cps[cpi].dict;
-      double *beg = REAL(x) + rg_offset + cp_offset;
+    for (auto cp = cps.rbegin(); cp != cps.rend(); ++cp) {
+      double *beg = REAL(x) + rg_offset + cp->offset;
       // In theory we might dictionary encode a subset of the columns only
-      if (!hasdict) {
-        double *end = beg + cp_num_values - 1;
-        float *fend = ((float*) beg) + cp_num_values - 1;
+      if (!cp->dict) {
+        double *end = beg + cp->num_values - 1;
+        float *fend = ((float*) (REAL(x) + rg_offset)) + cp->offset + cp->num_values - 1;
         while (beg <= end) {
           *end-- = static_cast<double>(*fend--);
         }
@@ -983,9 +980,9 @@ void convert_column_to_r_float_dict_nomiss(postprocess *pp, uint32_t cl) {
         }
 
         // fill in the dict
-        double *end = beg + cp_num_values;
+        double *end = beg + cp->num_values;
         double *dict = (double*) pp->dicts[cl][rg].buffer.data();
-        uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+        uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp->offset;
         while (beg < end) {
           *beg++ = dict[*didx++];
         }
@@ -1031,24 +1028,24 @@ void convert_column_to_r_float_dict_miss(postprocess *pp, uint32_t cl) {
     std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
     bool rg_dict_converted = false;
     int64_t rg_offset = pp->metadata.row_group_offsets[rg];
-    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
-      int64_t cp_offset = cps[cpi].offset;
-      uint32_t cp_num_values = cps[cpi].num_values;
-      uint32_t cp_num_present = cps[cpi].num_present;
-      bool hasdict = cps[cpi].dict;
+    for (auto cp = cps.rbegin(); cp != cps.rend(); ++cp) {
+      int64_t cp_offset = cp->offset;
+      uint32_t cp_num_values = cp->num_values;
+      uint32_t cp_num_present = cp->num_present;
+      bool hasdict = cp->dict;
       bool hasmiss = cp_num_present != cp_num_values;
       double *beg = REAL(x) + rg_offset + cp_offset;
       if (!hasdict) {
         if (!hasmiss) {
           double *endm1 = beg + cp_num_values - 1;
-          float *fendm1 = ((float*) beg) + cp_num_values - 1;
+          float *fendm1 = ((float*) (REAL(x) + rg_offset)) + cp_offset + cp_num_values - 1;
           while (beg <= endm1) {
             *endm1-- = static_cast<double>(*fendm1--);
           }
         } else {
           // nodict, miss
           double *endm1 = beg + cp_num_values - 1;
-          float *fendm1 = ((float*) beg) + cp_num_present - 1;
+          float *fendm1 = ((float*) (REAL(x) + rg_offset)) + cp_offset + cp_num_present - 1;
           uint8_t *presm1 = pp->present[cl][rg].map.data() + cp_offset + cp_num_values - 1;
           while (beg <= endm1) {
             if (*presm1) {
@@ -2005,10 +2002,10 @@ void convert_column_to_r_int64_decimal_dict_nomiss(postprocess *pp, uint32_t cl)
     std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
     bool rg_dict_converted = false;
     int64_t rg_offset = pp->metadata.row_group_offsets[rg];
-    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
-      int64_t cp_offset = cps[cpi].offset;
-      uint32_t cp_num_values = cps[cpi].num_values;
-      bool hasdict = cps[cpi].dict;
+    for (auto cp = cps.begin(); cp != cps.end(); ++cp) {
+      int64_t cp_offset = cp->offset;
+      uint32_t cp_num_values = cp->num_values;
+      bool hasdict = cp->dict;
       double *beg = REAL(x) + rg_offset + cp_offset;
       double *end = beg + cp_num_values;
       if (!hasdict) {
