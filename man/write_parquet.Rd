@@ -54,8 +54,12 @@ If a specified encoding is invalid for a certain column type,
 or nanoparquet does not implement it, \code{write_parquet()} throws an
 error.
 
-This version of nanoparquet supports the following encodings:
-\code{PLAIN}, \code{PLAIN_DICTIONARY}, \code{RLE}, and \code{RLE_DICTIONARY}.
+Currently \code{write_parquet()} supports the following encodings:
+\itemize{
+\item \code{PLAIN} for all column types,
+\item \code{PLAIN_DICTIONARY} and \code{RLE_DICTIONARY} for all column types,
+\item \code{RLE} for BOOLEAN columns.
+}
 
 See \link{parquet-encodings} for more about encodings.}
 
@@ -79,7 +83,7 @@ Writes the contents of an R data frame into a Parquet file.
 }
 \details{
 \code{write_parquet()} converts string columns to UTF-8 encoding by calling
-\code{\link[base:enc2utf8]{base::enc2utf8()}}. It does the same for factor levels.
+\code{\link[base:Encoding]{base::enc2utf8()}}. It does the same for factor levels.
 }
 \examples{
 \dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
