@@ -107,9 +107,10 @@ used for the column.</p>
 <p>If a specified encoding is invalid for a certain column type,
 or nanoparquet does not implement it, <code>write_parquet()</code> throws an
 error.</p>
-<p>This version of nanoparquet supports the following encodings:
-<code>PLAIN</code>, <code>GROUP_VAR_INT</code>, <code>PLAIN_DICTIONARY</code>, <code>RLE</code>, <code>BIT_PACKED</code>, <code>DELTA_BINARY_PACKED</code>, <code>DELTA_LENGTH_BYTE_ARRAY</code>, <code>DELTA_BYTE_ARRAY</code>, <code>RLE_DICTIONARY</code>, <code>BYTE_STREAM_SPLIT</code>.</p>
-<p>See <a href="parquet-encodings.html">parquet-encodings</a> for more about encodings.</p></dd>
+<p>Currently <code>write_parquet()</code> supports the following encodings:</p><ul><li><p><code>PLAIN</code> for all column types,</p></li>
+<li><p><code>PLAIN_DICTIONARY</code> and <code>RLE_DICTIONARY</code> for all column types,</p></li>
+<li><p><code>RLE</code> for BOOLEAN columns.</p></li>
+</ul><p>See <a href="parquet-encodings.html">parquet-encodings</a> for more about encodings.</p></dd>
 
 
 <dt id="arg-metadata">metadata<a class="anchor" aria-label="anchor" href="#arg-metadata"></a></dt>
