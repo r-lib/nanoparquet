@@ -105,12 +105,18 @@ issue here with a link to the file.
 
 ## Options
 
-See also `?parquet_options()`.
+See also `?parquet_options()` for further details.
 
 * `nanoparquet.class`: extra class to add to data frames returned by
   `read_parquet()`. If it is not defined, the default is `"tbl"`,
   which changes how the data frame is printed if the pillar package is
   loaded.
+* `nanoparquet.compression_level`: See `?parquet_options()` for the
+  defaults and the possible values for each compression method. `Inf`
+  selects maximum compression for each method.
+* `nanoparquet.num_rows_per_row_group`: The number of rows to put into a
+  row group by `write_parquet()`, if row groups are not specified
+  explicitly. It should be an integer scalar. Defaults to 10 million.
 * `nanoparquet.use_arrow_metadata`: unless this is set to `FALSE`,
   `read_parquet()` will make use of Arrow metadata in the Parquet file.
   Currently this is used to detect factor columns.
@@ -118,6 +124,11 @@ See also `?parquet_options()`.
   `write_parquet()` will add Arrow metadata to the Parquet file.
   This helps preserving classes of columns, e.g. factors will be read
   back as factors, both by nanoparquet and Arrow.
+* `nanoparquet.write_data_page_version`: Data version to write by default.
+  Possible values are 1 and 2. Default is 1.
+* `nanoparquet.write_minmax_values`: Whether to write minimum and maximum
+  values per row group, for data types that support this in
+  `write_parquet()`.
 
 ## License
 

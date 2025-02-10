@@ -113,12 +113,18 @@ issue here with a link to the file.
 
 \subsection{Options}{
 
-See also \code{?parquet_options()}.
+See also \code{?parquet_options()} for further details.
 \itemize{
 \item \code{nanoparquet.class}: extra class to add to data frames returned by
 \code{read_parquet()}. If it is not defined, the default is \code{"tbl"},
 which changes how the data frame is printed if the pillar package is
 loaded.
+\item \code{nanoparquet.compression_level}: See \code{?parquet_options()} for the
+defaults and the possible values for each compression method. \code{Inf}
+selects maximum compression for each method.
+\item \code{nanoparquet.num_rows_per_row_group}: The number of rows to put into a
+row group by \code{write_parquet()}, if row groups are not specified
+explicitly. It should be an integer scalar. Defaults to 10 million.
 \item \code{nanoparquet.use_arrow_metadata}: unless this is set to \code{FALSE},
 \code{read_parquet()} will make use of Arrow metadata in the Parquet file.
 Currently this is used to detect factor columns.
@@ -126,6 +132,11 @@ Currently this is used to detect factor columns.
 \code{write_parquet()} will add Arrow metadata to the Parquet file.
 This helps preserving classes of columns, e.g. factors will be read
 back as factors, both by nanoparquet and Arrow.
+\item \code{nanoparquet.write_data_page_version}: Data version to write by default.
+Possible values are 1 and 2. Default is 1.
+\item \code{nanoparquet.write_minmax_values}: Whether to write minimum and maximum
+values per row group, for data types that support this in
+\code{write_parquet()}.
 }
 }
 
