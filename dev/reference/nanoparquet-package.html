@@ -146,10 +146,16 @@ issue here with a link to the file.</p>
 <h3 id="options">Options<a class="anchor" aria-label="anchor" href="#options"></a></h3>
 
 
-<p>See also <code>?parquet_options()</code>.</p><ul><li><p><code>nanoparquet.class</code>: extra class to add to data frames returned by
+<p>See also <code>?parquet_options()</code> for further details.</p><ul><li><p><code>nanoparquet.class</code>: extra class to add to data frames returned by
 <code><a href="read_parquet.html">read_parquet()</a></code>. If it is not defined, the default is <code>"tbl"</code>,
 which changes how the data frame is printed if the pillar package is
 loaded.</p></li>
+<li><p><code>nanoparquet.compression_level</code>: See <code>?parquet_options()</code> for the
+defaults and the possible values for each compression method. <code>Inf</code>
+selects maximum compression for each method.</p></li>
+<li><p><code>nanoparquet.num_rows_per_row_group</code>: The number of rows to put into a
+row group by <code><a href="write_parquet.html">write_parquet()</a></code>, if row groups are not specified
+explicitly. It should be an integer scalar. Defaults to 10 million.</p></li>
 <li><p><code>nanoparquet.use_arrow_metadata</code>: unless this is set to <code>FALSE</code>,
 <code><a href="read_parquet.html">read_parquet()</a></code> will make use of Arrow metadata in the Parquet file.
 Currently this is used to detect factor columns.</p></li>
@@ -157,6 +163,11 @@ Currently this is used to detect factor columns.</p></li>
 <code><a href="write_parquet.html">write_parquet()</a></code> will add Arrow metadata to the Parquet file.
 This helps preserving classes of columns, e.g. factors will be read
 back as factors, both by nanoparquet and Arrow.</p></li>
+<li><p><code>nanoparquet.write_data_page_version</code>: Data version to write by default.
+Possible values are 1 and 2. Default is 1.</p></li>
+<li><p><code>nanoparquet.write_minmax_values</code>: Whether to write minimum and maximum
+values per row group, for data types that support this in
+<code><a href="write_parquet.html">write_parquet()</a></code>.</p></li>
 </ul></div>
 
 <div class="section">
