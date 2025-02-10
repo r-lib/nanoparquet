@@ -1,3 +1,5 @@
+# nanoparquet (development version)
+
 # nanoparquet 0.4.1
 
 * `write_parquet()` now correctly converts double `Date` columns
