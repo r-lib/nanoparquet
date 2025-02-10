@@ -54,8 +54,12 @@ If a specified encoding is invalid for a certain column type,
 or nanoparquet does not implement it, \code{write_parquet()} throws an
 error.
 
-This version of nanoparquet supports the following encodings:
-\code{PLAIN}, \code{GROUP_VAR_INT}, \code{PLAIN_DICTIONARY}, \code{RLE}, \code{BIT_PACKED}, \code{DELTA_BINARY_PACKED}, \code{DELTA_LENGTH_BYTE_ARRAY}, \code{DELTA_BYTE_ARRAY}, \code{RLE_DICTIONARY}, \code{BYTE_STREAM_SPLIT}.
+Currently \code{write_parquet()} supports the following encodings:
+\itemize{
+\item \code{PLAIN} for all column types,
+\item \code{PLAIN_DICTIONARY} and \code{RLE_DICTIONARY} for all column types,
+\item \code{RLE} for BOOLEAN columns.
+}
 
 See \link{parquet-encodings} for more about encodings.}
 

@@ -37,8 +37,11 @@
 #'   or nanoparquet does not implement it, `write_parquet()` throws an
 #'   error.
 #'
-#'   This version of nanoparquet supports the following encodings:
-#'   `r paste("\u0060", names(nanoparquet:::encodings), "\u0060", collapse = ", ")`.
+#'   Currently `write_parquet()` supports the following encodings:
+#'
+#'   - `PLAIN` for all column types,
+#'   - `PLAIN_DICTIONARY` and `RLE_DICTIONARY` for all column types,
+#'   - `RLE` for BOOLEAN columns.
 #'
 #'   See [parquet-encodings] for more about encodings.
 #' @param metadata Additional key-value metadata to add to the file.
