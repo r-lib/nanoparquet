@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cmath>
 
 #include "fastpforlib/bitpackinghelpers.h"
 
