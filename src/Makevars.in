@@ -43,6 +43,8 @@ PKG_CXX30FLAGS = -DR_NO_REMAP
 
 # PKG_LIBS = -lws2_32
 
+MAKEFLAGS=@MAKEFLAGS@
+
 all: $(SHLIB)
 
 broken: broken.cpp parquet/parquet_types.cpp \

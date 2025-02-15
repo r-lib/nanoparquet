@@ -52,3 +52,4 @@ Config/Needs/website:
     sessioninfo,
     svglite
 Language: en-US
+Biarch: true

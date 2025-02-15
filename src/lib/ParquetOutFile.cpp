@@ -630,8 +630,6 @@ void ParquetOutFile::write_page_header(uint32_t idx, PageHeader &ph) {
   );
 }
 
-// Currently only for byte arrays, more later
-
 void ParquetOutFile::write_dictionary_page(uint32_t idx, int64_t from,
                                            int64_t until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
