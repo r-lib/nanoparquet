@@ -143,6 +143,7 @@ test_that("FLOAT", {
 
 test_that("FLOAT from multiple row groups and pages", {
   skip_on_cran()
+  skip_without("arrow")
   pf <- test_path("data/float.parquet")
   expect_equal(
     as.data.frame(arrow::read_parquet(pf)),

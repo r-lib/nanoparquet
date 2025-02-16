@@ -48,6 +48,7 @@ test_that("MemStream", {
 
 test_that("DELTA_BIT_PACKED decoding", {
   skip_on_cran()
+  skip_without_pyarrow()
   if (is_asan()) skip("ASAN false positive")
 
   dodbp <- function(df, path) {

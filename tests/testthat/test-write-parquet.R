@@ -29,6 +29,7 @@ test_that("round trip with arrow", {
   # Don't want to skip on the parquet capability missing, because then
   # this might not be tested on the CI. So rather we skip on CRAN.
   skip_on_cran()
+  skip_without("arrow")
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df(tibble = TRUE, factor = TRUE)
   tmp <- tempfile(fileext = ".parquet")
@@ -45,6 +46,7 @@ test_that("round trip with arrow", {
 })
 
 test_that("round trip with duckdb", {
+  skip_without("duckdb")
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- as.data.frame(test_df())
   tmp <- tempfile(fileext = ".parquet")
@@ -62,6 +64,7 @@ test_that("round trip with duckdb", {
 
 test_that("round trip with pandas/pyarrow", {
   skip_on_cran()
+  skip_without_pyarrow()
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df()
   tmp1 <- tempfile(fileext = ".parquet")
@@ -372,6 +375,7 @@ test_that("Factor levels not in the data", {
 
 test_that("write Date", {
   skip_on_cran()
+  skip_without("arrow")
 
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -387,6 +391,7 @@ test_that("write Date", {
 
 test_that("write hms", {
   skip_on_cran()
+  skip_without("arrow")
 
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -402,6 +407,7 @@ test_that("write hms", {
 
 test_that("write POSIXct", {
   skip_on_cran()
+  skip_without("arrow")
 
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -417,6 +423,7 @@ test_that("write POSIXct", {
 
 test_that("write difftime", {
   skip_on_cran()
+  skip_without("arrow")
 
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

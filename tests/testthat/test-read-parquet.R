@@ -112,6 +112,7 @@ test_that("round trip with arrow", {
   # Don't want to skip on the parquet capability missing, because then
   # this might not be tested on the CI. So rather we skip on CRAN.
   skip_on_cran()
+  skip_without("arrow")
   mt <- test_df(factor = TRUE)
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -126,6 +127,8 @@ test_that("round trip with arrow", {
 
 test_that("round trip with duckdb", {
   skip_on_cran()
+  skip_without("duckdb")
+  skip_without("arrow")
   # https://github.com/llvm/llvm-project/issues/59432
   if (is_asan()) skip("ASAN bug")
   mt <- test_df()
@@ -202,7 +205,8 @@ test_that("read POSIXct", {
 })
 
 test_that("read POSIXct in MILLIS", {
-  skip_on_cran() # arrow
+  skip_on_cran()
+  skip_without("arrow")
   # This file has UTC = FALSE, so the exact result depends on the current
   # time zone. But it should match Arrow.
   pf <- test_path("data/timestamp-ms.parquet")
@@ -296,6 +300,7 @@ test_that("V2 data pages", {
 
 test_that("V2 data page with missing values", {
   skip_on_cran()
+  skip_without("arrow")
   pf <- test_path("data/duckdb-bug1589.parquet")
   expect_equal(
     as.data.frame(read_parquet(pf)),
@@ -368,6 +373,7 @@ test_that("DELTA_LENGTH_BYTE_ARRAY encoding", {
 
 test_that("DELTA_BYTE_ARRAY encoding", {
   skip_on_cran()
+  skip_without("arrow")
   pf <- test_path("data/delta_byte_array.parquet")
   dba <- read_parquet(pf)
   expect_snapshot({
@@ -381,6 +387,7 @@ test_that("DELTA_BYTE_ARRAY encoding", {
 
 test_that("BYTE_STREAM_SPLIT encoding", {
   skip_on_cran()
+  skip_without("arrow")
   pf <- test_path("data/byte_stream_split.parquet")
   bss <- read_parquet(pf)
   expect_snapshot({

@@ -148,6 +148,7 @@ test_that("mixing RLE_DICTIONARY and PLAIN", {
   expect_equal(tab$i96, rep(utcts(sprintf('%d-01-01', 1800:2199)), 6))
 
   skip_on_cran()
+  skip_without("arrow")
   pf <- test_path("data/mixed-miss.parquet")
   expect_snapshot({
     as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
@@ -165,6 +166,7 @@ test_that("mixing RLE_DICTIONARY and PLAIN", {
 
 test_that("mixing RLE_DICTIONARY and PLAIN, DECIMAL", {
   skip_on_cran()
+  skip_without("arrow")
   pf <- test_path("data/decimal.parquet")
   expect_snapshot({
     as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
@@ -192,6 +194,7 @@ test_that("mixing RLE_DICTIONARY and PLAIN, DECIMAL", {
 
 test_that("mixing RLE_DICTIONARY and PLAIN, BYTE_ARRAY", {
   skip_on_cran()
+  skip_without("arrow")
   pf <- test_path("data/binary.parquet")
   expect_snapshot({
     as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])
@@ -205,6 +208,7 @@ test_that("mixing RLE_DICTIONARY and PLAIN, BYTE_ARRAY", {
 
 test_that("mixing RLE_DICTIONARY and PLAIN, FLOAT16", {
   skip_on_cran()
+  skip_without("arrow")
   pf <- test_path("data/float16.parquet")
   expect_snapshot({
     as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])

@@ -1,3 +1,30 @@
+skip_without_pyarrow <- function() {
+  if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") return()
+  pyscript <- r"[
+    import pyarrow
+    import pyarrow.parquet as pq
+  ]"
+  pytmp <- tempfile(fileext = ".py")
+  on.exit(unlink(pytmp), add = TRUE)
+  writeLines(pyscript, pytmp)
+  py <- if (Sys.which("python3") != "") "python3" else "python"
+  res <- tryCatch(
+    processx::run(py, pytmp, stderr = "2>&1"),
+    error = function(err) err
+  )
+  if (inherits(res, "error")) {
+    skip("missing pyarrow")
+  }
+}
+
+skip_without <- function(pkgs) {
+  if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") return()
+  ok <- vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)
+  if (any(!ok)) {
+    skip(paste0("missing ", paste(pkgs[!ok], collapse = ", ")))
+  }
+}
+
 test_df <- function(tibble = FALSE, factor = FALSE, missing = FALSE) {
   df <- cbind(nam = rownames(mtcars), mtcars)
   df$cyl <- as.integer(df$cyl)
