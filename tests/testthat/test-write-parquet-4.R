@@ -436,3 +436,11 @@ test_that("argument errors", {
     write_parquet(mtcars, letters)
   })
 })
+
+test_that("edge case: empty dict", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- data.frame(address_id = c(NA_integer_, NA_integer_, NA_integer_))
+  write_parquet(df, tmp)
+  expect_equal(as.data.frame(read_parquet(tmp)), df)
+})
