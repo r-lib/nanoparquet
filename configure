@@ -26,7 +26,7 @@ if ! echo ${R_LIBRARY_DIR} | grep -q nanoparquet.Rcheck &&
   else
     NCPU=unknown
   fi
-  if expr "$NCPU" : '^[1-9][0-9]*$' >/dev/null; then
+  if expr "$NCPU" : '[1-9][0-9]*$' >/dev/null; then
     echo '**'" using $NCPU processors (unless configured differently in Makeconf)."
     MAKEFLAGS=-j${NCPU}
   fi
