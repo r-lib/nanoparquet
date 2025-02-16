@@ -12,21 +12,22 @@ else
 fi
 
 if ! echo ${R_LIBRARY_DIR} | grep -q nanoparquet.Rcheck &&
-   ! echo ${R_LIBS} | grep -q nanoparquet.Rcheck; then
+   ! echo ${R_LIBS} | grep -q nanoparquet.Rcheck &&
+   [ -z "$MAKEFLAGS" ]; then
   if [ -n "$NCPU" ]; then
     # already set
     true
   elif [ "$R_OSTYPE" = "windows" ]; then
     NCPU=$NUMBER_OF_PROCESSORS
   elif [ "$UNAME" = "Linux" ]; then
-    NCPU=`cat /proc/cpuinfo  | grep '^processor\s*:' | wc -l`
+    NCPU=`cat /proc/cpuinfo  | grep '^processor\s*:' | wc -l || true`
   elif [ "$UNAME" = "Darwin" ]; then
-    NCPU=`sysctl -n hw.ncpu`
+    NCPU=`sysctl -n hw.ncpu || true`
   else
     NCPU=unknown
   fi
   if expr "$NCPU" : '^[1-9][0-9]*$' >/dev/null; then
-    echo '**'" installing nanoparquet using $NCPU processors."
+    echo '**'" using $NCPU processors (unless configured differently in Makeconf)."
     MAKEFLAGS=-j${NCPU}
   fi
 fi
