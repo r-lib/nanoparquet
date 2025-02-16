@@ -8,15 +8,15 @@
 
 class ByteBuffer : public std::streambuf {
 public:
-  char *ptr = nullptr;
-  uint64_t len = 0;
+  char *ptr = stat;
+  std::streamsize len = 0;
   bool locked = false;
 
   ByteBuffer() {
-    setp(0, 0);
+    setp(stat, stat + sizeof(stat));
   }
 
-  void resize(uint64_t new_size, bool copy = true) {
+  void resize(std::streamsize new_size, bool copy = true) {
     if (new_size > len) {
       auto new_holder = std::unique_ptr<char[]>(new char[new_size]);
       if (copy && holder != nullptr) {
@@ -34,7 +34,7 @@ public:
     if (sptr == nullptr) {
       throw std::runtime_error("Cannot write to uninitialized byte buffer"); // # nocov
     }
-    uint64_t space = len - (sptr - ptr);
+    std::streamsize space = len - (sptr - ptr);
     if (space < n) {
       memcpy(sptr, s, space);                  // # nocov
       sptr += space;                           // # nocov
@@ -52,7 +52,7 @@ public:
     return (int) xsputn((const char*) &ch, 1);             // # nocov
   }                                                        // # nocov
 
-  void reset(uint64_t new_size = 0, bool copy = false) {
+  void reset(std::streamsize new_size = 0, bool copy = false) {
     if (new_size > 0) {
       resize(new_size, copy);
     }
@@ -60,8 +60,8 @@ public:
     setp(ptr, ptr + new_size);
   }
 
-  void skip(uint64_t bytes) {
-    uint64_t space = len - (sptr - ptr);
+  void skip(std::streamsize bytes) {
+    std::streamsize space = len - (sptr - ptr);
     if (space < bytes) {
       throw std::runtime_error("Cannot write past the end of the buffer");
     }
@@ -81,8 +81,9 @@ public:
   }
 
 private:
+  char stat[128];
   std::unique_ptr<char[]> holder = nullptr;
-  char *sptr = nullptr;
+  char *sptr = stat;
 };
 
 class BufferGuard {
@@ -109,7 +110,7 @@ public:
     }
     throw std::runtime_error("Buffer manageer Ran out of buffers :()");
   }
-  BufferGuard claim(uint64_t size) {
+  BufferGuard claim(std::streamsize size) {
     // same, but check if we have one with the right size (TODO)
     throw std::runtime_error("Not implemented yet");
   }
