@@ -36,7 +36,7 @@ SEXP nanoparquet_rle_decode_int(SEXP x, SEXP bit_width, SEXP includes_length,
 }
 
 SEXP nanoparquet_rle_encode_int(SEXP x, SEXP bit_width) {
-  int *input = INTEGER(x);
+  const uint32_t *input = (const uint32_t*) INTEGER(x);
   R_xlen_t input_len = Rf_xlength(x);
   uint8_t bw = INTEGER(bit_width)[0];
 
