@@ -54,7 +54,7 @@ test_that("temporal types", {
   write_parquet(df_date, tmp)
   np <- read_arrow_schema(tmp)
   expect_snapshot({
-    np[["columns"]]
+    as.data.frame(np[["columns"]])
     np[["columns"]][["type"]]
   })
 
@@ -66,7 +66,7 @@ test_that("temporal types", {
   write_parquet(df_hmsi, tmp)
   np <- read_arrow_schema(tmp)
   expect_snapshot({
-    np[["columns"]]
+    as.data.frame(np[["columns"]])
     np[["columns"]][["type"]]
   })
 
@@ -75,7 +75,7 @@ test_that("temporal types", {
   write_parquet(df_hmsd, tmp)
   np <- read_arrow_schema(tmp)
   expect_snapshot({
-    np[["columns"]]
+    as.data.frame(np[["columns"]])
     np[["columns"]][["type"]]
   })
 
@@ -84,7 +84,7 @@ test_that("temporal types", {
   write_parquet(df_difftime, tmp)
   np <- read_arrow_schema(tmp)
   expect_snapshot({
-    np[["columns"]]
+    as.data.frame(np[["columns"]])
     np[["columns"]][["type"]]
   })
 
@@ -93,7 +93,7 @@ test_that("temporal types", {
   write_parquet(df_posixct, tmp)
   np <- read_arrow_schema(tmp)
   expect_snapshot({
-    np[["columns"]]
+    as.data.frame(np[["columns"]])
     np[["columns"]][["type"]]
   })
 
@@ -102,7 +102,7 @@ test_that("temporal types", {
   write_parquet(df_factor, tmp)
   np <- read_arrow_schema(tmp)
   expect_snapshot({
-    np[["columns"]]
+    as.data.frame(np[["columns"]])
     np[["columns"]][["type"]]
   })
 })
