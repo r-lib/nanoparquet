@@ -1,4 +1,5 @@
 skip_without_pyarrow <- function() {
+  skip_on_cran()
   if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") return()
   pyscript <- r"[
     import pyarrow
@@ -18,6 +19,7 @@ skip_without_pyarrow <- function() {
 }
 
 skip_without <- function(pkgs) {
+  if (any(c("arrow", "duckdb") %in% pkgs)) skip_on_cran()
   if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") return()
   ok <- vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)
   if (any(!ok)) {
