@@ -25,12 +25,10 @@
 # temporal types
 
     Code
-      np[["columns"]]
+      as.data.frame(np[["columns"]])
     Output
-      # A data frame: 1 x 6
-        name  type_type type             nullable dictionary custom_metadata 
-        <chr> <chr>     <I<list>>        <lgl>    <I<list>>  <I<list>>       
-      1 x     Date      <named list [1]> TRUE     <NULL>     <named list [2]>
+        name type_type type nullable dictionary custom_metadata
+      1    x      Date  DAY     TRUE               characte....
     Code
       np[["columns"]][["type"]]
     Output
@@ -43,12 +41,10 @@
 ---
 
     Code
-      np[["columns"]]
+      as.data.frame(np[["columns"]])
     Output
-      # A data frame: 1 x 6
-        name  type_type type             nullable dictionary custom_metadata 
-        <chr> <chr>     <I<list>>        <lgl>    <I<list>>  <I<list>>       
-      1 x     Time      <named list [2]> TRUE     <NULL>     <named list [2]>
+        name type_type       type nullable dictionary custom_metadata
+      1    x      Time SECOND, 32     TRUE               characte....
     Code
       np[["columns"]][["type"]]
     Output
@@ -64,12 +60,10 @@
 ---
 
     Code
-      np[["columns"]]
+      as.data.frame(np[["columns"]])
     Output
-      # A data frame: 1 x 6
-        name  type_type type             nullable dictionary custom_metadata 
-        <chr> <chr>     <I<list>>        <lgl>    <I<list>>  <I<list>>       
-      1 x     Time      <named list [2]> TRUE     <NULL>     <named list [2]>
+        name type_type       type nullable dictionary custom_metadata
+      1    x      Time SECOND, 32     TRUE               characte....
     Code
       np[["columns"]][["type"]]
     Output
@@ -85,12 +79,10 @@
 ---
 
     Code
-      np[["columns"]]
+      as.data.frame(np[["columns"]])
     Output
-      # A data frame: 1 x 6
-        name  type_type type             nullable dictionary custom_metadata 
-        <chr> <chr>     <I<list>>        <lgl>    <I<list>>  <I<list>>       
-      1 x     Duration  <named list [1]> TRUE     <NULL>     <named list [2]>
+        name type_type       type nullable dictionary custom_metadata
+      1    x  Duration NANOSECOND     TRUE               characte....
     Code
       np[["columns"]][["type"]]
     Output
@@ -103,12 +95,10 @@
 ---
 
     Code
-      np[["columns"]]
+      as.data.frame(np[["columns"]])
     Output
-      # A data frame: 1 x 6
-        name  type_type type             nullable dictionary custom_metadata 
-        <chr> <chr>     <I<list>>        <lgl>    <I<list>>  <I<list>>       
-      1 x     Timestamp <named list [2]> TRUE     <NULL>     <named list [2]>
+        name type_type         type nullable dictionary custom_metadata
+      1    x Timestamp MICROSEC....     TRUE               characte....
     Code
       np[["columns"]][["type"]]
     Output
@@ -124,12 +114,10 @@
 ---
 
     Code
-      np[["columns"]]
+      as.data.frame(np[["columns"]])
     Output
-      # A data frame: 1 x 6
-        name  type_type type      nullable dictionary       custom_metadata 
-        <chr> <chr>     <I<list>> <lgl>    <I<list>>        <I<list>>       
-      1 x     Utf8      <NULL>    TRUE     <named list [4]> <named list [2]>
+        name type_type type nullable   dictionary custom_metadata
+      1    x      Utf8          TRUE 0, list(....    characte....
     Code
       np[["columns"]][["type"]]
     Output
