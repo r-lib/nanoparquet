@@ -32,9 +32,9 @@ jobs:
             "~/.pip/pip.conf"
           )
           if (Sys.which("pip3") != "") {
-            system("pip3 install pyarrow pandas")
+            system("pip3 install pyarrow pandas polars")
           } else {
-            system("pip install pyarrow pandas")
+            system("pip install pyarrow pandas polars")
           }
         shell: Rscript {0}
 
