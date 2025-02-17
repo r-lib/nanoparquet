@@ -160,8 +160,11 @@ parse_arrow_schema <- function(schema) {
 # STRSXP -> Utf8
 # LGLSXP -> Bool
 
-encode_arrow_schema_r <- function(df) {
+encode_arrow_schema_r <- function(df, schema) {
   endianness <- capitalize(.Platform$endian)
+  dates <- vapply(df, function(c) inherits(c, "Date"), logical(1))
+  hmss <- vapply(df, function(c) inherits(c, "hms"), logical(1))
+  psxcts <- vapply(df, function(c) inherits(c, "POSIXct"), logical(1))
 	fctrs <- vapply(df, function(c) inherits(c, "factor"), logical(1))
   dfts <- vapply(df, function(c) !inherits(c, "hms") && inherits(c, "difftime"), logical(1))
   typemap <- c(
@@ -173,6 +176,9 @@ encode_arrow_schema_r <- function(df) {
   )
   dftypes <- vapply(df, typeof, character(1))
   artypes <- typemap[dftypes]
+  artypes[dates] <- "Date"
+  artypes[hmss] <- "Time"
+  artypes[psxcts] <- "Timestamp"
   artypes[fctrs] <- "Utf8"
   artypes[dfts] <- "Duration"
   if (anyNA(artypes)) {
@@ -186,7 +192,10 @@ encode_arrow_schema_r <- function(df) {
     "FloatingPoint" = list(precision = "DOUBLE"),
     "Utf8" = NULL,
     "Bool" = NULL,
-    "Duration" = list(unit = "NANOSECOND")
+    "Duration" = list(unit = "NANOSECOND"),
+    "Time" = list(unit = "SECOND", bit_width = 32L),
+    "Date" = list(unit = "DAY"),
+    "Timestamp" = list(unit = "MICROSECOND", timezone = "UTC")
   )
   schema <- list(
     columns = data.frame(

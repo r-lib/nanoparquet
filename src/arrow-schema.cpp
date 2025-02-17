@@ -381,6 +381,51 @@ SEXP nanoparquet_encode_arrow_schema(SEXP rschema) {
     Type ft = (Type) INTEGER(f_ttp)[i];
     SEXP rtype = VECTOR_ELT(f_typ, i);
     switch (ft) {
+      case Type_Date:
+      {
+        DateBuilder date_builder(builder);
+        date_builder.add_unit((DateUnit) INTEGER(VECTOR_ELT(rtype, 0))[0]);
+        auto date_ = date_builder.Finish();
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(date_.Union());
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
+      case Type_Time:
+      {
+        TimeBuilder time_builder(builder);
+        time_builder.add_unit((TimeUnit) INTEGER(VECTOR_ELT(rtype, 0))[0]);
+        time_builder.add_bitWidth(INTEGER(VECTOR_ELT(rtype, 1))[0]);
+        auto time_ = time_builder.Finish();
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(time_.Union());
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
+      case Type_Timestamp:
+      {
+        auto timezone = builder.CreateString(CHAR(STRING_ELT(VECTOR_ELT(rtype, 1), 0)));
+        TimestampBuilder ts_builder(builder);
+        ts_builder.add_unit((TimeUnit) INTEGER(VECTOR_ELT(rtype, 0))[0]);
+        ts_builder.add_timezone(timezone);
+        auto ts_ = ts_builder.Finish();
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(ts_.Union());
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
       case Type_Int:
       {
         IntBuilder int_builder(builder);
