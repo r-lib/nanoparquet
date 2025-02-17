@@ -6,3 +6,4 @@
 *.o.bc
 /src/broken.dSYM
 /src/broken
+/src/Makevars
