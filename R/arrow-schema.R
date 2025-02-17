@@ -1,3 +1,12 @@
+read_arrow_schema <- function(file) {
+  mtd <- read_parquet_metadata(file)
+  kvm <- mtd[["file_meta_data"]][["key_value_metadata"]][[1]]
+  if ("ARROW:schema" %in% kvm[["key"]]) {
+    as <- kvm[["value"]][match("ARROW:schema", kvm[["key"]])]
+    parse_arrow_schema(as)
+  }
+}
+
 apply_arrow_schema <- function(tab, file, arrow_schema, dicts, types,
                                col_select) {
   if (is.na(arrow_schema)) {
