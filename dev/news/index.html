@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.4.1.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.4.2.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,11 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="nanoparquet-development-version">nanoparquet (development version)<a class="anchor" aria-label="anchor" href="#nanoparquet-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.2" id="nanoparquet-042">nanoparquet 0.4.2<a class="anchor" aria-label="anchor" href="#nanoparquet-042"></a></h2><p class="text-muted">CRAN release: 2025-02-22</p>
+<ul><li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now does not fail when writing files with a zero-length first page (<a href="https://github.com/r-lib/nanoparquet/issues/122" class="external-link">#122</a>).</p></li>
+<li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> can now read Parquet files that do not contain the dictionary page offset in their metadata. Polars creates such files (<a href="https://github.com/r-lib/nanoparquet/issues/132" class="external-link">#132</a>).</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.1" id="nanoparquet-041">nanoparquet 0.4.1<a class="anchor" aria-label="anchor" href="#nanoparquet-041"></a></h2><p class="text-muted">CRAN release: 2025-02-10</p>
 <ul><li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now correctly converts double <code>Date</code> columns to integer columns (<a href="https://github.com/eitsupi" class="external-link">@eitsupi</a>, <a href="https://github.com/r-lib/nanoparquet/issues/116" class="external-link">#116</a>).</p></li>
