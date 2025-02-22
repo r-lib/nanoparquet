@@ -226,3 +226,12 @@ test_that("mixing RLE_DICTIONARY and PLAIN, FLOAT16", {
   bs2[is.na(t1[,2])] <- NA
   expect_equal(t1[,2], bs2)
 })
+
+# https://github.com/r-lib/nanoparquet/issues/132
+test_that("dict page w/o dict offset set", {
+  pf <- test_path("data/broken/polars-no-dict-offset.parquet")
+  expect_equal(
+    as.data.frame(read_parquet(pf)),
+    data.frame(a = c(1,2,3), b = c(4,5,6))
+  )
+})

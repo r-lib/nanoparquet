@@ -227,9 +227,6 @@ void ParquetReader::read_column_chunk_int(ColumnChunk &cc) {
   int64_t chunk_start =
     cc.has_dictionary ? dictionary_page_offset : data_page_offset;
 
-  // Give a chance to R to allocate memory for the column chunk
-  alloc_column_chunk(cc);
-
   // read in the whole chunk
   BufferGuard tmp_buf_g = bufman_cc->claim();
   ByteBuffer &tmp_buf = tmp_buf_g.buf;
@@ -238,6 +235,25 @@ void ParquetReader::read_column_chunk_int(ColumnChunk &cc) {
   pfile.read(tmp_buf.ptr, cmd.total_compressed_size);
   uint8_t *ptr = (uint8_t*) tmp_buf.ptr;
   uint8_t *end = ptr + cmd.total_compressed_size;
+
+  // Polars does not set dictionary_page_offset :(
+  // https://github.com/r-lib/nanoparquet/issues/132
+  // We need to do this fix before calling alloc_column_chunk(), so the
+  // callback correctly knows if this chunk has a dictionary page.
+  // Sadly, this means that we are parsing the header of the first data
+  // page twice, for files that adhere to the spec and don't have dict
+  // pages. :((
+  if (!cc.has_dictionary) {
+    PageHeader dph;
+    uint32_t ph_size = cmd.total_compressed_size;
+    thrift_unpack(ptr, &ph_size, &dph, filename_);
+    if (dph.type == parquet::PageType::DICTIONARY_PAGE) {
+      cc.has_dictionary = true;
+    }
+  }
+
+  // Give a chance to R to allocate memory for the column chunk
+  alloc_column_chunk(cc);
 
   // dictionary page, if any
   if (cc.has_dictionary) {
