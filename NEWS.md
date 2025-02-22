@@ -1,5 +1,12 @@
 # nanoparquet (development version)
 
+* `write_parquet()` now does not fail when writing files with a zero-length
+  first page (#122).
+
+* `read_parquet()` can now read Parquet files that do not contain the
+  dictionary page offset in their metadata. Polars creates such files
+  (#132).
+
 # nanoparquet 0.4.1
 
 * `write_parquet()` now correctly converts double `Date` columns
