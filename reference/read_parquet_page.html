@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,27 +99,27 @@ is the same as <code>compressed_data</code>.</p></li>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">file_name</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/userdata1.parquet"</span>, package <span class="op">=</span> <span class="st">"nanoparquet"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">nanoparquet</span><span class="fu">:::</span><span class="fu"><a href="read_parquet_pages.html">read_parquet_pages</a></span><span class="op">(</span><span class="va">file_name</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 19 × 14</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    file_name                 row_group column page_type page_header_offset</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> /home/runner/work/_temp/…         0      0 DATA_PAGE                  4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> /home/runner/work/_temp/…         0      1 DATA_PAGE               <span style="text-decoration: underline;">6</span>741</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> /home/runner/work/_temp/…         0      2 DICTIONA…              <span style="text-decoration: underline;">10</span>766</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> /home/runner/work/_temp/…         0      2 DATA_PAGE              <span style="text-decoration: underline;">12</span>259</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> /home/runner/work/_temp/…         0      3 DICTIONA…              <span style="text-decoration: underline;">13</span>334</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> /home/runner/work/_temp/…         0      3 DATA_PAGE              <span style="text-decoration: underline;">15</span>211</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> /home/runner/work/_temp/…         0      4 DATA_PAGE              <span style="text-decoration: underline;">16</span>239</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> /home/runner/work/_temp/…         0      5 DICTIONA…              <span style="text-decoration: underline;">31</span>726</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> /home/runner/work/_temp/…         0      5 DATA_PAGE              <span style="text-decoration: underline;">31</span>759</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> /home/runner/work/_temp/…         0      6 DATA_PAGE              <span style="text-decoration: underline;">32</span>031</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span> /home/runner/work/_temp/…         0      7 DATA_PAGE              <span style="text-decoration: underline;">42</span>952</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> /home/runner/work/_temp/…         0      8 DICTIONA…              <span style="text-decoration: underline;">53</span>749</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span> /home/runner/work/_temp/…         0      8 DATA_PAGE              <span style="text-decoration: underline;">55</span>009</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span> /home/runner/work/_temp/…         0      9 DATA_PAGE              <span style="text-decoration: underline;">55</span>925</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">15</span> /home/runner/work/_temp/…         0     10 DATA_PAGE              <span style="text-decoration: underline;">59</span>312</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">16</span> /home/runner/work/_temp/…         0     11 DICTIONA…              <span style="text-decoration: underline;">65</span>063</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">17</span> /home/runner/work/_temp/…         0     11 DATA_PAGE              <span style="text-decoration: underline;">67</span>026</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">18</span> /home/runner/work/_temp/…         0     12 DICTIONA…              <span style="text-decoration: underline;">68</span>019</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">19</span> /home/runner/work/_temp/…         0     12 DATA_PAGE              <span style="text-decoration: underline;">71</span>089</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    file_name              row_group column page_type page_header_offset</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> /home/runner/work/_te…         0      0 DATA_PAGE                  4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> /home/runner/work/_te…         0      1 DATA_PAGE               <span style="text-decoration: underline;">6</span>741</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> /home/runner/work/_te…         0      2 DICTIONA…              <span style="text-decoration: underline;">10</span>766</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> /home/runner/work/_te…         0      2 DATA_PAGE              <span style="text-decoration: underline;">12</span>259</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> /home/runner/work/_te…         0      3 DICTIONA…              <span style="text-decoration: underline;">13</span>334</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> /home/runner/work/_te…         0      3 DATA_PAGE              <span style="text-decoration: underline;">15</span>211</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> /home/runner/work/_te…         0      4 DATA_PAGE              <span style="text-decoration: underline;">16</span>239</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> /home/runner/work/_te…         0      5 DICTIONA…              <span style="text-decoration: underline;">31</span>726</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> /home/runner/work/_te…         0      5 DATA_PAGE              <span style="text-decoration: underline;">31</span>759</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> /home/runner/work/_te…         0      6 DATA_PAGE              <span style="text-decoration: underline;">32</span>031</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span> /home/runner/work/_te…         0      7 DATA_PAGE              <span style="text-decoration: underline;">42</span>952</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> /home/runner/work/_te…         0      8 DICTIONA…              <span style="text-decoration: underline;">53</span>749</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span> /home/runner/work/_te…         0      8 DATA_PAGE              <span style="text-decoration: underline;">55</span>009</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span> /home/runner/work/_te…         0      9 DATA_PAGE              <span style="text-decoration: underline;">55</span>925</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">15</span> /home/runner/work/_te…         0     10 DATA_PAGE              <span style="text-decoration: underline;">59</span>312</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">16</span> /home/runner/work/_te…         0     11 DICTIONA…              <span style="text-decoration: underline;">65</span>063</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">17</span> /home/runner/work/_te…         0     11 DATA_PAGE              <span style="text-decoration: underline;">67</span>026</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">18</span> /home/runner/work/_te…         0     12 DICTIONA…              <span style="text-decoration: underline;">68</span>019</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">19</span> /home/runner/work/_te…         0     12 DATA_PAGE              <span style="text-decoration: underline;">71</span>089</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 9 more variables: uncompressed_page_size &lt;int&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   compressed_page_size &lt;int&gt;, crc &lt;int&gt;, num_values &lt;int&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   encoding &lt;chr&gt;, definition_level_encoding &lt;chr&gt;,</span></span>
@@ -185,11 +185,11 @@ is the same as <code>compressed_data</code>.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 15 00 15 80 7d 15 fa 68 2c 15 d0 0f 15 00 15 00 15 00 00 00</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 40 be 0c f1 d8 2a 05 00 c0 86 e0 9a e0 2a 05 00 c0 28 33 45 d3 2a 05</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [24] 00 40 2b 96 ce d2 2a 05 00 c0 9c 33 91 d6 2a 05 00 80 a2 54 7b d8 2a</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [47] 05 00 00 59 b2 77 d9 2a 05 00 80 ee 7d fc d7 2a 05 00 40 cf 71 8d d5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [70] 2a 05 00 c0 bc 7b cd e1 2a 05 00 80 e4 da 72 d2 2a 05 00 80 30 4d 73</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [93] e1 2a 05 00 40 fe a4 0f</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 40 be 0c f1 d8 2a 05 00 c0 86 e0 9a e0 2a 05 00 c0 28 33 45 d3 2a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [23] 05 00 40 2b 96 ce d2 2a 05 00 c0 9c 33 91 d6 2a 05 00 80 a2 54 7b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [45] d8 2a 05 00 00 59 b2 77 d9 2a 05 00 80 ee 7d fc d7 2a 05 00 40 cf</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [67] 71 8d d5 2a 05 00 c0 bc 7b cd e1 2a 05 00 80 e4 da 72 d2 2a 05 00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [89] 80 30 4d 73 e1 2a 05 00 40 fe a4 0f</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [ reached getOption("max.print") -- omitted 7900 entries ]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $definition_levels_byte_length</span>
@@ -205,11 +205,11 @@ is the same as <code>compressed_data</code>.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $compressed_data</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] c0 3e 30 40 be 0c f1 d8 2a 05 00 c0 86 e0 9a e0 01 08 2c 28 33 45 d3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [24] 2a 05 00 40 2b 96 ce d2 01 10 28 9c 33 91 d6 2a 05 00 80 a2 54 7b 01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [47] 28 10 00 59 b2 77 d9 01 10 0c ee 7d fc d7 01 28 0c cf 71 8d d5 01 28</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [70] 0c bc 7b cd e1 01 18 08 e4 da 72 01 38 0c 80 30 4d 73 01 10 30 40 fe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [93] a4 0f e2 2a 05 00 00 eb</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] c0 3e 30 40 be 0c f1 d8 2a 05 00 c0 86 e0 9a e0 01 08 2c 28 33 45</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [23] d3 2a 05 00 40 2b 96 ce d2 01 10 28 9c 33 91 d6 2a 05 00 80 a2 54</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [45] 7b 01 28 10 00 59 b2 77 d9 01 10 0c ee 7d fc d7 01 28 0c cf 71 8d</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [67] d5 01 28 0c bc 7b cd e1 01 18 08 e4 da 72 01 38 0c 80 30 4d 73 01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [89] 10 30 40 fe a4 0f e2 2a 05 00 00 eb</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [ reached getOption("max.print") -- omitted 6617 entries ]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
