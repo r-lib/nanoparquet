@@ -1,6 +1,6 @@
 Package: nanoparquet
 Title: Read and Write 'Parquet' Files
-Version: 0.4.2
+Version: 0.4.2.9000
 Authors@R: c(
     person("Gábor", "Csárdi", role = c("aut", "cre"), email = "csardi.gabor@gmail.com"),
     person("Hannes", "Mühleisen", role = c("aut", "cph"), comment = c(ORCID = "0000-0001-8552-0029")),
