@@ -103,7 +103,7 @@ if (file.exists(file.path(me, "results.parquet"))) {
   results <- nanoparquet::read_parquet(file.path(me, "results.parquet"))
 } else {
   results <- NULL
-  lapply(data_sizes[1:2], function(s) {
+  lapply(data_sizes, function(s) {
     lapply(variants, function(v) {
       r <- if (v == "readr" && s == "large") {
         measure(v, s)
@@ -302,8 +302,8 @@ Notes:
   faster than the other two implementations, for these data sets.
 * DuckDB seems to waste space when writing out Parquet files. This
   could be possibly fine tuned by forcing a different encoding. This
-  behavior will improve with the forthcoming DuckDB 1.2.0 release, see also
-  <https://github.com/duckdb/duckdb/issues/3316>.
+  behavior has improved somewhat with the 1.2.0 release
+  (<https://github.com/duckdb/duckdb/issues/3316>).
 
 <!-- ## ALTREP vs subsets -->
 
@@ -333,6 +333,7 @@ not wide enough for the whole table.
 
 ```{r results}
 #| R.options = list(width = 500)
+library(pillar)
 print(results, n = Inf)
 ```
 
@@ -371,5 +372,11 @@ duckdb packages might take up to 200ms to load on the test system,
 because they need to load their dependencies and they are also bigger.
 
 ```{r session-info}
-sessioninfo::session_info()
+if (file.exists(file.path(me, "sessioninfo.rds"))) {
+  si <- readRDS(file.path(me, "sessioninfo.rds"))
+} else {
+  si <- sessioninfo::session_info()
+  saveRDS(si, file.path(me, "sessioninfo.rds"))
+}
+si  
 ```
