@@ -378,5 +378,7 @@ if (file.exists(file.path(me, "sessioninfo.rds"))) {
   si <- sessioninfo::session_info()
   saveRDS(si, file.path(me, "sessioninfo.rds"))
 }
+# load sessioninfo, for the print method
+library(sessioninfo)
 si  
 ```
