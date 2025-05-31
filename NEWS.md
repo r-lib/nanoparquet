@@ -1,5 +1,7 @@
 # nanoparquet (development version)
 
+* `read_parquet()` can now read files from URLs.
+
 # nanoparquet 0.4.2
 
 * `write_parquet()` now does not fail when writing files with a zero-length
