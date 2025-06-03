@@ -1,0 +1,428 @@
+---
+title: "The nanoparquet R package"
+author:
+  - name: "Gábor Csárdi"
+    affiliation: Posit Software, PBC
+title-block-banner: true
+format:
+  html:
+    embed-resources: true
+---
+
+------------------------------------------------------------------------
+
+# The nanoparquet R package
+
+#### Name: Gábor Csárdi  Affiliation: Software Engineer at Posit, PBC
+
+<https://github.com/gaborcsardi>\
+<https://gaborcsardi.org/>
+
+## Outline
+
+1.  Read and write Parquet files with nanoparquet
+2.  Parquet features
+3.  About nanoparquet
+4.  The Parquet file format
+5.  Future plans
+
+------------------------------------------------------------------------
+
+# 1 Read and write Parquet files with nanoparquet
+
+Installation:
+
+``` r
+install.packages("nanoparquet")
+```
+
+Use the example file that comes with the package:
+
+```{r}
+library(nanoparquet)
+library(pillar)
+udf <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
+```
+
+Before reading the file, let's look at its metadata:
+
+```{r}
+read_parquet_info(udf)
+```
+
+```{r}
+read_parquet_schema(udf)
+```
+
+Read the file:
+
+```{r}
+ud1 <- read_parquet(udf)
+ud1
+```
+
+To show `write_parquet()`, we'll use the `flights` data in the nycflights13 package:
+
+```{r}
+library(nycflights13)
+flights
+```
+
+First we check how columns of `flights` will be mapped to Parquet types:
+
+```{r}
+infer_parquet_schema(flights)
+```
+
+This looks fine, so we go ahead and write out the file. By default it will be Snappy-compressed, and many columns will be dictionary encoded.
+
+```{r}
+write_parquet(flights, "flights.parquet")
+```
+
+Check the schema of the file we created:
+
+```{r}
+read_parquet_schema("flights.parquet")
+```
+
+Or, to see the full metadata of the Parquet file:
+
+```{r}
+read_parquet_metadata("flights.parquet")
+```
+
+The columns chunk information also tells you whether a column chunk is dictionary encoded, its encoding, its size, etc.
+
+```{r}
+cc <- read_parquet_metadata("flights.parquet")$column_chunks
+cc[, c("column", "encodings", "dictionary_page_offset")]
+```
+
+```{r}
+cc[["encodings"]][1:5]
+```
+
+------------------------------------------------------------------------
+
+# 2 Parquet features
+
+## Well supported
+
+-   R, Python, Rust, Java, Go, etc.
+-   Apache Arrow
+-   DuckDB
+-   R: Arrow, DuckDB, Polars, duckplyr
+-   Python: Arrow, DuckDB, Polars, fastparquet
+-   Positron data viewer (demo!)
+
+## Performant
+
+-   Columnar data storage. Columns or chunks of columns can be read efficiently.
+-   Several efficient encodings to keep data files small.
+-   Compression. Multiple types of compression in the same file.
+-   Skip columns and/or rows when only a subset of the data is needed.
+-   Designed for flexibility.
+-   Designed for parallel processing. Row groups, column chunks and pages can be processed (encoded/decoded and compressed/uncompressed) in parallel.
+-   Easy subsetting without reading the full file. (E.g. download only the required parts of the file from a URL.)
+-   Schema evolution: add and remove columns without re-encoding or even re-writing the existing data.
+
+## Rich data types
+
+-   Low level (primitive) data types, encoded efficiently.
+
+-   High level (logical) data types on top of this: UTF-8 strings, time stamps, JSON strings, enumeration type (factor), decimal numbers with arbitrary scale and precision, etc.
+
+## Missing values
+
+-   Parquet has built-in missing data support. Missing data is stored efficiently.
+
+# 3 About nanoparquet
+
+## Why we created nanoparquet?
+
+-   Parquet tools are typically used for larger, out of memory data sets.
+-   Perception: Parquet is only for large data.
+-   We wanted to have a smaller tool that has no dependencies and is easy to install.
+-   Facilitate adoption of Parquet for smaller data sets, especially for teams that share data between multiple environments, e.g. R, Python, Java, etc.
+
+## nanoparquet features
+
+-   Completely dependency free. Compiles into an R package that is less than 1MB, in less than a minute.
+-   Read and write flat (i.e. non-nested) Parquet files.
+-   Can read most [Parquet data types](https://nanoparquet.r-lib.org/reference/nanoparquet-types.html).
+-   Can write many R data types, including factors and temporal types to Parquet.
+-   Can read a subset of columns from a Parquet file.
+-   Can append a data frame to a Parquet file without first reading and then rewriting the whole file.
+-   Supports Snappy, Gzip and Zstd compression.
+-   [Competitive](https://nanoparquet.r-lib.org/dev/articles/benchmarks.html) with other tools in terms of speed, memory use and file size.
+
+## nanoparquet benchmarks
+
+<https://nanoparquet.r-lib.org/dev/articles/benchmarks.html>
+
+## nanoparquet limitations
+
+-   Only flat tables, no `LIST` or `MAP`, i.e. nested columns are not supported.
+-   Some newer Parquet types are not supported: `GEOMETRY` , `GEOGRAPHY`, `VARIANT`.
+-   Cannot read a subset of the rows.
+-   Reading files from URLs is not supported.
+-   nanoparquet always reads the data (or the selected subset of it) into memory. It does not work with out-of-memory data in Parquet files like Apache Arrow and DuckDB does.
+-   No concurrency, both `read_parquet()` and `write_parquet()` are single-threaded.
+-   No encryption.
+-   Some compression codecs are not supported: `LZO`, `BROTLI`, `LZ4`.
+-   No checksum support. nanoparquet does not check or write checksums.
+-   No Bloom filter support.
+-   Cannot write some encodings. (It can read all Parquet encodings, though!)
+
+# 4 The Parquet file format
+
+## Columnar data storage
+
+Data is stored column-wise, so whole columns (or large chunks of columns) are easy to read quickly. Columnar storage allows better compression, fast operations on subsets of columns, and easy ways of removing columns or adding new columns to a data file.
+
+```
+┌───────────────────────────┐
+│ HEADER (4 bytes)          │
+├───────────────────────────┤
+│ COLUMN 1                  │
+├───────────────────────────┤
+│ COLUMN 2                  │
+├───────────────────────────┤
+  ···
+├───────────────────────────┤
+│ COLUMN n                  │
+├───────────────────────────┤
+│ METADATA                  │
+├───────────────────────────┤
+│ METADATA LENGTH (4 bytes) │
+├───────────────────────────┤
+│ FOOTER (4 bytes)          │
+└───────────────────────────┘
+```
+
+## Row groups
+
+A horizontal partitioning of the data. Contains one *column chunk* for each column in the dataset.
+
+```
+┌─────────────────────────────────┐
+│ HEADER (4 bytes)                │
+├──────────────┬──────────────────┤
+│ ROW GROUP 1  │ COLUMN CHUNK 1   │
+│              │ ···              │
+│              │ COLUMN CHUNK n   │
+├──────────────┴──────────────────┤
+    ···
+├──────────────┬──────────────────┤
+│ ROW GROUP m  │ COLUMN CHUNK 1   │
+│              │ ···              │
+│              │ COLUMN CHUNK n   │
+├──────────────┴──────────────────┤
+│ METADATA                        │
+├─────────────────────────────────┤
+│ METADATA LENGTH (4 bytes)       │
+├─────────────────────────────────┤
+│ FOOTER (4 bytes)                │
+└─────────────────────────────────┘
+```
+
+## Metadata
+
+```
+┌────────────────────────────────────────┐
+│ File metadata:                         │
+│ - version                              │
+│ - schema                               │
+│ - key-value metadata                   │
+├──────────────┬─────────────────────────┤
+│ Row group 1  │ Column chunk 1 metadata │
+│ metadata     │ ···                     │
+│              │ Column chunk n metadata │
+├──────────────┴─────────────────────────┤
+    ···
+├──────────────┬─────────────────────────┤
+│ Row group m  │ Column chunk 1 metadata │
+│ metadata     │ ···                     │
+│              │ Column chunk n metadata │
+└──────────────┴─────────────────────────┘
+```
+
+## Column chunk metadata
+
+```
+┌───────────────────────────┐
+│ Encoding                  │
+│ Compression codec         │
+│ Offset of first data page │
+│ Key-value metadata        │
+│ ···                       │
+└───────────────────────────┘
+```
+
+## Detailed file format
+
+![](https://camo.githubusercontent.com/d713741348fd88809ec0809de0a9aea7a6358b04f7d2aace673c9286ee290dfb/68747470733a2f2f7261772e6769746875622e636f6d2f6170616368652f706172717565742d666f726d61742f6d61737465722f646f632f696d616765732f46696c654c61796f75742e676966)
+
+(Image from <https://github.com/apache/parquet-format>.)
+
+## Parquet data types
+
+<https://nanoparquet.r-lib.org/reference/nanoparquet-types.html>
+
+### Primitive types
+
+-   BOOLEAN
+-   INT32
+-   INT64
+-   INT96 (deprecated)
+-   FLOAT
+-   DOUBLE
+-   BYTE ARRAY
+-   FIXED LENGTH BYTE ARRAY
+
+### Logical types
+
+-   STRING (BYTE ARRAY)
+-   ENUM (BYTE ARRAY)
+-   UUID (FIXED LENGTH BYTE ARRAY)
+-   INT(8 \| 16 \| 32, signed \| unsigned) etc. (INT32 or INT64)
+-   DECIMAL (scale, precision) (INT32, INT64, BYTE ARRAY or FIXED LENGTH BYTE ARRAY)
+-   FLOAT16 (FIXED LENGTH BYTE ARRAY)
+-   DATE (INT32)
+-   TIME (millis \| micros \| nanos) (INT32, INT64)
+-   TIMESTAMP (UTC, millis \| micros \| nanos) (INT64)
+-   INTERVAL
+-   JSON
+-   BSON
+-   VARIANT
+-   GEOMETRY
+-   GEOGRAPHY
+-   LIST
+-   MAP
+-   UNKNOWN
+
+### nanoparquet example
+
+E.g. the `flights` table's `carrier` column was written as a string (`STRING`), because that's the default for character columns:
+
+```{r}
+read_parquet_schema("flights.parquet")
+```
+
+If you want to write it as an `ENUM`, you need to customize `write_parquet()` :
+
+```{r}
+write_parquet(flights, "flights2.parquet", schema = parquet_schema(carrier = "ENUM"))
+```
+
+Double check:
+
+```{r}
+read_parquet_schema("flights2.parquet")
+```
+
+## Encodings
+
+The data of a column chunk is stored in *pages*, using one of the possible data encodings (not a complete list):
+
+-   Plain encoding. Dump values of the column to the data page back to back. This encoding makes sense if there are no repeated values in a column, and the range of values is also very wide.
+-   Dictionary encoding. Pages within a column chunk may be dictionary encoded. This is handy if there are many repetitions of a handful of possible values, especially if the values are lengthy. E.g. a factor column. The first page is a special page that defines the dictionary for this column chunk and the subsequent pages contain dictionary indices.
+-   RLE-BP: run-length encoding + bit packing. Data, or more commonly, repetition and definition levels, or dictionary indices and be run-length-encoded. This is handy for repeated values. RLE encoding is actually a hybrid run length encoding with bit packing, so it is also efficient when only a small subset of possible values are used in the data, or the dictionary indices.
+-   Delta encoding. Encode the data or the dictionary indices as differences to an initial value. E.g. it can encode a natural sequence of numbers very efficiently.
+
+Encodings are very important to read and write data (space- and time-) efficiently. `nanoparquet::write_parquet()` chooses an encoding automatically, but you can override this.
+
+### nanoparquet example
+
+By default most columns in `flights` are dictionary encoded, because nanoparquet detected repetition:
+
+```{r}
+read_parquet_schema("flights.parquet")
+fc <- read_parquet_metadata("flights.parquet")$column_chunks
+fc
+fc$encodings
+```
+
+We can force `write_parquet()` to write them in `PLAIN` encoding. (Most often you should not do this.)
+
+```{r}
+write_parquet(flights, "flights3.parquet", encoding = "PLAIN")
+fs::file_info(c("flights.parquet", "flights3.parquet"))
+```
+
+`PLAIN` encoding might also take longer to read:
+
+```{r}
+bench::mark(
+  dict = read_parquet("flights.parquet"),
+  plain = read_parquet("flights3.parquet")
+)
+```
+
+# 5 Future plans
+
+## Remote files
+
+-   Support reading Parquet files over HTTP.
+
+-   Support reading Parquet metadata over HTTP.
+
+## Subsetting rows
+
+-   Support reading a subset of rows into the memory.
+
+## Parallel Parquet reader and writer
+
+-   Make `read_parquet()` and `write_parquet()` faster by processing row groups, column chunks, pages in parallel.
+
+## Schema evolution
+
+-   Support adding and removing columns efficiently.
+
+## Nested types
+
+-   Support reading and writing nested Parquet files, with `LIST` and `MAP` columns.
+
+## The missing bits
+
+-   Other new data types: `VARIANT`, `GEOMETRY`, `GEOGRAPHY`.
+
+-   Add missing compression algorithms.
+
+-   Add missing encodings to `write_parquet()`.
+
+-   Support encryption.
+
+-   Checksumming.
+
+-   Support using and writing Bloom filters.
+
+## ALTREP
+
+-   Support lazy-loading parts of Parquet files.
+
+## Manual type mapping
+
+-   Allow specifying the Parquet -\> R type mappings manually in `read_parquet()`.
+
+-   Already supported for `write_parquet()`.
+
+## Multi-file support
+
+-   Support Hive partitioning: split up a data set into multiple files, based on partition keys.
+
+## nanoparquet as a C++ library
+
+## nanoparquet Python package
+
+## nanoparquet for WebAssembly
+
+# 6 Links
+
+-   nanoparquet on GitHub: <https://github.com/r-lib/nanoparquet/>
+-   Parquet file format: <https://github.com/apache/parquet-format>
+-   Apache Arrow: <https://arrow.apache.org/>
+-   DuckDB: <https://duckdb.org/>
+-   Polars: <https://pola.rs/>
+-   duckplyr: <https://duckplyr.tidyverse.org/>
