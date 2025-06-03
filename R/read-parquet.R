@@ -32,6 +32,11 @@ read_parquet <- function(file, col_select = NULL,
 		on.exit(unlink(tmp), add = TRUE)
 		dump_connection(file, tmp)
 		file <- tmp
+	} else if (is.character(file) && length(file) == 1 && any(startsWith(file, c("https://", "http://")))) { 
+		tmp <- tempfile(fileext = ".parquet")
+		on.exit(unlink(tmp), add = TRUE)
+		suppressWarnings(download.file(file, destfile = tmp, quiet = TRUE, mode = "wb"))
+		file <- tmp
 	}
   file <- path.expand(file)
 
