@@ -30,6 +30,8 @@ format:
 
 # 1 Read and write Parquet files with nanoparquet
 
+On GitHub: <https://github.com/r-lib/nanoparquet/>
+
 Installation:
 
 ``` r
