@@ -305,7 +305,6 @@ test_that("double -> INT(16, TRUE)", {
     # unsupported for INT32
     write_parquet(d, tmp, schema = schema, encoding = "RLE")
   })
-
 })
 
 test_that("double -> INT(16, FALSE)", {
@@ -447,17 +446,21 @@ test_that("character -> UUID", {
     test_write(d, schema, "RLE_DICTIONARY")
   }
 
-  do(data.frame(u = c(
-    "00112233-4455-6677-8899-aabbccddeeff",
-    "01112233-4455-6677-8899-aabbccddeeff",
-    "02112233-4455-6677-8899-aabbccddeeff"
-  )))
-  do(data.frame(u = c(
-    "00112233-4455-6677-8899-aabbccddeeff",
-    "01112233-4455-6677-8899-aabbccddeeff",
-    NA,
-    "02112233-4455-6677-8899-aabbccddeeff"
-  )))
+  do(data.frame(
+    u = c(
+      "00112233-4455-6677-8899-aabbccddeeff",
+      "01112233-4455-6677-8899-aabbccddeeff",
+      "02112233-4455-6677-8899-aabbccddeeff"
+    )
+  ))
+  do(data.frame(
+    u = c(
+      "00112233-4455-6677-8899-aabbccddeeff",
+      "01112233-4455-6677-8899-aabbccddeeff",
+      NA,
+      "02112233-4455-6677-8899-aabbccddeeff"
+    )
+  ))
   do(data.frame(u = rep("00112233-4455-6677-8899-aabbccddeeff", 10)))
   d <- data.frame(u = rep("00112233-4455-6677-8899-aabbccddeeff", 10))
   d[[1]][5] <- NA

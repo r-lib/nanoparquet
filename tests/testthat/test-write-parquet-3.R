@@ -145,14 +145,14 @@ test_that("write_parquet -> BYTE_ARRAY", {
   # character -> BYTE_ARRAY
   d <- data.frame(d = c("foo", "bar", "foobar", NA))
   write_parquet(
-    d, tmp,
+    d,
+    tmp,
     schema = parquet_schema("BYTE_ARRAY")
   )
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
-
 })
 
 test_that("write_parquet -> FIXED_LEN_BYTE_ARRAY", {
@@ -162,7 +162,8 @@ test_that("write_parquet -> FIXED_LEN_BYTE_ARRAY", {
   # character -> FIXED_LEN_BYTE_ARRAY
   d <- data.frame(d = c("foo", "bar", "aaa", NA))
   write_parquet(
-    d, tmp,
+    d,
+    tmp,
     schema = parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
   )
   expect_snapshot({
@@ -495,7 +496,7 @@ test_that("double to smaller integers", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = c(2^31-1, 2^31))
+  d <- data.frame(d = c(2^31 - 1, 2^31))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("INT_32"))
   })
@@ -543,7 +544,7 @@ test_that("double to smaller integers", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = c(2^32-1, 2^32))
+  d <- data.frame(d = c(2^32 - 1, 2^32))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("UINT_32"))
   })
@@ -565,13 +566,21 @@ test_that("double to INT(64, *)", {
   })
 
   d <- data.frame(d = c(9223372036854770000, 9223372036854774273))
-  expect_snapshot(error = TRUE, {
-    write_parquet(d, tmp, schema = parquet_schema("INT_64"))
-  }, transform = redact_maxint64)
+  expect_snapshot(
+    error = TRUE,
+    {
+      write_parquet(d, tmp, schema = parquet_schema("INT_64"))
+    },
+    transform = redact_maxint64
+  )
   d <- data.frame(d = -c(9223372036854770000, 9223372036854774273))
-  expect_snapshot(error = TRUE, {
-    write_parquet(d, tmp, schema = parquet_schema("INT_64"))
-  }, transform = redact_maxint64)
+  expect_snapshot(
+    error = TRUE,
+    {
+      write_parquet(d, tmp, schema = parquet_schema("INT_64"))
+    },
+    transform = redact_maxint64
+  )
 
   d <- data.frame(d = as.double(c(0:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
@@ -623,7 +632,7 @@ test_that("FLOAT16", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(c = c(0, 1, 2, NA, -1, NaN, -2, -Inf, Inf, 1/2))
+  d <- data.frame(c = c(0, 1, 2, NA, -1, NaN, -2, -Inf, Inf, 1 / 2))
   write_parquet(d, tmp, schema = parquet_schema("FLOAT16"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -647,24 +656,28 @@ test_that("list of RAW to BYTE_ARRAY", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(d = I(list(
-    charToRaw("foo"),
-    charToRaw("bar"),
-    charToRaw("foobar")
-  )))
+  d <- data.frame(
+    d = I(list(
+      charToRaw("foo"),
+      charToRaw("bar"),
+      charToRaw("foobar")
+    ))
+  )
   write_parquet(d, tmp)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = I(list(
-    charToRaw("foo"),
-    NULL,
-    charToRaw("bar"),
-    charToRaw("foobar"),
-    NULL
-  )))
+  d <- data.frame(
+    d = I(list(
+      charToRaw("foo"),
+      NULL,
+      charToRaw("bar"),
+      charToRaw("foobar"),
+      NULL
+    ))
+  )
   write_parquet(d, tmp)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -677,28 +690,31 @@ test_that("list of RAW to FIXED_LEN_BYTE_ARRAY", {
   on.exit(unlink(tmp), add = TRUE)
   schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
 
-  d <- data.frame(d = I(list(
-    charToRaw("foo"),
-    charToRaw("bar"),
-    charToRaw("aaa")
-  )))
+  d <- data.frame(
+    d = I(list(
+      charToRaw("foo"),
+      charToRaw("bar"),
+      charToRaw("aaa")
+    ))
+  )
   write_parquet(d, tmp, schema = schema)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = I(list(
-    charToRaw("foo"),
-    NULL,
-    charToRaw("bar"),
-    charToRaw("aaa"),
-    NULL
-  )))
+  d <- data.frame(
+    d = I(list(
+      charToRaw("foo"),
+      NULL,
+      charToRaw("bar"),
+      charToRaw("aaa"),
+      NULL
+    ))
+  )
   write_parquet(d, tmp, schema = schema)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
-
 })

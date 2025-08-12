@@ -66,10 +66,16 @@ parquet_options <- function(
   class = getOption("nanoparquet.class", "tbl"),
   compression_level = getOption("nanoparquet.compression_level", NA_integer_),
   keep_row_groups = FALSE,
-  num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
+  num_rows_per_row_group = getOption(
+    "nanoparquet.num_rows_per_row_group",
+    10000000L
+  ),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
-  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L),
+  write_data_page_version = getOption(
+    "nanoparquet.write_data_page_version",
+    1L
+  ),
   write_minmax_values = getOption("nanoparquet.write_minmax_values", TRUE)
 ) {
   stopifnot(is.character(class))
@@ -78,9 +84,9 @@ parquet_options <- function(
   stopifnot(is_flag(write_arrow_metadata))
   stopifnot(
     identical(write_data_page_version, 1) ||
-    identical(write_data_page_version, 2) ||
-    identical(write_data_page_version, 1L) ||
-    identical(write_data_page_version, 2L)
+      identical(write_data_page_version, 2) ||
+      identical(write_data_page_version, 1L) ||
+      identical(write_data_page_version, 2L)
   )
   stopifnot(is_flag(write_minmax_values))
   num_rows_per_row_group <- as_count(
@@ -89,12 +95,17 @@ parquet_options <- function(
   )
   if (identical(compression_level, Inf)) {
     compression_level <- 100000L
-  } else if (identical(compression_level, NA) ||
-             identical(compression_level, NA_integer_) ||
-             identical(compression_level, NA_real_)) {
+  } else if (
+    identical(compression_level, NA) ||
+      identical(compression_level, NA_integer_) ||
+      identical(compression_level, NA_real_)
+  ) {
     compression_level <- NA_integer_
   } else {
-    compression_level <- as_integer_scalar(compression_level, "compression_level")
+    compression_level <- as_integer_scalar(
+      compression_level,
+      "compression_level"
+    )
   }
 
   list(

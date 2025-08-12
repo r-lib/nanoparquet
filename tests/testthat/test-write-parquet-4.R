@@ -1,12 +1,20 @@
 test_that("errors", {
   options <- parquet_options()
   expect_snapshot(error = TRUE, {
-   .Call(
-      rf_nanoparquet_write, mtcars, tempfile(), dim(mtcars), 0L,
-      list(character(), character()), rep(FALSE, ncol(mtcars)),
-      options, map_schema_to_df(NULL, mtcars), rep(10L, ncol(mtcars)), 1L,
+    .Call(
+      rf_nanoparquet_write,
+      mtcars,
+      tempfile(),
+      dim(mtcars),
+      0L,
+      list(character(), character()),
+      rep(FALSE, ncol(mtcars)),
+      options,
+      map_schema_to_df(NULL, mtcars),
+      rep(10L, ncol(mtcars)),
+      1L,
       sys.call()
-   )
+    )
   })
 })
 
@@ -261,41 +269,72 @@ test_that("Errors when writing a dictionary", {
 
   d <- data.frame(c = 1:5)
   expect_snapshot(error = TRUE, {
-    write_parquet(d, tmp, schema = parquet_schema("DOUBLE"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d,
+      tmp,
+      schema = parquet_schema("DOUBLE"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 
   d2 <- data.frame(c = as.double(1:5))
   expect_snapshot(error = TRUE, {
-    write_parquet(d2, tmp, schema = parquet_schema("BYTE_ARRAY"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d2,
+      tmp,
+      schema = parquet_schema("BYTE_ARRAY"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 
   d3 <- data.frame(c = as.factor(letters))
   expect_snapshot(error = TRUE, {
-    write_parquet(d3, tmp, schema = parquet_schema("DOUBLE"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d3,
+      tmp,
+      schema = parquet_schema("DOUBLE"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 
   # too small value for DECIMAL INT32
   d4 <- data.frame(c = -101L)
-  schema4 <- parquet_schema(list("DECIMAL", precision = 2, primitive_type = "INT32"))
+  schema4 <- parquet_schema(list(
+    "DECIMAL",
+    precision = 2,
+    primitive_type = "INT32"
+  ))
   expect_snapshot(error = TRUE, {
     write_parquet(d4, tmp, schema = schema4, encoding = "RLE_DICTIONARY")
   })
   # too larse values for DECIMAL INT32
   d5 <- data.frame(c = 101L)
-  schema5 <- parquet_schema(list("DECIMAL", precision = 2, primitive_type = "INT32"))
+  schema5 <- parquet_schema(list(
+    "DECIMAL",
+    precision = 2,
+    primitive_type = "INT32"
+  ))
   expect_snapshot(error = TRUE, {
     write_parquet(d5, tmp, schema = schema5, encoding = "RLE_DICTIONARY")
   })
 
   # too small value for DECIMAL INT64
   d4 <- data.frame(c = -101L)
-  schema4 <- parquet_schema(list("DECIMAL", precision = 2, primitive_type = "INT64"))
+  schema4 <- parquet_schema(list(
+    "DECIMAL",
+    precision = 2,
+    primitive_type = "INT64"
+  ))
   expect_snapshot(error = TRUE, {
     write_parquet(d4, tmp, schema = schema4, encoding = "RLE_DICTIONARY")
   })
   # too larse values for DECIMAL INT64
   d5 <- data.frame(c = 101L)
-  schema5 <- parquet_schema(list("DECIMAL", precision = 2, primitive_type = "INT64"))
+  schema5 <- parquet_schema(list(
+    "DECIMAL",
+    precision = 2,
+    primitive_type = "INT64"
+  ))
   expect_snapshot(error = TRUE, {
     write_parquet(d5, tmp, schema = schema5, encoding = "RLE_DICTIONARY")
   })
@@ -303,7 +342,12 @@ test_that("Errors when writing a dictionary", {
   # no INTSXP -> DOUBLE conversion
   d5 <- data.frame(c = 1:5)
   expect_snapshot(error = TRUE, {
-    write_parquet(d5, tmp, schema = parquet_schema("DOUBLE"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d5,
+      tmp,
+      schema = parquet_schema("DOUBLE"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 })
 
@@ -311,7 +355,9 @@ test_that("POSIXct dictionary", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(d = structure(1724157480.12919, class = c("POSIXct", "POSIXt")))
+  d <- data.frame(
+    d = structure(1724157480.12919, class = c("POSIXct", "POSIXt"))
+  )
   write_parquet(d, tmp, encoding = "RLE_DICTIONARY")
   expect_snapshot({
     as.data.frame(read_parquet(tmp))
@@ -319,7 +365,12 @@ test_that("POSIXct dictionary", {
   })
 
   expect_snapshot(error = TRUE, {
-    write_parquet(d, tmp, schema = parquet_schema("INT32"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d,
+      tmp,
+      schema = parquet_schema("INT32"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 
   d2 <- data.frame(x = as.difftime(1, units = "secs"))
@@ -330,7 +381,12 @@ test_that("POSIXct dictionary", {
   })
 
   expect_snapshot(error = TRUE, {
-    write_parquet(d2, tmp, schema = parquet_schema("INT32"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d2,
+      tmp,
+      schema = parquet_schema("INT32"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 })
 
@@ -340,13 +396,21 @@ test_that("more dictionaries", {
 
   # too small value for DECIMAL INT32
   d4 <- data.frame(c = as.double(-101L))
-  schema4 <- parquet_schema(list("DECIMAL", precision = 2, primitive_type = "INT32"))
+  schema4 <- parquet_schema(list(
+    "DECIMAL",
+    precision = 2,
+    primitive_type = "INT32"
+  ))
   expect_snapshot(error = TRUE, {
     write_parquet(d4, tmp, schema = schema4, encoding = "RLE_DICTIONARY")
   })
   # too larse values for DECIMAL INT32
   d5 <- data.frame(c = as.double(101L))
-  schema5 <- parquet_schema(list("DECIMAL", precision = 2, primitive_type = "INT32"))
+  schema5 <- parquet_schema(list(
+    "DECIMAL",
+    precision = 2,
+    primitive_type = "INT32"
+  ))
   expect_snapshot(error = TRUE, {
     write_parquet(d5, tmp, schema = schema5, encoding = "RLE_DICTIONARY")
   })
@@ -366,37 +430,65 @@ test_that("more dictionaries", {
   # too large value
   d6 <- data.frame(c = 128.0)
   expect_snapshot(error = TRUE, {
-    write_parquet(d6, tmp, schema = parquet_schema("INT_8"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d6,
+      tmp,
+      schema = parquet_schema("INT_8"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 
   # too large value
   d7 <- data.frame(c = 256.0)
   expect_snapshot(error = TRUE, {
-    write_parquet(d7, tmp, schema = parquet_schema("UINT_8"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d7,
+      tmp,
+      schema = parquet_schema("UINT_8"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 
   # too small value
   d8 <- data.frame(c = -1)
   expect_snapshot(error = TRUE, {
-    write_parquet(d8, tmp, schema = parquet_schema("UINT_8"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d8,
+      tmp,
+      schema = parquet_schema("UINT_8"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 
   # too small value for DECIMAL INT64
   d9 <- data.frame(c = as.double(-101L))
-  schema4 <- parquet_schema(list("DECIMAL", precision = 2, primitive_type = "INT64"))
+  schema4 <- parquet_schema(list(
+    "DECIMAL",
+    precision = 2,
+    primitive_type = "INT64"
+  ))
   expect_snapshot(error = TRUE, {
     write_parquet(d9, tmp, schema = schema4, encoding = "RLE_DICTIONARY")
   })
   # too larse values for DECIMAL INT32
   d10 <- data.frame(c = as.double(101L))
-  schema5 <- parquet_schema(list("DECIMAL", precision = 2, primitive_type = "INT64"))
+  schema5 <- parquet_schema(list(
+    "DECIMAL",
+    precision = 2,
+    primitive_type = "INT64"
+  ))
   expect_snapshot(error = TRUE, {
     write_parquet(d10, tmp, schema = schema5, encoding = "RLE_DICTIONARY")
   })
 
   # no DOUBLE -> BYTE_ARRAY conversion
   expect_snapshot(error = TRUE, {
-    write_parquet(d10, tmp, schema = parquet_schema("BYTE_ARRAY"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d10,
+      tmp,
+      schema = parquet_schema("BYTE_ARRAY"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 })
 
@@ -407,7 +499,12 @@ test_that("Even more dictionaries", {
   # bad UUID value
   d <- data.frame(x = "not-a-uuid")
   expect_snapshot(error = TRUE, {
-    write_parquet(d, tmp, schema = parquet_schema("UUID"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d,
+      tmp,
+      schema = parquet_schema("UUID"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 
   # invalid string length in FIXED_LEN_BYTE_ARRAY
@@ -419,7 +516,12 @@ test_that("Even more dictionaries", {
 
   # no CHARSXP -> DOUBLE conversion
   expect_snapshot(error = TRUE, {
-    write_parquet(d2, tmp, schema = parquet_schema("DOUBLE"), encoding = "RLE_DICTIONARY")
+    write_parquet(
+      d2,
+      tmp,
+      schema = parquet_schema("DOUBLE"),
+      encoding = "RLE_DICTIONARY"
+    )
   })
 })
 

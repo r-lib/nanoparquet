@@ -1,65 +1,65 @@
 type_names <- c(
-	BOOLEAN = 0L,
-	INT32 = 1L,
-	INT64 = 2L,
-	INT96 = 3L,
-	FLOAT = 4L,
-	DOUBLE = 5L,
-	BYTE_ARRAY = 6L,
-	FIXED_LEN_BYTE_ARRAY = 7L
+  BOOLEAN = 0L,
+  INT32 = 1L,
+  INT64 = 2L,
+  INT96 = 3L,
+  FLOAT = 4L,
+  DOUBLE = 5L,
+  BYTE_ARRAY = 6L,
+  FIXED_LEN_BYTE_ARRAY = 7L
 )
 ctype_names <- c(
-	UTF8 = 0L,
-	MAP = 1L,
-	MAP_KEY_VALUE = 2L,
-	LIST = 3L,
-	ENUM = 4L,
-	DECIMAL = 5L,
-	DATE = 6L,
-	TIME_MILLIS = 7L,
-	TIME_MICROS = 8L,
-	TIMESTAMP_MILLIS = 9L,
-	TIMESTAMP_MICROS = 10L,
-	UINT_8 = 11L,
-	UINT_16 = 12L,
-	UINT_32 = 13L,
-	UINT_64 = 14L,
-	INT_8 = 15L,
-	INT_16 = 16L,
-	INT_32 = 17L,
-	INT_64 = 18L,
-	JSON = 19L,
-	BSON = 20L,
-	INTERVAL = 21L
+  UTF8 = 0L,
+  MAP = 1L,
+  MAP_KEY_VALUE = 2L,
+  LIST = 3L,
+  ENUM = 4L,
+  DECIMAL = 5L,
+  DATE = 6L,
+  TIME_MILLIS = 7L,
+  TIME_MICROS = 8L,
+  TIMESTAMP_MILLIS = 9L,
+  TIMESTAMP_MICROS = 10L,
+  UINT_8 = 11L,
+  UINT_16 = 12L,
+  UINT_32 = 13L,
+  UINT_64 = 14L,
+  INT_8 = 15L,
+  INT_16 = 16L,
+  INT_32 = 17L,
+  INT_64 = 18L,
+  JSON = 19L,
+  BSON = 20L,
+  INTERVAL = 21L
 )
 
 repetition_types <- c(
-	REQUIRED = 0L,
-	OPTIONAL = 1L,
-	REPEATED = 2L
+  REQUIRED = 0L,
+  OPTIONAL = 1L,
+  REPEATED = 2L
 )
 
 encodings <- c(
-	PLAIN = 0L,
-	GROUP_VAR_INT = 1L,    # was never used, now deprecated
-	PLAIN_DICTIONARY = 2L,
-	RLE = 3L,
-	BIT_PACKED = 4L,
-	DELTA_BINARY_PACKED = 5L,
-	DELTA_LENGTH_BYTE_ARRAY = 6L,
-	DELTA_BYTE_ARRAY = 7L,
-	RLE_DICTIONARY = 8L,
-	BYTE_STREAM_SPLIT = 9L
+  PLAIN = 0L,
+  GROUP_VAR_INT = 1L, # was never used, now deprecated
+  PLAIN_DICTIONARY = 2L,
+  RLE = 3L,
+  BIT_PACKED = 4L,
+  DELTA_BINARY_PACKED = 5L,
+  DELTA_LENGTH_BYTE_ARRAY = 6L,
+  DELTA_BYTE_ARRAY = 7L,
+  RLE_DICTIONARY = 8L,
+  BYTE_STREAM_SPLIT = 9L
 )
 
 codecs <- c(
-	UNCOMPRESSED = 0L,
-	SNAPPY = 1L,
-	GZIP = 2L,
-	LZO = 3L,
-	BROTLI = 4L,
-	LZ4 = 5L,
-	ZSTD = 6L
+  UNCOMPRESSED = 0L,
+  SNAPPY = 1L,
+  GZIP = 2L,
+  LZO = 3L,
+  BROTLI = 4L,
+  LZ4 = 5L,
+  ZSTD = 6L
 )
 
 page_types <- c(
@@ -77,10 +77,10 @@ format_schema_result <- function(mtd, sch, options) {
     names(repetition_types)[sch$repetition_type + 1L]
   sch$logical_type <- I(sch$logical_type)
   sch <- as.data.frame(sch)
-	sch <- add_r_type_to_schema(mtd, sch, options)
+  sch <- add_r_type_to_schema(mtd, sch, options)
   class(sch) <- c("nanoparquet_schema", "tbl", class(sch))
 
-	sch
+  sch
 }
 
 #' Read the metadata of a Parquet file
@@ -193,48 +193,50 @@ format_schema_result <- function(mtd, sch, options) {
 #' nanoparquet::read_parquet_metadata(file_name)
 
 read_parquet_metadata <- function(file, options = parquet_options()) {
-	file <- path.expand(file)
-	res <- .Call(nanoparquet_read_metadata, file)
+  file <- path.expand(file)
+  res <- .Call(nanoparquet_read_metadata, file)
 
-	res$file_meta_data$key_value_metadata <-
-		as.data.frame(res$file_meta_data$key_value_metadata)
-	class(res$file_meta_data$key_value_metadata) <-
-		c("tbl", class(res$file_meta_data$key_value_metadata))
-	res$file_meta_data$key_value_metadata <-
-		I(list(res$file_meta_data$key_value_metadata))
-	res$file_meta_data <- as.data.frame(res$file_meta_data)
-	class(res$file_meta_data) <- c("tbl", class(res$file_meta_data))
+  res$file_meta_data$key_value_metadata <-
+    as.data.frame(res$file_meta_data$key_value_metadata)
+  class(res$file_meta_data$key_value_metadata) <-
+    c("tbl", class(res$file_meta_data$key_value_metadata))
+  res$file_meta_data$key_value_metadata <-
+    I(list(res$file_meta_data$key_value_metadata))
+  res$file_meta_data <- as.data.frame(res$file_meta_data)
+  class(res$file_meta_data) <- c("tbl", class(res$file_meta_data))
 
-	res$schema <- format_schema_result(res, res$schema, options)
+  res$schema <- format_schema_result(res, res$schema, options)
 
-	res$row_groups <- as.data.frame(res$row_groups)
-	class(res$row_groups) <- c("tbl", class(res$row_groups))
+  res$row_groups <- as.data.frame(res$row_groups)
+  class(res$row_groups) <- c("tbl", class(res$row_groups))
 
-	res$column_chunks$type <- names(type_names)[res$column_chunks$type + 1L]
-	res$column_chunks$encodings <- lapply(
-		res$column_chunks$encodings,
-		function(ec) { names(encodings)[ec + 1L] }
-	)
-	res$column_chunks$codec <- names(codecs)[res$column_chunks$codec + 1L]
-	res$column_chunks$encodings <- I(res$column_chunks$encodings)
-	res$column_chunks$path_in_schema <- I(res$column_chunks$path_in_schema)
-	res$column_chunks$min_value <- I(res$column_chunks$min_value)
-	res$column_chunks$max_value <- I(res$column_chunks$max_value)
-	res$column_chunks <- as.data.frame(res$column_chunks)
-	class(res$column_chunks) <- c("tbl", class(res$column_chunks))
+  res$column_chunks$type <- names(type_names)[res$column_chunks$type + 1L]
+  res$column_chunks$encodings <- lapply(
+    res$column_chunks$encodings,
+    function(ec) {
+      names(encodings)[ec + 1L]
+    }
+  )
+  res$column_chunks$codec <- names(codecs)[res$column_chunks$codec + 1L]
+  res$column_chunks$encodings <- I(res$column_chunks$encodings)
+  res$column_chunks$path_in_schema <- I(res$column_chunks$path_in_schema)
+  res$column_chunks$min_value <- I(res$column_chunks$min_value)
+  res$column_chunks$max_value <- I(res$column_chunks$max_value)
+  res$column_chunks <- as.data.frame(res$column_chunks)
+  class(res$column_chunks) <- c("tbl", class(res$column_chunks))
 
-	res
+  res
 }
 
 #' @export
 #' @rdname read_parquet_metadata
 
 parquet_metadata <- function(file) {
-	warning(
-		"`parquet_metadata()` is deprecated. ",
-		"Please use `read_parquet_metadata()` instead."
-	)
-	read_parquet_metadata(file)
+  warning(
+    "`parquet_metadata()` is deprecated. ",
+    "Please use `read_parquet_metadata()` instead."
+  )
+  read_parquet_metadata(file)
 }
 
 #' Read the schema of a Parquet file
@@ -275,9 +277,9 @@ parquet_metadata <- function(file) {
 #' @export
 
 read_parquet_schema <- function(file, options = parquet_options()) {
-	file <- path.expand(file)
-	mtd <- read_parquet_metadata(file, options = options)
-	mtd$schema
+  file <- path.expand(file)
+  mtd <- read_parquet_metadata(file, options = options)
+  mtd$schema
 }
 
 #' Short summary of a Parquet file
@@ -299,29 +301,29 @@ read_parquet_schema <- function(file, options = parquet_options()) {
 #' @export
 
 read_parquet_info <- function(file) {
-	file <- path.expand(file)
-	mtd <- read_parquet_metadata(file)
-	info <- data.frame(
-		stringsAsFactors = FALSE,
-		file_name = file,
-		num_cols = sum(is.na(mtd$schema$num_children)),
-		num_rows = mtd$file_meta_data$num_rows,
-		num_row_groups = nrow(mtd$row_groups),
-		file_size = file.size(file),
-		parquet_version = mtd$file_meta_data$version,
-		created_by = mtd$file_meta_data$created_by
-	)
-	class(info) <- c("tbl", class(info))
-	info
+  file <- path.expand(file)
+  mtd <- read_parquet_metadata(file)
+  info <- data.frame(
+    stringsAsFactors = FALSE,
+    file_name = file,
+    num_cols = sum(is.na(mtd$schema$num_children)),
+    num_rows = mtd$file_meta_data$num_rows,
+    num_row_groups = nrow(mtd$row_groups),
+    file_size = file.size(file),
+    parquet_version = mtd$file_meta_data$version,
+    created_by = mtd$file_meta_data$created_by
+  )
+  class(info) <- c("tbl", class(info))
+  info
 }
 
 #' @export
 #' @rdname read_parquet_info
 
 parquet_info <- function(file) {
-	warning(
-		"`parquet_info()` is deprecated, please use `read_parquet_info() ",
-		"instead."
-	)
-	read_parquet_info(file)
+  warning(
+    "`parquet_info()` is deprecated, please use `read_parquet_info() ",
+    "instead."
+  )
+  read_parquet_info(file)
 }

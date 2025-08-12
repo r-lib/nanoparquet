@@ -32,91 +32,103 @@
 #' @export
 
 parquet_column_types <- function(x, options = parquet_options()) {
-	warning(
-		"`parquet_column_types()` is deprecated, please use ",
-		"`read_parquet_schema()` or `parquet_schema()` instead."
+  warning(
+    "`parquet_column_types()` is deprecated, please use ",
+    "`read_parquet_schema()` or `parquet_schema()` instead."
   )
-	if (is.character(x)) {
-		parquet_column_types_file(x, options)
-	} else if (is.data.frame(x)) {
-		infer_parquet_schema(x, options)
-	} else {
-		stop("`x` must be a file name or a data frame in `parquet_column_types()`")
-	}
+  if (is.character(x)) {
+    parquet_column_types_file(x, options)
+  } else if (is.data.frame(x)) {
+    infer_parquet_schema(x, options)
+  } else {
+    stop("`x` must be a file name or a data frame in `parquet_column_types()`")
+  }
 }
 
 parquet_column_types_file <- function(file, options) {
   mtd <- read_parquet_metadata(file)
-	sch <- mtd$schema
-	add_r_type_to_schema(mtd, sch, options)
+  sch <- mtd$schema
+  add_r_type_to_schema(mtd, sch, options)
 }
 
 add_r_type_to_schema <- function(mtd, sch, options, col_select = NULL) {
-	kv <- mtd$file_meta_data$key_value_metadata[[1]]
+  kv <- mtd$file_meta_data$key_value_metadata[[1]]
 
-	type_map <- c(
-		BOOLEAN = "logical",
-		INT32 = "integer",
-		INT64 = "double",
-		DOUBLE = "double",
-		FLOAT = "double",
-		INT96 = "POSIXct",
-		FIXED_LEN_BYTE_ARRAY = "raw",
-		BYTE_ARRAY = "raw"
-	)
+  type_map <- c(
+    BOOLEAN = "logical",
+    INT32 = "integer",
+    INT64 = "double",
+    DOUBLE = "double",
+    FLOAT = "double",
+    INT96 = "POSIXct",
+    FIXED_LEN_BYTE_ARRAY = "raw",
+    BYTE_ARRAY = "raw"
+  )
 
-	sch$r_type <- unname(type_map[sch$type])
+  sch$r_type <- unname(type_map[sch$type])
 
-	sch$r_type[
-		sch$type == "FIXED_LEN_BYTE_ARRAY" &
-		sch$converted_type == "DECIMAL"] <- "double"
-	sch$r_type[
-		vapply(sch$logical_type, function(x) {
-			!is.null(x$type) && x$type %in% c("STRING", "ENUM", "UUID")
-		}, logical(1)) |
-		sch$converted_type == "UTF8"] <- "character"
+  sch$r_type[
+    sch$type == "FIXED_LEN_BYTE_ARRAY" &
+      sch$converted_type == "DECIMAL"
+  ] <- "double"
+  sch$r_type[
+    vapply(
+      sch$logical_type,
+      function(x) {
+        !is.null(x$type) && x$type %in% c("STRING", "ENUM", "UUID")
+      },
+      logical(1)
+    ) |
+      sch$converted_type == "UTF8"
+  ] <- "character"
 
-	# detected from Arrow schema
-	if (options[["use_arrow_metadata"]]) {
-		spec <- if ("ARROW:schema" %in% kv$key) {
-			kv <- mtd$file_meta_data$key_value_metadata[[1]]
-			arrow_find_special(
-				kv$value[match("ARROW:schema", kv$key)],
-				file
-			)
-		}
-		if (length(spec$factor)) sch$r_type[spec$factor] <- "factor"
-		if (length(spec$difftime)) sch$r_type[spec$difftime] <- "difftime"
-	}
+  # detected from Arrow schema
+  if (options[["use_arrow_metadata"]]) {
+    spec <- if ("ARROW:schema" %in% kv$key) {
+      kv <- mtd$file_meta_data$key_value_metadata[[1]]
+      arrow_find_special(
+        kv$value[match("ARROW:schema", kv$key)],
+        file
+      )
+    }
+    if (length(spec$factor)) {
+      sch$r_type[spec$factor] <- "factor"
+    }
+    if (length(spec$difftime)) sch$r_type[spec$difftime] <- "difftime"
+  }
 
-	# TODO: this is duplicated in the C++ code
-	# our own conversions
-	dates <- vapply(
-		sch$logical_type,
-		function(lt) !is.null(lt$type) && lt$type == "DATE",
-		logical(1)
-	) | sch$converted_type == "DATE"
-	sch$r_type[dates] <- "Date"
+  # TODO: this is duplicated in the C++ code
+  # our own conversions
+  dates <- vapply(
+    sch$logical_type,
+    function(lt) !is.null(lt$type) && lt$type == "DATE",
+    logical(1)
+  ) |
+    sch$converted_type == "DATE"
+  sch$r_type[dates] <- "Date"
 
-	hmss <- vapply(
-		sch$logical_type,
-		function(lt) !is.null(lt$type) && lt$type == "TIME",
-		logical(1)
-	) | sch$converted_type == "TIME_MILLIS" | sch$converted_type == "TIME_MICROS"
-	sch$r_type[hmss] <- "hms"
+  hmss <- vapply(
+    sch$logical_type,
+    function(lt) !is.null(lt$type) && lt$type == "TIME",
+    logical(1)
+  ) |
+    sch$converted_type == "TIME_MILLIS" |
+    sch$converted_type == "TIME_MICROS"
+  sch$r_type[hmss] <- "hms"
 
-	poscts <- vapply(
-		sch$logical_type,
-		function(lt) !is.null(lt) && lt$type == "TIMESTAMP",
-		logical(1)
-	) | sch$converted_type == "TIMESTAMP_MICROS"
-	sch$r_type[poscts] <- "POSIXct"
+  poscts <- vapply(
+    sch$logical_type,
+    function(lt) !is.null(lt) && lt$type == "TIMESTAMP",
+    logical(1)
+  ) |
+    sch$converted_type == "TIMESTAMP_MICROS"
+  sch$r_type[poscts] <- "POSIXct"
 
-	cols <- c(
-		"file_name",
-		"name",
-		"r_type",
-		setdiff(colnames(sch), c("file_name", "name", "r_type"))
-	)
-	sch[, cols]
+  cols <- c(
+    "file_name",
+    "name",
+    "r_type",
+    setdiff(colnames(sch), c("file_name", "name", "r_type"))
+  )
+  sch[, cols]
 }

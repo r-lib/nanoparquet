@@ -6,10 +6,13 @@ test_that("polars can read temporal types", {
 
   do <- function(df, path = tmp) {
     write_parquet(df, path)
-    pyscript <- sprintf(r"[
+    pyscript <- sprintf(
+      r"[
 import polars as pl
 pl.read_parquet("%s")
-    ]", normalizePath(path, winslash = "/"))
+    ]",
+      normalizePath(path, winslash = "/")
+    )
     pytmp <- tempfile(fileext = ".py")
     on.exit(unlink(pytmp), add = TRUE)
     writeLines(pyscript, pytmp)

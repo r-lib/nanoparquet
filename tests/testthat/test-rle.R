@@ -57,7 +57,7 @@ test_that("edge cases", {
   chk(0:7)
   chk(0:8)
   chk(0:9)
-  for (l in c(2,7,8,9,16,256,512,513,100000)) {
+  for (l in c(2, 7, 8, 9, 16, 256, 512, 513, 100000)) {
     chk(rep(0L, l))
     chk(rep(1L, l))
   }

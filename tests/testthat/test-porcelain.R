@@ -20,7 +20,9 @@ test_that("read_parquet_page for trick v2 data page", {
 
 test_that("read_parquet_page error", {
   # https://github.com/llvm/llvm-project/issues/59432
-  if (is_asan()) skip("ASAN bug")
+  if (is_asan()) {
+    skip("ASAN bug")
+  }
   pf <- test_path("data/mtcars-arrow.parquet")
   expect_error(read_parquet_page(pf, 5))
 })
@@ -49,11 +51,14 @@ test_that("MemStream", {
 test_that("DELTA_BIT_PACKED decoding", {
   skip_on_cran()
   skip_without_pyarrow()
-  if (is_asan()) skip("ASAN false positive")
+  if (is_asan()) {
+    skip("ASAN false positive")
+  }
 
   dodbp <- function(df, path) {
     write_parquet(df, path)
-    pyscript <- sprintf(r"[
+    pyscript <- sprintf(
+      r"[
 import pyarrow
 import pyarrow.parquet as pq
 path = "%s"
@@ -61,7 +66,9 @@ df = pq.read_table(path)
 writer = pq.ParquetWriter(path, df.schema, use_dictionary = False, column_encoding = 'DELTA_BINARY_PACKED')
 writer.write_table(df)
 writer.close()
-]", normalizePath(path, winslash = "/"))
+]",
+      normalizePath(path, winslash = "/")
+    )
     pytmp <- tempfile(fileext = ".py")
     on.exit(unlink(pytmp), add = TRUE)
     writeLines(pyscript, pytmp)
@@ -84,7 +91,9 @@ writer.close()
   dbp <- read_parquet_page(tmp, 4L)$data
   expect_equal(dbp_decode_int(dbp), d$x)
 
-  d <- data.frame(x = c(-(101:200) * 2L + 1:10, as.integer(rnorm(123)* 100L + 1000L)))
+  d <- data.frame(
+    x = c(-(101:200) * 2L + 1:10, as.integer(rnorm(123) * 100L + 1000L))
+  )
   stat <- dodbp(d, tmp)
   expect_snapshot(stat)
   dbp <- read_parquet_page(tmp, 4L)$data
@@ -97,10 +106,12 @@ writer.close()
   expect_equal(dbp_decode_int(dbp), d$x)
 
   # large integers
-  d <- data.frame(x = c(
-    as.integer(2^31-1 - runif(100) * 10L),
-    as.integer(-2^31+1 + runif(100) * 10L)
-  ))
+  d <- data.frame(
+    x = c(
+      as.integer(2^31 - 1 - runif(100) * 10L),
+      as.integer(-2^31 + 1 + runif(100) * 10L)
+    )
+  )
   stat <- dodbp(d, tmp)
   expect_snapshot(stat)
   dbp <- read_parquet_page(tmp, 4L)$data
@@ -109,8 +120,12 @@ writer.close()
 
 test_that("DELTA_BINARY_PACKED edge cases", {
   skip_on_cran()
-  if (is_ubsan()) skip("UBSAN false positive")
-  if (is_asan()) skip("ASAN false positive")
+  if (is_ubsan()) {
+    skip("UBSAN false positive")
+  }
+  if (is_asan()) {
+    skip("ASAN false positive")
+  }
   pf <- test_path("data/issue10279_delta_encoding.parquet")
   pgs <- read_parquet_pages(pf)
   expect_snapshot({
@@ -118,7 +133,9 @@ test_that("DELTA_BINARY_PACKED edge cases", {
     p1 <- read_parquet_page(pf, pgs$page_header_offset[1])
     dbp1 <- p1$data[
       (p1$definition_levels_byte_length +
-      p1$repetition_levels_byte_length + 1):length(p1$data)]
+        p1$repetition_levels_byte_length +
+        1):length(p1$data)
+    ]
     dbp_decode_int(dbp1)
 
     p3 <- read_parquet_page(pf, pgs$page_header_offset[3])
@@ -131,7 +148,7 @@ test_that("DELTA_BINARY_PACKED edge cases", {
 
     # unfortunately the minimum int32 value is NA in R
     # not sure what to do about this...
-    p5<- read_parquet_page(pf, pgs$page_header_offset[5])
+    p5 <- read_parquet_page(pf, pgs$page_header_offset[5])
     dbp5 <- p5$data
     dbp_decode_int(dbp5)
   })

@@ -246,7 +246,7 @@ test_that("DOUBLE", {
     test_write(d, schema, "RLE_DICTIONARY")
   }
   do(data.frame(d = 1:5 / 2))
-  do(data.frame(d = c(1:2 / 2, NA, 3:5/2)))
+  do(data.frame(d = c(1:2 / 2, NA, 3:5 / 2)))
   do(data.frame(d = rep(1, 10) / 2))
   do(d <- data.frame(d = c(rep(1, 5) / 2, NA, rep(1, 5) / 2)))
 
@@ -272,7 +272,7 @@ test_that("BYTE_ARRAY, string", {
   do(data.frame(s = c("foo", "bar", "foobar")))
   do(data.frame(s = c("foo", "bar", NA, "foobar")))
   do(data.frame(d = rep("foo", 10)))
-  d<- data.frame(d = rep("foo", 10))
+  d <- data.frame(d = rep("foo", 10))
   d[["d"]][5] <- NA
   do(d)
 
@@ -297,12 +297,14 @@ test_that("BYTE_ARRAY, RAW", {
   }
 
   do(data.frame(s = I(lapply(c("foo", "bar", "foobar"), charToRaw))))
-  do(data.frame(s = I(list(
-    charToRaw("foo"),
-    charToRaw("bar"),
-    NULL,
-    charToRaw("foobar")
-  ))))
+  do(data.frame(
+    s = I(list(
+      charToRaw("foo"),
+      charToRaw("bar"),
+      NULL,
+      charToRaw("foobar")
+    ))
+  ))
   do(data.frame(d = I(lapply(rep("foo", 10), charToRaw))))
   d <- data.frame(d = I(lapply(rep("foo", 10), charToRaw)))
   d[["d"]][5] <- list(NULL)
@@ -358,12 +360,12 @@ test_that("FIXED_LEN_BYTE_ARRAY, FLOAT16", {
     test_write(d, schema, "PLAIN")
     test_write(d, schema, "RLE_DICTIONARY")
   }
-  do(data.frame(d = 1:5/2))
-  d <- data.frame(d = 1:6/2)
+  do(data.frame(d = 1:5 / 2))
+  d <- data.frame(d = 1:6 / 2)
   d[["d"]][3] <- NA
   do(d)
-  do(data.frame(d = rep(1/2, 10)))
-  d <- data.frame(d = rep(1/2, 10))
+  do(data.frame(d = rep(1 / 2, 10)))
+  d <- data.frame(d = rep(1 / 2, 10))
   d[["d"]][5] <- NA
   do(d)
 

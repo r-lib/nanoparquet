@@ -1,6 +1,8 @@
 skip_without_pyarrow <- function() {
   skip_on_cran()
-  if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") return()
+  if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") {
+    return()
+  }
   pyscript <- r"[
     import pyarrow
     import pyarrow.parquet as pq
@@ -20,7 +22,9 @@ skip_without_pyarrow <- function() {
 
 skip_without_polars <- function() {
   skip_on_cran()
-  if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") return()
+  if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") {
+    return()
+  }
   pyscript <- r"[
     import polars
   ]"
@@ -38,8 +42,12 @@ skip_without_polars <- function() {
 }
 
 skip_without <- function(pkgs) {
-  if (any(c("arrow", "duckdb") %in% pkgs)) skip_on_cran()
-  if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") return()
+  if (any(c("arrow", "duckdb") %in% pkgs)) {
+    skip_on_cran()
+  }
+  if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") {
+    return()
+  }
   ok <- vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)
   if (any(!ok)) {
     skip(paste0("missing ", paste(pkgs[!ok], collapse = ", ")))
@@ -58,9 +66,9 @@ test_df <- function(tibble = FALSE, factor = FALSE, missing = FALSE) {
   if (missing) {
     for (i in seq_len(ncol(df))) {
       if (i <= nrow(df)) {
-        df[i,i] <- NA
+        df[i, i] <- NA
       } else {
-        df[1,i] <- NA
+        df[1, i] <- NA
       }
     }
   }

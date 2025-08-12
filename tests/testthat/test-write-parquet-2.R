@@ -7,10 +7,10 @@ test_that("REQ PLAIN", {
   N <- 10000
   d <- data.frame(
     stringsAsFactors = FALSE,
-    i = rep(c(1L, 2L, 2L, 2L, 3L, 3L, 3L, 3L), N/8),
-    r = rep(c(1, 1, 1, 1, 1, 1, 2, 10), N/8),
-    l = rep(c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE, TRUE), N/8),
-    s = rep(c("A", "A", "A", "B", "C", "D", "D", "D"), N/8)
+    i = rep(c(1L, 2L, 2L, 2L, 3L, 3L, 3L, 3L), N / 8),
+    r = rep(c(1, 1, 1, 1, 1, 1, 2, 10), N / 8),
+    l = rep(c(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE, TRUE), N / 8),
+    s = rep(c("A", "A", "A", "B", "C", "D", "D", "D"), N / 8)
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
@@ -29,7 +29,12 @@ test_that("REQ PLAIN", {
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   # data page v2
-  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "uncompressed")
+  write_parquet(
+    d,
+    tmp,
+    options = parquet_options(write_data_page_version = 2),
+    compression = "uncompressed"
+  )
   expect_equal(as.data.frame(read_parquet(tmp)), d)
   write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2))
   expect_equal(as.data.frame(read_parquet(tmp)), d)
@@ -44,10 +49,10 @@ test_that("OPT PLAIN", {
   N <- 10000
   d <- data.frame(
     stringsAsFactors = FALSE,
-    i = rep(c(1L, NA, 2L, NA, NA, 3L, 3L, 3L), N/8),
-    r = rep(c(1, 1, 1, 1, 1, 1, NA, NA), N/8),
-    l = rep(c(TRUE, FALSE, NA, NA, TRUE, FALSE, TRUE, NA), N/8),
-    s = rep(c(NA, NA, "A", "B", "C", NA, "D", NA), N/8)
+    i = rep(c(1L, NA, 2L, NA, NA, 3L, 3L, 3L), N / 8),
+    r = rep(c(1, 1, 1, 1, 1, 1, NA, NA), N / 8),
+    l = rep(c(TRUE, FALSE, NA, NA, TRUE, FALSE, TRUE, NA), N / 8),
+    s = rep(c(NA, NA, "A", "B", "C", NA, "D", NA), N / 8)
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
@@ -65,7 +70,12 @@ test_that("OPT PLAIN", {
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   # data page v2
-  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "uncompressed")
+  write_parquet(
+    d,
+    tmp,
+    options = parquet_options(write_data_page_version = 2),
+    compression = "uncompressed"
+  )
   expect_equal(as.data.frame(read_parquet(tmp)), d)
   write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2))
   expect_equal(as.data.frame(read_parquet(tmp)), d)
@@ -80,7 +90,7 @@ test_that("REQ RLE_DICT", {
   N <- 100000
   d <- data.frame(
     stringsAsFactors = FALSE,
-    f = rep(as.factor(c("A", "A", "B", "B", "C", "C", "D", "E")), N/8)
+    f = rep(as.factor(c("A", "A", "B", "B", "C", "C", "D", "E")), N / 8)
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
@@ -94,13 +104,33 @@ test_that("REQ RLE_DICT", {
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   # data page v2
-  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "uncompressed")
+  write_parquet(
+    d,
+    tmp,
+    options = parquet_options(write_data_page_version = 2),
+    compression = "uncompressed"
+  )
   expect_equal(as.data.frame(read_parquet(tmp)), d)
-  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "snappy")
+  write_parquet(
+    d,
+    tmp,
+    options = parquet_options(write_data_page_version = 2),
+    compression = "snappy"
+  )
   expect_equal(as.data.frame(read_parquet(tmp)), d)
-  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "gzip")
+  write_parquet(
+    d,
+    tmp,
+    options = parquet_options(write_data_page_version = 2),
+    compression = "gzip"
+  )
   expect_equal(as.data.frame(read_parquet(tmp)), d)
-  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "zstd")
+  write_parquet(
+    d,
+    tmp,
+    options = parquet_options(write_data_page_version = 2),
+    compression = "zstd"
+  )
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
 
@@ -113,7 +143,7 @@ test_that("OPT RLE_DICT", {
   N <- 100000
   d <- data.frame(
     stringsAsFactors = FALSE,
-    f = rep(as.factor(c(NA, "A", "B", NA, NA, "C", "D", "E")), N/8)
+    f = rep(as.factor(c(NA, "A", "B", NA, NA, "C", "D", "E")), N / 8)
   )
 
   write_parquet(d, tmp, compression = "uncompressed")
@@ -127,13 +157,33 @@ test_that("OPT RLE_DICT", {
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 
   # data page v2
-  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "uncompressed")
+  write_parquet(
+    d,
+    tmp,
+    options = parquet_options(write_data_page_version = 2),
+    compression = "uncompressed"
+  )
   expect_equal(as.data.frame(read_parquet(tmp)), d)
-  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "snappy")
+  write_parquet(
+    d,
+    tmp,
+    options = parquet_options(write_data_page_version = 2),
+    compression = "snappy"
+  )
   expect_equal(as.data.frame(read_parquet(tmp)), d)
-  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "gzip")
+  write_parquet(
+    d,
+    tmp,
+    options = parquet_options(write_data_page_version = 2),
+    compression = "gzip"
+  )
   expect_equal(as.data.frame(read_parquet(tmp)), d)
-  write_parquet(d, tmp, options = parquet_options(write_data_page_version = 2), compression = "zstd")
+  write_parquet(
+    d,
+    tmp,
+    options = parquet_options(write_data_page_version = 2),
+    compression = "zstd"
+  )
   expect_equal(as.data.frame(read_parquet(tmp)), d)
 })
 
@@ -174,7 +224,7 @@ test_that("gzip compression", {
 
   write_parquet(d, tmp, compression = "gzip")
   expect_equal(read_parquet_page(tmp, 4L)$codec, "GZIP")
-  expect_equal(read_parquet(tmp), d);
+  expect_equal(read_parquet(tmp), d)
 })
 
 test_that("zstd compression", {
@@ -184,7 +234,7 @@ test_that("zstd compression", {
 
   write_parquet(d, tmp, compression = "zstd")
   expect_equal(read_parquet_page(tmp, 4L)$codec, "ZSTD")
-  expect_equal(read_parquet(tmp), d);
+  expect_equal(read_parquet(tmp), d)
 })
 
 test_that("Conversion of sub-dates prior Posix origin is correct", {

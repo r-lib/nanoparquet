@@ -12,7 +12,7 @@ test_that("BOOLEAN", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d[["i"]][c(1,3,5)] <- NA
+  d[["i"]][c(1, 3, 5)] <- NA
   write_parquet(d, tmp, compression = "uncompressed")
   expect_snapshot({
     as.data.frame(read_parquet_pages(tmp))[["page_type"]]
@@ -26,7 +26,7 @@ test_that("BOOLEAN", {
     read_parquet(tmp)[["i"]]
   })
 
-  d[["i"]][c(1,3,5,50,99)] <- NA
+  d[["i"]][c(1, 3, 5, 50, 99)] <- NA
   write_parquet(d, tmp, compression = "uncompressed")
   expect_snapshot({
     read_parquet(tmp)[["i"]]
@@ -43,7 +43,7 @@ test_that("INT32", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d[["i"]][c(2,6,10)] <- NA
+  d[["i"]][c(2, 6, 10)] <- NA
   write_parquet(d, tmp, compression = "uncompressed")
   expect_snapshot({
     as.data.frame(read_parquet(tmp))
@@ -57,7 +57,7 @@ test_that("INT32", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d[["i"]][c(1,5,10,20,39)] <- NA
+  d[["i"]][c(1, 5, 10, 20, 39)] <- NA
   write_parquet(d, tmp, compression = "uncompressed")
   expect_snapshot({
     as.data.frame(read_parquet_pages(tmp))[["page_type"]]
@@ -77,7 +77,7 @@ test_that("INT64", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d[["i"]][c(2,6,10)] <- NA
+  d[["i"]][c(2, 6, 10)] <- NA
   write_parquet(d, tmp, compression = "uncompressed", schema = schema)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp))[, -1]
@@ -93,7 +93,7 @@ test_that("INT64", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d[["i"]][c(1,5,10,20,39)] <- NA
+  d[["i"]][c(1, 5, 10, 20, 39)] <- NA
   write_parquet(d, tmp, compression = "uncompressed", schema = schema)
   expect_snapshot({
     as.data.frame(read_parquet_pages(tmp))[["page_type"]]
@@ -109,14 +109,14 @@ test_that("FLOAT", {
   on.exit(unlink(tmp), add = TRUE)
   schema <- parquet_schema("FLOAT")
 
-  d <- data.frame(i = 1:10/2)
+  d <- data.frame(i = 1:10 / 2)
   write_parquet(d, tmp, compression = "uncompressed", schema = schema)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp))[, -1]
     as.data.frame(read_parquet(tmp))
   })
 
-  d[["i"]][c(2,6,10)] <- NA
+  d[["i"]][c(2, 6, 10)] <- NA
   write_parquet(d, tmp, compression = "uncompressed", schema = schema)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp))[, -1]
@@ -124,7 +124,7 @@ test_that("FLOAT", {
   })
 
   # dict
-  d <- data.frame(i = rep(1:2, 20)/2)
+  d <- data.frame(i = rep(1:2, 20) / 2)
   write_parquet(d, tmp, compression = "uncompressed", schema = schema)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp))[, -1]
@@ -132,7 +132,7 @@ test_that("FLOAT", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d[["i"]][c(1,5,10,20,39)] <- NA
+  d[["i"]][c(1, 5, 10, 20, 39)] <- NA
   write_parquet(d, tmp, compression = "uncompressed", schema = schema)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp))[, -1]
@@ -155,27 +155,27 @@ test_that("DOUBLE", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(i = 1:10/2)
+  d <- data.frame(i = 1:10 / 2)
   write_parquet(d, tmp, compression = "uncompressed")
   expect_snapshot({
     as.data.frame(read_parquet(tmp))
   })
 
-  d[["i"]][c(2,6,10)] <- NA
+  d[["i"]][c(2, 6, 10)] <- NA
   write_parquet(d, tmp, compression = "uncompressed")
   expect_snapshot({
     as.data.frame(read_parquet(tmp))
   })
 
   # dict
-  d <- data.frame(i = rep(1:2, 20)/2)
+  d <- data.frame(i = rep(1:2, 20) / 2)
   write_parquet(d, tmp, compression = "uncompressed")
   expect_snapshot({
     as.data.frame(read_parquet_pages(tmp))[["page_type"]]
     as.data.frame(read_parquet(tmp))
   })
 
-  d[["i"]][c(1,5,10,20,39)] <- NA
+  d[["i"]][c(1, 5, 10, 20, 39)] <- NA
   write_parquet(d, tmp, compression = "uncompressed")
   expect_snapshot({
     as.data.frame(read_parquet_pages(tmp))[["page_type"]]
@@ -187,12 +187,14 @@ test_that("BYTE_ARRAY", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(l = I(list(
-    as.raw(1:10),
-    as.raw(11:20),
-    as.raw(1:3),
-    as.raw(1:1)
-  )))
+  d <- data.frame(
+    l = I(list(
+      as.raw(1:10),
+      as.raw(11:20),
+      as.raw(1:3),
+      as.raw(1:1)
+    ))
+  )
   write_parquet(d, tmp, compression = "uncompressed")
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp))[, -1]
@@ -240,12 +242,14 @@ test_that("FIXED_LEN_BYTE_ARRAY", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(l = I(list(
-    as.raw(1:10),
-    as.raw(11:20),
-    as.raw(1:10),
-    as.raw(21:30)
-  )))
+  d <- data.frame(
+    l = I(list(
+      as.raw(1:10),
+      as.raw(11:20),
+      as.raw(1:10),
+      as.raw(21:30)
+    ))
+  )
   schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 10))
   write_parquet(d, tmp, schema = schema, compression = "uncompressed")
   expect_snapshot({
@@ -311,7 +315,13 @@ test_that("compression", {
 
     write_parquet(d, tmp, compression = comp, encoding = "PLAIN", options = v2)
     expect_equal(read_parquet(tmp), d, info = comp)
-    write_parquet(d2, tmp, compression = comp, encoding = "RLE_DICTIONARY", options = v2)
+    write_parquet(
+      d2,
+      tmp,
+      compression = comp,
+      encoding = "RLE_DICTIONARY",
+      options = v2
+    )
     expect_equal(read_parquet(tmp), d2, info = comp)
   }
 })

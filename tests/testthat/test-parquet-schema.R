@@ -59,7 +59,7 @@ test_that("parquet_type", {
     parquet_type("INT", bit_width = 16, is_signed = 1)
     parquet_type("DECIMAL", precision = 5)
     parquet_type("DECIMAL", primitive_type = "INT32")
-    parquet_type("DECIMAL", precision = 5/2, primitive_type = "INT32")
+    parquet_type("DECIMAL", precision = 5 / 2, primitive_type = "INT32")
     parquet_type("DECIMAL", precision = 0, primitive_type = "INT32")
     parquet_type("DECIMAL", precision = 5, scale = 6, primitive_type = "INT32")
     parquet_type("DECIMAL", precision = 10, primitive_type = "INT32")

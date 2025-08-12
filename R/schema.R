@@ -94,18 +94,22 @@
 #' )
 
 parquet_schema <- function(...) {
-	args <- list(...)
-	if (length(args) == 1 && is_string(args[[1]])  && !is.null(args[[1]]) &&
+  args <- list(...)
+  if (
+    length(args) == 1 &&
+      is_string(args[[1]]) &&
+      !is.null(args[[1]]) &&
       file.exists(args[[1]]) &&
-      (is.null(names(args)) || names(args)[1] %in% c("", "file"))) {
-		warning(
-			"Using `parquet_schema()` to read the schema from a file is deprecated. ",
-			"Use `read_parquet_schema()` instead."
-		)
-		read_parquet_schema(args[[1]])
-	} else {
-		parquet_schema_create(args)
-	}
+      (is.null(names(args)) || names(args)[1] %in% c("", "file"))
+  ) {
+    warning(
+      "Using `parquet_schema()` to read the schema from a file is deprecated. ",
+      "Use `read_parquet_schema()` instead."
+    )
+    read_parquet_schema(args[[1]])
+  } else {
+    parquet_schema_create(args)
+  }
 }
 
 parquet_schema_create <- function(types) {
@@ -146,15 +150,22 @@ parquet_schema_create <- function(types) {
   ptdf
 }
 
-parquet_type <- function(type, type_length = NULL, bit_width = NULL,
-                         is_signed = NULL, precision = NULL, scale = NULL,
-                         is_adjusted_utc = NULL, unit = NULL,
-                         primitive_type = NULL, repetition_type = NULL,
-                         encoding = NULL) {
-
+parquet_type <- function(
+  type,
+  type_length = NULL,
+  bit_width = NULL,
+  is_signed = NULL,
+  precision = NULL,
+  scale = NULL,
+  is_adjusted_utc = NULL,
+  unit = NULL,
+  primitive_type = NULL,
+  repetition_type = NULL,
+  encoding = NULL
+) {
   fixed_len_byte_array <- function() {
     stopifnot(
-      ! is.null(type_length),
+      !is.null(type_length),
       is_uint32(type_length)
     )
     r <- list(
@@ -167,9 +178,9 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
 
   int <- function() {
     stopifnot(
-      ! is.null(bit_width),
+      !is.null(bit_width),
       bit_width %in% c(8L, 16L, 32L, 64L),
-      ! is.null(is_signed),
+      !is.null(is_signed),
       is_flag(is_signed)
     )
     r <- list(
@@ -187,11 +198,11 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
 
   decimal <- function() {
     stopifnot(
-      ! is.null(precision),
+      !is.null(precision),
       is_uint32(precision),
       precision > 0,
       is.null(scale) || (is_uint32(scale) && scale <= precision),
-      ! is.null(primitive_type),
+      !is.null(primitive_type),
       is_string(primitive_type),
       primitive_type %in%
         c("INT32", "INT64", "BYTE_ARRAY", "FIXED_LEN_BYTE_ARRAY")
@@ -202,7 +213,7 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
       stopifnot(precision <= 18)
     } else if (primitive_type == "FIXED_LEN_BYTE_ARRAY") {
       stopifnot(
-        ! is.null(type_length),
+        !is.null(type_length),
         is_uint32(type_length),
         precision <= floor(log10(2^(8 * type_length - 1) - 1))
       )
@@ -229,9 +240,9 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
 
   time <- function() {
     stopifnot(
-      ! is.null(is_adjusted_utc),
+      !is.null(is_adjusted_utc),
       is_flag(is_adjusted_utc),
-      ! is.null(unit),
+      !is.null(unit),
       is_string(unit),
       unit %in% c("MILLIS", "MICROS", "NANOS")
     )
@@ -250,9 +261,9 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
 
   timestamp <- function() {
     stopifnot(
-      ! is.null(is_adjusted_utc),
+      !is.null(is_adjusted_utc),
       is_flag(is_adjusted_utc),
-      ! is.null(unit),
+      !is.null(unit),
       is_string(unit),
       unit %in% c("MILLIS", "MICROS", "NANOS")
     )
@@ -275,7 +286,8 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
     # nocov end
   }
 
-  ptype <- switch (type,
+  ptype <- switch(
+    type,
     # dummy type to denote auto-detection
     AUTO = list(type = NA_character_),
 
@@ -333,20 +345,68 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
     UNKNOWN = err("UNKNOWN"),
 
     # some converted types as shortcuts
-    "INT_8" = { bit_width <- 8; is_signed <- TRUE; int() },
-    "INT_16" = { bit_width <- 16; is_signed <- TRUE; int() },
-    "INT_32" = { bit_width <- 32; is_signed <- TRUE; int() },
-    "INT_64" = { bit_width <- 64; is_signed <- TRUE; int() },
+    "INT_8" = {
+      bit_width <- 8
+      is_signed <- TRUE
+      int()
+    },
+    "INT_16" = {
+      bit_width <- 16
+      is_signed <- TRUE
+      int()
+    },
+    "INT_32" = {
+      bit_width <- 32
+      is_signed <- TRUE
+      int()
+    },
+    "INT_64" = {
+      bit_width <- 64
+      is_signed <- TRUE
+      int()
+    },
 
-    "TIME_MICROS" = { is_adjusted_utc <- TRUE; unit <- "MICROS"; time() },
-    "TIME_MILLIS" = { is_adjusted_utc <- TRUE; unit <- "MILLIS"; time() },
-    "TIMESTAMP_MICROS" = { is_adjusted_utc <- TRUE; unit <- "MICROS"; timestamp() },
-    "TIMESTAMP_MILLIS" = { is_adjusted_utc <- TRUE; unit <- "MILLIS"; timestamp() },
+    "TIME_MICROS" = {
+      is_adjusted_utc <- TRUE
+      unit <- "MICROS"
+      time()
+    },
+    "TIME_MILLIS" = {
+      is_adjusted_utc <- TRUE
+      unit <- "MILLIS"
+      time()
+    },
+    "TIMESTAMP_MICROS" = {
+      is_adjusted_utc <- TRUE
+      unit <- "MICROS"
+      timestamp()
+    },
+    "TIMESTAMP_MILLIS" = {
+      is_adjusted_utc <- TRUE
+      unit <- "MILLIS"
+      timestamp()
+    },
 
-    "UINT_8" = { bit_width <- 8; is_signed <- FALSE; int() },
-    "UINT_16" = { bit_width <- 16; is_signed <- FALSE; int() },
-    "UINT_32" = { bit_width <- 32; is_signed <- FALSE; int() },
-    "UINT_64" = { bit_width <- 64; is_signed <- FALSE; int() },
+    "UINT_8" = {
+      bit_width <- 8
+      is_signed <- FALSE
+      int()
+    },
+    "UINT_16" = {
+      bit_width <- 16
+      is_signed <- FALSE
+      int()
+    },
+    "UINT_32" = {
+      bit_width <- 32
+      is_signed <- FALSE
+      int()
+    },
+    "UINT_64" = {
+      bit_width <- 64
+      is_signed <- FALSE
+      int()
+    },
 
     # bail
     err(type)
@@ -367,7 +427,9 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
     "Unused Parquet type parameter 'is_signed'." = is.null(is_signed),
     "Unused Parquet type parameter 'precision'." = is.null(precision),
     "Unused Parquet type parameter 'scale'." = is.null(scale),
-    "Unused Parquet type parameter 'is_adjusted_utc'." = is.null(is_adjusted_utc),
+    "Unused Parquet type parameter 'is_adjusted_utc'." = is.null(
+      is_adjusted_utc
+    ),
     "Unused Parquet type parameter 'unit'." = is.null(unit),
     "Unused Parquet type parameter 'primitive_type'." = is.null(primitive_type)
   )
@@ -383,7 +445,7 @@ parquet_type <- function(type, type_length = NULL, bit_width = NULL,
 
 logical_to_converted <- function(logical_type) {
   res <- .Call(rf_nanoparquet_logical_to_converted, logical_type)
-  res[["converted_type"]] <- names(ctype_names)[res[["converted_type"]] + 1 ]
+  res[["converted_type"]] <- names(ctype_names)[res[["converted_type"]] + 1]
   res
 }
 
@@ -402,14 +464,15 @@ map_schema_to_df <- function(schema, df, options) {
       "parquet_schema",
       structure(as.list(rep("AUTO", ncol(df))), names = names(df))
     )
-
   } else if (!is.null(nms) && !anyNA(nms) && !any(nms == "")) {
     # all properly named
     dfmiss <- setdiff(nms, names(df))
-    if (length(dfmiss) > 0){
+    if (length(dfmiss) > 0) {
       stop(
-        "Parquet schema column", if (length(dfmiss) > 1) "s",
-        "missing from the data: ", paste(dfmiss, collapse = ", ")
+        "Parquet schema column",
+        if (length(dfmiss) > 1) "s",
+        "missing from the data: ",
+        paste(dfmiss, collapse = ", ")
       )
     }
     # add AUTO to missing columns
@@ -420,7 +483,6 @@ map_schema_to_df <- function(schema, df, options) {
     )
     schema <- rbind(schema, auto)
     schema[match(names(df), schema$name), ]
-
   } else {
     if (nrow(schema) != ncol(df)) {
       stop(

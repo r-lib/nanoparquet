@@ -70,8 +70,8 @@ write_parquet <- function(
   encoding = NULL,
   metadata = NULL,
   row_groups = NULL,
-  options = parquet_options()) {
-
+  options = parquet_options()
+) {
   file <- path.expand(file)
 
   compression <- parse_compression(compression, options)
@@ -95,7 +95,7 @@ write_parquet <- function(
   }
 
   if (options[["write_arrow_metadata"]]) {
-    if (! "ARROW:schema" %in% metadata[[1]]) {
+    if (!"ARROW:schema" %in% metadata[[1]]) {
       metadata[[1]] <- c(metadata[[1]], "ARROW:schema")
       metadata[[2]] <- c(metadata[[2]], encode_arrow_schema(x))
     }
@@ -137,8 +137,8 @@ write_parquet <- function(
 
 parse_compression <- function(
   compression = c("snappy", "gzip", "zstd", "uncompressed"),
-  options) {
-
+  options
+) {
   codecs <- c("uncompressed" = 0L, "snappy" = 1L, "gzip" = 2L, "zstd" = 6L)
   compression <- codecs[match.arg(compression)]
   if (is.na(options[["compression_level"]])) {
@@ -153,7 +153,7 @@ parse_compression <- function(
 }
 
 prepare_write_df <- function(x) {
-    # convert strings to UTF-8
+  # convert strings to UTF-8
   strs <- which(vapply(x, is.character, logical(1)))
   for (idx in strs) {
     x[[idx]] <- enc2utf8(x[[idx]])
@@ -199,7 +199,7 @@ prepare_write_df <- function(x) {
   }
 
   x
-  }
+}
 
 check_schema_required_cols <- function(x, schema) {
   # if schema has REQUIRED, but the column has NAs, that's an error
@@ -210,7 +210,9 @@ check_schema_required_cols <- function(x, schema) {
   if (length(bad) > 0) {
     stop(
       "Parquet schema does not allow missing values for column",
-      if (length(bad) > 1) "s", ":", paste(names(x)[bad], collapse = ", ")
+      if (length(bad) > 1) "s",
+      ":",
+      paste(names(x)[bad], collapse = ", ")
     )
   }
   schema[["repetition_type"]][is.na(rt)] <-
@@ -220,31 +222,29 @@ check_schema_required_cols <- function(x, schema) {
 
 parse_encoding <- function(encoding, x) {
   stopifnot(
-    "`encoding` must be `NULL` or a character vector" =
-      is.null(encoding) || is.character(encoding),
-    "`encoding` contains at least one unknown encoding" =
-      all(is.na(encoding) | encoding %in% names(encodings))
+    "`encoding` must be `NULL` or a character vector" = is.null(encoding) ||
+      is.character(encoding),
+    "`encoding` contains at least one unknown encoding" = all(
+      is.na(encoding) | encoding %in% names(encodings)
+    )
   )
 
   if (is.null(encoding)) {
     structure(rep(NA_character_, length(x)), names = names(x))
-
   } else if (is_named(encoding)) {
     stopifnot(
-      "names of `encoding` must be unique" =
-        !anyDuplicated(names(encoding)),
-      "names of `encoding` must match names of `x`" =
-        all(names(encoding) %in% c(names(x), ""))
+      "names of `encoding` must be unique" = !anyDuplicated(names(encoding)),
+      "names of `encoding` must match names of `x`" = all(
+        names(encoding) %in% c(names(x), "")
+      )
     )
     def <- c(encoding[names(encoding) == ""], NA_character_)[1]
     encoding <- encoding[names(encoding) != ""]
     res <- structure(rep(def, length(x)), names = names(x))
     res[names(encoding)] <- encoding
     res
-
   } else if (length(encoding) == 1) {
     structure(rep(encoding, length(x)), names = names(x))
-
   } else {
     stopifnot(length(encoding) == length(x))
     structure(encoding, names = names(x))
@@ -258,8 +258,14 @@ default_row_groups <- function(x, schema, compression, encoding, options) {
 }
 
 # this one as well
-default_append_row_groups <- function(x, crnt_metadata, schema,
-                                      compression, encoding, options) {
+default_append_row_groups <- function(
+  x,
+  crnt_metadata,
+  schema,
+  compression,
+  encoding,
+  options
+) {
   default_size <- options[["num_rows_per_row_group"]]
   crnt_sizes <- crnt_metadata$row_groups$num_rows
   last_size <- utils::tail(crnt_sizes, 1)
@@ -267,15 +273,22 @@ default_append_row_groups <- function(x, crnt_metadata, schema,
   if (last_size + nrow(x) > default_size) {
     # create new row group(s)
     crnt_rows <- crnt_metadata$file_meta_data$num_rows
-    new <- seq(1L, nrow(x) + last_size, by = default_size)[-1] + crnt_rows - last_size
+    new <- seq(1L, nrow(x) + last_size, by = default_size)[-1] +
+      crnt_rows -
+      last_size
     crnt <- c(crnt, new)
   }
   as.integer(crnt)
 }
 
 parse_row_groups <- function(x, rg) {
-  if (!is.integer(rg) || anyNA(rg) || any(rg <= 0) ||
-      any(diff(rg) <= 0) || rg[1] != 1L) {
+  if (
+    !is.integer(rg) ||
+      anyNA(rg) ||
+      any(rg <= 0) ||
+      any(diff(rg) <= 0) ||
+      rg[1] != 1L
+  ) {
     stop(
       "Row groups must be specified as a growing positive integer ",
       "vector, starting with 1."
@@ -345,7 +358,6 @@ append_parquet <- function(
   row_groups = NULL,
   options = parquet_options()
 ) {
-
   file <- path.expand(file)
   compression <- parse_compression(compression, options)
 
@@ -359,22 +371,36 @@ append_parquet <- function(
   encoding <- parse_encoding(encoding, x)
 
   nrow_file <- as.integer(mtd$file_meta_data$num_rows)
-  row_groups <- row_groups %||% if (options[["keep_row_groups"]]) {
-    c(1L, nrow_file + default_row_groups(
-      x, schema, compression, encoding, options
-    ))
-  } else {
-    default_append_row_groups(
-      x, mtd, schema, compression, encoding, options
-    )
-  }
+  row_groups <- row_groups %||%
+    if (options[["keep_row_groups"]]) {
+      c(
+        1L,
+        nrow_file +
+          default_row_groups(
+            x,
+            schema,
+            compression,
+            encoding,
+            options
+          )
+      )
+    } else {
+      default_append_row_groups(
+        x,
+        mtd,
+        schema,
+        compression,
+        encoding,
+        options
+      )
+    }
   row_group_starts <- parse_row_groups(x, row_groups)
   x <- row_group_starts[[1]]
   row_group_starts <- row_group_starts[[2]]
 
   # check if we are extending the last row group of the original file
   nrow_total <- nrow_file + nrow(x)
-  extend_last_row_group <- ! (nrow_file + 1L) %in% row_group_starts
+  extend_last_row_group <- !(nrow_file + 1L) %in% row_group_starts
 
   # if yes, prepend the last row group of the file to the new data
   if (extend_last_row_group) {

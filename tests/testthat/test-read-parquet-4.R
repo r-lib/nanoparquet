@@ -3,7 +3,12 @@ test_that("DECIMAL converted type", {
   on.exit(unlink(tmp), add = TRUE)
 
   d <- data.frame(d = 100)
-  sch <- parquet_schema(list("DECIMAL", primitive_type = "INT32", precision = 5, scale = 2))
+  sch <- parquet_schema(list(
+    "DECIMAL",
+    primitive_type = "INT32",
+    precision = 5,
+    scale = 2
+  ))
   sch$logical_type[1] <- list(NULL)
   write_parquet(d, tmp, schema = sch)
   expect_snapshot({
@@ -36,7 +41,12 @@ test_that("DECIMAL in BA", {
   on.exit(unlink(tmp), add = TRUE)
 
   d <- data.frame(d = as.double(100:110))
-  sch <- parquet_schema(list("DECIMAL", primitive_type = "BYTE_ARRAY", precision = 5, scale = 2))
+  sch <- parquet_schema(list(
+    "DECIMAL",
+    primitive_type = "BYTE_ARRAY",
+    precision = 5,
+    scale = 2
+  ))
   write_parquet(d, tmp, schema = sch)
   expect_snapshot({
     as.data.frame(read_parquet(tmp))
@@ -45,7 +55,12 @@ test_that("DECIMAL in BA", {
   })
 
   d2 <- data.frame(d = 100:110)
-  sch <- parquet_schema(list("DECIMAL", primitive_type = "BYTE_ARRAY", precision = 5, scale = 2))
+  sch <- parquet_schema(list(
+    "DECIMAL",
+    primitive_type = "BYTE_ARRAY",
+    precision = 5,
+    scale = 2
+  ))
   write_parquet(d2, tmp, schema = sch)
   expect_snapshot({
     as.data.frame(read_parquet(tmp))
@@ -59,7 +74,12 @@ test_that("DECIMAL in BA, dictionary", {
   on.exit(unlink(tmp), add = TRUE)
 
   d <- data.frame(d = as.double(100:110))
-  sch <- parquet_schema(list("DECIMAL", primitive_type = "BYTE_ARRAY", precision = 5, scale = 2))
+  sch <- parquet_schema(list(
+    "DECIMAL",
+    primitive_type = "BYTE_ARRAY",
+    precision = 5,
+    scale = 2
+  ))
   write_parquet(d, tmp, schema = sch, encoding = "RLE_DICTIONARY")
   expect_snapshot({
     as.data.frame(read_parquet(tmp))
@@ -68,7 +88,12 @@ test_that("DECIMAL in BA, dictionary", {
   })
 
   d2 <- data.frame(d = 100:110)
-  sch <- parquet_schema(list("DECIMAL", primitive_type = "BYTE_ARRAY", precision = 5, scale = 2))
+  sch <- parquet_schema(list(
+    "DECIMAL",
+    primitive_type = "BYTE_ARRAY",
+    precision = 5,
+    scale = 2
+  ))
   write_parquet(d2, tmp, schema = sch, encoding = "RLE_DICTIONARY")
   expect_snapshot({
     as.data.frame(read_parquet(tmp))

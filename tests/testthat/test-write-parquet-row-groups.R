@@ -85,9 +85,10 @@ test_that("strings in a dictionary", {
 
   df <- test_df()
   write_parquet(
-    df, tmp,
+    df,
+    tmp,
     encoding = c(large = "RLE", "RLE_DICTIONARY"),
-    options = parquet_options(num_rows_per_row_group=10)
+    options = parquet_options(num_rows_per_row_group = 10)
   )
   expect_equal(as.data.frame(df), as.data.frame(read_parquet(tmp)))
 })

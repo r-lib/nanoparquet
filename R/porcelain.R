@@ -42,17 +42,17 @@
 #' nanoparquet:::read_parquet_pages(file_name)
 
 read_parquet_pages <- function(file) {
-	file <- path.expand(file)
-	res <- .Call(nanoparquet_read_pages, file)
-	res$encoding <- names(encodings)[res$encoding + 1L]
-	res$definition_level_encoding <-
-		names(encodings)[res$definition_level_encoding + 1L]
-	res$repetition_level_encoding <-
-		names(encodings)[res$repetition_level_encoding + 1L]
-	res$page_type <- names(page_types)[res$page_type + 1L]
-	res <- as.data.frame(res)
-	class(res) <- c("tbl", class(res))
-	res
+  file <- path.expand(file)
+  res <- .Call(nanoparquet_read_pages, file)
+  res$encoding <- names(encodings)[res$encoding + 1L]
+  res$definition_level_encoding <-
+    names(encodings)[res$definition_level_encoding + 1L]
+  res$repetition_level_encoding <-
+    names(encodings)[res$repetition_level_encoding + 1L]
+  res$page_type <- names(page_types)[res$page_type + 1L]
+  res <- as.data.frame(res)
+  class(res) <- c("tbl", class(res))
+  res
 }
 
 #' Read a page from a Parquet file
@@ -91,57 +91,57 @@ read_parquet_pages <- function(file) {
 #' nanoparquet:::read_parquet_page(file_name, 4L)
 
 read_parquet_page <- function(file, offset) {
-	file <- path.expand(file)
-	res <- .Call(nanoparquet_read_page, file, as.double(offset))
-	res$page_type <- names(page_types)[res$page_type + 1L]
-	res$codec <- names(codecs)[res$codec + 1L]
-	res$encoding <- names(encodings)[res$encoding + 1L]
-	res$definition_level_encoding <-
-		names(encodings)[res$definition_level_encoding + 1L]
-	res$repetition_level_encoding <-
-		names(encodings)[res$repetition_level_encoding + 1L]
-	res$data_type <- names(type_names)[res$data_type + 1L]
-	res$repetition_type <- names(repetition_types)[res$repetition_type + 1L]
-	res$compressed_data <- res$data
-	copy <- 0L
-	if (res$page_type == "DATA_PAGE_V2") {
-		if (!is.na(res$repetition_levels_byte_length)) {
-			copy <- copy + res$repetition_levels_byte_length
-		}
-		if (!is.na(res$definition_levels_byte_length)) {
-			copy <- copy + res$definition_levels_byte_length
-		}
-	}
-	if (res$codec == "SNAPPY") {
-		res$data <- c(
-			if (copy > 0) res$data[1:copy],
-			snappy_uncompress(res$data[(copy+1L):length(res$data)])
-		)
-	} else if (res$codec == "GZIP") {
-		res$compressed_data <- res$data
-		res$data <- c(
-			if (copy > 0) res$data[1:copy],
-			gzip_uncompress(
-				res$data[(copy+1L):length(res$data)],
-				res$uncompressed_page_size - copy
-			)
-		)
-	} else if (res$codec == "ZSTD") {
-		res$compressed_data <- res$data
-		res$data <- c(
-			if (copy > 0) res$data[1:copy],
-			zstd_uncompress(
-				res$data[(copy+1L):length(res$data)],
-				res$uncompressed_page_size - copy
-			)
-		)
-	} else if (res$codec == "UNCOMPRESSED") {
-		# keep data
-	} else {
-		res$data <- NULL
-	}
+  file <- path.expand(file)
+  res <- .Call(nanoparquet_read_page, file, as.double(offset))
+  res$page_type <- names(page_types)[res$page_type + 1L]
+  res$codec <- names(codecs)[res$codec + 1L]
+  res$encoding <- names(encodings)[res$encoding + 1L]
+  res$definition_level_encoding <-
+    names(encodings)[res$definition_level_encoding + 1L]
+  res$repetition_level_encoding <-
+    names(encodings)[res$repetition_level_encoding + 1L]
+  res$data_type <- names(type_names)[res$data_type + 1L]
+  res$repetition_type <- names(repetition_types)[res$repetition_type + 1L]
+  res$compressed_data <- res$data
+  copy <- 0L
+  if (res$page_type == "DATA_PAGE_V2") {
+    if (!is.na(res$repetition_levels_byte_length)) {
+      copy <- copy + res$repetition_levels_byte_length
+    }
+    if (!is.na(res$definition_levels_byte_length)) {
+      copy <- copy + res$definition_levels_byte_length
+    }
+  }
+  if (res$codec == "SNAPPY") {
+    res$data <- c(
+      if (copy > 0) res$data[1:copy],
+      snappy_uncompress(res$data[(copy + 1L):length(res$data)])
+    )
+  } else if (res$codec == "GZIP") {
+    res$compressed_data <- res$data
+    res$data <- c(
+      if (copy > 0) res$data[1:copy],
+      gzip_uncompress(
+        res$data[(copy + 1L):length(res$data)],
+        res$uncompressed_page_size - copy
+      )
+    )
+  } else if (res$codec == "ZSTD") {
+    res$compressed_data <- res$data
+    res$data <- c(
+      if (copy > 0) res$data[1:copy],
+      zstd_uncompress(
+        res$data[(copy + 1L):length(res$data)],
+        res$uncompressed_page_size - copy
+      )
+    )
+  } else if (res$codec == "UNCOMPRESSED") {
+    # keep data
+  } else {
+    res$data <- NULL
+  }
 
-	res
+  res
 }
 
 snappy_compress <- function(buffer) {
@@ -153,19 +153,19 @@ snappy_uncompress <- function(buffer) {
 }
 
 gzip_compress <- function(buffer) {
-	.Call(gzip_compress_raw, buffer)
+  .Call(gzip_compress_raw, buffer)
 }
 
 gzip_uncompress <- function(buffer, uncompressed_length) {
-	.Call(gzip_uncompress_raw, buffer, uncompressed_length)
+  .Call(gzip_uncompress_raw, buffer, uncompressed_length)
 }
 
 zstd_compress <- function(buffer) {
-	.Call(zstd_compress_raw, buffer)
+  .Call(zstd_compress_raw, buffer)
 }
 
 zstd_uncompress <- function(buffer, uncompressed_length) {
-	.Call(zstd_uncompress_raw, buffer, uncompressed_length)
+  .Call(zstd_uncompress_raw, buffer, uncompressed_length)
 }
 
 #' RLE encode integers
@@ -180,15 +180,15 @@ zstd_uncompress <- function(buffer, uncompressed_length) {
 #' @family encodings
 
 rle_encode_int <- function(x) {
-	bw <- if (length(x)) {
-		max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
-	} else {
-		1L
-	}
-	res <- .Call(nanoparquet_rle_encode_int, x, bw)
-	attr(res, "bit_width") <- bw
-	attr(res, "length") <- length(x)
-	res
+  bw <- if (length(x)) {
+    max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
+  } else {
+    1L
+  }
+  res <- .Call(nanoparquet_rle_encode_int, x, bw)
+  attr(res, "bit_width") <- bw
+  attr(res, "length") <- length(x)
+  res
 }
 
 #' RLE decode integers
@@ -203,9 +203,12 @@ rle_encode_int <- function(x) {
 #' @seealso [rle_encode_int()]
 #' @family encodings
 
-rle_decode_int <- function(x, bit_width = attr(x, "bit_width"),
-													 length = attr(x, "length") %||% NA) {
-	.Call(nanoparquet_rle_decode_int, x, bit_width, is.na(length), length)
+rle_decode_int <- function(
+  x,
+  bit_width = attr(x, "bit_width"),
+  length = attr(x, "length") %||% NA
+) {
+  .Call(nanoparquet_rle_decode_int, x, bit_width, is.na(length), length)
 }
 
 # dbp_encode_int <- function(x) {
@@ -213,7 +216,7 @@ rle_decode_int <- function(x, bit_width = attr(x, "bit_width"),
 # }
 
 dbp_decode_int <- function(x) {
-	.Call(nanoparquet_dbp_decode_int32, x)
+  .Call(nanoparquet_dbp_decode_int32, x)
 }
 
 # dbp_encode_int64 <- function(x) {
@@ -221,30 +224,31 @@ dbp_decode_int <- function(x) {
 # }
 
 dbp_decode_int64 <- function(x) {
-	.Call(nanoparquet_dbp_decode_int64, x)
+  .Call(nanoparquet_dbp_decode_int64, x)
 }
 
 unpack_bits <- function(x, bit_width, n) {
-	.Call(nanoparquet_unpack_bits_int32, x, bit_width, n)
+  .Call(nanoparquet_unpack_bits_int32, x, bit_width, n)
 }
 
 pack_bits <- function(x, bit_width = NULL) {
-	bit_width <- bit_width %||% if (length(x)) {
-		max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
-	} else {
-		0L
-	}
-	.Call(nanoparquet_pack_bits_int32, x, bit_width)
+  bit_width <- bit_width %||%
+    if (length(x)) {
+      max(as.integer(ceiling(log2(max(x) + 1L))), 1L)
+    } else {
+      0L
+    }
+  .Call(nanoparquet_pack_bits_int32, x, bit_width)
 }
 
 dict_encode <- function(x, n = length(x)) {
-	.Call(nanoparquet_create_dict, x, n)
+  .Call(nanoparquet_create_dict, x, n)
 }
 
-dict_encode_idx <- function(x, from = 1L, until = length(x) + 1L ) {
-	.Call(nanoparquet_create_dict_idx, x, from - 1L, until - 1L, sys.call())
+dict_encode_idx <- function(x, from = 1L, until = length(x) + 1L) {
+  .Call(nanoparquet_create_dict_idx, x, from - 1L, until - 1L, sys.call())
 }
 
 lgl_avg_run_length <- function(x, n = length(x)) {
-	.Call(nanoparquet_avg_run_length, x, n)
+  .Call(nanoparquet_avg_run_length, x, n)
 }
