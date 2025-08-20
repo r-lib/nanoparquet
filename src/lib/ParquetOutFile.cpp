@@ -507,7 +507,7 @@ uint32_t ParquetOutFile::rle_encode(
   bool add_size,
   uint32_t skip) {
 
-  size_t tgt_size_est = MaxRleBpSize((int*) src.ptr, src_size, bit_width);
+  size_t tgt_size_est = MaxRleBpSize((uint32_t*) src.ptr, src_size, bit_width);
   // std::cerr << "Estimated size: " << tgt_size_est << std::endl;
   tgt.reset(
     skip + tgt_size_est + (add_bit_width ? 1 : 0) + (add_size ? 4 : 0),
@@ -517,7 +517,7 @@ uint32_t ParquetOutFile::rle_encode(
     tgt.ptr[skip] = bit_width;
   }
   size_t tgt_size = RleBpEncode(
-    (int*) src.ptr,
+    (uint32_t*) src.ptr,
     src_size,
     bit_width,
     (uint8_t *) tgt.ptr + skip + (add_bit_width ? 1 : 0) + (add_size ? 4 : 0),
@@ -687,7 +687,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx, uint32_t group,
     // estimate the max RLE length
     uint32_t num_values = get_num_values_dictionary(idx, se, from, until);
     uint8_t bit_width = num_values > 0 ? ceil(log2((double) num_values)) : 1;
-    total_size = MaxRleBpSizeSimple(rg_num_rows, bit_width);
+    total_size = MaxRleBpSize(rg_num_rows, bit_width);
   }
 
   uint32_t page_size = 1024 * 1024;
