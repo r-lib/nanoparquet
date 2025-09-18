@@ -47,3 +47,4 @@ jobs:
         run: |
           uncovr::test()
           uncovr::codecov()
+        shell: Rscript {0}
