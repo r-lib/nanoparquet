@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      TESTTHAT_CPUS: 4
 
     steps:
       - uses: actions/checkout@v4
