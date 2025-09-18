@@ -38,7 +38,7 @@ public:
     if (space < n) {
       memcpy(sptr, s, space);                  // # nocov
       sptr += space;                           // # nocov
-      pbump(space);
+      pbump(space);                            // # nocov
       return space;                            // # nocov
     } else {
       memcpy(sptr, s, n);
