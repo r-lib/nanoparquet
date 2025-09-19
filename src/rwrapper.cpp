@@ -125,23 +125,6 @@ SEXP is_ubsan_() {
 #endif
 }
 
-// A function to flush test coverate data to disk
-#ifdef GCOV_COMPILE
-void __gcov_dump();
-void __gcov_reset();
-SEXP np_gcov_flush() {
-  REprintf("Flushing coverage info\n");
-  __gcov_dump();
-  __gcov_reset();
-  return R_NilValue;
-}
-#else
-SEXP np_gcov_flush(void) {
-  return R_NilValue;
-}
-#endif
-
-
 // R native routine registration
 #define CALLDEF(name, n) \
   { #name, (DL_FUNC)&name, n }
@@ -189,7 +172,6 @@ static const R_CallMethodDef R_CallDef[] = {
 
   CALLDEF(is_asan_, 0),
   CALLDEF(is_ubsan_, 0),
-  CALLDEF(np_gcov_flush, 0),
 
   {NULL, NULL, 0}
 };

@@ -34,7 +34,3 @@ NULL
 #' @seealso [write_parquet()] on how to select a non-default encoding when
 #' writing Parquet files.
 NULL
-
-gcov_flush <- function() {
-  .Call(np_gcov_flush)
-}
