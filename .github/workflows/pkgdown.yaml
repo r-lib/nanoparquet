@@ -32,6 +32,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          install-quarto: true
           extra-packages: any::pkgdown, local::.
           needs: website
 
