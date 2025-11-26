@@ -13,3 +13,4 @@
 ^src/Makevars$
 ^[\.]?air\.toml$
 ^\.vscode$
+^\.dev$
