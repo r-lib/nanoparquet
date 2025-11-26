@@ -109,7 +109,7 @@ void RParquetReader::init(RParquetFilter &filter) {
     }
     rtype rt = metadata.r_types[idx];
     SET_VECTOR_ELT(columns, idx, Rf_allocVector(rt.type, metadata.num_rows));
-    metadata.dataptr[idx] = (uint8_t*) DATAPTR(VECTOR_ELT(columns, idx));
+    metadata.dataptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(columns, idx));
     if (rt.type != rt.tmptype && rt.tmptype != NILSXP) {
       tmpdata[idx].resize(metadata.num_rows * rt.elsize);
     }
