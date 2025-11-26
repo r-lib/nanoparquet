@@ -30,6 +30,7 @@ test_that("read a subset", {
 })
 
 test_that("read a subset, edge cases", {
+  loadNamespace("pillar")
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
   df <- as.data.frame(test_df(missing = TRUE))
