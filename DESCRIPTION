@@ -25,7 +25,7 @@ Suggests:
     arrow,
     bit64,
     DBI,
-    duckdb,
+    duckdb (>= 1.4.0),
     hms,
     mockery,
     pillar,

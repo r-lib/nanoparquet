@@ -53,12 +53,12 @@ test_that("round trip with duckdb", {
   on.exit(unlink(tmp), add = TRUE)
 
   write_parquet(mt, tmp, compression = "uncompressed")
-  df <- duckdb:::sql(sprintf("FROM '%s'", tmp))
+  df <- duckdb::sql_query(sprintf("FROM '%s'", tmp))
   expect_equal(df, mt)
   unlink(tmp)
 
   write_parquet(mt, tmp, compression = "snappy")
-  df <- duckdb:::sql(sprintf("FROM '%s'", tmp))
+  df <- duckdb::sql_query(sprintf("FROM '%s'", tmp))
   expect_equal(df, mt)
 })
 
