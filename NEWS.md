@@ -1,4 +1,4 @@
-# nanoparquet (development version)
+# nanoparquet 0.4.3
 
 * No user visible changes.
 
