@@ -1,0 +1,8 @@
+# License
+
+    YEAR: 2019-2024
+    COPYRIGHT HOLDER: Hannes Mühleisen, Posit Software, PBC,
+      Google Inc., Apache Software Foundation, Game Tools and Valve Software,
+      Rich Geldreich and Tenacious Software LLC, Facebook, Inc,
+      Daniel Lemire and others.
+      See COPYRIGHTS file for details.
