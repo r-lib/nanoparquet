@@ -1,0 +1,237 @@
+# Changelog
+
+## nanoparquet (development version)
+
+## nanoparquet 0.4.3
+
+CRAN release: 2025-12-17
+
+- No user visible changes.
+
+## nanoparquet 0.4.2
+
+CRAN release: 2025-02-22
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now does not fail when writing files with a zero-length first page
+  ([\#122](https://github.com/r-lib/nanoparquet/issues/122)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  can now read Parquet files that do not contain the dictionary page
+  offset in their metadata. Polars creates such files
+  ([\#132](https://github.com/r-lib/nanoparquet/issues/132)).
+
+## nanoparquet 0.4.1
+
+CRAN release: 2025-02-10
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now correctly converts double `Date` columns to integer columns
+  ([@eitsupi](https://github.com/eitsupi),
+  [\#116](https://github.com/r-lib/nanoparquet/issues/116)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now correctly reads `FLOAT` columns from files with multiple row
+  groups.
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now correctly reads Parquet files that have column chunks with both
+  dictionary encoded and not dictionary encoded pages
+  ([\#110](https://github.com/r-lib/nanoparquet/issues/110)).
+
+## nanoparquet 0.4.0
+
+CRAN release: 2025-01-29
+
+- API changes:
+
+  - [`parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/parquet_schema.md)
+    is now called
+    [`read_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_schema.md).
+    The new
+    [`parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/parquet_schema.md)
+    function falls back to
+    [`read_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_schema.md)
+    if it is called with a single string argument, with a warning.
+
+  - [`parquet_info()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_info.md)
+    is now called
+    [`read_parquet_info()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_info.md).
+    `parquet_info(` still works for now, with a warning.
+
+  - [`parquet_metadata()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_metadata.md)
+    is now called
+    [`read_parquet_metadata()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_metadata.md).
+    [`parquet_metadata()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_metadata.md)
+    still works, with a warning.
+
+  - [`parquet_column_types()`](https://nanoparquet.r-lib.org/dev/reference/parquet_column_types.md)
+    is now deprecated, and issues a warning. Use
+    [`read_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_schema.md)
+    or the new
+    [`infer_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/infer_parquet_schema.md)
+    function instead.
+
+- Other improvements:
+
+  - The new
+    [`parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/parquet_schema.md)
+    function creates a Parquet schema from scratch. You can use this
+    schema as the new `schema` argument of
+    [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md),
+    to specify how the columns of a data frame should be mapped to
+    Parquet types.
+
+  - New
+    [`append_parquet()`](https://nanoparquet.r-lib.org/dev/reference/append_parquet.md)
+    function to append a data frame to an existing Parquet file.
+
+  - New `col_select` argument for
+    [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+    to read a subset of columns from a Parquet file.
+
+  - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+    can now write multiple row groups. By default it puts at most 10
+    million rows into a single row group. You can choose the row groups
+    manually with the `row_groups` argument.
+
+  - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+    now writes minimum and maximum values per row group for most types.
+    See `?parquet_options()` for turning this off. It also writes out
+    the number of non-missing values.
+
+  - Newly supported type conversions in
+    [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+    via the schema argument:
+
+    - `integer` to `INT64`,
+    - `integer` to `INT96`,
+    - `double` to `INT96`,
+    - `double` to `FLOAT`,
+    - `character` to `BYTE_ARRAY`,
+    - `character` to `FIXED_LEN_BYTE_ARRAY`,
+    - `character` to `ENUM`,
+    - `factor` to `ENUM`.
+    - `integer` to `DECIMAL`, `INT32`,
+    - `integer` to `DECIMAL`, `INT64`,
+    - `double` to `DECIMAL`, `INT32`,
+    - `double` to `DECIMAL`, `INT64`,
+    - `integer` to `INT(8, *)`, `INT(16, *)`, `INT(32, signed)`,
+    - `double` to `INT(*, *)`,
+    - `character` to `UUID`,
+    - `double` to `FLOAT16`,
+    - `list` of `raw` vectors to `BYTE_ARRAY`,
+    - `list` of `raw` vectors to `FIXED_LEN_BYTE_ARRAY`.
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  can now write version 2 data pages. The default is still version 1,
+  but it might change in the future.
+
+- `write_parquet(file = ":raw:")` now works correctly for larger data
+  frames ([\#77](https://github.com/r-lib/nanoparquet/issues/77)).
+
+- New `compression_level` option to select the compression level
+  manually. See
+  [`?parquet_options`](https://nanoparquet.r-lib.org/dev/reference/parquet_options.md)
+  for details. ([\#91](https://github.com/r-lib/nanoparquet/issues/91)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  can now read from an R connection
+  ([\#71](https://github.com/r-lib/nanoparquet/issues/71)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now reads `DECIMAL` values correctly from `INT32` and `INT64` columns
+  if their `scale` is not zero.
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now reads `JSON` columns as character vectors, as documented.
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now reads the `FLOAT16` logical type as a real (double) vector.
+
+- The `class` argument of
+  [`parquet_options()`](https://nanoparquet.r-lib.org/dev/reference/parquet_options.md)
+  and the `nanoparquet.class` option now work again
+  ([\#104](https://github.com/r-lib/nanoparquet/issues/104)).
+
+## nanoparquet 0.3.1
+
+CRAN release: 2024-07-01
+
+- This version fixes a
+  [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  crash ([\#73](https://github.com/r-lib/nanoparquet/issues/73)).
+
+## nanoparquet 0.3.0
+
+CRAN release: 2024-06-17
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  type mapping changes:
+
+  - The `STRING` logical type and the `UTF8` converted type are still
+    read as a character vector, but `BYTE_ARRAY` types without a
+    converted or logical types are not any more, and are read as a list
+    of raw vectors. Missing values are indicated as `NULL` values.
+  - The `DECIMAL` converted type is read as a `REALSXP` now, even if its
+    type is `FIXED_LEN_BYTE_ARRAY`. (Not just if it is `BYTE_ARRAY`).
+  - The `UUID` logical type is now read as a character vector, formatted
+    as `00112233-4455-6677-8899-aabbccddeeff`.
+  - `BYTE_ARRAY` and `FIXED_LEN_BYTE_ARRAY` types without logical or
+    converted types; or with unsupported ones: `FLOAT16`, `INTERVAL`;
+    are now read into a list of raw vectors. Missing values are denoted
+    by `NULL`.
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now automatically uses dictionary encoding for columns that have many
+  repeated values. Only the first 10k rows are used to decide if
+  dictionary will be used or not. Similarly, logical columns are written
+  in RLE encoding if they contain runs of repeated values. `NA` values
+  are ignored when selecting the encoding
+  ([\#18](https://github.com/r-lib/nanoparquet/issues/18)).
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  can now write a data frame to a memory buffer, returned as a raw
+  vector, if the special `":raw:"` filename is used
+  ([\#31](https://github.com/r-lib/nanoparquet/issues/31)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  can now read Parquet files with V2 data pages
+  ([\#37](https://github.com/r-lib/nanoparquet/issues/37)).
+
+- Both
+  [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  and
+  [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now support GZIP and ZSTD compressed Parquet files.
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now supports the `RLE` encoding for `BOOLEAN` columns and also
+  supports the `DELTA_BINARY_PACKED`, `DELTA_LENGTH_BYTE_ARRAY`,
+  `DELTA_BYTE_ARRAY` and `BYTE_STREAM_SPLIT` encodings.
+
+- The `parquet_columns()` function is now called
+  [`parquet_column_types()`](https://nanoparquet.r-lib.org/dev/reference/parquet_column_types.md)
+  and it can now map the column types of a data frame to Parquet types.
+
+- [`parquet_info()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_info.md),
+  [`parquet_metadata()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_metadata.md)
+  and
+  [`parquet_column_types()`](https://nanoparquet.r-lib.org/dev/reference/parquet_column_types.md)
+  now work if the `created_by` metadata field is unset.
+
+- New
+  [`parquet_options()`](https://nanoparquet.r-lib.org/dev/reference/parquet_options.md)
+  function that you can use to set nanoparquet options for a single
+  [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  or
+  [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  call.
+
+## nanoparquet 0.2.0
+
+CRAN release: 2024-05-30
+
+- First release on CRAN. It contains the Parquet reader from
+  <https://github.com/hannes/miniparquet>, a Parquet writer, functions
+  to read Parquet metadata, and many improvements.
