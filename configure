@@ -32,4 +32,12 @@ if ! echo ${R_LIBRARY_DIR} | grep -q nanoparquet.Rcheck &&
   fi
 fi
 
-cat src/Makevars.in | sed "s|@MAKEFLAGS@|${MAKEFLAGS}|" > src/Makevars
+PKG_LIBS=
+if [ "$UNAME" = "Windows" ]; then
+    PKG_LIBS=-lws2_32
+fi
+
+cat src/Makevars.in |
+    sed "s|@MAKEFLAGS@|${MAKEFLAGS}|" |
+    sed "s|@PKG_LIBS@|${PKG_LIBS}|" |
+    cat > src/Makevars
