@@ -66,8 +66,15 @@ jobs:
         shell: Rscript {0}
 
       - uses: r-lib/actions/setup-r-dependencies@v2
+        if: runner.os != 'Windows'
         with:
           extra-packages: any::rcmdcheck
+          needs: check
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        if: runner.os == 'Windows'
+        with:
+          extra-packages: any::rcmdcheck, duckdb=?ignore-before-r=4.2.0
           needs: check
 
       - name: Update arrow on macOS, CRAN binary is broken
