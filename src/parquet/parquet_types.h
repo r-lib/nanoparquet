@@ -188,6 +188,9 @@ std::string to_string(const ConvertedType::type& val);
 /**
  * Representation of Schemas
  */
+#ifdef OPTIONAL
+#undef OPTIONAL  // Windows headers define this as a macro
+#endif
 struct FieldRepetitionType {
   enum type {
     /**
