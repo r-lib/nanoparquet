@@ -1,4 +1,4 @@
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 #include "snappy/snappy.h"
 #include "miniz/miniz_wrapper.hpp"

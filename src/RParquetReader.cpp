@@ -2077,7 +2077,7 @@ void convert_columns_to_r_(postprocess *pp) {
       for (size_t i = 0; i < nc; i++) {
         SET_STRING_ELT(cls, i, Rf_mkCharCE(rt.classes[i].c_str(), CE_UTF8));
       }
-      SET_CLASS(x, cls);
+      Rf_setAttrib(x, R_ClassSymbol, cls);
       UNPROTECT(1);
     }
 

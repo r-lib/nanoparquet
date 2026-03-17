@@ -1,5 +1,5 @@
 #pragma once
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 #include "parquet/parquet_types.h"
 #include "lib/ParquetReader.h"

@@ -1,6 +1,6 @@
 #include <cstdint>
 
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 extern "C" {
 
