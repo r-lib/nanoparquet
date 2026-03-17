@@ -424,6 +424,9 @@ test_that("DELTA_BYTE_ARRAY encoding", {
 test_that("BYTE_STREAM_SPLIT encoding", {
   skip_on_cran()
   skip_without("arrow")
+  if (getRversion() < "4.2.0" && .Platform$OS.type == "windows") {
+    skip("arrow fails here")
+  }
   pf <- test_path("data/byte_stream_split.parquet")
   bss <- read_parquet(pf)
   expect_snapshot({
