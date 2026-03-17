@@ -17,6 +17,15 @@
  * under the License.
  */
 
+extern "C" {
+#ifdef _WIN32
+#include <winsock2.h>
+#include <winsock.h>
+#else
+#include <arpa/inet.h>
+#endif
+} // extern "C"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>

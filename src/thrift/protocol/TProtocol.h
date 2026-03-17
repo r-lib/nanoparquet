@@ -41,6 +41,8 @@
 #undef WIN32_LEAN_AND_MEAN
 #undef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
 #endif
+#else
+#include <arpa/inet.h>
 #endif
 
 #include <thrift/transport/TTransport.h>
