@@ -1,4 +1,4 @@
-#include <Rdefines.h>
+#include <Rinternals.h>
 #include "lib/memstream.h"
 
 extern "C" {

@@ -32,4 +32,18 @@ if ! echo ${R_LIBRARY_DIR} | grep -q nanoparquet.Rcheck &&
   fi
 fi
 
-cat src/Makevars.in | sed "s|@MAKEFLAGS@|${MAKEFLAGS}|" > src/Makevars
+PKG_LIBS=
+PKG_CPPFLAGS=
+if [ "$UNAME" = "Windows" ]; then
+    PKG_LIBS=-lws2_32
+    PKG_CPPFLAGS="-D__THRIFT_BYTE_ORDER=1 -D__THRIFT_LITTLE_ENDIAN=1 -D__THRIFT_BIG_ENDIAN=2"
+    # otherwise output is messed up in windows terminal or cmd
+    PKG_CXXFLAGS=-fno-diagnostics-color
+fi
+
+cat src/Makevars.in |
+    sed "s|@MAKEFLAGS@|${MAKEFLAGS}|" |
+    sed "s|@PKG_CPPFLAGS@|${PKG_CPPFLAGS}|" |
+    sed "s|@PKG_CXXFLAGS@|${PKG_CXXFLAGS}|" |
+    sed "s|@PKG_LIBS@|${PKG_LIBS}|" |
+    cat > src/Makevars

@@ -234,6 +234,9 @@ test_that("mixing RLE_DICTIONARY and PLAIN, BYTE_ARRAY", {
 test_that("mixing RLE_DICTIONARY and PLAIN, FLOAT16", {
   skip_on_cran()
   skip_without("arrow")
+  if (getRversion() < "4.2.0" && .Platform$OS.type == "windows") {
+    skip("arrow fails here")
+  }
   pf <- test_path("data/float16.parquet")
   expect_snapshot({
     as.data.frame(read_parquet_schema(pf)[, c("type", "repetition_type")])

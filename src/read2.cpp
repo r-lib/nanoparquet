@@ -3,7 +3,7 @@
 
 #include "lib/nanoparquet.h"
 #undef ERROR
-#include <Rdefines.h>
+#include <Rinternals.h>
 #include "protect.h"
 
 #include "RParquetReader.h"

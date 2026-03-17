@@ -1,6 +1,7 @@
 #include <cstdlib>
+#include <cstring>
 
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 #include "base64.h"
 

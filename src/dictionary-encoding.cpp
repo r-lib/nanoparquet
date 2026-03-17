@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cstring>
 
-#include <Rdefines.h>
+#include <Rinternals.h>
 #include "protect.h"
 
 extern SEXP nanoparquet_call;

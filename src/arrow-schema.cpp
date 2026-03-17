@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 #include "flatbuffers/Message_generated.h"
 

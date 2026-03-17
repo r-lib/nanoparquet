@@ -2,7 +2,7 @@
 #include "lib/RleBpEncoder.h"
 #include "lib/DbpDecoder.h"
 
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 #include "protect.h"
 

@@ -206,8 +206,7 @@ bool TFramedTransport::readFrame() {
     size_bytes_read += bytes_read;
   }
 
-  // TODO: this won't work on big-endian
-  // sz = ntohl(sz);
+  sz = ntohl(sz);
 
   if (sz < 0) {
     throw TTransportException("Frame size has negative value");
@@ -266,8 +265,8 @@ void TFramedTransport::flush() {
 
   // Slip the frame size into the start of the buffer.
   sz_hbo = static_cast<uint32_t>(wBase_ - (wBuf_.get() + sizeof(sz_nbo)));
-  sz_nbo = (int32_t) sz_hbo; // (int32_t)htonl((uint32_t)(sz_hbo));
-  memcpy(wBuf_.get(), (uint8_t*)&sz_nbo, sizeof(sz_nbo));
+  sz_nbo = static_cast<int32_t>(htonl(static_cast<uint32_t>(sz_hbo)));
+  memcpy(wBuf_.get(), reinterpret_cast<uint8_t*>(&sz_nbo), sizeof(sz_nbo));
 
   if (sz_hbo > 0) {
     // Note that we reset wBase_ (with a pad for the frame size)
@@ -357,7 +356,7 @@ uint32_t TMemoryBuffer::readAppendToString(std::string& str, uint32_t len) {
   computeRead(len, &start, &give);
 
   // Append to the provided string.
-  str.append((char*)start, give);
+  str.append(reinterpret_cast<char*>(start), give);
 
   return give;
 }

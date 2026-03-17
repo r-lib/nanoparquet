@@ -45,6 +45,14 @@ skip_without <- function(pkgs) {
   if (any(c("arrow", "duckdb") %in% pkgs)) {
     skip_on_cran()
   }
+  if (
+    "duckdb" %in%
+      pkgs &&
+      getRversion() < "4.2.0" &&
+      .Platform$OS.type == "windows"
+  ) {
+    skip("duckdb requires R 4.2.0 on Windows")
+  }
   if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") {
     return()
   }

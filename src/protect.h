@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 #define STR(x) STR2(x)
 #define STR2(x) #x
