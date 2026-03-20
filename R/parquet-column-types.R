@@ -81,6 +81,13 @@ add_r_type_to_schema <- function(mtd, sch, options, col_select = NULL) {
     ) |
       sch$converted_type == "UTF8"
   ] <- "character"
+  sch$r_type[vapply(
+    sch$logical_type,
+    function(x) {
+      !is.null(x$type) && x$type == "LIST"
+    },
+    logical(1)
+  )] <- "list"
 
   # detected from Arrow schema
   if (options[["use_arrow_metadata"]]) {
