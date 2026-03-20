@@ -9,5 +9,11 @@
     "[r]": {
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "Posit.air-vscode"
+    },
+    "files.exclude": {
+        ".dev": true
+    },
+    "search.exclude": {
+        ".dev": true
     }
 }
