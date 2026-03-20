@@ -215,6 +215,7 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
 // ------------------------------------------------------------------------
 
 void RParquetReader::read_columns() {
+  check_meta_data();
   if (filter.filter_columns) {
     for (auto i = 0; i < filter.columns.size(); i++) {
       read_column(filter.columns[i] + 1);
