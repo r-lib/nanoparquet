@@ -125,7 +125,6 @@ public:
   }
 
   // read data
-  void read_all_columns();
   void read_column(uint32_t idx);
   void read_row_group(uint32_t row_group);
   void read_column_chunk(uint32_t row_group, uint32_t column);
