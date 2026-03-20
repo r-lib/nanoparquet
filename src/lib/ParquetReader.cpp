@@ -173,7 +173,7 @@ void ParquetReader::read_row_group(uint32_t row_group) {
   for (uint32_t col = 1; col < file_meta_data_.schema.size(); col++) {
     SchemaElement &sel = file_meta_data_.schema[col];
     if (!sel.__isset.type) {
-      throw runtime_error("Invalid Parquet file, column type is not set");
+      throw runtime_error("Invalid Parquet file, column type is not set (read_row_group)");
     }
     vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
     parquet::ColumnChunk pcc = rgs[row_group].columns[leaf_cols[col]];
@@ -188,7 +188,7 @@ void ParquetReader::read_column_chunk(uint32_t row_group, uint32_t column) {
   }
   SchemaElement &sel = file_meta_data_.schema[column];
   if (!sel.__isset.type) {
-    throw runtime_error("Invalid Parquet file, column type is not set");
+    throw runtime_error("Invalid Parquet file, column type is not set (read_column_chunk)");
   }
   vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
   parquet::ColumnChunk pcc = rgs[row_group].columns[leaf_cols[column]];
@@ -202,7 +202,7 @@ void ParquetReader::read_column(uint32_t column) {
   }
   SchemaElement &sel = file_meta_data_.schema[column];
   if (!sel.__isset.type) {
-    throw runtime_error("Invalid Parquet file, column type is not set");
+    throw runtime_error("Invalid Parquet file, column type is not set (read_column)");
   }
   vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
 
