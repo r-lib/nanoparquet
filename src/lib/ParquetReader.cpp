@@ -528,7 +528,7 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
     );
   }
 
-  if (dp.cc.optional) {
+  if (dp.cc.optional || dp.cc.repeated) {
     if (dp.ph.data_page_header.definition_level_encoding != Encoding::RLE) {
       throw runtime_error("Unknown definition level encoding");
     }
@@ -552,7 +552,7 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
   if (dp.cc.repeated && dp.repeat != nullptr) {
     memcpy(dp.repeat, rep_levels.ptr, dp.num_values);
   }
-  if (dp.cc.optional && dp.present != nullptr) {
+  if ((dp.cc.optional || dp.cc.repeated) && dp.present != nullptr) {
     memcpy(dp.present, def_levels.ptr, dp.num_values);
   }
 
@@ -576,6 +576,8 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
 
   BufferGuard def_levels_g = bufman_na->claim();
   ByteBuffer &def_levels = def_levels_g.buf;
+
+  // TODO: repeated columns!
 
   if (dp.cc.optional) {
     def_buf = buf;

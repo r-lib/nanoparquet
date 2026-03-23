@@ -23,8 +23,8 @@ public:
       num_rows(num_rows) {
     parquet::ColumnMetaData cmd = cc.meta_data;
     has_dictionary = cmd.__isset.dictionary_page_offset;
-    optional = sel.repetition_type !=
-      parquet::FieldRepetitionType::REQUIRED;
+    optional = sel.repetition_type ==
+      parquet::FieldRepetitionType::OPTIONAL;
     repeated = sel.repetition_type ==
       parquet::FieldRepetitionType::REPEATED;
   }

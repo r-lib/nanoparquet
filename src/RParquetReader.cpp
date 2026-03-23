@@ -92,6 +92,8 @@ void RParquetReader::init(RParquetFilter &filter) {
   R_PreserveObject(arrow_metadata);
   repeats = Rf_allocVector(VECSXP, metadata.num_cols_to_read);
   R_PreserveObject(repeats);
+  presents = Rf_allocVector(VECSXP, metadata.num_cols_to_read);
+  R_PreserveObject(presents);
 
   tmpdata.resize(metadata.num_cols_to_read);
   dicts.resize(metadata.num_cols_to_read);
@@ -119,6 +121,8 @@ void RParquetReader::init(RParquetFilter &filter) {
       }
       SET_VECTOR_ELT(repeats, idx, Rf_allocVector(RAWSXP, num_values));
       metadata.repeatptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(repeats, idx));
+      SET_VECTOR_ELT(presents, idx, Rf_allocVector(RAWSXP, num_values));
+      metadata.presentptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(presents, idx));
     }
     SET_VECTOR_ELT(columns, idx, Rf_allocVector(rt.type, num_values));
     metadata.dataptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(columns, idx));
@@ -147,6 +151,9 @@ RParquetReader::~RParquetReader() {
   if (!Rf_isNull(repeats)) {
     R_ReleaseObject(repeats);
   }
+  if (!Rf_isNull(presents)) {
+    R_ReleaseObject(presents);
+  }
 }
 
 // ------------------------------------------------------------------------
@@ -166,6 +173,7 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
   metadata.row_group_offsets.resize(metadata.num_row_groups);
   metadata.dataptr.resize(metadata.num_cols_to_read);
   metadata.repeatptr.resize(metadata.num_cols_to_read);
+  metadata.presentptr.resize(metadata.num_cols_to_read);
 
   if (!filter.filter_row_groups) {
     for (auto i = 0; i < fmt.row_groups.size(); i++) {
@@ -519,6 +527,7 @@ void RParquetReader::alloc_data_page(DataPage &data) {
 
   if (data.cc.repeated) {
     data.repeat = metadata.repeatptr[cl] + data.from;
+    data.present = metadata.presentptr[cl] + data.from;
   }
 
   if (is_index) {

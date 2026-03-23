@@ -34,12 +34,13 @@ SEXP nanoparquet_read_(SEXP filesxp, SEXP rcols, SEXP options) {
     reader.read_columns();
     reader.convert_columns_to_r();
     reader.create_df();
-    PROTECT(res = Rf_allocVector(VECSXP, 5));
+    PROTECT(res = Rf_allocVector(VECSXP, 6));
     SET_VECTOR_ELT(res, 0, reader.columns);
     SET_VECTOR_ELT(res, 1, reader.facdicts);
     SET_VECTOR_ELT(res, 2, reader.types);
     SET_VECTOR_ELT(res, 3, reader.arrow_metadata);
     SET_VECTOR_ELT(res, 4, reader.repeats);
+    SET_VECTOR_ELT(res, 5, reader.presents);
     UNPROTECT(1);
     return res;
   } catch (std::exception &ex) {
@@ -111,12 +112,13 @@ SEXP nanoparquet_read_row_group_(
     reader.read_row_group(rg);
     reader.convert_columns_to_r();
     reader.create_df();
-    PROTECT(res = Rf_allocVector(VECSXP, 5));
+    PROTECT(res = Rf_allocVector(VECSXP, 6));
     SET_VECTOR_ELT(res, 0, reader.columns);
     SET_VECTOR_ELT(res, 1, reader.facdicts);
     SET_VECTOR_ELT(res, 2, reader.types);
     SET_VECTOR_ELT(res, 3, reader.arrow_metadata);
     SET_VECTOR_ELT(res, 4, reader.repeats);
+    SET_VECTOR_ELT(res, 5, reader.presents);
     UNPROTECT(1);
     return res;
   } catch (std::exception &ex) {

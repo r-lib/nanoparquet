@@ -59,6 +59,7 @@ public:
   std::vector<rtype> r_types;
   std::vector<uint8_t*> dataptr;
   std::vector<uint8_t*> repeatptr;
+  std::vector<uint8_t*> presentptr;
 };
 
 struct tmpbytes {
@@ -126,6 +127,7 @@ public:
   SEXP types = R_NilValue;
   SEXP arrow_metadata = R_NilValue;
   SEXP repeats = R_NilValue;
+  SEXP presents = R_NilValue;
 
   std::vector<std::vector<uint8_t>> tmpdata;
   std::vector<std::vector<tmpdict>> dicts;
