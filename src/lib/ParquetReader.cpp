@@ -44,6 +44,7 @@ ParquetReader::ParquetReader(std::string filename, bool readwrite)
   : file_type_(FILE_ON_DISK), filename_(filename) {
   // set nuber of threads here, assuming each thread needs k buffers
   bufman_cc = std::unique_ptr<BufferManager>(new BufferManager(1));
+  bufman_rep = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_na = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_pg = std::unique_ptr<BufferManager>(new BufferManager(1));
   init_file_on_disk(readwrite);
@@ -143,27 +144,6 @@ void ParquetReader::check_meta_data() {
        << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
     throw runtime_error(ss.str());
   }
-  if (file_meta_data_.schema[0].num_children !=
-      file_meta_data_.schema.size() - 1) {
-    std::stringstream ss;
-    ss << "Only flat tables (no nesting) are supported, could not read Parquet file at '"
-       << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
-    throw runtime_error(ss.str());
-  }
-
-  // TODO assert that the first col is root
-
-  for (uint64_t col_idx = 1; col_idx < file_meta_data_.schema.size();
-       col_idx++) {
-    auto &s_ele = file_meta_data_.schema[col_idx];
-
-    if (!s_ele.__isset.type || s_ele.num_children > 0) {
-      std::stringstream ss;
-      ss << "Only flat tables (no nesting) are supported, could not read Parquet file at '"
-         << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
-      throw runtime_error(ss.str());
-    }
-  }
 }
 
 void ParquetReader::read_row_group(uint32_t row_group) {
@@ -176,6 +156,7 @@ void ParquetReader::read_row_group(uint32_t row_group) {
       throw runtime_error("Invalid Parquet file, column type is not set (read_row_group)");
     }
     vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
+    // RowGroup.columns only contain the leaf columns
     parquet::ColumnChunk pcc = rgs[row_group].columns[leaf_cols[col]];
     ColumnChunk cc(pcc, sel, col, row_group, rgs[row_group].num_rows);
     read_column_chunk_int(cc);
@@ -191,6 +172,7 @@ void ParquetReader::read_column_chunk(uint32_t row_group, uint32_t column) {
     throw runtime_error("Invalid Parquet file, column type is not set (read_column_chunk)");
   }
   vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
+    // RowGroup.columns only contain the leaf columns
   parquet::ColumnChunk pcc = rgs[row_group].columns[leaf_cols[column]];
   ColumnChunk cc(pcc, sel, column, row_group, rgs[row_group].num_rows);
   read_column_chunk_int(cc);
@@ -207,6 +189,7 @@ void ParquetReader::read_column(uint32_t column) {
   vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
 
   for (uint32_t rgi = 0; rgi < rgs.size(); rgi++) {
+    // RowGroup.columns only contain the leaf columns
     parquet::ColumnChunk pcc = rgs[rgi].columns[leaf_cols[column]];
     ColumnChunk cc(pcc, sel, column, rgi, rgs[rgi].num_rows);
     read_column_chunk_int(cc);
@@ -517,25 +500,47 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
   dp.set_num_values(dp.ph.data_page_header.num_values);
   dp.encoding = dp.ph.data_page_header.encoding;
 
-  uint8_t *def_buf = nullptr;
-  uint32_t def_len = 0;
+  uint8_t *tmp_buf = nullptr;
+  uint32_t tmp_len = 0;
+
+  BufferGuard rep_levels_g = bufman_rep->claim();
+  ByteBuffer &rep_levels = rep_levels_g.buf;
 
   BufferGuard def_levels_g = bufman_na->claim();
   ByteBuffer &def_levels = def_levels_g.buf;
+
+  if (dp.cc.repeated) {
+    if (dp.ph.data_page_header.repetition_level_encoding != Encoding::RLE) {
+      throw runtime_error("Unknown repetition level encoding");
+    }
+    tmp_buf = buf;
+    memcpy(&tmp_len, tmp_buf, sizeof(uint32_t));
+    tmp_buf += sizeof(uint32_t);
+    buf += sizeof(uint32_t);
+    len -= sizeof(uint32_t);
+    buf += tmp_len;
+    len -= tmp_len;
+    rep_levels.resize(dp.num_values);
+    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, 1);
+    uint32_t num_repeated = dec.GetBatchCount<uint8_t>(
+      (uint8_t*) rep_levels.ptr,
+      dp.num_values
+    );
+  }
 
   if (dp.cc.optional) {
     if (dp.ph.data_page_header.definition_level_encoding != Encoding::RLE) {
       throw runtime_error("Unknown definition level encoding");
     }
-    def_buf = buf;
-    memcpy(&def_len, def_buf, sizeof(uint32_t));
-    def_buf += sizeof(uint32_t);
+    tmp_buf = buf;
+    memcpy(&tmp_len, tmp_buf, sizeof(uint32_t));
+    tmp_buf += sizeof(uint32_t);
     buf += sizeof(uint32_t);
     len -= sizeof(uint32_t);
-    buf += def_len;
-    len -= def_len;
+    buf += tmp_len;
+    len -= tmp_len;
     def_levels.resize(dp.num_values);
-    RleBpDecoder dec((const uint8_t *)def_buf, def_len, 1);
+    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, 1);
     uint32_t num_present = dec.GetBatchCount<uint8_t>(
       (uint8_t*) def_levels.ptr,
       dp.num_values
@@ -544,6 +549,9 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
   }
   update_data_page_size(dp, buf, len);
   alloc_data_page(dp);
+  if (dp.cc.repeated && dp.repeat != nullptr) {
+    memcpy(dp.repeat, rep_levels.ptr, dp.num_values);
+  }
   if (dp.cc.optional && dp.present != nullptr) {
     memcpy(dp.present, def_levels.ptr, dp.num_values);
   }

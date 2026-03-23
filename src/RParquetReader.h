@@ -43,6 +43,8 @@ public:
   bool byte_array = false;
   // for DECIMAL
   int32_t scale;
+  // REPEATED columns are always lists
+  bool repeated = false;
 };
 
 struct rmetadata {
@@ -56,6 +58,7 @@ public:
   std::vector<int64_t> row_group_offsets;
   std::vector<rtype> r_types;
   std::vector<uint8_t*> dataptr;
+  std::vector<uint8_t*> repeatptr;
 };
 
 struct tmpbytes {
@@ -122,6 +125,7 @@ public:
   SEXP facdicts = R_NilValue;
   SEXP types = R_NilValue;
   SEXP arrow_metadata = R_NilValue;
+  SEXP repeats = R_NilValue;
 
   std::vector<std::vector<uint8_t>> tmpdata;
   std::vector<std::vector<tmpdict>> dicts;

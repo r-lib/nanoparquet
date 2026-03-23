@@ -90,6 +90,8 @@ void RParquetReader::init(RParquetFilter &filter) {
   R_PreserveObject(types);
   arrow_metadata = Rf_allocVector(STRSXP, 1);
   R_PreserveObject(arrow_metadata);
+  repeats = Rf_allocVector(VECSXP, metadata.num_cols_to_read);
+  R_PreserveObject(repeats);
 
   tmpdata.resize(metadata.num_cols_to_read);
   dicts.resize(metadata.num_cols_to_read);
@@ -97,7 +99,7 @@ void RParquetReader::init(RParquetFilter &filter) {
   byte_arrays.resize(metadata.num_cols_to_read);
   present.resize(metadata.num_cols_to_read);
 
-  for (auto i = 0, idx = 0; i < metadata.num_cols; i++) {
+  for (auto i = 0, idx = 0, meta_idx = 0; i < metadata.num_cols; i++) {
     // skip non-leaf columns
     if (file_meta_data_.schema[i].__isset.num_children &&
         file_meta_data_.schema[i].num_children > 0) {
@@ -105,16 +107,27 @@ void RParquetReader::init(RParquetFilter &filter) {
     }
     // skips columns the reader does not want
     if (filter.filter_columns && colmap[i] == 0) {
+      meta_idx++;
       continue;
     }
     rtype rt = metadata.r_types[idx];
-    SET_VECTOR_ELT(columns, idx, Rf_allocVector(rt.type, metadata.num_rows));
+    uint64_t num_values = metadata.num_rows;
+    if (rt.repeated) {
+      num_values = 0;
+      for (auto rg : file_meta_data_.row_groups) {
+         num_values += rg.columns[meta_idx].meta_data.num_values;
+      }
+      SET_VECTOR_ELT(repeats, idx, Rf_allocVector(RAWSXP, num_values));
+      metadata.repeatptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(repeats, idx));
+    }
+    SET_VECTOR_ELT(columns, idx, Rf_allocVector(rt.type, num_values));
     metadata.dataptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(columns, idx));
     if (rt.type != rt.tmptype && rt.tmptype != NILSXP) {
-      tmpdata[idx].resize(metadata.num_rows * rt.elsize);
+      tmpdata[idx].resize(num_values * rt.elsize);
     }
     INTEGER(types)[idx] = file_meta_data_.schema[i].type;
     idx++;
+    meta_idx++;
   }
 }
 
@@ -130,6 +143,9 @@ RParquetReader::~RParquetReader() {
   }
   if (!Rf_isNull(arrow_metadata)) {
     R_ReleaseObject(arrow_metadata);
+  }
+  if (!Rf_isNull(repeats)) {
+    R_ReleaseObject(repeats);
   }
 }
 
@@ -149,6 +165,7 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
   metadata.row_group_num_rows.resize(metadata.num_row_groups);
   metadata.row_group_offsets.resize(metadata.num_row_groups);
   metadata.dataptr.resize(metadata.num_cols_to_read);
+  metadata.repeatptr.resize(metadata.num_cols_to_read);
 
   if (!filter.filter_row_groups) {
     for (auto i = 0; i < fmt.row_groups.size(); i++) {
@@ -228,6 +245,7 @@ void RParquetReader::read_columns() {
 }
 
 rtype::rtype(parquet::SchemaElement &sel) {
+  repeated = sel.repetition_type == parquet::FieldRepetitionType::REPEATED;
   switch (sel.type) {
   case parquet::Type::BOOLEAN:
     type = tmptype = LGLSXP;
@@ -432,7 +450,8 @@ void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
       present[cl].resize(metadata.num_row_groups);
     }
     present[cl][cc.row_group].num_present = 0;
-    present[cl][cc.row_group].map.resize(cc.num_rows);
+    // number of values can me more than the number of rows if REPEATED
+    present[cl][cc.row_group].map.resize(cc.cc.meta_data.num_values);
   }
 }
 
@@ -447,7 +466,7 @@ void RParquetReader::alloc_dict_page(DictPage &dict) {
   rtype rt = metadata.r_types[cl];
 
   dicts[cl][rg].dict_len = dict.dict_len;
-  dicts[cl][rg].indices.resize(dict.cc.num_rows);
+  dicts[cl][rg].indices.resize(dict.cc.cc.meta_data.num_values);
   if (rt.byte_array) {
     dicts[cl][rg].bytes.buffer.resize(dict.strs.total_len);
     dicts[cl][rg].bytes.offsets.resize(dict.dict_len);
@@ -496,6 +515,10 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   if (data.cc.optional) {
     present[cl][rg].num_present += data.num_present;
     data.present = present[cl][rg].map.data() + data.from;
+  }
+
+  if (data.cc.repeated) {
+    data.repeat = metadata.repeatptr[cl] + data.from;
   }
 
   if (is_index) {

@@ -102,3 +102,8 @@ is_named <- function(x) {
   nm <- names(x)
   !is.null(nm) && !anyNA(nm)
 }
+
+split_at <- function(x, sizes) {
+  starts <- c(1, cumsum(sizes[-length(sizes)]) + 1)
+  Map(function(s, n) x[seq_len(n) + s - 1], starts, sizes)
+}

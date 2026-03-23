@@ -25,6 +25,8 @@ public:
     has_dictionary = cmd.__isset.dictionary_page_offset;
     optional = sel.repetition_type !=
       parquet::FieldRepetitionType::REQUIRED;
+    repeated = sel.repetition_type ==
+      parquet::FieldRepetitionType::REPEATED;
   }
   parquet::ColumnChunk &cc;
   parquet::SchemaElement &sel;
@@ -33,6 +35,7 @@ public:
   int64_t num_rows;
   bool has_dictionary;
   bool optional;
+  bool repeated;
 };
 
 struct StringSet {
@@ -69,8 +72,8 @@ struct DataPage {
 public:
   DataPage(ColumnChunk &cc, parquet::PageHeader &ph, uint32_t page,
            uint32_t from)
-    : cc(cc), ph(ph), page(page), data(nullptr), present(nullptr),
-      num_values(0), num_present(0), from(from) {
+    : cc(cc), ph(ph), page(page), data(nullptr), repeat(nullptr),
+      present(nullptr), num_values(0), num_present(0), from(from) {
     if (ph.__isset.data_page_header) {
       encoding = ph.data_page_header.encoding;
     } else {
@@ -95,6 +98,7 @@ public:
   parquet::PageHeader &ph;
   uint32_t page;
   uint8_t *data;
+  uint8_t *repeat;
   uint8_t *present;
   uint32_t num_values;
   uint32_t num_present;
@@ -157,6 +161,7 @@ protected:
   // A set of managed buffers for the missing data. We use a separate set of
   // buffers for theese because they should be of the same size, so we can
   // avoid multiple re-allocations
+  std::unique_ptr<BufferManager> bufman_rep = nullptr;
   std::unique_ptr<BufferManager> bufman_na = nullptr;
   // These buffers are for the individual pages, which, again tend ro be
   // smaller than the whole column chunks.

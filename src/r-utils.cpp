@@ -112,4 +112,25 @@ SEXP rf_nanoparquet_any_null(SEXP x) noexcept {
   return Rf_ScalarLogical(0);
 }
 
+SEXP nanoparquet_repeated_positions(SEXP data, SEXP replevels, SEXP nrows) {
+  SEXP res = Rf_protect(Rf_allocVector(INTSXP, INTEGER(nrows)[0]));
+  // first repetition level is always 0
+  INTEGER(res)[0] = 1;
+  for (R_xlen_t i = 1, r = 0; i < Rf_xlength(replevels); i++) {
+    if (RAW(replevels)[i] > 0) {
+      INTEGER(res)[r]++;
+    } else {
+      r++;
+      if (r >= INTEGER(nrows)[0]) {
+        Rf_error("Repetition levels indicate more rows than expected, broken Parquet file?");
+        break;
+      }
+      INTEGER(res)[r] = 1;
+    }
+  }
+  Rf_unprotect(1);
+  return res;
+}
+
+
 } // extern "C"

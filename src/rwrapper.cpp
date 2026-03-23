@@ -21,6 +21,7 @@ SEXP nanoparquet_read_column_chunk(
   SEXP options,
   SEXP call
 );
+SEXP nanoparquet_repeated_positions(SEXP data, SEXP replevels, SEXP nrows);
 SEXP rf_nanoparquet_write(
   SEXP dfsxp,
   SEXP filesxp,
@@ -134,6 +135,7 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_read_row_group, 4),
   CALLDEF(nanoparquet_read_col_names, 1),
   CALLDEF(nanoparquet_read_column_chunk, 5),
+  CALLDEF(nanoparquet_repeated_positions, 3),
   CALLDEF(rf_nanoparquet_write, 11),
   CALLDEF(rf_nanoparquet_append, 11),
   CALLDEF(rf_nanoparquet_map_to_parquet_types, 2),

@@ -80,9 +80,22 @@ post_process_read_result <- function(res, file, options, col_select) {
   dicts <- res[[2]]
   types <- res[[3]]
   arrow_schema <- res[[4]]
+  repeats <- res[[5]]
   res <- res[[1]]
   if (options[["use_arrow_metadata"]] && !is.na(arrow_schema)) {
     res <- apply_arrow_schema(res, file, arrow_schema, dicts, types, col_select)
+  }
+
+  # fix up repeated columns, if any
+  has_reps <- lengths(repeats) > 0
+  for (idx in which(has_reps)) {
+    bpos <- .Call(
+      nanoparquet_repeated_positions,
+      res[[idx]],
+      repeats[[idx]],
+      nrow(res)
+    )
+    res[[idx]] <- split_at(res[[idx]], bpos)
   }
 
   # convert hms from milliseconds to seconds, also integer -> double
