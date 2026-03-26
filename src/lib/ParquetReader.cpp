@@ -174,6 +174,40 @@ void ParquetReader::check_meta_data() {
        << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
     throw runtime_error(ss.str());
   }
+
+  // Nesting is not supported, except for nested 3-layer LIST columns
+  // LIST columns must have three layers
+  for (int i = 1; i < file_meta_data_.schema.size(); i++) {
+    parquet::SchemaElement sel = file_meta_data_.schema[i];
+    if (sel.__isset.num_children && sel.num_children > 0) {
+      parquet::SchemaElement sel0 = file_meta_data_.schema[i - 1];
+      bool isList = sel.__isset.logicalType && sel.logicalType.__isset.LIST;
+      bool isList0 = sel0.__isset.logicalType && sel0.logicalType.__isset.LIST;
+      if (sel.num_children != 1 || !(isList || isList0)) {
+        std::stringstream ss;
+        ss << "Nested columns are not supported, could not read Parquet file at '"
+           << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+        throw runtime_error(ss.str());
+      }
+
+      if (sel.__isset.logicalType && sel.logicalType.__isset.LIST) {
+        // must have two more columns as least, first one REPEATED
+        if (i + 2 >= file_meta_data_.schema.size()) {
+          std::stringstream ss;
+          ss << "Only three-layer LIST columns are supported, could not read Parquet file at '"
+             << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+          throw runtime_error(ss.str());
+        }
+        parquet::SchemaElement sel1 = file_meta_data_.schema[i + 1];
+        if (sel1.repetition_type != parquet::FieldRepetitionType::REPEATED) {
+          std::stringstream ss;
+          ss << "First layer of LIST column must be REPEATED, could not read Parquet file at '"
+             << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+          throw runtime_error(ss.str());
+        }
+      }
+    }
+  }
 }
 
 void ParquetReader::read_row_group(uint32_t row_group) {
