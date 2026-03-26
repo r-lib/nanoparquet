@@ -111,3 +111,51 @@ redact_maxint64 <- function(x) {
 utcts <- function(x) {
   as.POSIXct(as.POSIXlt(as.Date(x), tz = "UTC"))
 }
+
+make_nested_list_parquet <- function(filename, depth, rows = NULL, ...) {
+  # Write a Parquet file with a single column 'a' that is a list nested to
+  # `depth` levels (depth=1 -> list<int32>, depth=2 -> list<list<int32>>).
+  #
+  # Args:
+  #   filename  output .parquet path
+  #   depth     nesting depth, must be >= 1
+  #   rows      optional row data; if NULL a small default example is used.
+  #             Must be an R list of rows, each nested to `depth` levels with
+  #             integer values at the leaves.
+
+  if (depth < 1L) {
+    stop("depth must be >= 1")
+  }
+
+  # Build the Arrow type recursively: list_of(list_of(...(int32())...))
+  make_type <- function(d) {
+    if (d == 0L) arrow::int32() else arrow::list_of(make_type(d - 1L))
+  }
+
+  # Default data: 3 rows that exercise empty lists at every level.
+  # At depth 1: list(1:3, integer(0), 4L)
+  # At depth d: wraps depth d-1 rows as [normal+empty, empty, singleton].
+  make_rows <- function(d) {
+    if (d == 1L) {
+      list(1:3, integer(0), 4L)
+    } else {
+      inner <- make_rows(d - 1L)
+      list(
+        list(inner[[1]], inner[[2]]),
+        list(),
+        list(inner[[3]])
+      )
+    }
+  }
+
+  if (is.null(rows)) {
+    rows <- make_rows(depth)
+  }
+
+  arr <- arrow::Array$create(rows, type = make_type(depth))
+  arrow::write_parquet(arrow::arrow_table(a = arr), filename, ...)
+}
+
+read_parquet_duckdb <- function(file) {
+  duckdb::sql_query(sprintf("FROM '%s'", file))
+}

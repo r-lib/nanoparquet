@@ -1,4 +1,50 @@
 
+def make_nested_list_parquet(filename, depth, rows=None):
+  """
+  Write a Parquet file with a single column 'a' that is a list nested to
+  `depth` levels (e.g. depth=1 -> list<int32>, depth=2 -> list<list<int32>>).
+
+  Args:
+    filename: output .parquet path
+    depth:    nesting depth, must be >= 1
+    rows:     list of row values; if None a small default example is used.
+              Each row must be a Python list nested to `depth` levels with
+              int values at the leaves.
+  """
+  import pyarrow as pa
+  import pyarrow.parquet as pq
+
+  if depth < 1:
+    raise ValueError("depth must be >= 1")
+
+  # Build the Arrow type recursively: list<list<...<int32>...>>
+  def make_type(d):
+    return pa.int32() if d == 0 else pa.list_(make_type(d - 1))
+
+  col_type = make_type(depth)
+
+  # Default data: 3 rows that exercise empty lists at every level
+  if rows is None:
+    def make_rows(d):
+      if d == 1:
+        return [
+          [1, 2, 3],  # normal
+          [],         # empty
+          [4],        # singleton
+        ]
+      inner = make_rows(d - 1)
+      return [
+        [inner[0], inner[1]],  # one non-empty + one empty sub-list
+        [],                    # empty outer list
+        [inner[2]],            # singleton sub-list
+      ]
+    rows = make_rows(depth)
+
+  schema = pa.schema([pa.field('a', col_type)])
+  table = pa.table({'a': pa.array(rows, type=col_type)}, schema=schema)
+  pq.write_table(table, filename)
+
+
 def do_float():
   import pyarrow as pa
   import pyarrow.parquet as pq
