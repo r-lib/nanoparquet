@@ -174,6 +174,7 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
   metadata.dataptr.resize(metadata.num_cols_to_read);
   metadata.repeatptr.resize(metadata.num_cols_to_read);
   metadata.presentptr.resize(metadata.num_cols_to_read);
+  metadata.repetition_types.resize(metadata.num_cols);
 
   if (!filter.filter_row_groups) {
     for (auto i = 0; i < fmt.row_groups.size(); i++) {

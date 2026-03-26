@@ -60,6 +60,7 @@ public:
   std::vector<uint8_t*> dataptr;
   std::vector<uint8_t*> repeatptr;
   std::vector<uint8_t*> presentptr;
+  std::vector<int32_t> repetition_types;
 };
 
 struct tmpbytes {

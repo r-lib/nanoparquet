@@ -111,12 +111,42 @@ void ParquetReader::init_file_on_disk(bool readwrite) {
                 &file_meta_data_, filename_);
   has_file_meta_data_ = true;
 
+  is_leaf.resize(file_meta_data_.schema.size());
+  parent_column.resize(file_meta_data_.schema.size());
+  repetition_types.resize(file_meta_data_.schema.size());
+  max_repetition_level.resize(file_meta_data_.schema.size());
+  max_definition_level.resize(file_meta_data_.schema.size());
+
+  std::stack<uint32_t> parent_stack;
+
   num_leaf_cols = 0;
   leaf_cols.resize(file_meta_data_.schema.size());
   for (int i = 0; i < file_meta_data_.schema.size(); i++) {
+
+    if (!parent_stack.empty()) {
+      parent_column[i] = parent_stack.top();
+      parent_stack.pop();
+    }
+
     parquet::SchemaElement sel = file_meta_data_.schema[i];
-    if (sel.__isset.num_children && sel.num_children > 0) {
+
+    max_repetition_level[i] = max_repetition_level[parent_column[i]];
+    max_definition_level[i] = max_definition_level[parent_column[i]];
+    repetition_types[i] = static_cast<int32_t>(sel.repetition_type);
+    if (sel.repetition_type == parquet::FieldRepetitionType::REPEATED) {
+      max_repetition_level[i]++;
+    }
+    if (sel.__isset.repetition_type &&
+        sel.repetition_type != parquet::FieldRepetitionType::REQUIRED) {
+      max_definition_level[i]++;
+    }
+
+    is_leaf[i] = !sel.__isset.num_children || sel.num_children == 0;
+    if (!is_leaf[i]) {
       leaf_cols[i] = -1;
+      for (int j = 0; j < sel.num_children; j++) {
+        parent_stack.push(i);
+      }
     } else {
       leaf_cols[i] = num_leaf_cols++;
     }
@@ -505,6 +535,13 @@ void ParquetReader::update_data_page_size(DataPage &dp, uint8_t *buf, int32_t le
   dp.strs.total_len = totlen;
 }
 
+uint8_t get_bit_width(uint32_t v) {
+  if (v == 0) return 0;
+  uint8_t n = 0;
+  while (v >>= 1) n++;
+  return n + 1;
+}
+
 uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t len) {
   if (!dp.ph.__isset.data_page_header) {
     throw runtime_error("Invalid page, data page header not set");
@@ -533,8 +570,9 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
     buf += tmp_len;
     len -= tmp_len;
     rep_levels.resize(dp.num_values);
-    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, 1);
-    uint32_t num_repeated = dec.GetBatchCount<uint8_t>(
+    uint8_t bw = get_bit_width(max_repetition_level[dp.cc.column]);
+    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
+    dec.GetBatchCount<uint8_t>(
       (uint8_t*) rep_levels.ptr,
       dp.num_values
     );
@@ -552,7 +590,8 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
     buf += tmp_len;
     len -= tmp_len;
     def_levels.resize(dp.num_values);
-    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, 1);
+    uint8_t bw = get_bit_width(max_definition_level[dp.cc.column]);
+    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
     uint32_t num_present = dec.GetBatchCount<uint8_t>(
       (uint8_t*) def_levels.ptr,
       dp.num_values
@@ -561,10 +600,16 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
   }
   update_data_page_size(dp, buf, len);
   alloc_data_page(dp);
-  if (dp.cc.repeated && dp.repeat != nullptr) {
+  if (dp.cc.repeated) {
+    if (!dp.repeat) {
+      throw runtime_error("Memory for repetition levels not allocated");
+    }
     memcpy(dp.repeat, rep_levels.ptr, dp.num_values);
   }
-  if ((dp.cc.optional || dp.cc.repeated) && dp.present != nullptr) {
+  if ((dp.cc.optional || dp.cc.repeated)) {
+    if (!dp.present) {
+      throw runtime_error("Memory for definition levels not allocated");
+    }
     memcpy(dp.present, def_levels.ptr, dp.num_values);
   }
 
@@ -583,24 +628,40 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
   buf += skip;
   len -= skip;
 
-  uint8_t *def_buf = nullptr;
-  uint32_t def_len = 0;
+  uint8_t *tmp_buf = nullptr;
+  uint32_t tmp_len = 0;
+
+  BufferGuard rep_levels_g = bufman_rep->claim();
+  ByteBuffer &rep_levels = rep_levels_g.buf;
 
   BufferGuard def_levels_g = bufman_na->claim();
   ByteBuffer &def_levels = def_levels_g.buf;
 
-  // TODO: repeated columns!
+  if (dp.cc.repeated) {
+    tmp_buf = buf;
+    tmp_len = dp.ph.data_page_header_v2.repetition_levels_byte_length;
+    buf += tmp_len;
+    len -= tmp_len;
+    rep_levels.resize(dp.num_values);
+    uint8_t bw = get_bit_width(max_repetition_level[dp.cc.column]);
+    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
+    dec.GetBatchCount<uint8_t>(
+      (uint8_t*) rep_levels.ptr,
+      dp.num_values
+    );
+  }
 
-  if (dp.cc.optional) {
-    def_buf = buf;
-    def_len = dp.ph.data_page_header_v2.definition_levels_byte_length;
-    buf += def_len;
-    len -= def_len;
+  if (dp.cc.optional || dp.cc.repeated) {
+    tmp_buf = buf;
+    tmp_len = dp.ph.data_page_header_v2.definition_levels_byte_length;
+    buf += tmp_len;
+    len -= tmp_len;
     uint32_t num_present = dp.num_values - dp.ph.data_page_header_v2.num_nulls;
     dp.set_num_present(num_present);
     update_data_page_size(dp, buf, len);
     alloc_data_page(dp);
-    RleBpDecoder dec((const uint8_t *)def_buf, def_len, 1);
+    uint8_t bw = get_bit_width(max_definition_level[dp.cc.column]);
+    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
     if (dp.present) {
       dec.GetBatch<uint8_t>(dp.present, dp.num_values);
     } else {
@@ -610,6 +671,13 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
   } else {
     update_data_page_size(dp, buf, len);
     alloc_data_page(dp);
+  }
+
+  if (dp.cc.repeated) {
+    if (!dp.repeat) {
+      throw runtime_error("Memory for repetition levels not allocated");
+    }
+    memcpy(dp.repeat, rep_levels.ptr, dp.num_values);
   }
 
   return read_data_page_internal(dp, buf, len);

@@ -141,6 +141,10 @@ public:
 
   parquet::FileMetaData file_meta_data_;
 
+  std::vector<int32_t> parent_column;
+  std::vector<int32_t> repetition_types;
+  std::vector<int> leaf_cols; // map schema columns to leaf columns in chunks
+
   std::pair<parquet::PageHeader, int64_t> read_page_header(int64_t pos);
   void read_chunk(int64_t offset, int64_t size, int8_t *buffer);
 
@@ -153,8 +157,11 @@ protected:
   size_t file_size;
 
   bool has_file_meta_data_;
-  std::vector<int> leaf_cols; // map schema columns to leaf columns in chunks
   uint32_t num_leaf_cols;
+
+  std::vector<bool> is_leaf;
+  std::vector<uint32_t> max_repetition_level;
+  std::vector<uint32_t> max_definition_level;
 
   // A set of managed buffers for the column chunk data
   std::unique_ptr<BufferManager> bufman_cc = nullptr;

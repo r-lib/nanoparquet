@@ -34,14 +34,35 @@ SEXP nanoparquet_read_(SEXP filesxp, SEXP rcols, SEXP options) {
     reader.read_columns();
     reader.convert_columns_to_r();
     reader.create_df();
-    PROTECT(res = Rf_allocVector(VECSXP, 6));
+    PROTECT(res = Rf_allocVector(VECSXP, 9));
     SET_VECTOR_ELT(res, 0, reader.columns);
     SET_VECTOR_ELT(res, 1, reader.facdicts);
     SET_VECTOR_ELT(res, 2, reader.types);
     SET_VECTOR_ELT(res, 3, reader.arrow_metadata);
     SET_VECTOR_ELT(res, 4, reader.repeats);
     SET_VECTOR_ELT(res, 5, reader.presents);
-    UNPROTECT(1);
+    SEXP parent_col = PROTECT(Rf_allocVector(INTSXP, reader.parent_column.size()));
+    memcpy(
+      INTEGER(parent_col),
+      reader.parent_column.data(),
+      reader.parent_column.size() * sizeof(int32_t)
+    );
+    SET_VECTOR_ELT(res, 6, parent_col);
+    SEXP repetition_types = PROTECT(Rf_allocVector(INTSXP, reader.repetition_types.size()));
+    memcpy(
+      INTEGER(repetition_types),
+      reader.repetition_types.data(),
+      reader.repetition_types.size() * sizeof(int32_t)
+    );
+    SET_VECTOR_ELT(res, 7, repetition_types);
+    SEXP leaf_cols = PROTECT(Rf_allocVector(INTSXP, reader.leaf_cols.size()));
+    memcpy(
+      INTEGER(leaf_cols),
+      reader.leaf_cols.data(),
+      reader.leaf_cols.size() * sizeof(int32_t)
+    );
+    SET_VECTOR_ELT(res, 8, leaf_cols);
+    UNPROTECT(4);
     return res;
   } catch (std::exception &ex) {
     strncpy(_np_error, ex.what(), sizeof(_np_error) - 1);
