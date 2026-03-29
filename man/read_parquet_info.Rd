@@ -16,7 +16,8 @@ parquet_info(file)
 Data frame with columns:
 \itemize{
 \item \code{file_name}: file name.
-\item \code{num_cols}: number of (leaf) columns.
+\item \code{num_cols}: number of columns. (The number of child nodes of the
+root node in the schema.)
 \item \code{num_rows}: number of rows.
 \item \code{num_row_groups}: number of row groups.
 \item \code{file_size}: file size in bytes.

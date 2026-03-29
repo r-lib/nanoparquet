@@ -287,7 +287,8 @@ read_parquet_schema <- function(file, options = parquet_options()) {
 #' @param file Path to a Parquet file.
 #' @return Data frame with columns:
 #'   * `file_name`: file name.
-#'   * `num_cols`: number of (leaf) columns.
+#'   * `num_cols`: number of columns. (The number of child nodes of the
+#'      root node in the schema.)
 #'   * `num_rows`: number of rows.
 #'   * `num_row_groups`: number of row groups.
 #'   * `file_size`: file size in bytes.
@@ -306,7 +307,7 @@ read_parquet_info <- function(file) {
   info <- data.frame(
     stringsAsFactors = FALSE,
     file_name = file,
-    num_cols = sum(is.na(mtd$schema$num_children)),
+    num_cols = mtd$schema$num_children[1],
     num_rows = mtd$file_meta_data$num_rows,
     num_row_groups = nrow(mtd$row_groups),
     file_size = file.size(file),
