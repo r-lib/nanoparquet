@@ -465,7 +465,7 @@
       # A data frame: 1 x 7
         file_name         num_cols num_rows num_row_groups file_size parquet_version
         <chr>                <int>    <dbl>          <int>     <dbl>           <int>
-      1 data/enum.parquet       13        2              1      3930               1
+      1 data/enum.parquet        7        2              1      3930               1
       # i 1 more variable: created_by <chr>
     Code
       read_parquet_info(test_path("data/factor.parquet"))
