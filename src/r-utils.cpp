@@ -238,29 +238,17 @@ SEXP nanoparquet_enlist_req_opt(SEXP x, SEXP rep, SEXP def, SEXP nrows) {
       lstidx++;
       SET_VECTOR_ELT(res, lstidx, Rf_allocVector(TYPEOF(x), clengths[lstidx]));
       eltidx = 0;
-      if (*d == 0) {
-        // empty list element
-      } else if (*d == 1) {
-        // NA
-        set_list_element_na(VECTOR_ELT(res, lstidx), eltidx);
-        eltidx++;
-      } else {
-        // non-NA element
-        set_list_element(VECTOR_ELT(res, lstidx), eltidx, x, xidx);
-        eltidx++;
-        xidx++;
-      }
-    } else {
-      if (*d == 1) {
-        // NA
-        set_list_element_na(VECTOR_ELT(res, lstidx), eltidx);
-        eltidx++;
-      } else {
-        // non-NA element
-        set_list_element(VECTOR_ELT(res, lstidx), eltidx, x, xidx);
-        eltidx++;
-        xidx++;
-      }
+    }
+    // def = 0 => empty list, 1 => NA, 2 => non-NA element
+    if (*d == 1) {
+      // NA
+      set_list_element_na(VECTOR_ELT(res, lstidx), eltidx);
+      eltidx++;
+    } else if (*d == 2) {
+      // non-NA element
+      set_list_element(VECTOR_ELT(res, lstidx), eltidx, x, xidx);
+      eltidx++;
+      xidx++;
     }
   }
 
@@ -308,14 +296,11 @@ SEXP nanoparquet_enlist_opt_req(SEXP x, SEXP rep, SEXP def, SEXP nrows) {
         // NULL
         SET_VECTOR_ELT(res, lstidx, R_NilValue);
       } else {
+        // list() or non-empty list element
         SET_VECTOR_ELT(res, lstidx, Rf_allocVector(TYPEOF(x), clengths[lstidx]));
-        if (*d == 2) {
-          set_list_element(VECTOR_ELT(res, lstidx), eltidx, x, xidx);
-          eltidx++;
-          xidx++;
-        }
       }
-    } else {
+    }
+    if (*d == 2) {
       // non-NA element
       set_list_element(VECTOR_ELT(res, lstidx), eltidx, x, xidx);
       eltidx++;
@@ -328,7 +313,63 @@ SEXP nanoparquet_enlist_opt_req(SEXP x, SEXP rep, SEXP def, SEXP nrows) {
 }
 
 SEXP nanoparquet_enlist_opt_opt(SEXP x, SEXP rep, SEXP def, SEXP nrows) {
-  return R_NilValue;
+  R_xlen_t len = Rf_xlength(rep);
+  if (Rf_length(def) != len) {
+    Rf_error("Length of repetition and definition levels must be the same");
+  }
+  R_xlen_t listlen = REAL(nrows)[0];
+  SEXP lengths = Rf_protect(Rf_allocVector(REALSXP, listlen));
+  double *clengths = REAL(lengths);
+  SEXP res = Rf_protect(Rf_allocVector(VECSXP, listlen));
+
+  // calculate the length of each list element. we need this first to
+  // avoid reallocations
+  Rbyte *crep = RAW(rep), *cdef = RAW(def);
+  R_xlen_t lstidx = -1;
+  for (Rbyte *r = crep, *d = cdef; r < crep + len; r++, d++) {
+    if (*r == 0) {
+      // new list element
+      if (*d <= 1) {
+        // NULL or list()
+        REAL(lengths)[++lstidx] = 0;
+      } else {
+        REAL(lengths)[++lstidx] = 1;
+      }
+    } else {
+      REAL(lengths)[lstidx]++;
+
+    }
+  }
+
+  // now fill in the list elements
+  lstidx = -1;
+  R_xlen_t xidx = 0, eltidx = 0;
+  for (Rbyte *r = crep, *d = cdef; r < crep + len; r++, d++) {
+    if (*r == 0) {
+      lstidx++;
+      eltidx = 0;
+      if (*d == 0) {
+        // NULL
+        SET_VECTOR_ELT(res, lstidx, R_NilValue);
+      } else {
+        // list() or non-empty list element
+        SET_VECTOR_ELT(res, lstidx, Rf_allocVector(TYPEOF(x), clengths[lstidx]));
+      }
+    }
+    if (*d == 2) {
+      // NA
+      set_list_element_na(VECTOR_ELT(res, lstidx), eltidx);
+      eltidx++;
+    } else if (*d == 3) {
+      // non-NA element
+      set_list_element(VECTOR_ELT(res, lstidx), eltidx, x, xidx);
+      eltidx++;
+      xidx++;
+    }
+  }
+
+  Rf_unprotect(2);
+  return res;
 }
 
 } // extern "C"

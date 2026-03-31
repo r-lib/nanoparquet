@@ -17,3 +17,36 @@
       Error in `read_parquet()`:
       ! Only three-layer LIST columns are supported, could not read Parquet file at 'data/old_list_structure.parquet' @ lib/ParquetReader.cpp:198
 
+# LIST
+
+    Code
+      as.data.frame(read_parquet(test_path("data/list-req-req.parquet")))
+    Output
+        element
+      1 1, 2, 3
+      2        
+      3       4
+    Code
+      as.data.frame(read_parquet(test_path("data/list-req-opt.parquet")))
+    Output
+         element
+      1 1, NA, 3
+      2         
+      3        4
+    Code
+      as.data.frame(read_parquet(test_path("data/list-opt-req.parquet")))
+    Output
+        element
+      1 1, 2, 3
+      2        
+      3    NULL
+      4       4
+    Code
+      as.data.frame(read_parquet(test_path("data/list-opt-opt.parquet")))
+    Output
+         element
+      1 1, NA, 3
+      2         
+      3     NULL
+      4        4
+

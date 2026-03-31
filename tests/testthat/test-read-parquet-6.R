@@ -11,3 +11,12 @@ test_that("Only 3-layer LIST is supported for now", {
     as.data.frame(read_parquet(pf))
   })
 })
+
+test_that("LIST", {
+  expect_snapshot({
+    as.data.frame(read_parquet(test_path("data/list-req-req.parquet")))
+    as.data.frame(read_parquet(test_path("data/list-req-opt.parquet")))
+    as.data.frame(read_parquet(test_path("data/list-opt-req.parquet")))
+    as.data.frame(read_parquet(test_path("data/list-opt-opt.parquet")))
+  })
+})
