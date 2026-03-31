@@ -22,21 +22,21 @@
     Code
       as.data.frame(read_parquet(test_path("data/list-req-req.parquet")))
     Output
-        element
+              a
       1 1, 2, 3
       2        
       3       4
     Code
       as.data.frame(read_parquet(test_path("data/list-req-opt.parquet")))
     Output
-         element
+               a
       1 1, NA, 3
       2         
       3        4
     Code
       as.data.frame(read_parquet(test_path("data/list-opt-req.parquet")))
     Output
-        element
+              a
       1 1, 2, 3
       2        
       3    NULL
@@ -44,7 +44,7 @@
     Code
       as.data.frame(read_parquet(test_path("data/list-opt-opt.parquet")))
     Output
-         element
+               a
       1 1, NA, 3
       2         
       3     NULL

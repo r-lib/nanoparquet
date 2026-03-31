@@ -47,8 +47,10 @@ public:
   bool byte_array = false;
   // for DECIMAL
   int32_t scale;
-  // REPEATED columns are always lists
+  // REPEATED columns are always converted to lists
   bool repeated = false;
+  // bottom layer of 3-layer list column
+  bool is_list3 = false;
 };
 
 struct rmetadata {

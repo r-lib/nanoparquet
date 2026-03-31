@@ -261,8 +261,9 @@ rtype::rtype(
     std::vector<int32_t> &parent_column
 ) {
   parquet::SchemaElement sel = schema[schema_col];
+  is_list3 = is_list(schema, schema_col, parent_column);
   repeated = sel.repetition_type == parquet::FieldRepetitionType::REPEATED ||
-    is_list(schema, schema_col, parent_column)  ;
+    is_list3;
   switch (sel.type) {
   case parquet::Type::BOOLEAN:
     type = tmptype = LGLSXP;
@@ -2181,15 +2182,21 @@ void RParquetReader::convert_columns_to_r() {
 
 void RParquetReader::create_df() {
   SEXP nms = PROTECT(Rf_allocVector(STRSXP, metadata.num_cols_to_read));
+  R_xlen_t ri = 0;
   for (R_xlen_t i = 0; i < metadata.num_cols; i++) {
     // skip columns that were not requested
     if (colmap[i] == 0) {
       continue;
     }
+    R_xlen_t nm_col = i;
+    if (metadata.r_types[ri].is_list3) {
+      nm_col = parent_column[parent_column[i]];
+    }
     SET_STRING_ELT(
       nms, colmap[i] - 1,
-      Rf_mkCharCE(file_meta_data_.schema[i].name.c_str(), CE_UTF8)
+      Rf_mkCharCE(file_meta_data_.schema[nm_col].name.c_str(), CE_UTF8)
     );
+    ri++;
   }
   Rf_setAttrib(columns, R_NamesSymbol, nms);
   UNPROTECT(1);
