@@ -23,7 +23,11 @@ enum r_type_conversion {
 class rtype {
 public:
   rtype() { }
-  rtype(parquet::SchemaElement &sel);
+  rtype(
+    std::vector<parquet::SchemaElement> &schema,
+    uint32_t schema_col,
+    std::vector<int32_t> &parent_column
+  );
   // final type
   int type;
   r_type_conversion type_conversion = NONE;
@@ -59,7 +63,6 @@ public:
   std::vector<rtype> r_types;
   std::vector<uint8_t*> dataptr;
   std::vector<uint8_t*> repeatptr;
-  std::vector<uint8_t*> presentptr;
   std::vector<int32_t> repetition_types;
 };
 
@@ -128,7 +131,6 @@ public:
   SEXP types = R_NilValue;
   SEXP arrow_metadata = R_NilValue;
   SEXP repeats = R_NilValue;
-  SEXP presents = R_NilValue;
 
   std::vector<std::vector<uint8_t>> tmpdata;
   std::vector<std::vector<tmpdict>> dicts;

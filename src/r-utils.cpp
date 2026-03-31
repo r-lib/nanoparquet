@@ -137,5 +137,31 @@ SEXP nanoparquet_repeated_positions(
   return res;
 }
 
+SEXP nanoparquet_enlist_sizes_req_req(SEXP rep, SEXP def) {
+  R_xlen_t len = Rf_xlength(rep);
+  if (Rf_length(def) != len) {
+    Rf_error("Length of repetition and definition levels must be the same");
+  }
+  Rbyte *crep = RAW(rep), *cdef = RAW(def);
+  R_xlen_t listlen = 0;
+  for (Rbyte *r = crep; r < crep + len; r++) {
+    if (*r == 0) {
+      listlen++;
+    }
+  }
+
+  SEXP res = Rf_protect(Rf_allocVector(INTSXP, listlen));
+  R_xlen_t p = -1;
+  for (Rbyte *r = crep, *d = cdef; r < crep + len; r++, d++) {
+    if (*r == 0) {
+      INTEGER(res)[++p] = *d == 0 ? 0 : 1;
+    } else {
+      INTEGER(res)[p]++;
+    }
+  }
+
+  Rf_unprotect(1);
+  return res;
+}
 
 } // extern "C"

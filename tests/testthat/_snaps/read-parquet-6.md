@@ -15,5 +15,5 @@
       as.data.frame(read_parquet(pf))
     Condition
       Error in `read_parquet()`:
-      ! Only three-layer LIST columns are supported, could not read Parquet file at 'data/old_list_structure.parquet' @ lib/ParquetReader.cpp:199
+      ! Only three-layer LIST columns are supported, could not read Parquet file at 'data/old_list_structure.parquet' @ lib/ParquetReader.cpp:198
 

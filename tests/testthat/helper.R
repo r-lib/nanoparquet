@@ -156,6 +156,41 @@ make_nested_list_parquet <- function(filename, depth, rows = NULL, ...) {
   arrow::write_parquet(arrow::arrow_table(a = arr), filename, ...)
 }
 
+# Write a Parquet file with a single list<int32> column 'a', with controllable
+# repetition types for the outer list and its elements.
+#
+# list_nullable    = TRUE  -> outer list field is OPTIONAL (may be NULL)
+#                  = FALSE -> outer list field is REQUIRED (never NULL)
+# element_nullable = TRUE  -> list elements are OPTIONAL (may be NULL)
+#                  = FALSE -> list elements are REQUIRED (never NULL)
+#
+# rows: optional data; must be an R list of integer vectors (no NAs when
+#       element_nullable = FALSE, no NULLs when list_nullable = FALSE).
+make_list_parquet <- function(
+  filename,
+  list_nullable = TRUE,
+  element_nullable = TRUE,
+  rows = NULL
+) {
+  elem_field <- arrow::field(
+    "item",
+    arrow::int32(),
+    nullable = element_nullable
+  )
+  list_type <- arrow::list_of(elem_field)
+
+  if (is.null(rows)) {
+    rows <- list(1:3, integer(0), 4L)
+  }
+
+  arr <- arrow::Array$create(rows, type = list_type)
+
+  col_field <- arrow::field("a", list_type, nullable = list_nullable)
+  tbl <- arrow::arrow_table(a = arr, schema = arrow::schema(col_field))
+
+  arrow::write_parquet(tbl, filename)
+}
+
 read_parquet_duckdb <- function(file) {
   duckdb::sql_query(sprintf("FROM '%s'", file))
 }

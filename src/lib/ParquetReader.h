@@ -18,15 +18,13 @@ enum parquet_input_type {
 struct ColumnChunk {
 public:
   ColumnChunk(parquet::ColumnChunk &cc, parquet::SchemaElement &sel,
-              uint32_t column, uint32_t row_group, int64_t num_rows)
+              uint32_t column, uint32_t row_group, int64_t num_rows,
+              uint32_t max_rep_level, uint32_t max_def_level)
     : cc(cc), sel(sel), column(column), row_group(row_group),
-      num_rows(num_rows) {
+      num_rows(num_rows), max_rep_level(max_rep_level),
+      max_def_level(max_def_level) {
     parquet::ColumnMetaData cmd = cc.meta_data;
     has_dictionary = cmd.__isset.dictionary_page_offset;
-    optional = sel.repetition_type ==
-      parquet::FieldRepetitionType::OPTIONAL;
-    repeated = sel.repetition_type ==
-      parquet::FieldRepetitionType::REPEATED;
   }
   parquet::ColumnChunk &cc;
   parquet::SchemaElement &sel;
@@ -34,8 +32,8 @@ public:
   uint32_t row_group;
   int64_t num_rows;
   bool has_dictionary;
-  bool optional;
-  bool repeated;
+  uint32_t max_rep_level;
+  uint32_t max_def_level;
 };
 
 struct StringSet {

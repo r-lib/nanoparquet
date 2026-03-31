@@ -136,8 +136,7 @@ void ParquetReader::init_file_on_disk(bool readwrite) {
     if (sel.repetition_type == parquet::FieldRepetitionType::REPEATED) {
       max_repetition_level[i]++;
     }
-    if (sel.__isset.repetition_type &&
-        sel.repetition_type != parquet::FieldRepetitionType::REQUIRED) {
+    if (sel.repetition_type != parquet::FieldRepetitionType::REQUIRED) {
       max_definition_level[i]++;
     }
 
@@ -226,7 +225,15 @@ void ParquetReader::read_row_group(uint32_t row_group) {
     vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
     // RowGroup.columns only contain the leaf columns
     parquet::ColumnChunk pcc = rgs[row_group].columns[leaf_cols[col]];
-    ColumnChunk cc(pcc, sel, col, row_group, rgs[row_group].num_rows);
+    ColumnChunk cc(
+      pcc,
+      sel,
+      col,
+      row_group,
+      rgs[row_group].num_rows,
+      max_repetition_level[col],
+      max_definition_level[col]
+    );
     read_column_chunk_int(cc);
   }
 }
@@ -246,7 +253,15 @@ void ParquetReader::read_column_chunk(uint32_t row_group, uint32_t column) {
   vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
     // RowGroup.columns only contain the leaf columns
   parquet::ColumnChunk pcc = rgs[row_group].columns[leaf_cols[column]];
-  ColumnChunk cc(pcc, sel, column, row_group, rgs[row_group].num_rows);
+  ColumnChunk cc(
+    pcc,
+    sel,
+    column,
+    row_group,
+    rgs[row_group].num_rows,
+    max_repetition_level[column],
+    max_definition_level[column]
+  );
   read_column_chunk_int(cc);
 }
 
@@ -267,7 +282,15 @@ void ParquetReader::read_column(uint32_t column) {
   for (uint32_t rgi = 0; rgi < rgs.size(); rgi++) {
     // RowGroup.columns only contain the leaf columns
     parquet::ColumnChunk pcc = rgs[rgi].columns[leaf_cols[column]];
-    ColumnChunk cc(pcc, sel, column, rgi, rgs[rgi].num_rows);
+    ColumnChunk cc(
+      pcc,
+      sel,
+      column,
+      rgi,
+      rgs[rgi].num_rows,
+      max_repetition_level[column],
+      max_definition_level[column]
+    );
     read_column_chunk_int(cc);
   }
 }
@@ -592,7 +615,7 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
   BufferGuard def_levels_g = bufman_na->claim();
   ByteBuffer &def_levels = def_levels_g.buf;
 
-  if (dp.cc.repeated) {
+  if (dp.cc.max_rep_level > 0) {
     if (dp.ph.data_page_header.repetition_level_encoding != Encoding::RLE) {
       throw runtime_error("Unknown repetition level encoding");
     }
@@ -604,7 +627,7 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
     buf += tmp_len;
     len -= tmp_len;
     rep_levels.resize(dp.num_values);
-    uint8_t bw = get_bit_width(max_repetition_level[dp.cc.column]);
+    uint8_t bw = get_bit_width(dp.cc.max_rep_level);
     RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
     dec.GetBatchCount<uint8_t>(
       (uint8_t*) rep_levels.ptr,
@@ -612,7 +635,7 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
     );
   }
 
-  if (dp.cc.optional || dp.cc.repeated) {
+  if (dp.cc.max_def_level > 0) {
     if (dp.ph.data_page_header.definition_level_encoding != Encoding::RLE) {
       throw runtime_error("Unknown definition level encoding");
     }
@@ -624,7 +647,7 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
     buf += tmp_len;
     len -= tmp_len;
     def_levels.resize(dp.num_values);
-    uint8_t bw = get_bit_width(max_definition_level[dp.cc.column]);
+    uint8_t bw = get_bit_width(dp.cc.max_def_level);
     RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
     uint32_t num_present = dec.GetBatchCount<uint8_t>(
       (uint8_t*) def_levels.ptr,
@@ -634,13 +657,14 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
   }
   update_data_page_size(dp, buf, len);
   alloc_data_page(dp);
-  if (dp.cc.repeated) {
+  if (dp.cc.max_rep_level > 0) {
+    assert(dp.repeat);
     if (!dp.repeat) {
       throw runtime_error("Memory for repetition levels not allocated");
     }
     memcpy(dp.repeat, rep_levels.ptr, dp.num_values);
   }
-  if ((dp.cc.optional || dp.cc.repeated)) {
+  if (dp.cc.max_def_level > 0) {
     if (!dp.present) {
       throw runtime_error("Memory for definition levels not allocated");
     }
@@ -671,13 +695,13 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
   BufferGuard def_levels_g = bufman_na->claim();
   ByteBuffer &def_levels = def_levels_g.buf;
 
-  if (dp.cc.repeated) {
+  if (dp.cc.max_rep_level > 0) {
     tmp_buf = buf;
     tmp_len = dp.ph.data_page_header_v2.repetition_levels_byte_length;
     buf += tmp_len;
     len -= tmp_len;
     rep_levels.resize(dp.num_values);
-    uint8_t bw = get_bit_width(max_repetition_level[dp.cc.column]);
+    uint8_t bw = get_bit_width(dp.cc.max_rep_level);
     RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
     dec.GetBatchCount<uint8_t>(
       (uint8_t*) rep_levels.ptr,
@@ -685,7 +709,7 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
     );
   }
 
-  if (dp.cc.optional || dp.cc.repeated) {
+  if (dp.cc.max_def_level > 0) {
     tmp_buf = buf;
     tmp_len = dp.ph.data_page_header_v2.definition_levels_byte_length;
     buf += tmp_len;
@@ -694,7 +718,7 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
     dp.set_num_present(num_present);
     update_data_page_size(dp, buf, len);
     alloc_data_page(dp);
-    uint8_t bw = get_bit_width(max_definition_level[dp.cc.column]);
+    uint8_t bw = get_bit_width(dp.cc.max_def_level);
     RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
     if (dp.present) {
       dec.GetBatch<uint8_t>(dp.present, dp.num_values);
@@ -707,7 +731,8 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
     alloc_data_page(dp);
   }
 
-  if (dp.cc.repeated) {
+  if (dp.cc.max_rep_level > 0) {
+    assert(dp.repeat);
     if (!dp.repeat) {
       throw runtime_error("Memory for repetition levels not allocated");
     }
