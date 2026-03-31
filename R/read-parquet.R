@@ -115,25 +115,29 @@ post_process_read_result <- function(res, file, options, col_select) {
         res[[idx]] <- enlist_req_req(
           res[[idx]],
           repeats[[idx]],
-          presents[[idx]]
+          presents[[idx]],
+          nrow(res)
         )
       } else if (lst_rep == 0 && elt_rep == 1) {
         res[[idx]] <- enlist_req_opt(
           res[[idx]],
           repeats[[idx]],
-          presents[[idx]]
+          presents[[idx]],
+          nrow(res)
         )
       } else if (lst_rep == 1 && elt_rep == 0) {
         res[[idx]] <- enlist_opt_req(
           res[[idx]],
           repeats[[idx]],
-          presents[[idx]]
+          presents[[idx]],
+          nrow(res)
         )
       } else if (lst_rep == 1 && elt_rep == 1) {
         res[[idx]] <- enlist_opt_opt(
           res[[idx]],
           repeats[[idx]],
-          presents[[idx]]
+          presents[[idx]],
+          nrow(res)
         )
       }
     }
@@ -164,25 +168,25 @@ post_process_read_result <- function(res, file, options, col_select) {
   res
 }
 
-enlist_req_req <- function(x, rep, def) {
+enlist_req_req <- function(x, rep, def, nrows) {
   # def = 0 => empty list
-  sizes <- .Call(nanoparquet_enlist_sizes_req_req, rep, def)
+  sizes <- .Call(nanoparquet_enlist_sizes_req_req, rep, def, as.double(nrows))
   split_at(x, sizes)
 }
 
-enlist_req_opt <- function(x, rep, def) {
+enlist_req_opt <- function(x, rep, def, nrows) {
   # def = 0 => empty list, 1 => NA
-  browser()
+  .Call(nanoparquet_enlist_req_opt, x, rep, def, as.double(nrows))
 }
 
-enlist_opt_req <- function(x, rep, def) {
+enlist_opt_req <- function(x, rep, def, nrows) {
   # def = 0 => NULL, 1 => list()
-  browser()
+  .Call(nanoparquet_enlist_opt_req, x, rep, def, as.double(nrows))
 }
 
-enlist_opt_opt <- function(x, rep, def) {
+enlist_opt_opt <- function(x, rep, def, nrows) {
   # def = 0 => NULL ,1 => list(), 2 => NA
-  browser()
+  .Call(nanoparquet_enlist_opt_opt, x, rep, def, as.double(nrows))
 }
 
 # dump the contents of a connection to path

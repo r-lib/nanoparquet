@@ -27,7 +27,11 @@ SEXP nanoparquet_repeated_positions(
   SEXP deflevels,
   SEXP nrows
 );
-SEXP nanoparquet_enlist_sizes_req_req(SEXP rep, SEXP def);
+SEXP nanoparquet_enlist_sizes_req_req(SEXP rep, SEXP def, SEXP nrows);
+SEXP nanoparquet_enlist_req_opt(SEXP x, SEXP rep, SEXP def, SEXP nrows);
+SEXP nanoparquet_enlist_opt_req(SEXP x, SEXP rep, SEXP def, SEXP nrows);
+SEXP nanoparquet_enlist_opt_opt(SEXP x, SEXP rep, SEXP def, SEXP nrows);
+
 SEXP rf_nanoparquet_write(
   SEXP dfsxp,
   SEXP filesxp,
@@ -142,7 +146,10 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_read_col_names, 1),
   CALLDEF(nanoparquet_read_column_chunk, 5),
   CALLDEF(nanoparquet_repeated_positions, 4),
-  CALLDEF(nanoparquet_enlist_sizes_req_req, 2),
+  CALLDEF(nanoparquet_enlist_sizes_req_req, 3),
+  CALLDEF(nanoparquet_enlist_req_opt, 4),
+  CALLDEF(nanoparquet_enlist_opt_req, 4),
+  CALLDEF(nanoparquet_enlist_opt_opt, 4),
   CALLDEF(rf_nanoparquet_write, 11),
   CALLDEF(rf_nanoparquet_append, 11),
   CALLDEF(rf_nanoparquet_map_to_parquet_types, 2),

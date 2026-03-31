@@ -120,7 +120,6 @@ void RParquetReader::init(RParquetFilter &filter) {
       SET_VECTOR_ELT(repeats, idx, Rf_allocVector(RAWSXP, num_values));
       metadata.repeatptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(repeats, idx));
     }
-    REprintf("Column %d, type %d, num values %llu\n", i, rt.type, num_values);
     SET_VECTOR_ELT(columns, idx, Rf_allocVector(rt.type, num_values));
     metadata.dataptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(columns, idx));
     if (rt.type != rt.tmptype && rt.tmptype != NILSXP) {
