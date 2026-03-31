@@ -337,7 +337,6 @@ SEXP nanoparquet_enlist_opt_opt(SEXP x, SEXP rep, SEXP def, SEXP nrows) {
       }
     } else {
       REAL(lengths)[lstidx]++;
-
     }
   }
 

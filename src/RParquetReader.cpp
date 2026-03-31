@@ -962,7 +962,7 @@ void convert_column_to_r_int64_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_int64(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_int64_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1141,7 +1141,7 @@ void convert_column_to_r_float_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_float(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_float_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1314,7 +1314,7 @@ void convert_column_to_r_int96_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_int96(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_int96_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1442,7 +1442,7 @@ void convert_column_to_r_ba_string_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_string(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_string_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1574,7 +1574,7 @@ void convert_column_to_r_ba_decimal_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_decimal(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_decimal_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1691,7 +1691,7 @@ void convert_column_to_r_ba_raw_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_raw(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_raw_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1798,7 +1798,7 @@ void convert_column_to_r_ba_uuid_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_uuid(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_uuid_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1886,7 +1886,7 @@ void convert_column_to_r_ba_float16_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_float16(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_float16_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1970,7 +1970,7 @@ void convert_column_to_r_int32_decimal_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_int32_decimal(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_int32_decimal_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -2049,7 +2049,7 @@ void convert_column_to_r_int64_decimal_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_int64_decimal(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_int64_decimal_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
