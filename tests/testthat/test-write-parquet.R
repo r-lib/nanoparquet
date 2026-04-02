@@ -118,7 +118,7 @@ test_that("errors", {
   on.exit(unlink(tmp), add = TRUE)
 
   mt <- mt2 <- test_df(factor = TRUE)
-  mt$list <- I(replicate(nrow(mt), 1:4, simplify = FALSE))
+  mt$list <- I(replicate(nrow(mt), list(1:4), simplify = FALSE))
 
   expect_error(write_parquet(mt, tmp))
   expect_snapshot(error = TRUE, write_parquet(mt, tmp))

@@ -263,6 +263,10 @@ void fill_converted_type_for_logical_type(
 
   } else if (logical_type.__isset.BSON) {
     sel.__set_converted_type(ConvertedType::BSON);
+
+  } else if (logical_type.__isset.LIST) {
+    sel.__set_converted_type(ConvertedType::LIST);
+
   }
 
   // There is no INTERVAL logical type? What's going on here?
