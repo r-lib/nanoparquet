@@ -189,7 +189,7 @@ void ParquetReader::check_meta_data() {
         throw runtime_error(ss.str());
       }
 
-      if (sel.__isset.logicalType && sel.logicalType.__isset.LIST) {
+      if (isList) {
         // must have two more columns as least, first one REPEATED
         if (i + 2 >= file_meta_data_.schema.size()) {
           std::stringstream ss;
@@ -201,6 +201,16 @@ void ParquetReader::check_meta_data() {
         if (sel1.repetition_type != parquet::FieldRepetitionType::REPEATED) {
           std::stringstream ss;
           ss << "First layer of LIST column must be REPEATED, could not read Parquet file at '"
+             << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+          throw runtime_error(ss.str());
+        }
+        parquet::SchemaElement sel2 = file_meta_data_.schema[i + 2];
+        bool isList2 =
+          (sel2.__isset.converted_type && sel2.converted_type == parquet::ConvertedType::LIST) ||
+          (sel2.__isset.logicalType && sel2.logicalType.__isset.LIST);
+        if (isList2) {
+          std::stringstream ss;
+          ss << "Only one layer of nesting is supported for LIST columns, could not read Parquet file at '"
              << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
           throw runtime_error(ss.str());
         }
