@@ -2566,6 +2566,43 @@ bool RParquetOutFile::get_group_minmax_values(uint32_t idx, uint32_t group,
   }
 }
 
+std::vector<parquet::SchemaElement> RParquetOutFile::schema_from_supplied(
+  const std::string &name,
+  bool req,
+  R_xlen_t idx,
+  int type,
+  int *type_length,
+  int *converted_type,
+  SEXP logical_type,
+  int *scale,
+  int *precision) {
+
+  parquet::SchemaElement sel;
+  sel.__set_name(name);
+  sel.__set_repetition_type(
+    req ? parquet::FieldRepetitionType::REQUIRED
+        : parquet::FieldRepetitionType::OPTIONAL);
+
+  // use the supplied schema
+  sel.__set_type((parquet::Type::type) type);
+  if (type_length[idx] != NA_INTEGER) {
+    sel.__set_type_length(type_length[idx]);
+  }
+  if (converted_type[idx] != NA_INTEGER) {
+    sel.__set_converted_type((parquet::ConvertedType::type) converted_type[idx]);
+  }
+  if (!Rf_isNull(VECTOR_ELT(logical_type, idx))) {
+    r_to_logical_type(VECTOR_ELT(logical_type, idx), sel);
+  }
+  if (scale[idx] != NA_INTEGER) {
+    sel.__set_scale(scale[idx]);
+  }
+  if (precision[idx] != NA_INTEGER) {
+    sel.__set_precision(precision[idx]);
+  }
+  return { sel };
+}
+
 void RParquetOutFile::init_metadata(
   SEXP dfsxp,
   SEXP dim,
@@ -2602,43 +2639,17 @@ void RParquetOutFile::init_metadata(
   for (R_xlen_t idx = 0; idx < nc; idx++) {
     SEXP col = VECTOR_ELT(dfsxp, idx);
     bool req = LOGICAL(required)[idx];
+    std::string name = CHAR(STRING_ELT(nms, idx));
     std::string rtypename;
-    parquet::SchemaElement sel;
-    sel.__set_name(CHAR(STRING_ELT(nms, idx)));
-    if (req) {
-      sel.__set_repetition_type(parquet::FieldRepetitionType::REQUIRED);
-    } else {
-      sel.__set_repetition_type(parquet::FieldRepetitionType::OPTIONAL);
-    }
+    std::vector<parquet::SchemaElement> sels = type[idx] == NA_INTEGER ?
+      nanoparquet_map_to_parquet_type(col, options, rtypename, name, req) :
+      schema_from_supplied(name, req, idx, type[idx], type_length, converted_type, logical_type, scale, precision);
 
-    if (type[idx] == NA_INTEGER) {
-      // default mapping
-      nanoparquet_map_to_parquet_type(col, options, sel, rtypename);
-      fill_converted_type_for_logical_type(sel);
-    } else {
-      // use the supplied schema
-      sel.__set_type((parquet::Type::type) type[idx]);
-      if (type_length[idx] != NA_INTEGER) {
-        sel.__set_type_length(type_length[idx]);
-      }
-      if (converted_type[idx] != NA_INTEGER) {
-        sel.__set_converted_type((parquet::ConvertedType::type) converted_type[idx]);
-      }
-      if (!Rf_isNull(VECTOR_ELT(logical_type, idx))) {
-        r_to_logical_type(VECTOR_ELT(logical_type, idx), sel);
-      }
-      if (scale[idx] != NA_INTEGER) {
-        sel.__set_scale(scale[idx]);
-      }
-      if (precision[idx] != NA_INTEGER) {
-        sel.__set_precision(precision[idx]);
-      }
-    }
-
-    if (!write_minmax_values) {
+    if (!write_minmax_values || sels.size() != 1) {
       // nothing to do
-    } if (sel.__isset.logicalType) {
-      parquet::LogicalType &lt = sel.logicalType;
+      // TODO: support minmax values for nested types
+    } if (sels[0].__isset.logicalType) {
+      parquet::LogicalType &lt = sels[0].logicalType;
       is_minmax_supported[idx] = lt.__isset.DATE || lt.__isset.INTEGER ||
         lt.__isset.TIME || lt.__isset.STRING || lt.__isset.ENUM ||
         lt.__isset.JSON || lt.__isset.BSON || lt.__isset.TIMESTAMP;
@@ -2646,7 +2657,7 @@ void RParquetOutFile::init_metadata(
       // is_minmax_supported[idx] = lt.__isset.UUID ||
       //   lt.__isset.DECIMAL || lt.isset.FLOAT16;
     } else {
-      switch(sel.type) {
+      switch(sels[0].type) {
       // case parquet::Type::BOOLEAN:
       case parquet::Type::INT32:
       case parquet::Type::INT64:
@@ -2663,8 +2674,10 @@ void RParquetOutFile::init_metadata(
     }
 
     int32_t ienc = INTEGER(encoding)[idx];
-    parquet::Encoding::type enc = detect_encoding(idx, sel, ienc);
-    schema_add_column(sel, enc);
+    parquet::Encoding::type enc = detect_encoding(idx, sels.back(), ienc);
+    for (auto &sel : sels) {
+      schema_add_column(sel, enc);
+    }
   }
 
   if (!Rf_isNull(metadata)) {

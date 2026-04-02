@@ -7,11 +7,12 @@
 #include "lib/ParquetOutFile.h"
 
 void r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel);
-void nanoparquet_map_to_parquet_type(
+std::vector<parquet::SchemaElement> nanoparquet_map_to_parquet_type(
   SEXP x,
   SEXP options,
-  parquet::SchemaElement &sel,
-  std::string &rtype);
+  std::string &rtype,
+  const std::string &name,
+  bool req);
 
 extern "C" {
 

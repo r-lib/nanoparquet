@@ -208,11 +208,12 @@ SEXP rf_nanoparquet_map_to_parquet_types(SEXP df, SEXP options) noexcept {
 
   for (R_xlen_t cl = 0; cl < nc; cl++) {
     SEXP col = VECTOR_ELT(df, cl);
-    parquet::SchemaElement sel;
+    std::vector<parquet::SchemaElement> sels;
     std::string rtype;
     CPP_BEGIN;
-    nanoparquet_map_to_parquet_type(col, options, sel, rtype);
+    sels = nanoparquet_map_to_parquet_type(col, options, rtype, "", false);
     CPP_END;
+    parquet::SchemaElement sel = sels[0];
     SEXP typ = Rf_allocVector(VECSXP, 3);
     SET_VECTOR_ELT(res, cl, typ);
     SET_VECTOR_ELT(typ, 0, Rf_mkString(to_string(sel.type).c_str()));

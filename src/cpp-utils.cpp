@@ -169,11 +169,12 @@ void r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
   }
 }
 
-void nanoparquet_map_to_parquet_type(
+std::vector<parquet::SchemaElement> nanoparquet_map_to_parquet_type(
   SEXP x,
   SEXP options,
-  parquet::SchemaElement &sel,
-  std::string &rtype) {
+  std::string &rtype,
+  const std::string &name,
+  bool req) {
 
   // to minimize R API calls, we do all this up front
   int rtypeof;
@@ -207,6 +208,13 @@ void nanoparquet_map_to_parquet_type(
       break;
     }
   });
+
+  std::vector<parquet::SchemaElement> sels(1);
+  parquet::SchemaElement &sel = sels[0];
+  sel.__set_name(name);
+  sel.__set_repetition_type(
+    req ? parquet::FieldRepetitionType::REQUIRED
+        : parquet::FieldRepetitionType::OPTIONAL);
 
   switch (rtypeof) {
   case INTSXP: {
@@ -313,5 +321,8 @@ void nanoparquet_map_to_parquet_type(
     });
   }
 
-  fill_converted_type_for_logical_type(sel);
+  for (auto &s : sels) {
+    fill_converted_type_for_logical_type(s);
+  }
+  return sels;
 }

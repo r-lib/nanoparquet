@@ -85,6 +85,18 @@ public:
                                std::string &min_value,
                                std::string &max_value);
 
+  std::vector<parquet::SchemaElement> schema_from_supplied(
+    const std::string &name,
+    bool req,
+    R_xlen_t idx,
+    int type,
+    int *type_length,
+    int *converted_type,
+    SEXP logical_type,
+    int *scale,
+    int *precision
+  );
+
   void init_metadata(
     SEXP dfsxp,
     SEXP dim,
