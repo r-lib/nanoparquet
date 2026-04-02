@@ -140,10 +140,10 @@
       1 schema    <NA>  <NA>          NA            <NA>           <NA>             
       2    day    Date INT32          NA        OPTIONAL           DATE         DATE
       3  count integer INT32          NA        REQUIRED         INT_32 INT, 32,....
-        num_children scale precision field_id
-      1            2    NA        NA       NA
-      2           NA    NA        NA       NA
-      3           NA    NA        NA       NA
+        num_children scale precision field_id children
+      1            2    NA        NA       NA         
+      2           NA    NA        NA       NA         
+      3           NA    NA        NA       NA         
       
       [[2]]
       [1] "2024-09-06" "2024-09-08" "2024-09-10" "2024-09-12" "2024-09-14"

@@ -81,13 +81,6 @@ add_r_type_to_schema <- function(mtd, sch, options, col_select = NULL) {
     ) |
       sch$converted_type == "UTF8"
   ] <- "character"
-  sch$r_type[vapply(
-    sch$logical_type,
-    function(x) {
-      !is.null(x$type) && x$type == "LIST"
-    },
-    logical(1)
-  )] <- "list"
 
   # detected from Arrow schema
   if (options[["use_arrow_metadata"]]) {
@@ -137,5 +130,80 @@ add_r_type_to_schema <- function(mtd, sch, options, col_select = NULL) {
     "r_type",
     setdiff(colnames(sch), c("file_name", "name", "r_type"))
   )
-  sch[, cols]
+  sch <- sch[, cols]
+
+  sch <- process_nested_columns(sch)
+
+  sch
+}
+
+process_nested_columns <- function(sch) {
+  is_group <- !is.na(sch$num_children) & sch$num_children > 0
+  is_group[1] <- FALSE
+  wh_groups <- which(is_group)
+
+  # first work out the child columns for each group
+  # this makes it easier to create the correct nested types
+  children <- replicate(nrow(sch), list(integer()))
+  parents <- rep(NA_integer_, nrow(sch))
+  for (gr in rev(wh_groups)) {
+    nc <- sch$num_children[gr]
+    chidx <- gr
+    while (nc > 0) {
+      chidx <- chidx + 1L
+      children[[gr]] <- c(children[[gr]], chidx)
+      parents[chidx] <- gr
+      # if this child is a group, skip its children
+      if (!is.na(sch$num_children[chidx])) {
+        chidx <- chidx + sch$num_children[chidx]
+      }
+      nc <- nc - 1L
+    }
+  }
+  sch$children <- children
+
+  is_list <- (!is.na(sch$converted_type) & sch$converted_type == "LIST") |
+    vapply(
+      sch$logical_type,
+      function(lt) {
+        !is.null(lt$type) && lt$type == "LIST"
+      },
+      logical(1)
+    )
+
+  is_repeated <- !is.na(sch$repetition_type) &
+    sch$repetition_type == "REPEATED" &
+    !is_list &
+    (is.na(parents) | !is_list[parents])
+
+  wh_nested <- which(is_group | is_repeated)
+  for (nst in rev(wh_nested)) {
+    is_middle <- FALSE
+    if (is_group[nst]) {
+      # is it a LIST middle node? Rules from
+      # https://github.com/apache/parquet-format/blob/master/LogicalTypes.md
+      # #backward-compatibility-rules
+      is_middle <- !is.na(sch$num_children[nst]) &&
+        sch$num_children[nst] == 1L &&
+        sch$repetition_type[sch$children[[nst]]] != "REPEATED" &&
+        sch$name[sch$children[[nst]]] != "array" &&
+        sch$name[sch$children[[nst]]] !=
+          paste0(sch$name[parents[nst]], "_tuple")
+      if (is_middle) {
+        sch$r_type[nst] <- sch$r_type[sch$children[[nst]]]
+      } else {
+        sch$r_type[nst] <- paste0(
+          "list(",
+          paste(sch$r_type[sch$children[[nst]]], collapse = ", "),
+          ")"
+        )
+      }
+      sch$r_type[sch$children[[nst]]] <- NA_character_
+    }
+    if (is_repeated[nst] && !is_middle) {
+      sch$r_type[nst] <- paste0("list(", sch$r_type[nst], ")")
+    }
+  }
+
+  sch
 }

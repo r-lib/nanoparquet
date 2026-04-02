@@ -506,9 +506,9 @@
         type_length repetition_type converted_type logical_type num_children scale
       1          NA        REQUIRED           <NA>                         1    NA
       2           2        OPTIONAL           <NA>      FLOAT16           NA    NA
-        precision field_id
-      1        NA       NA
-      2        NA       NA
+        precision field_id children
+      1        NA       NA         
+      2        NA       NA         
     Code
       as.data.frame(read_parquet(pf))
     Output

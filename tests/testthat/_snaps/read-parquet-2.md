@@ -222,9 +222,9 @@
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
       2      i double INT64          NA        REQUIRED           <NA>             
-        num_children scale precision field_id
-      1            1    NA        NA       NA
-      2           NA    NA        NA       NA
+        num_children scale precision field_id children
+      1            1    NA        NA       NA         
+      2           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -248,9 +248,9 @@
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
       2      i double INT64          NA        OPTIONAL           <NA>             
-        num_children scale precision field_id
-      1            1    NA        NA       NA
-      2           NA    NA        NA       NA
+        num_children scale precision field_id children
+      1            1    NA        NA       NA         
+      2           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -278,9 +278,9 @@
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
       2      i double INT64          NA        REQUIRED           <NA>             
-        num_children scale precision field_id
-      1            1    NA        NA       NA
-      2           NA    NA        NA       NA
+        num_children scale precision field_id children
+      1            1    NA        NA       NA         
+      2           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -338,9 +338,9 @@
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
       2      i double INT64          NA        OPTIONAL           <NA>             
-        num_children scale precision field_id
-      1            1    NA        NA       NA
-      2           NA    NA        NA       NA
+        num_children scale precision field_id children
+      1            1    NA        NA       NA         
+      2           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -394,9 +394,9 @@
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
       2      i double FLOAT          NA        REQUIRED           <NA>             
-        num_children scale precision field_id
-      1            1    NA        NA       NA
-      2           NA    NA        NA       NA
+        num_children scale precision field_id children
+      1            1    NA        NA       NA         
+      2           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -420,9 +420,9 @@
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
       2      i double FLOAT          NA        OPTIONAL           <NA>             
-        num_children scale precision field_id
-      1            1    NA        NA       NA
-      2           NA    NA        NA       NA
+        num_children scale precision field_id children
+      1            1    NA        NA       NA         
+      2           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -446,9 +446,9 @@
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
       2      i double FLOAT          NA        REQUIRED           <NA>             
-        num_children scale precision field_id
-      1            1    NA        NA       NA
-      2           NA    NA        NA       NA
+        num_children scale precision field_id children
+      1            1    NA        NA       NA         
+      2           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_pages(tmp))[["page_type"]]
     Output
@@ -506,9 +506,9 @@
           name r_type  type type_length repetition_type converted_type logical_type
       1 schema   <NA>  <NA>          NA            <NA>           <NA>             
       2      i double FLOAT          NA        OPTIONAL           <NA>             
-        num_children scale precision field_id
-      1            1    NA        NA       NA
-      2           NA    NA        NA       NA
+        num_children scale precision field_id children
+      1            1    NA        NA       NA         
+      2           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_pages(tmp))[["page_type"]]
     Output
@@ -702,9 +702,9 @@
           name r_type       type type_length repetition_type converted_type
       1 schema   <NA>       <NA>          NA            <NA>           <NA>
       2      l    raw BYTE_ARRAY          NA        REQUIRED           <NA>
-        logical_type num_children scale precision field_id
-      1                         1    NA        NA       NA
-      2                        NA    NA        NA       NA
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -722,9 +722,9 @@
           name r_type       type type_length repetition_type converted_type
       1 schema   <NA>       <NA>          NA            <NA>           <NA>
       2      l    raw BYTE_ARRAY          NA        OPTIONAL           <NA>
-        logical_type num_children scale precision field_id
-      1                         1    NA        NA       NA
-      2                        NA    NA        NA       NA
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -746,9 +746,9 @@
           name    r_type       type type_length repetition_type converted_type
       1 schema      <NA>       <NA>          NA            <NA>           <NA>
       2      s character BYTE_ARRAY          NA        REQUIRED           UTF8
-        logical_type num_children scale precision field_id
-      1                         1    NA        NA       NA
-      2       STRING           NA    NA        NA       NA
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2       STRING           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -769,9 +769,9 @@
           name    r_type       type type_length repetition_type converted_type
       1 schema      <NA>       <NA>          NA            <NA>           <NA>
       2      s character BYTE_ARRAY          NA        OPTIONAL           UTF8
-        logical_type num_children scale precision field_id
-      1                         1    NA        NA       NA
-      2       STRING           NA    NA        NA       NA
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2       STRING           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -789,9 +789,9 @@
           name r_type                 type type_length repetition_type converted_type
       1 schema   <NA>                 <NA>          NA            <NA>           <NA>
       2      l    raw FIXED_LEN_BYTE_ARRAY          10        REQUIRED           <NA>
-        logical_type num_children scale precision field_id
-      1                         1    NA        NA       NA
-      2                        NA    NA        NA       NA
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -809,9 +809,9 @@
           name r_type                 type type_length repetition_type converted_type
       1 schema   <NA>                 <NA>          NA            <NA>           <NA>
       2      l    raw FIXED_LEN_BYTE_ARRAY          10        OPTIONAL           <NA>
-        logical_type num_children scale precision field_id
-      1                         1    NA        NA       NA
-      2                        NA    NA        NA       NA
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -833,9 +833,9 @@
           name r_type                 type type_length repetition_type converted_type
       1 schema   <NA>                 <NA>          NA            <NA>           <NA>
       2      s    raw FIXED_LEN_BYTE_ARRAY           3        REQUIRED           <NA>
-        logical_type num_children scale precision field_id
-      1                         1    NA        NA       NA
-      2                        NA    NA        NA       NA
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output
@@ -856,9 +856,9 @@
           name r_type                 type type_length repetition_type converted_type
       1 schema   <NA>                 <NA>          NA            <NA>           <NA>
       2      s    raw FIXED_LEN_BYTE_ARRAY           3        OPTIONAL           <NA>
-        logical_type num_children scale precision field_id
-      1                         1    NA        NA       NA
-      2                        NA    NA        NA       NA
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(tmp))
     Output

@@ -25,21 +25,21 @@
       12 test.parquet   gear    double     DOUBLE          NA        REQUIRED
       13 test.parquet   carb    double     DOUBLE          NA        REQUIRED
       14 test.parquet  large   logical    BOOLEAN          NA        REQUIRED
-         converted_type logical_type num_children scale precision field_id
-      1            <NA>                        13    NA        NA       NA
-      2            UTF8       STRING           NA    NA        NA       NA
-      3            <NA>                        NA    NA        NA       NA
-      4          INT_32 INT, 32,....           NA    NA        NA       NA
-      5            <NA>                        NA    NA        NA       NA
-      6            <NA>                        NA    NA        NA       NA
-      7            <NA>                        NA    NA        NA       NA
-      8            <NA>                        NA    NA        NA       NA
-      9            <NA>                        NA    NA        NA       NA
-      10           <NA>                        NA    NA        NA       NA
-      11           <NA>                        NA    NA        NA       NA
-      12           <NA>                        NA    NA        NA       NA
-      13           <NA>                        NA    NA        NA       NA
-      14           <NA>                        NA    NA        NA       NA
+         converted_type logical_type num_children scale precision field_id children
+      1            <NA>                        13    NA        NA       NA         
+      2            UTF8       STRING           NA    NA        NA       NA         
+      3            <NA>                        NA    NA        NA       NA         
+      4          INT_32 INT, 32,....           NA    NA        NA       NA         
+      5            <NA>                        NA    NA        NA       NA         
+      6            <NA>                        NA    NA        NA       NA         
+      7            <NA>                        NA    NA        NA       NA         
+      8            <NA>                        NA    NA        NA       NA         
+      9            <NA>                        NA    NA        NA       NA         
+      10           <NA>                        NA    NA        NA       NA         
+      11           <NA>                        NA    NA        NA       NA         
+      12           <NA>                        NA    NA        NA       NA         
+      13           <NA>                        NA    NA        NA       NA         
+      14           <NA>                        NA    NA        NA       NA         
     Code
       as.data.frame(mtd$row_groups)
     Output
@@ -141,75 +141,91 @@
       12 test.parquet   gear    double     DOUBLE          NA        REQUIRED
       13 test.parquet   carb    double     DOUBLE          NA        REQUIRED
       14 test.parquet  large   logical    BOOLEAN          NA        REQUIRED
-         converted_type logical_type num_children scale precision field_id
-      1            <NA>                        13    NA        NA       NA
-      2            UTF8       STRING           NA    NA        NA       NA
-      3            <NA>                        NA    NA        NA       NA
-      4          INT_32 INT, 32,....           NA    NA        NA       NA
-      5            <NA>                        NA    NA        NA       NA
-      6            <NA>                        NA    NA        NA       NA
-      7            <NA>                        NA    NA        NA       NA
-      8            <NA>                        NA    NA        NA       NA
-      9            <NA>                        NA    NA        NA       NA
-      10           <NA>                        NA    NA        NA       NA
-      11           <NA>                        NA    NA        NA       NA
-      12           <NA>                        NA    NA        NA       NA
-      13           <NA>                        NA    NA        NA       NA
-      14           <NA>                        NA    NA        NA       NA
+         converted_type logical_type num_children scale precision field_id children
+      1            <NA>                        13    NA        NA       NA         
+      2            UTF8       STRING           NA    NA        NA       NA         
+      3            <NA>                        NA    NA        NA       NA         
+      4          INT_32 INT, 32,....           NA    NA        NA       NA         
+      5            <NA>                        NA    NA        NA       NA         
+      6            <NA>                        NA    NA        NA       NA         
+      7            <NA>                        NA    NA        NA       NA         
+      8            <NA>                        NA    NA        NA       NA         
+      9            <NA>                        NA    NA        NA       NA         
+      10           <NA>                        NA    NA        NA       NA         
+      11           <NA>                        NA    NA        NA       NA         
+      12           <NA>                        NA    NA        NA       NA         
+      13           <NA>                        NA    NA        NA       NA         
+      14           <NA>                        NA    NA        NA       NA         
 
 # ENUM type
 
     Code
       as.data.frame(sch)
     Output
-                 file_name                   name    r_type       type type_length
-      1  data/enum.parquet             trace.Span      <NA>       <NA>          NA
-      2  data/enum.parquet                     id       raw BYTE_ARRAY          NA
-      3  data/enum.parquet              parent_id       raw BYTE_ARRAY          NA
-      4  data/enum.parquet               trace_id       raw BYTE_ARRAY          NA
-      5  data/enum.parquet                   name character BYTE_ARRAY          NA
-      6  data/enum.parquet start_timestamp_micros    double      INT64          NA
-      7  data/enum.parquet        duration_micros    double      INT64          NA
-      8  data/enum.parquet                   tags      <NA>       <NA>          NA
-      9  data/enum.parquet                    key character BYTE_ARRAY          NA
-      10 data/enum.parquet                 v_type character BYTE_ARRAY          NA
-      11 data/enum.parquet                  v_str character BYTE_ARRAY          NA
-      12 data/enum.parquet                 v_bool   logical    BOOLEAN          NA
-      13 data/enum.parquet                v_int64    double      INT64          NA
-      14 data/enum.parquet              v_float64    double     DOUBLE          NA
-      15 data/enum.parquet               v_binary       raw BYTE_ARRAY          NA
-         repetition_type converted_type logical_type num_children scale precision
-      1             <NA>           <NA>                         7    NA        NA
-      2         OPTIONAL           <NA>                        NA    NA        NA
-      3         OPTIONAL           <NA>                        NA    NA        NA
-      4         OPTIONAL           <NA>                        NA    NA        NA
-      5         OPTIONAL           UTF8       STRING           NA    NA        NA
-      6         OPTIONAL           <NA>                        NA    NA        NA
-      7         OPTIONAL           <NA>                        NA    NA        NA
-      8         REPEATED           <NA>                         7    NA        NA
-      9         OPTIONAL           UTF8       STRING           NA    NA        NA
-      10        OPTIONAL           ENUM         ENUM           NA    NA        NA
-      11        OPTIONAL           UTF8       STRING           NA    NA        NA
-      12        OPTIONAL           <NA>                        NA    NA        NA
-      13        OPTIONAL           <NA>                        NA    NA        NA
-      14        OPTIONAL           <NA>                        NA    NA        NA
-      15        OPTIONAL           <NA>                        NA    NA        NA
-         field_id
-      1        NA
-      2         1
-      3         2
-      4         3
-      5         4
-      6         5
-      7         6
-      8         7
-      9         1
-      10        2
-      11        3
-      12        4
-      13        5
-      14        6
-      15        7
+                 file_name                   name
+      1  data/enum.parquet             trace.Span
+      2  data/enum.parquet                     id
+      3  data/enum.parquet              parent_id
+      4  data/enum.parquet               trace_id
+      5  data/enum.parquet                   name
+      6  data/enum.parquet start_timestamp_micros
+      7  data/enum.parquet        duration_micros
+      8  data/enum.parquet                   tags
+      9  data/enum.parquet                    key
+      10 data/enum.parquet                 v_type
+      11 data/enum.parquet                  v_str
+      12 data/enum.parquet                 v_bool
+      13 data/enum.parquet                v_int64
+      14 data/enum.parquet              v_float64
+      15 data/enum.parquet               v_binary
+                                                                            r_type
+      1                                                                       <NA>
+      2                                                                        raw
+      3                                                                        raw
+      4                                                                        raw
+      5                                                                  character
+      6                                                                     double
+      7                                                                     double
+      8  list(list(character, character, character, logical, double, double, raw))
+      9                                                                       <NA>
+      10                                                                      <NA>
+      11                                                                      <NA>
+      12                                                                      <NA>
+      13                                                                      <NA>
+      14                                                                      <NA>
+      15                                                                      <NA>
+               type type_length repetition_type converted_type logical_type
+      1        <NA>          NA            <NA>           <NA>             
+      2  BYTE_ARRAY          NA        OPTIONAL           <NA>             
+      3  BYTE_ARRAY          NA        OPTIONAL           <NA>             
+      4  BYTE_ARRAY          NA        OPTIONAL           <NA>             
+      5  BYTE_ARRAY          NA        OPTIONAL           UTF8       STRING
+      6       INT64          NA        OPTIONAL           <NA>             
+      7       INT64          NA        OPTIONAL           <NA>             
+      8        <NA>          NA        REPEATED           <NA>             
+      9  BYTE_ARRAY          NA        OPTIONAL           UTF8       STRING
+      10 BYTE_ARRAY          NA        OPTIONAL           ENUM         ENUM
+      11 BYTE_ARRAY          NA        OPTIONAL           UTF8       STRING
+      12    BOOLEAN          NA        OPTIONAL           <NA>             
+      13      INT64          NA        OPTIONAL           <NA>             
+      14     DOUBLE          NA        OPTIONAL           <NA>             
+      15 BYTE_ARRAY          NA        OPTIONAL           <NA>             
+         num_children scale precision field_id                  children
+      1             7    NA        NA       NA                          
+      2            NA    NA        NA        1                          
+      3            NA    NA        NA        2                          
+      4            NA    NA        NA        3                          
+      5            NA    NA        NA        4                          
+      6            NA    NA        NA        5                          
+      7            NA    NA        NA        6                          
+      8             7    NA        NA        7 9, 10, 11, 12, 13, 14, 15
+      9            NA    NA        NA        1                          
+      10           NA    NA        NA        2                          
+      11           NA    NA        NA        3                          
+      12           NA    NA        NA        4                          
+      13           NA    NA        NA        5                          
+      14           NA    NA        NA        6                          
+      15           NA    NA        NA        7                          
 
 # UUID type
 
@@ -222,9 +238,9 @@
         type_length repetition_type converted_type logical_type num_children scale
       1          NA        REQUIRED           <NA>                         1    NA
       2          16        OPTIONAL           <NA>         UUID            0    NA
-        precision field_id
-      1        NA       NA
-      2        NA       NA
+        precision field_id children
+      1        NA       NA         
+      2        NA       NA         
 
 # DATE type
 
@@ -234,9 +250,9 @@
                 file_name  name r_type  type type_length repetition_type
       1 data/date.parquet dates   <NA>  <NA>          NA            <NA>
       2 data/date.parquet     d   Date INT32          NA        OPTIONAL
-        converted_type logical_type num_children scale precision field_id
-      1           <NA>                         1    NA        NA       NA
-      2           DATE         DATE           NA    NA        NA       NA
+        converted_type logical_type num_children scale precision field_id children
+      1           <NA>                         1    NA        NA       NA         
+      2           DATE         DATE           NA    NA        NA       NA         
 
 # DECIMAL type
 
@@ -255,12 +271,12 @@
       3        OPTIONAL        DECIMAL DECIMAL,....           NA     2         8
       4        OPTIONAL        DECIMAL DECIMAL,....           NA     2        15
       5        OPTIONAL        DECIMAL DECIMAL,....           NA     2        30
-        field_id
-      1       NA
-      2       NA
-      3       NA
-      4       NA
-      5       NA
+        field_id children
+      1       NA         
+      2       NA         
+      3       NA         
+      4       NA         
+      5       NA         
 
 ---
 
@@ -331,9 +347,9 @@
                   file_name          name r_type  type type_length repetition_type
       1 data/timetz.parquet duckdb_schema   <NA>  <NA>          NA        REQUIRED
       2 data/timetz.parquet            tt    hms INT64          NA        OPTIONAL
-        converted_type logical_type num_children scale precision field_id
-      1           <NA>                         1    NA        NA       NA
-      2    TIME_MICROS TIME, TR....           NA    NA        NA       NA
+        converted_type logical_type num_children scale precision field_id children
+      1           <NA>                         1    NA        NA       NA         
+      2    TIME_MICROS TIME, TR....           NA    NA        NA       NA         
 
 ---
 
@@ -365,9 +381,9 @@
                      file_name   name  r_type  type type_length repetition_type
       1 data/timestamp.parquet schema    <NA>  <NA>          NA        REQUIRED
       2 data/timestamp.parquet   Time POSIXct INT64          NA        OPTIONAL
-          converted_type logical_type num_children scale precision field_id
-      1             <NA>                         1    NA        NA       NA
-      2 TIMESTAMP_MICROS TIMESTAM....           NA    NA        NA       NA
+          converted_type logical_type num_children scale precision field_id children
+      1             <NA>                         1    NA        NA       NA         
+      2 TIMESTAMP_MICROS TIMESTAM....           NA    NA        NA       NA         
 
 ---
 
@@ -396,54 +412,60 @@
     Code
       as.data.frame(sch)
     Output
-                               file_name         name    r_type       type
-      1 data/nested_lists.snappy.parquet spark_schema      <NA>       <NA>
-      2 data/nested_lists.snappy.parquet            a      <NA>       <NA>
-      3 data/nested_lists.snappy.parquet         list      <NA>       <NA>
-      4 data/nested_lists.snappy.parquet      element      <NA>       <NA>
-      5 data/nested_lists.snappy.parquet         list      <NA>       <NA>
-      6 data/nested_lists.snappy.parquet      element      <NA>       <NA>
-      7 data/nested_lists.snappy.parquet         list      <NA>       <NA>
-      8 data/nested_lists.snappy.parquet      element character BYTE_ARRAY
-      9 data/nested_lists.snappy.parquet            b   integer      INT32
-        type_length repetition_type converted_type logical_type num_children scale
-      1          NA            <NA>           <NA>                         2    NA
-      2          NA        OPTIONAL           LIST                         1    NA
-      3          NA        REPEATED           <NA>                         1    NA
-      4          NA        OPTIONAL           LIST                         1    NA
-      5          NA        REPEATED           <NA>                         1    NA
-      6          NA        OPTIONAL           LIST                         1    NA
-      7          NA        REPEATED           <NA>                         1    NA
-      8          NA        OPTIONAL           UTF8                        NA    NA
-      9          NA        REQUIRED           <NA>                        NA    NA
-        precision field_id
-      1        NA       NA
-      2        NA       NA
-      3        NA       NA
-      4        NA       NA
-      5        NA       NA
-      6        NA       NA
-      7        NA       NA
-      8        NA       NA
-      9        NA       NA
+                               file_name         name                      r_type
+      1 data/nested_lists.snappy.parquet spark_schema                        <NA>
+      2 data/nested_lists.snappy.parquet            a list(list(list(character)))
+      3 data/nested_lists.snappy.parquet         list                        <NA>
+      4 data/nested_lists.snappy.parquet      element                        <NA>
+      5 data/nested_lists.snappy.parquet         list                        <NA>
+      6 data/nested_lists.snappy.parquet      element                        <NA>
+      7 data/nested_lists.snappy.parquet         list                        <NA>
+      8 data/nested_lists.snappy.parquet      element                        <NA>
+      9 data/nested_lists.snappy.parquet            b                     integer
+              type type_length repetition_type converted_type logical_type
+      1       <NA>          NA            <NA>           <NA>             
+      2       <NA>          NA        OPTIONAL           LIST             
+      3       <NA>          NA        REPEATED           <NA>             
+      4       <NA>          NA        OPTIONAL           LIST             
+      5       <NA>          NA        REPEATED           <NA>             
+      6       <NA>          NA        OPTIONAL           LIST             
+      7       <NA>          NA        REPEATED           <NA>             
+      8 BYTE_ARRAY          NA        OPTIONAL           UTF8             
+      9      INT32          NA        REQUIRED           <NA>             
+        num_children scale precision field_id children
+      1            2    NA        NA       NA         
+      2            1    NA        NA       NA        3
+      3            1    NA        NA       NA        4
+      4            1    NA        NA       NA        5
+      5            1    NA        NA       NA        6
+      6            1    NA        NA       NA        7
+      7            1    NA        NA       NA        8
+      8           NA    NA        NA       NA         
+      9           NA    NA        NA       NA         
 
 # MAP type
 
     Code
       as.data.frame(sch)
     Output
-               file_name        name    r_type       type type_length repetition_type
-      1 data/map.parquet hive_schema      <NA>       <NA>          NA            <NA>
-      2 data/map.parquet  raw_header      <NA>       <NA>          NA        OPTIONAL
-      3 data/map.parquet         map      <NA>       <NA>          NA        REPEATED
-      4 data/map.parquet         key character BYTE_ARRAY          NA        REQUIRED
-      5 data/map.parquet       value character BYTE_ARRAY          NA        OPTIONAL
-        converted_type logical_type num_children scale precision field_id
-      1           <NA>                         1    NA        NA       NA
-      2            MAP                         1    NA        NA       NA
-      3  MAP_KEY_VALUE                         2    NA        NA       NA
-      4           UTF8                        NA    NA        NA       NA
-      5           UTF8                        NA    NA        NA       NA
+               file_name        name                                 r_type
+      1 data/map.parquet hive_schema                                   <NA>
+      2 data/map.parquet  raw_header list(list(list(character, character)))
+      3 data/map.parquet         map                                   <NA>
+      4 data/map.parquet         key                                   <NA>
+      5 data/map.parquet       value                                   <NA>
+              type type_length repetition_type converted_type logical_type
+      1       <NA>          NA            <NA>           <NA>             
+      2       <NA>          NA        OPTIONAL            MAP             
+      3       <NA>          NA        REPEATED  MAP_KEY_VALUE             
+      4 BYTE_ARRAY          NA        REQUIRED           UTF8             
+      5 BYTE_ARRAY          NA        OPTIONAL           UTF8             
+        num_children scale precision field_id children
+      1            1    NA        NA       NA         
+      2            1    NA        NA       NA        3
+      3            2    NA        NA       NA     4, 5
+      4           NA    NA        NA       NA         
+      5           NA    NA        NA       NA         
 
 # key-value metadata
 
