@@ -252,7 +252,9 @@ inline bool is_list(
 ) {
   int32_t grandparent = parent_column[parent_column[schema_col]];
   parquet::SchemaElement gp_schema = schema[grandparent];
-  return gp_schema.__isset.logicalType && gp_schema.logicalType.__isset.LIST;
+  return (gp_schema.__isset.converted_type &&
+    gp_schema.converted_type == parquet::ConvertedType::LIST) ||
+    (gp_schema.__isset.logicalType && gp_schema.logicalType.__isset.LIST);
 }
 
 rtype::rtype(

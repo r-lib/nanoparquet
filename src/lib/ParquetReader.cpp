@@ -180,8 +180,12 @@ void ParquetReader::check_meta_data() {
     parquet::SchemaElement sel = file_meta_data_.schema[i];
     if (sel.__isset.num_children && sel.num_children > 0) {
       parquet::SchemaElement sel0 = file_meta_data_.schema[i - 1];
-      bool isList = sel.__isset.logicalType && sel.logicalType.__isset.LIST;
-      bool isList0 = sel0.__isset.logicalType && sel0.logicalType.__isset.LIST;
+      bool isList =
+        (sel.__isset.converted_type && sel.converted_type == parquet::ConvertedType::LIST) ||
+        (sel.__isset.logicalType && sel.logicalType.__isset.LIST);
+      bool isList0 =
+        (sel0.__isset.converted_type && sel0.converted_type == parquet::ConvertedType::LIST) ||
+        (sel0.__isset.logicalType && sel0.logicalType.__isset.LIST);
       if (sel.num_children != 1 || !(isList || isList0)) {
         std::stringstream ss;
         ss << "Nested columns are not supported, could not read Parquet file at '"
