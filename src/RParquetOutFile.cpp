@@ -1702,7 +1702,7 @@ void write_boolean_impl(std::ostream &file, SEXP col,
   }
 }
 
-void RParquetOutFile::write_boolean(std::ostream &file, uint32_t idx,
+void RParquetOutFile::write_boolean_as_bitpacked(std::ostream &file, uint32_t idx,
                                     uint32_t group, uint32_t page,
                                     uint64_t from, uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -1737,8 +1737,9 @@ void RParquetOutFile::write_boolean_as_int(std::ostream &file,
   file.write((const char *) (LOGICAL(col) + from), sizeof(int) * len);
 }
 
-uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
-                                         uint64_t from, uint64_t until) {
+uint32_t RParquetOutFile:: write_definition_levels(std::ostream &file, uint32_t idx,
+                                         uint64_t from, uint64_t until,
+                                         parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
     r_call([&] {
@@ -1806,8 +1807,8 @@ uint32_t RParquetOutFile:: write_present(std::ostream &file, uint32_t idx,
 }
 
 void RParquetOutFile::write_present_boolean_as_int(std::ostream &file,
-                                                   uint32_t idx,
-                                                   uint32_t num_present,
+                                                    uint32_t idx,
+                                                    uint32_t num_present,
                                                    uint64_t from,
                                                    uint64_t until) {
   SEXP col = VECTOR_ELT(df, idx);
@@ -1836,7 +1837,7 @@ void RParquetOutFile::write_present_boolean_as_int(std::ostream &file,
   }
 }
 
-void RParquetOutFile::write_present_boolean(
+void RParquetOutFile::write_present_boolean_as_bitpacked(
   std::ostream &file,
   uint32_t idx,
   uint32_t num_present,

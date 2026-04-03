@@ -312,7 +312,7 @@ void ParquetOutFile::write_data_(
     write_fixed_len_byte_array(file, idx, group, page, from, until, se);
     break;
   case Type::BOOLEAN:
-    write_boolean(file, idx, group, page, from, until);
+    write_boolean_as_bitpacked(file, idx, group, page, from, until);
     break;
   default:
     throw runtime_error("Cannot write unknown column type");   // # nocov
@@ -368,7 +368,7 @@ void ParquetOutFile::write_present_data_(
     write_fixed_len_byte_array(file, idx, group, page, from, until, se);
     break;
   case Type::BOOLEAN:
-    write_present_boolean(file, idx, num_present, from, until);
+    write_present_boolean_as_bitpacked(file, idx, num_present, from, until);
     break;
   default:
     throw runtime_error("Cannot write unknown column type");   // # nocov
@@ -903,7 +903,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os0, idx, page_from, page_until);
+    uint32_t num_present = write_definition_levels(*os0, idx, page_from, page_until, se);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(buf_unc, page_num_values, buf_com, 1, false);
@@ -943,7 +943,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os0, idx, page_from, page_until);
+    uint32_t num_present = write_definition_levels(*os0, idx, page_from, page_until, se);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -995,7 +995,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os1, idx, page_from, page_until);
+    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, se);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -1052,7 +1052,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os1, idx, page_from, page_until);
+    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, se);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -1176,7 +1176,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os1, idx, page_from, page_until);
+    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, se);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -1225,7 +1225,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_present(*os1, idx, page_from, page_until);
+    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, se);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(

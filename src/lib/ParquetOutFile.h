@@ -74,23 +74,24 @@ public:
                                           uint32_t group, uint32_t page,
                                           uint64_t from, uint64_t until,
                                           parquet::SchemaElement &sel) = 0;
-  virtual void write_boolean(std::ostream &file, uint32_t idx, uint32_t group,
+  virtual void write_boolean_as_bitpacked(std::ostream &file, uint32_t idx, uint32_t group,
                              uint32_t page, uint64_t from, uint64_t until) = 0;
   virtual void write_boolean_as_int(std::ostream &file, uint32_t idx,
                                     uint32_t group, uint32_t page,
                                     uint64_t from, uint64_t until) = 0;
+  virtual void write_present_boolean_as_bitpacked(std::ostream &file, uint32_t idx,
+                                          uint32_t num_present, uint64_t from,
+                                          uint64_t until) = 0;
+  virtual void write_present_boolean_as_int(std::ostream &file,
+                                             uint32_t idx,
+                                             uint32_t num_present,
+                                             uint64_t from,
+                                             uint64_t until) = 0;
 
   // callbacks for missing values and list columns
-  virtual uint32_t write_present(std::ostream &file, uint32_t idx,
-                                 uint64_t from, uint64_t until) = 0;
-  virtual void write_present_boolean(std::ostream &file, uint32_t idx,
-                                     uint32_t num_present, uint64_t from,
-                                     uint64_t until) = 0;
-  virtual void write_present_boolean_as_int(std::ostream &file,
-                                            uint32_t idx,
-                                            uint32_t num_present,
-                                            uint64_t from,
-                                            uint64_t until) = 0;
+  virtual uint32_t write_definition_levels(std::ostream &file, uint32_t idx,
+                                 uint64_t from, uint64_t until,
+                                 parquet::SchemaElement &sel) = 0;
 
   // callbacks to write a dictionary
   virtual uint32_t get_size_byte_array(uint32_t idx,
