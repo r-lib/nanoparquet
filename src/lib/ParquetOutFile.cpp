@@ -605,7 +605,12 @@ void ParquetOutFile::write_column(uint32_t idx, uint32_t group,
     cmd->__set_dictionary_page_offset(dictionary_page_offset);
   }
   uint32_t data_offset = pfile.tellp();
-  write_data_pages(idx, group, from, until);
+  uint32_t max_repetition_level = 0;
+  uint32_t max_definition_level =
+    se.repetition_type == parquet::FieldRepetitionType::REQUIRED ? 0 : 1;
+  write_data_pages(
+    idx, group, from, until, max_repetition_level, max_definition_level
+  );
   int32_t column_bytes = ((int32_t) pfile.tellp()) - col_start;
   cmd->__set_num_values(until - from);
   cmd->__set_total_compressed_size(column_bytes);
@@ -679,7 +684,9 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx, int64_t from,
 }
 
 void ParquetOutFile::write_data_pages(uint32_t idx, uint32_t group,
-                                      int64_t from, int64_t until) {
+                                      int64_t from, int64_t until,
+                                      uint32_t max_repetition_level,
+                                      uint32_t max_definition_level) {
   SchemaElement se = schemas[idx + 1];
   int64_t rg_num_rows = until - from;
 
@@ -724,14 +731,19 @@ void ParquetOutFile::write_data_pages(uint32_t idx, uint32_t group,
     if (page_until > until) {
       page_until = until;
     }
-    write_data_page(idx, group, i, from, until, page_from, page_until);
+    write_data_page(
+      idx, group, i, from, until, page_from, page_until,
+      max_repetition_level, max_definition_level
+    );
   }
 }
 
 void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
                                      uint32_t page, int64_t rg_from,
                                      int64_t rg_until, uint64_t page_from,
-                                     uint64_t page_until) {
+                                     uint64_t page_until,
+                                     uint32_t max_repetition_level,
+                                     uint32_t max_definition_level) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   Statistics *stat = &(cmd->statistics);
   SchemaElement se = schemas[idx + 1];
@@ -743,7 +755,10 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     DataPageHeader dph;
     dph.__set_num_values(page_num_values);
     dph.__set_encoding(encodings[idx]);
-    if (se.repetition_type == FieldRepetitionType::OPTIONAL) {
+    if (max_repetition_level > 0) {
+      dph.__set_repetition_level_encoding(Encoding::RLE);
+    }
+    if (max_definition_level > 0) {
       dph.__set_definition_level_encoding(Encoding::RLE);
     }
     // for version 1 we can set it here

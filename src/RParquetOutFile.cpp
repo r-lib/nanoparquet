@@ -2647,7 +2647,7 @@ void RParquetOutFile::init_metadata(
 
     if (!write_minmax_values || sels.size() != 1) {
       // nothing to do
-      // TODO: support minmax values for nested types
+      // no min/max for nested types
     } if (sels[0].__isset.logicalType) {
       parquet::LogicalType &lt = sels[0].logicalType;
       is_minmax_supported[idx] = lt.__isset.DATE || lt.__isset.INTEGER ||

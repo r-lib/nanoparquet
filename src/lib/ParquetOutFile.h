@@ -45,7 +45,7 @@ public:
   void append();
 
   // This makes the write inherently sequential and we might remove it
-  // latest. Currently, it makes it easier to keep track of minimume and
+  // later. Currently, it makes it easier to keep track of minimum and
   // maximum values per row group.
   virtual void write_row_group(uint32_t group) = 0;
 
@@ -80,7 +80,7 @@ public:
                                     uint32_t group, uint32_t page,
                                     uint64_t from, uint64_t until) = 0;
 
-  // callbacks for missing values
+  // callbacks for missing values and list columns
   virtual uint32_t write_present(std::ostream &file, uint32_t idx,
                                  uint64_t from, uint64_t until) = 0;
   virtual void write_present_boolean(std::ostream &file, uint32_t idx,
@@ -149,10 +149,13 @@ private:
                     int64_t until);
   void write_dictionary_page(uint32_t idx, int64_t from, int64_t until);
   void write_data_pages(uint32_t idx, uint32_t group, int64_t from,
-                        int64_t until);
+                        int64_t until, uint32_t max_repetition_level,
+                        uint32_t max_definition_level);
   void write_data_page(uint32_t idx, uint32_t group, uint32_t page,
                        int64_t rg_from, int64_t rg_until,
-                       uint64_t from, uint64_t until);
+                       uint64_t from, uint64_t until,
+                       uint32_t max_repetition_level,
+                       uint32_t max_definition_level);
   void write_page_header(uint32_t idx, parquet::PageHeader &ph);
   void write_footer();
 
