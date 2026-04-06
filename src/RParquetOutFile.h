@@ -64,9 +64,11 @@ public:
                                      uint32_t num_present, uint64_t from,
                                      uint64_t until);
 
-  uint32_t write_definition_levels(std::ostream &file, uint32_t idx, uint64_t from,
+  uint32_t write_definition_levels(std::ostream &def_file, std::ostream &rep_file,
+                         uint32_t idx, uint64_t from,
                          uint64_t until, nanoparquet::SchemaElementEx &sel);
-  uint32_t write_definition_levels_list(std::ostream &file, uint32_t idx,
+  uint32_t write_definition_levels_list(std::ostream &def_file,
+                         std::ostream &rep_file, uint32_t idx,
                          uint64_t from, uint64_t until,
                          nanoparquet::SchemaElementEx &sel);
 
@@ -148,6 +150,9 @@ private:
   void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
                            uint64_t from, uint64_t until,
                            parquet::SchemaElement &sel);
+  void write_list_int32(std::ostream &file, SEXP col, uint32_t idx,
+                        uint64_t from, uint64_t until,
+                        parquet::SchemaElement &sel);
   void write_double_int32_time(std::ostream &file, SEXP col, uint32_t idx,
                                uint64_t from, uint64_t until,
                                parquet::SchemaElement &sel, double factor);

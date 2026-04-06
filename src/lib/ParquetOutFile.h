@@ -104,7 +104,11 @@ public:
                                              uint64_t until) = 0;
 
   // callbacks for missing values and list columns
-  virtual uint32_t write_definition_levels(std::ostream &file, uint32_t idx,
+  // rep_file receives raw (pre-RLE) repetition level ints for list columns;
+  // for non-list columns nothing is written to it.
+  virtual uint32_t write_definition_levels(std::ostream &def_file,
+                                 std::ostream &rep_file,
+                                 uint32_t idx,
                                  uint64_t from, uint64_t until,
                                  SchemaElementEx &sel) = 0;
 
@@ -199,6 +203,7 @@ private:
 
   ByteBuffer buf_unc;
   ByteBuffer buf_com;
+  ByteBuffer buf_rep;
 
   uint64_t calculate_column_data_size(uint32_t idx, uint32_t num_present,
                                       uint64_t from, uint64_t until);

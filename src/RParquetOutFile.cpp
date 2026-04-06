@@ -852,6 +852,9 @@ void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
       write_double_int32(file, col, idx, from, until, sel);
     }
     break;
+  case VECSXP:
+    write_list_int32(file, col, idx, from, until, sel);
+    break;
   default:
     r_call([&] {
       Rf_errorcall(
@@ -860,6 +863,31 @@ void RParquetOutFile::write_int32(std::ostream &file, uint32_t idx,
         type_names[TYPEOF(col)]
       );
     });
+  }
+}
+
+void RParquetOutFile::write_list_int32(std::ostream &file, SEXP col,
+                                       uint32_t idx, uint64_t from,
+                                       uint64_t until,
+                                       parquet::SchemaElement &sel) {
+  for (uint64_t i = from; i < until; i++) {
+    SEXP elt = VECTOR_ELT(col, i);
+    if (Rf_isNull(elt)) continue;
+    if (TYPEOF(elt) != INTSXP) {
+      r_call([&] {
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot write %s as a Parquet INT32 type in list column.",
+          type_names[TYPEOF(elt)]
+        );
+      });
+    }
+    R_xlen_t elen = Rf_xlength(elt);
+    for (R_xlen_t j = 0; j < elen; j++) {
+      int32_t val = INTEGER(elt)[j];
+      if (val == NA_INTEGER) continue;
+      file.write((const char *) &val, sizeof(int32_t));
+    }
   }
 }
 
@@ -1737,25 +1765,73 @@ void RParquetOutFile::write_boolean_as_int(std::ostream &file,
   file.write((const char *) (LOGICAL(col) + from), sizeof(int) * len);
 }
 
-uint32_t RParquetOutFile::write_definition_levels_list(std::ostream &file,
+uint32_t RParquetOutFile::write_definition_levels_list(std::ostream &def_file,
+                                         std::ostream &rep_file,
                                          uint32_t idx, uint64_t from,
                                          uint64_t until,
                                          nanoparquet::SchemaElementEx &sel) {
-  throw std::runtime_error("Writing list columns is not yet implemented"); // # nocov
+  // List column: max_definition_level = 3, max_repetition_level = 1.
+  // For each row (list slot):
+  //   - NULL list        -> def=0, rep=0
+  //   - empty list       -> def=1, rep=0
+  //   - non-NULL element -> def=3, rep=0 for first element, rep=1 for rest
+  //   - NA element       -> def=2, rep=0 for first element, rep=1 for rest
+  SEXP col = VECTOR_ELT(df, idx);
+  uint64_t num_present = 0;  // number of non-null element values (def == 3)
+
+  for (uint64_t i = from; i < until; i++) {
+    SEXP elt = VECTOR_ELT(col, i);
+    if (Rf_isNull(elt)) {
+      // NULL list: single entry, def=0, rep=0
+      int def = 0, rep = 0;
+      def_file.write((const char *) &def, sizeof(int));
+      rep_file.write((const char *) &rep, sizeof(int));
+    } else {
+      R_xlen_t elen = Rf_xlength(elt);
+      if (elen == 0) {
+        // empty list: single entry, def=1, rep=0
+        int def = 1, rep = 0;
+        def_file.write((const char *) &def, sizeof(int));
+        rep_file.write((const char *) &rep, sizeof(int));
+      } else {
+        for (R_xlen_t j = 0; j < elen; j++) {
+          int rep = (j == 0) ? 0 : 1;
+          int def;
+          switch (TYPEOF(elt)) {
+          case INTSXP:  def = (INTEGER(elt)[j] != NA_INTEGER) ? 3 : 2; break;
+          case REALSXP: def = (!R_IsNA(REAL(elt)[j])) ? 3 : 2; break;
+          case STRSXP:  def = (STRING_ELT(elt, j) != R_NaString) ? 3 : 2; break;
+          case LGLSXP:  def = (LOGICAL(elt)[j] != NA_LOGICAL) ? 3 : 2; break;
+          default:      def = 3; break;
+          }
+          def_file.write((const char *) &def, sizeof(int));
+          rep_file.write((const char *) &rep, sizeof(int));
+          if (def == 3) num_present++;
+        }
+      }
+    }
+  }
+
+  return num_present;
 }
 
-uint32_t RParquetOutFile::write_definition_levels(std::ostream &file, uint32_t idx,
+uint32_t RParquetOutFile::write_definition_levels(std::ostream &def_file,
+                                         std::ostream &rep_file,
+                                         uint32_t idx,
                                          uint64_t from, uint64_t until,
                                          nanoparquet::SchemaElementEx &sel) {
   if (sel.elements.size() == 3) {
-    return write_definition_levels_list(file, idx, from, until, sel);
+    return write_definition_levels_list(def_file, rep_file, idx, from, until, sel);
   } else if (sel.elements.size() != 1) {
-    throw std::runtime_error(                                             // # nocov
-      "Internal nanoparquet error: unexpected schema element count"     // # nocov
-    );                                                                  // # nocov
+    r_call([&] {
+      Rf_errorcall(                                         // # nocov
+        nanoparquet_call,                                   // # nocov
+        "Internal nanoparquet error: unexpected schema element count"
+      );
+    });
   }
   SEXP col = VECTOR_ELT(df, idx);
-  if (until > Rf_xlength(col)) {
+  if (until > (uint64_t) Rf_xlength(col)) {
     r_call([&] {
       Rf_errorcall(                                         // # nocov
         nanoparquet_call,                                   // # nocov
@@ -1815,7 +1891,7 @@ uint32_t RParquetOutFile::write_definition_levels(std::ostream &file, uint32_t i
     });
   }
 
-  file.write(present.ptr, len * sizeof(int));
+  def_file.write(present.ptr, len * sizeof(int));
 
   return num_pres;
 }

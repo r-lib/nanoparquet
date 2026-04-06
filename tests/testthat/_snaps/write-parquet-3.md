@@ -158,14 +158,6 @@
       Error in `write_parquet()`:
       ! Cannot write a character vector as a Parquet INT32 type.
 
----
-
-    Code
-      write_parquet(d, tmp, schema = parquet_schema("INT32"))
-    Condition
-      Error in `write_parquet()`:
-      ! Cannot write a list as a Parquet INT32 type.
-
 # write_parquet -> INT64
 
     Code
