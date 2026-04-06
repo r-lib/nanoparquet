@@ -695,11 +695,6 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
   dp.set_num_values(dp.ph.data_page_header_v2.num_values);
   dp.encoding = dp.ph.data_page_header_v2.encoding;
 
-  // skip junk repetition and definition levels, if any
-  int32_t skip = dp.ph.data_page_header_v2.repetition_levels_byte_length;
-  buf += skip;
-  len -= skip;
-
   uint8_t *tmp_buf = nullptr;
   uint32_t tmp_len = 0;
 
@@ -721,6 +716,11 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
       (uint8_t*) rep_levels.ptr,
       dp.num_values
     );
+  } else {
+    // skip junk repetition and definition levels, if any
+    int32_t skip = dp.ph.data_page_header_v2.repetition_levels_byte_length;
+    buf += skip;
+    len -= skip;
   }
 
   if (dp.cc.max_def_level > 0) {

@@ -50,3 +50,36 @@
       3     NULL
       4        4
 
+---
+
+    Code
+      as.data.frame(read_parquet(test_path("data/list-v2-req-req.parquet")))
+    Output
+              a
+      1 1, 2, 3
+      2        
+      3       4
+    Code
+      as.data.frame(read_parquet(test_path("data/list-v2-req-opt.parquet")))
+    Output
+               a
+      1 1, NA, 3
+      2         
+      3        4
+    Code
+      as.data.frame(read_parquet(test_path("data/list-v2-opt-req.parquet")))
+    Output
+              a
+      1 1, 2, 3
+      2        
+      3    NULL
+      4       4
+    Code
+      as.data.frame(read_parquet(test_path("data/list-v2-opt-opt.parquet")))
+    Output
+               a
+      1 1, NA, 3
+      2         
+      3     NULL
+      4        4
+

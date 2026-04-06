@@ -631,7 +631,11 @@ void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
-  bool hasmiss = pp->metadata.repetition_types[cl + 1] == 1;
+  // For repeated (list) columns, the data vector is already a compact sequence
+  // of leaf values; the multi-level def levels are handled by the enlisting
+  // functions, so no in-place shift is needed here.
+  bool hasmiss = !pp->metadata.r_types[cl].repeated &&
+    pp->metadata.repetition_types[cl + 1] == 1;
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
     int64_t rg_offset = pp->metadata.row_group_offsets[rg];

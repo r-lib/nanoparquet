@@ -19,4 +19,11 @@ test_that("LIST", {
     as.data.frame(read_parquet(test_path("data/list-opt-req.parquet")))
     as.data.frame(read_parquet(test_path("data/list-opt-opt.parquet")))
   })
+
+  expect_snapshot({
+    as.data.frame(read_parquet(test_path("data/list-v2-req-req.parquet")))
+    as.data.frame(read_parquet(test_path("data/list-v2-req-opt.parquet")))
+    as.data.frame(read_parquet(test_path("data/list-v2-opt-req.parquet")))
+    as.data.frame(read_parquet(test_path("data/list-v2-opt-opt.parquet")))
+  })
 })

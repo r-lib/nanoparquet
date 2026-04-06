@@ -45,6 +45,40 @@ def make_nested_list_parquet(filename, depth, rows=None):
   pq.write_table(table, filename)
 
 
+def make_list_parquet(
+  filename,
+  list_nullable=True,
+  element_nullable=True,
+  rows=None,
+  data_page_version="1.0"
+):
+  """
+  Write a Parquet file with a single list<int32> column 'a'.
+
+  Args:
+    filename:           output .parquet path
+    list_nullable:      if True, the outer list field is OPTIONAL (may be null)
+    element_nullable:   if True, list elements are OPTIONAL (may be null)
+    rows:               list of row values (list of lists of ints); if None a
+                        small default example is used
+    data_page_version:  "1.0" (default) or "2.0"
+  """
+  import pyarrow as pa
+  import pyarrow.parquet as pq
+
+  elem_field = pa.field("item", pa.int32(), nullable=element_nullable)
+  list_type = pa.list_(elem_field)
+
+  if rows is None:
+    rows = [[1, 2, 3], [], [4]]
+
+  col_field = pa.field("a", list_type, nullable=list_nullable)
+  schema = pa.schema([col_field])
+  arr = pa.array(rows, type=list_type)
+  table = pa.table({"a": arr}, schema=schema)
+  pq.write_table(table, filename, data_page_version=data_page_version)
+
+
 def do_float():
   import pyarrow as pa
   import pyarrow.parquet as pq
