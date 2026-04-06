@@ -100,7 +100,7 @@ void ParquetOutFile::set_num_rows(uint32_t nr, uint32_t ntotal) {
 void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
                                        parquet::Encoding::type encoding) {
   schemas.push_back(sel);
-  schemas[0].__set_num_children(schemas[0].num_children + 1);
+  schemas[0].element().__set_num_children(schemas[0].element().num_children + 1);
   encodings.push_back(encoding);
   num_cols++;
 }
@@ -108,7 +108,7 @@ void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
 void ParquetOutFile::init_column_meta_data() {
   column_meta_data.clear();
   for (uint32_t cl = 0; cl < schemas.size() - 1; cl++) {
-    parquet::SchemaElement &sel = schemas[cl + 1];
+    parquet::SchemaElement &sel = schemas[cl + 1].element();
     parquet::Encoding::type encoding = encodings[cl];
     ColumnMetaData cmd;
     cmd.__set_type(sel.type);
@@ -287,7 +287,7 @@ void ParquetOutFile::write_data_(
   uint64_t until) {
 
   streampos cb_start = file.tellp();
-  parquet::SchemaElement &se = schemas[idx + 1];
+  parquet::SchemaElement &se = schemas[idx + 1].element();
   parquet::Type::type type = se.type;
   switch (type) {
   case Type::INT32:
@@ -343,7 +343,7 @@ void ParquetOutFile::write_present_data_(
   uint64_t until) {
 
   streampos cb_start = file.tellp();
-  parquet::SchemaElement &se = schemas[idx + 1];
+  parquet::SchemaElement &se = schemas[idx + 1].element();
   parquet::Type::type type = se.type;
   switch (type) {
   case Type::INT32:
@@ -591,7 +591,7 @@ int64_t ParquetOutFile::write_columns(uint32_t group, int64_t from,
 void ParquetOutFile::write_column(uint32_t idx, uint32_t group,
                                   int64_t from, int64_t until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
-  SchemaElement se = schemas[idx + 1];
+  SchemaElement se = schemas[idx + 1].element();
   uint32_t col_start = pfile.tellp();
   // we increase this as needed
   cmd->__set_total_uncompressed_size(0);
@@ -642,7 +642,7 @@ void ParquetOutFile::write_page_header(uint32_t idx, PageHeader &ph) {
 void ParquetOutFile::write_dictionary_page(uint32_t idx, int64_t from,
                                            int64_t until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
-  SchemaElement se = schemas[idx + 1];
+  SchemaElement se = schemas[idx + 1].element();
   // Uncompresed size of the dictionary in bytes
   uint32_t dict_size = get_size_dictionary(idx, se, from, until);
   // Number of entries in the dicitonary
@@ -687,7 +687,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx, uint32_t group,
                                       int64_t from, int64_t until,
                                       uint32_t max_repetition_level,
                                       uint32_t max_definition_level) {
-  SchemaElement se = schemas[idx + 1];
+  SchemaElement se = schemas[idx + 1].element();
   int64_t rg_num_rows = until - from;
 
   // guess total size and decide on number of pages
@@ -746,7 +746,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
                                      uint32_t max_definition_level) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   Statistics *stat = &(cmd->statistics);
-  SchemaElement se = schemas[idx + 1];
+  SchemaElement se = schemas[idx + 1].element();
   PageHeader ph;
   DataPageHeaderV2 dph2;
   uint32_t page_num_values = page_until - page_from;
@@ -1275,7 +1275,7 @@ uint64_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
                                                     uint64_t from,
                                                     uint64_t until) {
   // +1 is to skip the root schema
-  parquet::SchemaElement &se = schemas[idx + 1];
+  parquet::SchemaElement &se = schemas[idx + 1].element();
   parquet::Type::type type = se.type;
   switch (type) {
   case Type::BOOLEAN: {
@@ -1310,9 +1310,15 @@ uint64_t ParquetOutFile::calculate_column_data_size(uint32_t idx,
 }
 
 void ParquetOutFile::write_footer() {
+  std::vector<parquet::SchemaElement> flat_schemas;
+  for (auto &sex : schemas) {
+    for (auto &el : sex.elements) {
+      flat_schemas.push_back(el);
+    }
+  }
   FileMetaData fmd;
   fmd.__set_version(1);
-  fmd.__set_schema(schemas);
+  fmd.__set_schema(flat_schemas);
   fmd.__set_num_rows(num_total_rows_set ? num_total_rows : num_rows);
   fmd.__set_row_groups(row_groups);
   fmd.__set_key_value_metadata(kv);

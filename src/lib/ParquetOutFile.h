@@ -13,6 +13,21 @@ struct Int96 {
 
 namespace nanoparquet {
 
+// Wraps one or more parquet::SchemaElement objects. A single logical column
+// (e.g. a list column) may require multiple schema elements in the file.
+// For now every SchemaElementEx holds exactly one element.
+struct SchemaElementEx {
+  std::vector<parquet::SchemaElement> elements;
+
+  SchemaElementEx() = default;
+  SchemaElementEx(const parquet::SchemaElement &el) {
+    elements.push_back(el);
+  }
+
+  parquet::SchemaElement &element() { return elements[0]; }
+  const parquet::SchemaElement &element() const { return elements[0]; }
+};
+
 class ParquetOutFile {
 public:
   ParquetOutFile(
@@ -130,7 +145,7 @@ private:
   int compression_level;
 
   std::vector<parquet::Encoding::type> encodings;
-  std::vector<parquet::SchemaElement> schemas;
+  std::vector<SchemaElementEx> schemas;
   std::vector<parquet::ColumnMetaData> column_meta_data;
   std::vector<parquet::KeyValue> kv;
 
