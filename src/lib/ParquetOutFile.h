@@ -49,7 +49,7 @@ public:
   void set_num_rows(uint32_t nr);
   void set_num_rows(uint32_t nr, uint32_t ntotal);
   void schema_add_column(
-    parquet::SchemaElement &sel,
+    SchemaElementEx &sel,
     parquet::Encoding::type encoding
   );
   void add_key_value_metadata(std::string key, std::string value);
@@ -106,7 +106,7 @@ public:
   // callbacks for missing values and list columns
   virtual uint32_t write_definition_levels(std::ostream &file, uint32_t idx,
                                  uint64_t from, uint64_t until,
-                                 parquet::SchemaElement &sel) = 0;
+                                 SchemaElementEx &sel) = 0;
 
   // callbacks to write a dictionary
   virtual uint32_t get_size_byte_array(uint32_t idx,

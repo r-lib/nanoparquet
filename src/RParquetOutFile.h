@@ -65,7 +65,10 @@ public:
                                      uint64_t until);
 
   uint32_t write_definition_levels(std::ostream &file, uint32_t idx, uint64_t from,
-                         uint64_t until, parquet::SchemaElement &sel);
+                         uint64_t until, nanoparquet::SchemaElementEx &sel);
+  uint32_t write_definition_levels_list(std::ostream &file, uint32_t idx,
+                         uint64_t from, uint64_t until,
+                         nanoparquet::SchemaElementEx &sel);
 
   // for dictionaries
   uint32_t get_num_values_dictionary(uint32_t idx,
@@ -86,7 +89,7 @@ public:
                                std::string &min_value,
                                std::string &max_value);
 
-  std::vector<parquet::SchemaElement> schema_from_supplied(
+  nanoparquet::SchemaElementEx schema_from_supplied(
     const std::string &name,
     bool req,
     R_xlen_t idx,

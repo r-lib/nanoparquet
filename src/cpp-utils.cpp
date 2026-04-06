@@ -173,7 +173,7 @@ void r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
   }
 }
 
-std::vector<parquet::SchemaElement> nanoparquet_map_to_parquet_type_vecsxp(
+nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_vecsxp(
   SEXP x,
   SEXP options,
   std::string &rtype,
@@ -197,7 +197,7 @@ std::vector<parquet::SchemaElement> nanoparquet_map_to_parquet_type_vecsxp(
   if (!Rf_isNull(elt) && elt_type != VECSXP && elt_type != RAWSXP) {
     // Atomic element type: build a 3-layer LIST schema
     std::string inner_rtype;
-    std::vector<parquet::SchemaElement> inner =
+    nanoparquet::SchemaElementEx inner =
       nanoparquet_map_to_parquet_type_atomic(
         elt, options, inner_rtype, "element", false
       );
@@ -220,7 +220,9 @@ std::vector<parquet::SchemaElement> nanoparquet_map_to_parquet_type_vecsxp(
     sel1.__set_num_children(1);
     // sel1.__isset.type remains false — this is a group, not a primitive
 
-    return {sel0, sel1, inner[0]};
+    nanoparquet::SchemaElementEx sex;
+    sex.elements = {sel0, sel1, inner.element()};
+    return sex;
   }
 
   // VECSXP, RAWSXP, or empty list: single BYTE_ARRAY column
@@ -231,10 +233,10 @@ std::vector<parquet::SchemaElement> nanoparquet_map_to_parquet_type_vecsxp(
     req ? parquet::FieldRepetitionType::REQUIRED
         : parquet::FieldRepetitionType::OPTIONAL);
   sel.__set_type(parquet::Type::BYTE_ARRAY);
-  return {sel};
+  return nanoparquet::SchemaElementEx(sel);
 }
 
-std::vector<parquet::SchemaElement> nanoparquet_map_to_parquet_type_atomic(
+nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_atomic(
   SEXP x,
   SEXP options,
   std::string &rtype,
@@ -274,8 +276,7 @@ std::vector<parquet::SchemaElement> nanoparquet_map_to_parquet_type_atomic(
     }
   });
 
-  std::vector<parquet::SchemaElement> sels(1);
-  parquet::SchemaElement &sel = sels[0];
+  parquet::SchemaElement sel;
   sel.__set_name(name);
   sel.__set_repetition_type(
     req ? parquet::FieldRepetitionType::REQUIRED
@@ -380,13 +381,11 @@ std::vector<parquet::SchemaElement> nanoparquet_map_to_parquet_type_atomic(
     });
   }
 
-  for (auto &s : sels) {
-    fill_converted_type_for_logical_type(s);
-  }
-  return sels;
+  fill_converted_type_for_logical_type(sel);
+  return nanoparquet::SchemaElementEx(sel);
 }
 
-std::vector<parquet::SchemaElement> nanoparquet_map_to_parquet_type(
+nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type(
   SEXP x,
   SEXP options,
   std::string &rtype,

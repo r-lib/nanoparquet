@@ -1737,9 +1737,23 @@ void RParquetOutFile::write_boolean_as_int(std::ostream &file,
   file.write((const char *) (LOGICAL(col) + from), sizeof(int) * len);
 }
 
-uint32_t RParquetOutFile:: write_definition_levels(std::ostream &file, uint32_t idx,
+uint32_t RParquetOutFile::write_definition_levels_list(std::ostream &file,
+                                         uint32_t idx, uint64_t from,
+                                         uint64_t until,
+                                         nanoparquet::SchemaElementEx &sel) {
+  throw std::runtime_error("Writing list columns is not yet implemented"); // # nocov
+}
+
+uint32_t RParquetOutFile::write_definition_levels(std::ostream &file, uint32_t idx,
                                          uint64_t from, uint64_t until,
-                                         parquet::SchemaElement &sel) {
+                                         nanoparquet::SchemaElementEx &sel) {
+  if (sel.elements.size() == 3) {
+    return write_definition_levels_list(file, idx, from, until, sel);
+  } else if (sel.elements.size() != 1) {
+    throw std::runtime_error(                                             // # nocov
+      "Internal nanoparquet error: unexpected schema element count"     // # nocov
+    );                                                                  // # nocov
+  }
   SEXP col = VECTOR_ELT(df, idx);
   if (until > Rf_xlength(col)) {
     r_call([&] {
@@ -2567,7 +2581,7 @@ bool RParquetOutFile::get_group_minmax_values(uint32_t idx, uint32_t group,
   }
 }
 
-std::vector<parquet::SchemaElement> RParquetOutFile::schema_from_supplied(
+nanoparquet::SchemaElementEx RParquetOutFile::schema_from_supplied(
   const std::string &name,
   bool req,
   R_xlen_t idx,
@@ -2601,7 +2615,7 @@ std::vector<parquet::SchemaElement> RParquetOutFile::schema_from_supplied(
   if (precision[idx] != NA_INTEGER) {
     sel.__set_precision(precision[idx]);
   }
-  return { sel };
+  return nanoparquet::SchemaElementEx(sel);
 }
 
 void RParquetOutFile::init_metadata(
@@ -2642,15 +2656,15 @@ void RParquetOutFile::init_metadata(
     bool req = LOGICAL(required)[idx];
     std::string name = CHAR(STRING_ELT(nms, idx));
     std::string rtypename;
-    std::vector<parquet::SchemaElement> sels = type[idx] == NA_INTEGER ?
+    nanoparquet::SchemaElementEx sels = type[idx] == NA_INTEGER ?
       nanoparquet_map_to_parquet_type(col, options, rtypename, name, req) :
       schema_from_supplied(name, req, idx, type[idx], type_length, converted_type, logical_type, scale, precision);
 
-    if (!write_minmax_values || sels.size() != 1) {
+    if (!write_minmax_values || sels.elements.size() != 1) {
       // nothing to do
       // no min/max for nested types
-    } if (sels[0].__isset.logicalType) {
-      parquet::LogicalType &lt = sels[0].logicalType;
+    } if (sels.element().__isset.logicalType) {
+      parquet::LogicalType &lt = sels.element().logicalType;
       is_minmax_supported[idx] = lt.__isset.DATE || lt.__isset.INTEGER ||
         lt.__isset.TIME || lt.__isset.STRING || lt.__isset.ENUM ||
         lt.__isset.JSON || lt.__isset.BSON || lt.__isset.TIMESTAMP;
@@ -2658,7 +2672,7 @@ void RParquetOutFile::init_metadata(
       // is_minmax_supported[idx] = lt.__isset.UUID ||
       //   lt.__isset.DECIMAL || lt.isset.FLOAT16;
     } else {
-      switch(sels[0].type) {
+      switch(sels.element().type) {
       // case parquet::Type::BOOLEAN:
       case parquet::Type::INT32:
       case parquet::Type::INT64:
@@ -2675,10 +2689,8 @@ void RParquetOutFile::init_metadata(
     }
 
     int32_t ienc = INTEGER(encoding)[idx];
-    parquet::Encoding::type enc = detect_encoding(idx, sels.back(), ienc);
-    for (auto &sel : sels) {
-      schema_add_column(sel, enc);
-    }
+    parquet::Encoding::type enc = detect_encoding(idx, sels.elements.back(), ienc);
+    schema_add_column(sels, enc);
   }
 
   if (!Rf_isNull(metadata)) {
@@ -2760,7 +2772,8 @@ void RParquetOutFile::init_append_metadata(
 
     int32_t ienc = INTEGER(encoding)[idx];
     parquet::Encoding::type enc = detect_encoding(idx, sel, ienc);
-    schema_add_column(sel, enc);
+    nanoparquet::SchemaElementEx sex(sel);
+    schema_add_column(sex, enc);
   }
 }
 

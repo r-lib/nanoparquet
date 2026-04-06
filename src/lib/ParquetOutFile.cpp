@@ -97,7 +97,7 @@ void ParquetOutFile::set_num_rows(uint32_t nr, uint32_t ntotal) {
   num_total_rows_set = true;
 }
 
-void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
+void ParquetOutFile::schema_add_column(SchemaElementEx &sel,
                                        parquet::Encoding::type encoding) {
   schemas.push_back(sel);
   schemas[0].element().__set_num_children(schemas[0].element().num_children + 1);
@@ -108,10 +108,12 @@ void ParquetOutFile::schema_add_column(parquet::SchemaElement &sel,
 void ParquetOutFile::init_column_meta_data() {
   column_meta_data.clear();
   for (uint32_t cl = 0; cl < schemas.size() - 1; cl++) {
-    parquet::SchemaElement &sel = schemas[cl + 1].element();
+    SchemaElementEx &sex = schemas[cl + 1];
+    parquet::SchemaElement &sel = sex.element();       // outer: name, repetition
+    parquet::SchemaElement &leaf = sex.elements.back(); // leaf: type
     parquet::Encoding::type encoding = encodings[cl];
     ColumnMetaData cmd;
-    cmd.__set_type(sel.type);
+    cmd.__set_type(leaf.type);
     vector<Encoding::type> encs;
     if (sel.repetition_type != parquet::FieldRepetitionType::REQUIRED &&
         encoding != Encoding::RLE) {
@@ -287,7 +289,8 @@ void ParquetOutFile::write_data_(
   uint64_t until) {
 
   streampos cb_start = file.tellp();
-  parquet::SchemaElement &se = schemas[idx + 1].element();
+  // For list columns (3 elements), use the leaf (last) element for type dispatch
+  parquet::SchemaElement &se = schemas[idx + 1].elements.back();
   parquet::Type::type type = se.type;
   switch (type) {
   case Type::INT32:
@@ -343,7 +346,7 @@ void ParquetOutFile::write_present_data_(
   uint64_t until) {
 
   streampos cb_start = file.tellp();
-  parquet::SchemaElement &se = schemas[idx + 1].element();
+  parquet::SchemaElement &se = schemas[idx + 1].elements.back();
   parquet::Type::type type = se.type;
   switch (type) {
   case Type::INT32:
@@ -903,7 +906,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_definition_levels(*os0, idx, page_from, page_until, se);
+    uint32_t num_present = write_definition_levels(*os0, idx, page_from, page_until, schemas[idx + 1]);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(buf_unc, page_num_values, buf_com, 1, false);
@@ -943,7 +946,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os0 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_definition_levels(*os0, idx, page_from, page_until, se);
+    uint32_t num_present = write_definition_levels(*os0, idx, page_from, page_until, schemas[idx + 1]);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -995,7 +998,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, se);
+    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, schemas[idx + 1]);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -1052,7 +1055,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, se);
+    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, schemas[idx + 1]);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -1176,7 +1179,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, se);
+    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, schemas[idx + 1]);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
@@ -1225,7 +1228,7 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     buf_unc.reset(miss_size);
     std::unique_ptr<std::ostream> os1 =
       std::unique_ptr<std::ostream>(new std::ostream(&buf_unc));
-    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, se);
+    uint32_t num_present = write_definition_levels(*os1, idx, page_from, page_until, schemas[idx + 1]);
 
     // 2. RLE buf_unc to buf_com
     uint32_t rle_size = rle_encode(
