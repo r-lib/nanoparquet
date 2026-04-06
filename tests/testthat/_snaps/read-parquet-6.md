@@ -83,3 +83,93 @@
       3     NULL
       4        4
 
+---
+
+    Code
+      read_parquet_page(pf, pgoff)[elts]
+    Output
+      $has_repetition_levels
+      [1] TRUE
+      
+      $has_definition_levels
+      [1] TRUE
+      
+      $num_values
+      [1] 10
+      
+      $num_rows
+      [1] NA
+      
+
+---
+
+    Code
+      read_parquet_page(pf2, pgoff2)[elts]
+    Output
+      $has_repetition_levels
+      [1] TRUE
+      
+      $has_definition_levels
+      [1] TRUE
+      
+      $num_values
+      [1] 5
+      
+      $num_rows
+      [1] NA
+      
+
+---
+
+    Code
+      read_parquet_page(pf3, pgoff3)[elts]
+    Output
+      $has_repetition_levels
+      [1] TRUE
+      
+      $has_definition_levels
+      [1] TRUE
+      
+      $num_values
+      [1] 5
+      
+      $num_rows
+      [1] NA
+      
+
+---
+
+    Code
+      read_parquet_page(pf4, pgoff4)[elts]
+    Output
+      $has_repetition_levels
+      [1] TRUE
+      
+      $has_definition_levels
+      [1] TRUE
+      
+      $num_values
+      [1] 6
+      
+      $num_rows
+      [1] NA
+      
+
+---
+
+    Code
+      read_parquet_page(pf5, pgoff5)[elts]
+    Output
+      $has_repetition_levels
+      [1] TRUE
+      
+      $has_definition_levels
+      [1] TRUE
+      
+      $num_values
+      [1] 6
+      
+      $num_rows
+      [1] NA
+      
+
