@@ -1765,7 +1765,30 @@ void RParquetOutFile::write_boolean_as_int(std::ostream &file,
   file.write((const char *) (LOGICAL(col) + from), sizeof(int) * len);
 }
 
-uint32_t RParquetOutFile::write_definition_levels_list(std::ostream &def_file,
+uint32_t RParquetOutFile::get_num_levels(uint32_t idx, uint64_t from,
+                                         uint64_t until,
+                                         nanoparquet::SchemaElementEx &sel) {
+  if (sel.elements.size() != 3) {
+    return until - from;
+  }
+  // List column: count total elements across all list slots.
+  // NULL lists and empty lists each contribute 1 level; non-empty lists
+  // contribute one level per element.
+  SEXP col = VECTOR_ELT(df, idx);
+  uint32_t n = 0;
+  for (uint64_t i = from; i < until; i++) {
+    SEXP elt = VECTOR_ELT(col, i);
+    if (Rf_isNull(elt) || Rf_xlength(elt) == 0) {
+      n++;
+    } else {
+      n += Rf_xlength(elt);
+    }
+  }
+  return n;
+}
+
+nanoparquet::DefLevelsResult RParquetOutFile::write_definition_levels_list(
+                                         std::ostream &def_file,
                                          std::ostream &rep_file,
                                          uint32_t idx, uint64_t from,
                                          uint64_t until,
@@ -1777,7 +1800,8 @@ uint32_t RParquetOutFile::write_definition_levels_list(std::ostream &def_file,
   //   - non-NULL element -> def=3, rep=0 for first element, rep=1 for rest
   //   - NA element       -> def=2, rep=0 for first element, rep=1 for rest
   SEXP col = VECTOR_ELT(df, idx);
-  uint64_t num_present = 0;  // number of non-null element values (def == 3)
+  uint32_t num_present = 0;  // number of non-null element values (def == 3)
+  uint32_t num_levels = 0;   // total rep/def level pairs written
 
   for (uint64_t i = from; i < until; i++) {
     SEXP elt = VECTOR_ELT(col, i);
@@ -1786,6 +1810,7 @@ uint32_t RParquetOutFile::write_definition_levels_list(std::ostream &def_file,
       int def = 0, rep = 0;
       def_file.write((const char *) &def, sizeof(int));
       rep_file.write((const char *) &rep, sizeof(int));
+      num_levels++;
     } else {
       R_xlen_t elen = Rf_xlength(elt);
       if (elen == 0) {
@@ -1793,6 +1818,7 @@ uint32_t RParquetOutFile::write_definition_levels_list(std::ostream &def_file,
         int def = 1, rep = 0;
         def_file.write((const char *) &def, sizeof(int));
         rep_file.write((const char *) &rep, sizeof(int));
+        num_levels++;
       } else {
         for (R_xlen_t j = 0; j < elen; j++) {
           int rep = (j == 0) ? 0 : 1;
@@ -1807,15 +1833,17 @@ uint32_t RParquetOutFile::write_definition_levels_list(std::ostream &def_file,
           def_file.write((const char *) &def, sizeof(int));
           rep_file.write((const char *) &rep, sizeof(int));
           if (def == 3) num_present++;
+          num_levels++;
         }
       }
     }
   }
 
-  return num_present;
+  return {num_present, num_levels};
 }
 
-uint32_t RParquetOutFile::write_definition_levels(std::ostream &def_file,
+nanoparquet::DefLevelsResult RParquetOutFile::write_definition_levels(
+                                         std::ostream &def_file,
                                          std::ostream &rep_file,
                                          uint32_t idx,
                                          uint64_t from, uint64_t until,
@@ -1893,7 +1921,7 @@ uint32_t RParquetOutFile::write_definition_levels(std::ostream &def_file,
 
   def_file.write(present.ptr, len * sizeof(int));
 
-  return num_pres;
+  return {(uint32_t) num_pres, (uint32_t) len};
 }
 
 void RParquetOutFile::write_present_boolean_as_int(std::ostream &file,

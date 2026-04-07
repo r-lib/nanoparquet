@@ -64,10 +64,13 @@ public:
                                      uint32_t num_present, uint64_t from,
                                      uint64_t until);
 
-  uint32_t write_definition_levels(std::ostream &def_file, std::ostream &rep_file,
+  uint32_t get_num_levels(uint32_t idx, uint64_t from, uint64_t until,
+                          nanoparquet::SchemaElementEx &sel);
+  nanoparquet::DefLevelsResult write_definition_levels(std::ostream &def_file,
+                         std::ostream &rep_file,
                          uint32_t idx, uint64_t from,
                          uint64_t until, nanoparquet::SchemaElementEx &sel);
-  uint32_t write_definition_levels_list(std::ostream &def_file,
+  nanoparquet::DefLevelsResult write_definition_levels_list(std::ostream &def_file,
                          std::ostream &rep_file, uint32_t idx,
                          uint64_t from, uint64_t until,
                          nanoparquet::SchemaElementEx &sel);
