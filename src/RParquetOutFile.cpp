@@ -568,11 +568,11 @@ void RParquetOutFile::write_integer_int32(std::ostream &file, SEXP col,
         int32_t val = INTEGER(col)[i];
         if (val == NA_INTEGER) continue;
         if (minmax && (!has_min || val < min_value)) {
-	  has_min = true;
+          has_min = true;
           SAVE_MIN2(min_value, idx, val);
         }
         if (minmax && (!has_max || val > max_value)) {
-	  has_max = true;
+          has_max = true;
           SAVE_MAX2(max_value, idx, val);
         }
         file.write((const char*) &val, sizeof(int32_t));
@@ -608,11 +608,11 @@ void RParquetOutFile::write_integer_int32(std::ostream &file, SEXP col,
         });
       }
       if (minmax && (!has_min || val < min_value)) {
-	has_min = true;
+        has_min = true;
         SAVE_MIN2(min_value, idx, val);
       }
       if (minmax && (!has_max || val > max_value)) {
-	has_max = true;
+        has_max = true;
         SAVE_MAX2(max_value, idx, val);
       }
       file.write((const char *) &val, sizeof(int32_t));
@@ -1323,12 +1323,37 @@ void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
   has_minmax_value[idx] = has_minmax_value[idx] || has_min;
 }
 
+void write_list_double(std::ostream &file, SEXP col, uint64_t from,
+                       uint64_t until, parquet::SchemaElement &sel) {
+  for (uint64_t i = from; i < until; i++) {
+    SEXP elt = VECTOR_ELT(col, i);
+    if (Rf_isNull(elt)) continue;
+    if (TYPEOF(elt) != REALSXP) {
+      r_call([&] {
+        Rf_errorcall(
+          nanoparquet_call,
+          "Cannot write %s as a Parquet DOUBLE type in list column.",
+          type_names[TYPEOF(elt)]
+        );
+      });
+    }
+    R_xlen_t elen = Rf_xlength(elt);
+    for (R_xlen_t j = 0; j < elen; j++) {
+      double val = REAL(elt)[j];
+      if (R_IsNA(val)) continue;
+      file.write((const char *) &val, sizeof(double));
+    }
+  }
+}
+
 void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
                                    uint32_t group, uint32_t page,
                                    uint64_t from, uint64_t until,
                                    parquet::SchemaElement &sel) {
   SEXP col = VECTOR_ELT(df, idx);
-  if (TYPEOF(col) != REALSXP) {
+  if (TYPEOF(col) == VECSXP) {
+    return write_list_double(file, col, from, until, sel);
+  } else if (TYPEOF(col) != REALSXP) {
     r_call([&] {
       Rf_errorcall(
         nanoparquet_call,
@@ -1363,11 +1388,11 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
       double val = REAL(col)[i];
       if (R_IsNA(val)) continue;
       if (minmax && (!has_min || val < min_value)) {
-	has_min = true;
+        has_min = true;
         SAVE_MIN2(min_value, idx, val);
       }
       if (minmax && (!has_max || val > max_value)) {
-	has_max = true;
+        has_max = true;
         SAVE_MAX2(max_value, idx, val);
       }
       file.write((const char*) &val, sizeof(double));
