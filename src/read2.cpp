@@ -24,7 +24,7 @@ static SEXP create_presents(RParquetReader &reader) {
     for (auto rg = 0; rg < reader.present[cl].size(); rg++) {
       l += reader.present[cl][rg].map.size();
     }
-    if (l == 0) { break; }
+    if (l == 0) { continue; }
     SET_VECTOR_ELT(presents, cl, Rf_allocVector(RAWSXP, l));
     l = 0;
     for (auto rg = 0; rg < reader.present[cl].size(); rg++) {
