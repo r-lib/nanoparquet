@@ -1498,7 +1498,23 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
       if (Rf_isNull(el)) {
         continue;
       }
-      if (TYPEOF(el) != RAWSXP) {
+      if (TYPEOF(el) == STRSXP) {
+        R_xlen_t nel = Rf_xlength(el);
+        for (R_xlen_t j = 0; j < nel; j++) {
+          SEXP csxp = STRING_ELT(el, j);
+          if (csxp == NA_STRING) {
+            continue;
+          }
+          const char *c = CHAR(csxp);
+          uint32_t len1 = strlen(c);
+          file.write((const char*) &len1, 4);
+          file.write(c, len1);
+        }
+      } else if (TYPEOF(el) == RAWSXP) {
+        uint32_t len1 = Rf_xlength(el);
+        file.write((const char*) &len1, sizeof(uint32_t));
+        file.write((const char*) RAW(el), len1);
+      } else {
         r_call([&] {
           Rf_errorcall(                                                       // # nocov
             nanoparquet_call,                                                 // # nocov
@@ -1507,9 +1523,6 @@ void RParquetOutFile::write_byte_array(std::ostream &file, uint32_t idx,
           );
         });
       }
-      uint32_t len1 = Rf_xlength(el);
-      file.write((const char*) &len1, sizeof(uint32_t));
-      file.write((const char*) RAW(el), len1);
     }
     break;
   }
@@ -1558,7 +1571,18 @@ uint32_t RParquetOutFile::get_size_byte_array(
       if (Rf_isNull(el)) {
         continue;
       }
-      if (TYPEOF(el) != RAWSXP) {
+      if (TYPEOF(el) == STRSXP) {
+        R_xlen_t nel = Rf_xlength(el);
+        for (R_xlen_t j = 0; j < nel; j++) {
+          SEXP csxp = STRING_ELT(el, j);
+          if (csxp != NA_STRING) {
+            const char *c = CHAR(csxp);
+            size += strlen(c) + 4;
+          }
+        }
+      } else if (TYPEOF(el) == RAWSXP) {
+        size += Rf_xlength(el) + 4;
+      } else {
         r_call([&] {
           Rf_errorcall(
             nanoparquet_call,
@@ -1567,7 +1591,6 @@ uint32_t RParquetOutFile::get_size_byte_array(
           );
         });
       }
-      size += Rf_xlength(el) + 4;
     }
     break;
   }
