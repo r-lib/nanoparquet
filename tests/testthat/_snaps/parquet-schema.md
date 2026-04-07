@@ -825,11 +825,6 @@
       Error in `timestamp()`:
       ! unit %in% c("MILLIS", "MICROS", "NANOS") is not TRUE
     Code
-      parquet_type("LIST")
-    Condition
-      Error in `err()`:
-      ! Parquet type 'LIST' is not supported by nanoparquet
-    Code
       parquet_type("MAP")
     Condition
       Error in `err()`:

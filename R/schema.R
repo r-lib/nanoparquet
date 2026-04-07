@@ -116,36 +116,60 @@ parquet_schema_create <- function(types) {
   ptypes <- lapply(types, function(t) do.call(parquet_type, as.list(t)))
   nms <- names(types) %||% rep("", length(types))
   nms[nms == ""] <- NA_character_
-  na <- rep(NA, length(ptypes))
+
+  normalize <- function(x, nm) {
+    na <- rep(NA_character_, length(x$type))
+    nai <- rep(NA_integer_, length(x$type))
+    x$file_name <- na
+    if (is.null(x$name)) {
+      x$name <- nm
+    } else {
+      x$name[1] <- nm
+    }
+    x$type <- x$type %||% NA_character_
+    x$r_type <- na
+    x$type_length <- x$type_length %||% nai
+    x$repetition_type <- x$repetition_type %||% na
+    x$converted_type <- x$converted_type %||% na
+    x$num_children <- x$num_children %||% nai
+    x$scale <- x$scale %||% nai
+    x$precision <- x$precision %||% nai
+    x$field_id <- nai
+    x
+  }
+
+  ptypes <- mapply(FUN = normalize, ptypes, nms, SIMPLIFY = FALSE)
+
   ptdf <- data.frame(
-    file_name = as.character(na),
-    name = nms,
-    r_type = as.character(na),
-    type = map_chr(ptypes, "[[", "type"),
-    type_length = map_int(
-      ptypes,
-      function(x) x[["type_length"]] %||% NA_integer_
-    ),
-    repetition_type = map_chr(
-      ptypes,
-      function(x) x[["repetition_type"]] %||% NA_character_
-    ),
-    converted_type = map_chr(
-      ptypes,
-      function(x) x[["converted_type"]] %||% NA_character_
-    ),
-    logical_type = I(unname(lapply(ptypes, "[[", "logical_type"))),
-    num_children = as.integer(na),
-    scale = map_int(
-      ptypes,
-      function(x) x[["scale"]] %||% NA_integer_
-    ),
-    precision = map_int(
-      ptypes,
-      function(x) x[["precision"]] %||% NA_integer_
-    ),
-    field_id = as.integer(na)
+    file_name = unlist(lapply(ptypes, "[[", "file_name")),
+    name = unlist(lapply(ptypes, "[[", "name")),
+    r_type = unlist(lapply(ptypes, "[[", "r_type")),
+    type = unlist(lapply(ptypes, "[[", "type")),
+    type_length = unlist(lapply(ptypes, "[[", "type_length")),
+    repetition_type = unlist(lapply(ptypes, "[[", "repetition_type")),
+    converted_type = unlist(lapply(ptypes, "[[", "converted_type")),
+    logical_type = if (length(ptypes) == 0) {
+      I(list())
+    } else {
+      I(unlist(
+        lapply(ptypes, function(x) {
+          lt <- x$logical_type
+          if (is.null(lt) || inherits(lt, "nanoparquet_logical_type")) {
+            list(lt)
+          } else {
+            lt
+          }
+        }),
+        recursive = FALSE,
+        use.names = FALSE
+      ))
+    },
+    num_children = unlist(lapply(ptypes, "[[", "num_children")),
+    scale = unlist(lapply(ptypes, "[[", "scale")),
+    precision = unlist(lapply(ptypes, "[[", "precision")),
+    field_id = unlist(lapply(ptypes, "[[", "field_id"))
   )
+
   class(ptdf) <- c("nanoparquet_schema", "tbl", class(ptdf))
   ptdf
 }
@@ -161,7 +185,8 @@ parquet_type <- function(
   unit = NULL,
   primitive_type = NULL,
   repetition_type = NULL,
-  encoding = NULL
+  encoding = NULL,
+  element = NULL
 ) {
   fixed_len_byte_array <- function() {
     stopifnot(
@@ -185,11 +210,11 @@ parquet_type <- function(
     )
     r <- list(
       type = if (bit_width <= 32L) "INT32" else "INT64",
-      logical_type = list(
+      logical_type = nanoparquet_logical_type(list(
         type = "INT",
         bit_width = as.integer(bit_width),
         is_signed = is_signed
-      )
+      ))
     )
     bit_width <<- NULL
     is_signed <<- NULL
@@ -220,11 +245,11 @@ parquet_type <- function(
     }
     r <- list(
       type = primitive_type,
-      logical_type = list(
+      logical_type = nanoparquet_logical_type(list(
         type = "DECIMAL",
         scale = if (!is.null(scale)) as.integer(scale),
         precision = as.integer(precision)
-      ),
+      )),
       scale = as.integer(scale %||% 0),
       precision = as.integer(precision)
     )
@@ -248,11 +273,11 @@ parquet_type <- function(
     )
     r <- list(
       type = if (unit == "MILLIS") "INT32" else "INT64",
-      logical_type = list(
+      logical_type = nanoparquet_logical_type(list(
         type = "TIME",
         is_adjusted_utc = is_adjusted_utc,
         unit = unit
-      )
+      ))
     )
     is_adjusted_utc <<- NULL
     unit <<- NULL
@@ -269,14 +294,24 @@ parquet_type <- function(
     )
     r <- list(
       type = "INT64",
-      logical_type = list(
+      logical_type = nanoparquet_logical_type(list(
         type = "TIMESTAMP",
         is_adjusted_utc = is_adjusted_utc,
         unit = unit
-      )
+      ))
     )
     is_adjusted_utc <<- NULL
     unit <<- NULL
+    r
+  }
+
+  nested_list <- function() {
+    stopifnot(!is.null(element))
+    if (!is.null(element$repetition_type)) {
+      stop("Custom repetition_type is not yet supported for LIST columns")
+    }
+    r <- do.call("parquet_type", as.list(element))
+    element <<- NULL
     r
   }
 
@@ -304,15 +339,15 @@ parquet_type <- function(
     # logical types
     STRING = list(
       type = "BYTE_ARRAY",
-      logical_type = list(type = "STRING")
+      logical_type = nanoparquet_logical_type(list(type = "STRING"))
     ),
     ENUM = list(
       type = "BYTE_ARRAY",
-      logical_type = list(type = "ENUM")
+      logical_type = nanoparquet_logical_type(list(type = "ENUM"))
     ),
     UUID = list(
       type = "FIXED_LEN_BYTE_ARRAY",
-      logical_type = list(type = "UUID"),
+      logical_type = nanoparquet_logical_type(list(type = "UUID")),
       type_length = 16L
     ),
     INTEGER = int(),
@@ -320,27 +355,47 @@ parquet_type <- function(
     DECIMAL = decimal(),
     FLOAT16 = list(
       type = "FIXED_LEN_BYTE_ARRAY",
-      logical_type = list(type = "FLOAT16"),
+      logical_type = nanoparquet_logical_type(list(type = "FLOAT16")),
       type_length = 2L
     ),
-    DATE = list(type = "INT32", logical_type = list(type = "DATE")),
+    DATE = list(
+      type = "INT32",
+      logical_type = nanoparquet_logical_type(list(type = "DATE"))
+    ),
     TIME = time(),
     TIMESTAMP = timestamp(),
     # There is no INTERVAL logical type? What's going on here?
     # INTERVAL = list(
     #   type = "FIXED_LEN_BYTE_ARRAY",
-    #   logical_type = list(type = "INTERVAL"),
+    #   logical_type = nanoparquet_logical_type(list(type = "INTERVAL")),
     #   type_length = 12L
     # ),
     JSON = list(
       type = "BYTE_ARRAY",
-      logical_type = list(type = "JSON")
+      logical_type = nanoparquet_logical_type(list(type = "JSON"))
     ),
     BSON = list(
       type = "BYTE_ARRAY",
-      logical_type = list(type = "BSON")
+      logical_type = nanoparquet_logical_type(list(type = "BSON"))
     ),
-    LIST = err("LIST"),
+    LIST = {
+      nl <- nested_list()
+      list(
+        name = c(NA_character_, "list", "element"),
+        type = c(NA_character_, NA_character_, nl$type),
+        logical_type = list(
+          nanoparquet_logical_type(list(type = "LIST")),
+          NULL,
+          nl$logical_type
+        ),
+        converted_type = c(
+          "LIST",
+          NA_character_,
+          nl$converted_type %||% NA_character_
+        ),
+        repetition_type = c("OPTIONAL", "REPEATED", "OPTIONAL")
+      )
+    },
     MAP = err("MAP"),
     UNKNOWN = err("UNKNOWN"),
 
@@ -435,12 +490,18 @@ parquet_type <- function(
   )
 
   if (!is.null(ptype[["logical_type"]])) {
-    class(ptype[["logical_type"]]) <- "nanoparquet_logical_type"
-    ct <- logical_to_converted(ptype[["logical_type"]])
-    ptype[names(ct)] <- ct
+    if (is.null(ptype[["converted_type"]])) {
+      ct <- logical_to_converted(ptype[["logical_type"]])
+      ptype[names(ct)] <- ct
+    }
   }
 
   ptype
+}
+
+nanoparquet_logical_type <- function(x) {
+  class(x) <- "nanoparquet_logical_type"
+  x
 }
 
 logical_to_converted <- function(logical_type) {
