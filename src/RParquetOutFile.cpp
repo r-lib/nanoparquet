@@ -870,6 +870,28 @@ void RParquetOutFile::write_list_int32(std::ostream &file, SEXP col,
                                        uint32_t idx, uint64_t from,
                                        uint64_t until,
                                        parquet::SchemaElement &sel) {
+
+  if (sel.__isset.logicalType && sel.logicalType.__isset.INTEGER) {
+    bool is_signed = sel.logicalType.INTEGER.isSigned;
+    int bit_width = sel.logicalType.INTEGER.bitWidth;
+    if (!is_signed) {
+      r_call([&] {
+        Rf_errorcall(
+          nanoparquet_call,
+          "Only signed integers are supported in Parquet list columns."
+        );
+      });
+    }
+    if (bit_width != 32) {
+      r_call([&] {
+        Rf_errorcall(
+          nanoparquet_call,
+          "Only bit_width = 32 is supported in Parquet list columns."
+        );
+      });
+    }
+  }
+
   for (uint64_t i = from; i < until; i++) {
     SEXP elt = VECTOR_ELT(col, i);
     if (Rf_isNull(elt)) continue;
