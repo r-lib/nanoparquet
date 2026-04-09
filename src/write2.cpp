@@ -203,7 +203,7 @@ SEXP rf_nanoparquet_logical_to_converted(SEXP logical_type) noexcept {
 SEXP rf_nanoparquet_map_to_parquet_types(SEXP df, SEXP options) noexcept {
   R_xlen_t nc = Rf_xlength(df);
   SEXP res = PROTECT(Rf_allocVector(VECSXP, nc));
-  SEXP nms = Rf_getAttrib(df, R_NamesSymbol);
+  SEXP nms = PROTECT(Rf_getAttrib(df, R_NamesSymbol));
 
   CPP_INIT;
 
@@ -240,7 +240,7 @@ SEXP rf_nanoparquet_map_to_parquet_types(SEXP df, SEXP options) noexcept {
     }
   }
 
-  UNPROTECT(1);
+  UNPROTECT(2);
   return res;
 }
 
