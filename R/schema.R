@@ -307,7 +307,7 @@ parquet_type <- function(
 
   nested_list <- function() {
     stopifnot(!is.null(element))
-    if (!is.null(element$repetition_type)) {
+    if (is.list(element) && !is.null(element$repetition_type)) {
       stop("Custom repetition_type is not yet supported for LIST columns")
     }
     r <- do.call("parquet_type", as.list(element))
