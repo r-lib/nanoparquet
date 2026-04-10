@@ -40,6 +40,30 @@ test_that("BOOLEAN", {
   })
 })
 
+test_that("BOOLEAN multi-page round-trip (issue #142)", {
+  # With NANOPARQUET_PAGE_SIZE=1024 (1KB), a BOOLEAN column needs ~8192 rows per
+  # page. Use 20000 rows to force 3 pages, exposing a bug where the second page
+  # was decoded to the same memory offset as the first (psize was 0 for BOOLEAN).
+  set.seed(42)
+  n <- 20000L
+  x <- sample(c(TRUE, FALSE, NA), n, replace = TRUE, prob = c(0.9, 0.05, 0.05))
+  d <- data.frame(l = x)
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  withr::with_envvar(c(NANOPARQUET_PAGE_SIZE = "1024"), {
+    write_parquet(d, tmp, encoding = "RLE")
+    d2 <- as.data.frame(read_parquet(tmp))
+  })
+  expect_equal(d, d2)
+
+  withr::with_envvar(c(NANOPARQUET_PAGE_SIZE = "1024"), {
+    write_parquet(d, tmp, encoding = "PLAIN")
+    d2 <- as.data.frame(read_parquet(tmp))
+  })
+  expect_equal(d, d2)
+})
+
 test_that("INT32", {
   do <- function(d) {
     test_write(d)

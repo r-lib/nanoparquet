@@ -2,6 +2,13 @@
 
 * `append_parquet()` now creates a new file if `file` does not exist (#155).
 
+* `read_parquet()` now reads logical (BOOLEAN) columns correctly when the
+  column spans multiple data pages (#142).
+
+* `write_parquet()` now writes files larger than 4 GB correctly. File offsets
+  and column sizes were stored as 32-bit integers and overflowed, producing
+  corrupt Parquet files that could not be read back (#143).
+
 * `write_parquet()` now handles data frames with zero rows correctly,
   including zero-column data frames (#138).
 
