@@ -3,6 +3,12 @@
 ## nanoparquet (development version)
 
 - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now writes files larger than 4 GB correctly. File offsets and column
+  sizes were stored as 32-bit integers and overflowed, producing corrupt
+  Parquet files that could not be read back
+  ([\#143](https://github.com/r-lib/nanoparquet/issues/143)).
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
   now handles data frames with zero rows correctly, including
   zero-column data frames
   ([\#138](https://github.com/r-lib/nanoparquet/issues/138)).
