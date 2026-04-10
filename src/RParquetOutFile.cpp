@@ -2825,14 +2825,68 @@ void RParquetOutFile::init_metadata(
   min_values.resize(nc);
   max_values.resize(nc);
 
+  // Build per-column row index from r_col (schema column 1).
+  // All rows for R column i (1-based) have r_col == i.
+  int *r_col = INTEGER(VECTOR_ELT(schema, 1));
+  int schema_nrows = (int) Rf_xlength(VECTOR_ELT(schema, 1));
+  std::vector<std::vector<int>> col_rows((int) nc);
+  for (int sr = 0; sr < schema_nrows; sr++) {
+    int rc = r_col[sr];
+    if (rc != NA_INTEGER && rc >= 1 && rc <= (int) nc) {
+      col_rows[rc - 1].push_back(sr);
+    }
+  }
+
+  static const char *parquet_type_names[] = {
+    "BOOLEAN", "INT32", "INT64", "INT96", "FLOAT", "DOUBLE",
+    "BYTE_ARRAY", "FIXED_LEN_BYTE_ARRAY"
+  };
+
   for (R_xlen_t idx = 0; idx < nc; idx++) {
+    // first_sr: top-level row for this column (carries the column type for
+    // flat columns, or NA for the LIST group).
+    // last_sr:  leaf/element row (carries the user-specified element type for
+    // LIST columns).
+    int first_sr = col_rows[idx].empty() ? (int)idx : col_rows[idx].front();
+    int last_sr  = col_rows[idx].empty() ? (int)idx : col_rows[idx].back();
+    bool is_list_col = (int)col_rows[idx].size() > 1;
+
     SEXP col = VECTOR_ELT(dfsxp, idx);
     bool req = LOGICAL(required)[idx];
     std::string name = CHAR(STRING_ELT(nms, idx));
     std::string rtypename;
-    nanoparquet::SchemaElementEx sels = type[idx] == NA_INTEGER ?
-      nanoparquet_map_to_parquet_type(col, options, rtypename, name, req) :
-      schema_from_supplied(name, req, idx, type[idx], type_length, converted_type, logical_type, scale, precision);
+    nanoparquet::SchemaElementEx sels;
+    if (type[first_sr] == NA_INTEGER) {
+      sels = nanoparquet_map_to_parquet_type(col, options, rtypename, name, req);
+      // If this is a multi-row schema group (user specified a LIST element type),
+      // validate that the auto-detected element type matches.
+      if (is_list_col && type[last_sr] != NA_INTEGER) {
+        if (sels.elements.size() != 3) {
+          Rf_error(
+            "Column '%s' must be a list to be written as a Parquet LIST type, "
+            "got '%s'.",
+            name.c_str(), rtypename.c_str()
+          );
+        }
+        parquet::Type::type detected = sels.elements.back().type;
+        parquet::Type::type user_t   = (parquet::Type::type) type[last_sr];
+        if (detected != user_t) {
+          const char *det_nm = (detected >= 0 && detected <= 7)
+            ? parquet_type_names[detected] : "unknown";
+          const char *usr_nm = (user_t >= 0 && user_t <= 7)
+            ? parquet_type_names[user_t] : "unknown";
+          Rf_error(
+            "Cannot write column '%s' as Parquet LIST<%s>: "
+            "detected element type is %s.",
+            name.c_str(), usr_nm, det_nm
+          );
+        }
+      }
+    } else {
+      sels = schema_from_supplied(name, req, first_sr, type[first_sr],
+                                  type_length, converted_type, logical_type,
+                                  scale, precision);
+    }
 
     if (!write_minmax_values || sels.elements.size() != 1) {
       // nothing to do

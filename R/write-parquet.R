@@ -101,8 +101,9 @@ write_parquet <- function(
     }
   }
 
-  schema <- check_schema_required_cols(x, schema)
-  required <- schema[["repetition_type"]] == "REQUIRED"
+  schema_top <- schema[!duplicated(schema[["r_col"]]), ]
+  schema_top <- check_schema_required_cols(x, schema_top)
+  required   <- schema_top[["repetition_type"]] == "REQUIRED"
 
   encoding <- parse_encoding(encoding, x)
 
@@ -366,8 +367,9 @@ append_parquet <- function(
   mtd <- read_parquet_metadata(file)
   schema <- read_parquet_schema(file)
   schema <- map_schema_to_df(schema, x, list())
-  schema <- check_schema_required_cols(x, schema)
-  required <- schema[["repetition_type"]] == "REQUIRED"
+  schema_top <- schema[!duplicated(schema[["r_col"]]), ]
+  schema_top <- check_schema_required_cols(x, schema_top)
+  required   <- schema_top[["repetition_type"]] == "REQUIRED"
   encoding <- parse_encoding(encoding, x)
 
   nrow_file <- as.integer(mtd$file_meta_data$num_rows)

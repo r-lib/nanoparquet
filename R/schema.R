@@ -400,7 +400,8 @@ parquet_type <- function(
           NA_character_,
           nl$converted_type %||% NA_character_
         ),
-        repetition_type = c("OPTIONAL", "REPEATED", "OPTIONAL")
+        repetition_type = c("OPTIONAL", "REPEATED", "OPTIONAL"),
+        num_children = c(1L, 1L, NA_integer_)
       )
     },
     MAP = err("MAP"),
@@ -522,18 +523,23 @@ map_schema_to_df <- function(schema, df, options) {
     is.null(schema) || is.data.frame(schema),
     is.data.frame(df)
   )
-  # no need to deal with internal nodes for now
-  schema <- schema[is.na(schema[["num_children"]]), ]
-  nms <- schema$name
+  # Remove root node (r_col = NA, present only in file-read schemas).
+  schema <- schema[!is.na(schema[["r_col"]]), ]
 
-  schema <- if (is.null(schema)) {
+  # All remaining rows are passed to C++. Use r_col to find the top-level row
+  # of each R column (first row per r_col group), which carries the column name.
+  rcol <- schema[["r_col"]]
+  top  <- !duplicated(rcol)
+  nms  <- schema$name[top]
+
+  if (is.null(schema)) {
     # no schema at all, everything auto-detected
-    do.call(
+    schema <- do.call(
       "parquet_schema",
       structure(as.list(rep("AUTO", ncol(df))), names = names(df))
     )
   } else if (!is.null(nms) && !anyNA(nms) && !any(nms == "")) {
-    # all properly named
+    # all properly named — match against df columns
     dfmiss <- setdiff(nms, names(df))
     if (length(dfmiss) > 0) {
       stop(
@@ -543,16 +549,36 @@ map_schema_to_df <- function(schema, df, options) {
         paste(dfmiss, collapse = ", ")
       )
     }
-    # add AUTO to missing columns
+    # add AUTO rows for df columns not in the schema
     smiss <- setdiff(names(df), nms)
-    auto <- do.call(
+    auto  <- do.call(
       "parquet_schema",
       structure(as.list(rep("AUTO", length(smiss))), names = smiss)
     )
-    schema <- rbind(schema, auto)
-    schema[match(names(df), schema$name), ]
+    # Reorder all rows (grouped by r_col) to match df column order.
+    top_rcols  <- rcol[top]
+    schema_nms <- setdiff(names(df), smiss)
+    col_order  <- match(schema_nms, nms)
+    ordered_rows <- unlist(lapply(col_order, function(i) {
+      which(rcol == top_rcols[i])
+    }))
+    schema <- schema[ordered_rows, ]
+    # Renumber r_col: each column gets its position in the df.
+    new_rcol <- unlist(lapply(seq_along(col_order), function(i) {
+      rep(match(schema_nms[i], names(df)),
+          sum(rcol == top_rcols[col_order[i]]))
+    }))
+    schema[["r_col"]] <- new_rcol
+    # Append AUTO rows (one row each, r_col = position in df).
+    if (nrow(auto) > 0) {
+      auto[["r_col"]] <- match(smiss, names(df))
+      schema <- rbind(schema, auto)
+    }
+    schema <- schema[order(schema[["r_col"]]), ]
   } else {
-    if (nrow(schema) != ncol(df)) {
+    # unnamed / partially named
+    n_top <- sum(top)
+    if (n_top != ncol(df)) {
       stop(
         "Parquet schema size does not match data size. ",
         "They must match, unless the schema is fully named."
@@ -560,7 +586,6 @@ map_schema_to_df <- function(schema, df, options) {
     }
     if (is.null(nms) || all(is.na(nms) | nms == "")) {
       # no names at all, ok
-      schema
     } else {
       # some names, those must match
       if (is.na(nms) | nms == names(df)) {
@@ -568,7 +593,6 @@ map_schema_to_df <- function(schema, df, options) {
           "Parquet schema names do not fully match data frame names."
         )
       }
-      schema
     }
   }
 
