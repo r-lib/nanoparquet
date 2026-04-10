@@ -1,15 +1,14 @@
 # nanoparquet (development version)
 
-* `append_parquet()` now gives a clear error when appending data with missing
-  values (`NA`) to a column that was written as `REQUIRED` (i.e. non-nullable).
-  Previously this caused a cryptic internal error (#146).
+* `append_parquet()` now gives a clear error when appending data with
+  missing values (`NA`) to a column that was written as `REQUIRED` (i.e.
+  non-nullable) (#146).
 
 * `append_parquet()` now creates a new file if `file` does not exist (#155).
 
 * `read_parquet()` now correctly reads `DECIMAL` values stored as
   `FIXED_LEN_BYTE_ARRAY` with a byte length greater than 8 (e.g. 128-bit
-  decimals). Previously only the lower 64 bits were used, producing wrong
-  results (#148).
+  decimals) (#148).
 
 * `write_parquet()` now sets the `definition_level_encoding` and
   `repetition_level_encoding` fields in data page headers to `RLE` for all
@@ -30,7 +29,7 @@
 * `write_parquet()` now handles data frames with zero rows correctly,
   including zero-column data frames (#138).
 
-* `read_parquet()` no longer segfaults when reading a Parquet file with
+* `read_parquet()` no longer crashes when reading a Parquet file with
   zero columns (#138).
 
 * nanoparquet now supports Parquet `LIST` columns:
