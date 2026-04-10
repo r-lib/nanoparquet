@@ -46,7 +46,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="nanoparquet-development-version">nanoparquet (development version)<a class="anchor" aria-label="anchor" href="#nanoparquet-development-version"></a></h2>
-<ul><li>
+<ul><li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now handles data frames with zero rows correctly, including zero-column data frames (<a href="https://github.com/r-lib/nanoparquet/issues/138" class="external-link">#138</a>).</p></li>
+<li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> no longer segfaults when reading a Parquet file with zero columns (<a href="https://github.com/r-lib/nanoparquet/issues/138" class="external-link">#138</a>).</p></li>
+<li>
 <p>nanoparquet now supports Parquet <code>LIST</code> columns:</p>
 <ul><li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> can write R list columns whose elements are integer, double, or character vectors. <code>NULL</code> entries encode a missing list, <code>NA</code> values inside an element vector encode a missing element, and zero-length vectors encode an empty list.</p></li>
 <li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> can read <code>LIST</code> columns with any supported scalar element type. All four combinations of optional/required outer list and optional/required element are supported, for both data page version 1 and version 2.</p></li>

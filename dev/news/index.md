@@ -2,6 +2,15 @@
 
 ## nanoparquet (development version)
 
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now handles data frames with zero rows correctly, including
+  zero-column data frames
+  ([\#138](https://github.com/r-lib/nanoparquet/issues/138)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  no longer segfaults when reading a Parquet file with zero columns
+  ([\#138](https://github.com/r-lib/nanoparquet/issues/138)).
+
 - nanoparquet now supports Parquet `LIST` columns:
 
   - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
