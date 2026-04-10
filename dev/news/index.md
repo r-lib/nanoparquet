@@ -2,6 +2,11 @@
 
 ## nanoparquet (development version)
 
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now reads logical (BOOLEAN) columns correctly when the column spans
+  multiple data pages
+  ([\#142](https://github.com/r-lib/nanoparquet/issues/142)).
+
 - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
   now writes files larger than 4 GB correctly. File offsets and column
   sizes were stored as 32-bit integers and overflowed, producing corrupt
