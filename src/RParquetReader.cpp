@@ -98,6 +98,7 @@ void RParquetReader::init(RParquetFilter &filter) {
   chunk_parts.resize(metadata.num_cols_to_read);
   byte_arrays.resize(metadata.num_cols_to_read);
   present.resize(metadata.num_cols_to_read);
+  metadata.rg_repeat_offsets.resize(metadata.num_cols_to_read);
 
   for (auto i = 0, idx = 0, meta_idx = 0; i < metadata.num_cols; i++) {
     // skip non-leaf columns
@@ -114,8 +115,10 @@ void RParquetReader::init(RParquetFilter &filter) {
     uint64_t num_values = metadata.num_rows;
     if (rt.repeated) {
       num_values = 0;
-      for (auto rg : file_meta_data_.row_groups) {
-         num_values += rg.columns[meta_idx].meta_data.num_values;
+      metadata.rg_repeat_offsets[idx].resize(metadata.num_row_groups);
+      for (size_t rgi = 0; rgi < file_meta_data_.row_groups.size(); rgi++) {
+        metadata.rg_repeat_offsets[idx][rgi] = (int64_t) num_values;
+        num_values += file_meta_data_.row_groups[rgi].columns[meta_idx].meta_data.num_values;
       }
       SET_VECTOR_ELT(repeats, idx, Rf_allocVector(RAWSXP, num_values));
       metadata.repeatptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(repeats, idx));
@@ -538,14 +541,26 @@ void RParquetReader::alloc_data_page(DataPage &data) {
   }
 
   if (data.cc.max_rep_level > 0) {
-    data.repeat = metadata.repeatptr[cl] + data.from;
+    int64_t rg_rep_off = metadata.rg_repeat_offsets[cl].empty()
+      ? 0 : metadata.rg_repeat_offsets[cl][rg];
+    data.repeat = metadata.repeatptr[cl] + rg_rep_off + data.from;
   }
 
   if (is_index) {
       data.data = (uint8_t*) (dicts[cl][rg].indices.data() + page_off);
 
   } else if (!rt.byte_array) {
-    int64_t off = metadata.row_group_offsets[rg];
+    int64_t off;
+    if (!metadata.rg_repeat_offsets[cl].empty() && !present[cl].empty()) {
+      // For repeated columns, use cumulative present count from previous row
+      // groups so that actual (non-NA) values are stored contiguously.
+      off = 0;
+      for (auto prev_rg = 0; prev_rg < rg; prev_rg++) {
+        off += present[cl][prev_rg].num_present;
+      }
+    } else {
+      off = metadata.row_group_offsets[rg];
+    }
     if (tmpdata[cl].size() > 0) {
       // only for int96 currently
       data.data = tmpdata[cl].data() + off * rt.elsize + page_off * rt.psize;
@@ -554,7 +569,16 @@ void RParquetReader::alloc_data_page(DataPage &data) {
     }
   } else {
     tmpbytes bapage;
-    bapage.from = metadata.row_group_offsets[rg] + page_off;
+    int64_t rg_off;
+    if (!metadata.rg_repeat_offsets[cl].empty() && !present[cl].empty()) {
+      rg_off = 0;
+      for (auto prev_rg = 0; prev_rg < rg; prev_rg++) {
+        rg_off += present[cl][prev_rg].num_present;
+      }
+    } else {
+      rg_off = metadata.row_group_offsets[rg];
+    }
+    bapage.from = rg_off + page_off;
     bapage.buffer.resize(data.strs.total_len);
     bapage.offsets.resize(data.num_present);
     bapage.lengths.resize(data.num_present);
@@ -587,7 +611,9 @@ void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     if (pp->dicts[cl][rg].dict_len == 0) continue;
     std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
-    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    int64_t rg_offset = pp->metadata.rg_repeat_offsets[cl].empty()
+      ? pp->metadata.row_group_offsets[rg]
+      : pp->metadata.rg_repeat_offsets[cl][rg];
     for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
       if (!cps[cpi].dict) continue;
       int64_t cp_offset = cps[cpi].offset;

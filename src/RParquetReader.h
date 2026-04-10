@@ -62,6 +62,9 @@ public:
   size_t num_row_groups;
   std::vector<int64_t> row_group_num_rows;
   std::vector<int64_t> row_group_offsets;
+  // For repeated (list) columns: cumulative rep/def entry count before each
+  // row group, per column. Indexed [col][rg]. Empty for non-repeated columns.
+  std::vector<std::vector<int64_t>> rg_repeat_offsets;
   std::vector<rtype> r_types;
   std::vector<uint8_t*> dataptr;
   std::vector<uint8_t*> repeatptr;
