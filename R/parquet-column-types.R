@@ -107,6 +107,16 @@ add_r_type_to_schema <- function(mtd, sch, options, col_select = NULL) {
     sch$converted_type == "DATE"
   sch$r_type[dates] <- "Date"
 
+  int64s <- vapply(
+    sch$logical_type,
+    function(lt) {
+      !is.null(lt$type) && lt$type == "INT" &&
+        !is.null(lt$bit_width) && lt$bit_width == 64L
+    },
+    logical(1)
+  ) | (!is.na(sch$converted_type) & sch$converted_type == "INT_64")
+  sch$r_type[int64s] <- "integer64"
+
   hmss <- vapply(
     sch$logical_type,
     function(lt) !is.null(lt$type) && lt$type == "TIME",

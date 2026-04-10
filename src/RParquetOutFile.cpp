@@ -2387,6 +2387,22 @@ void RParquetOutFile::write_dictionary(
         int64_t el = icol[iidx[i]] * fact;
         file.write((const char*) &el, sizeof(int64_t));
       }
+    } else if (Rf_inherits(col, "integer64")) {
+      if (type != parquet::Type::INT64) {
+        r_call([&] {
+          Rf_errorcall(
+            nanoparquet_call,
+            "Cannot convert an integer64 vector to Parquet type %s.",
+            parquet::_Type_VALUES_TO_NAMES.at(type)
+          );
+        });
+      }
+      // integer64 stores int64 values as raw bytes in REALSXP
+      for (auto i = 0; i < len; i++) {
+        int64_t el;
+        memcpy(&el, &icol[iidx[i]], sizeof(int64_t));
+        file.write((const char*) &el, sizeof(int64_t));
+      }
     } else if (Rf_inherits(col, "hms")) {
       double fact;
       is_time(sel, fact);
