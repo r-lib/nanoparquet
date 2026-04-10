@@ -1,5 +1,7 @@
 # nanoparquet (development version)
 
+* `append_parquet()` now creates a new file if `file` does not exist (#155).
+
 * `read_parquet()` now correctly reads `DECIMAL` values stored as
   `FIXED_LEN_BYTE_ARRAY` with a byte length greater than 8 (e.g. 128-bit
   decimals). Previously only the lower 64 bits were used, producing wrong

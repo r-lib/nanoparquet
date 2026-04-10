@@ -1,3 +1,13 @@
+test_that("append_parquet creates file if it doesn't exist", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df1 <- test_df()
+  append_parquet(df1, tmp)
+  expect_true(file.exists(tmp))
+  expect_equal(read_parquet(tmp), df1)
+})
+
 test_that("keep all row groups", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

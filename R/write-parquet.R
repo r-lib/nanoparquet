@@ -370,6 +370,18 @@ append_parquet <- function(
   options = parquet_options()
 ) {
   file <- path.expand(file)
+
+  if (!file.exists(file)) {
+    return(write_parquet(
+      x,
+      file,
+      compression = compression,
+      encoding = encoding,
+      row_groups = row_groups,
+      options = options
+    ))
+  }
+
   compression <- parse_compression(compression, options)
 
   x <- prepare_write_df(x)
