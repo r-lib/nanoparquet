@@ -272,7 +272,7 @@ rtype::rtype(
   case parquet::Type::BOOLEAN:
     type = tmptype = LGLSXP;
     elsize = sizeof(int);
-    psize = 0; // not really true or course...
+    psize = sizeof(int);
     break;
   case parquet::Type::INT32:
     type = tmptype = INTSXP;
