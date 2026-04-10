@@ -1,5 +1,11 @@
 # nanoparquet (development version)
 
+* `write_parquet()` now handles data frames with zero rows correctly,
+  including zero-column data frames (#138).
+
+* `read_parquet()` no longer segfaults when reading a Parquet file with
+  zero columns (#138).
+
 * nanoparquet now supports Parquet `LIST` columns:
 
   - `write_parquet()` can write R list columns whose elements are integer,

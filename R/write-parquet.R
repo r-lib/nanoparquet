@@ -254,6 +254,7 @@ parse_encoding <- function(encoding, x) {
 
 # we should refine this later
 default_row_groups <- function(x, schema, compression, encoding, options) {
+  if (nrow(x) == 0L) return(integer(0))
   default_size <- options[["num_rows_per_row_group"]]
   seq(1L, nrow(x), by = default_size)
 }
@@ -283,6 +284,15 @@ default_append_row_groups <- function(
 }
 
 parse_row_groups <- function(x, rg) {
+  if (length(rg) == 0L) {
+    if (!is.integer(rg)) {
+      stop(
+        "Row groups must be specified as a growing positive integer ",
+        "vector, starting with 1."
+      )
+    }
+    return(list(x = x, row_groups = rg))
+  }
   if (
     !is.integer(rg) ||
       anyNA(rg) ||

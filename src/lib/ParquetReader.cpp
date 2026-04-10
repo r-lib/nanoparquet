@@ -140,7 +140,7 @@ void ParquetReader::init_file_on_disk(bool readwrite) {
       max_definition_level[i]++;
     }
 
-    is_leaf[i] = !sel.__isset.num_children || sel.num_children == 0;
+    is_leaf[i] = i > 0 && (!sel.__isset.num_children || sel.num_children == 0);
     if (!is_leaf[i]) {
       leaf_cols[i] = -1;
       for (int j = 0; j < sel.num_children; j++) {
@@ -167,9 +167,9 @@ void ParquetReader::check_meta_data() {
   }
 
   // check if we like this schema
-  if (file_meta_data_.schema.size() < 2) {
+  if (file_meta_data_.schema.size() < 1) {
     std::stringstream ss;
-    ss << "Need at least one column, could not read Parquet file at '"
+    ss << "Invalid schema (no root element), could not read Parquet file at '"
        << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
     throw runtime_error(ss.str());
   }

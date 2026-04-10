@@ -310,3 +310,39 @@ test_that("list(character()) dictionary encoding", {
   expect_equal(df2$x, df$x)
   expect_equal(df2$y, df$y)
 })
+
+test_that("write and read zero columns, zero rows", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame()
+  write_parquet(df, tmp)
+  df2 <- read_parquet(tmp)
+  expect_equal(ncol(df2), 0L)
+  expect_equal(nrow(df2), 0L)
+  expect_equal(
+    read_parquet_metadata(tmp)$file_meta_data$num_rows,
+    0L
+  )
+})
+
+test_that("write and read zero rows", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame(
+    i = integer(),
+    d = double(),
+    s = character(),
+    l = logical()
+  )
+  write_parquet(df, tmp)
+  df2 <- read_parquet(tmp)
+  expect_equal(nrow(df2), 0L)
+  expect_equal(ncol(df2), 4L)
+  expect_equal(names(df2), c("i", "d", "s", "l"))
+  expect_equal(
+    read_parquet_metadata(tmp)$file_meta_data$num_rows,
+    0L
+  )
+})

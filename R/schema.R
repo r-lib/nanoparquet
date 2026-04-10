@@ -119,6 +119,25 @@ parquet_schema <- function(...) {
 }
 
 parquet_schema_create <- function(types) {
+  if (length(types) == 0) {
+    ptdf <- data.frame(
+      file_name = character(),
+      r_col = integer(),
+      name = character(),
+      r_type = character(),
+      type = character(),
+      type_length = integer(),
+      repetition_type = character(),
+      converted_type = character(),
+      logical_type = I(list()),
+      num_children = integer(),
+      scale = integer(),
+      precision = integer(),
+      field_id = integer()
+    )
+    class(ptdf) <- c("nanoparquet_schema", "tbl", class(ptdf))
+    return(ptdf)
+  }
   ptypes <- lapply(types, function(t) do.call(parquet_type, as.list(t)))
   nms <- names(types) %||% rep("", length(types))
   nms[nms == ""] <- NA_character_

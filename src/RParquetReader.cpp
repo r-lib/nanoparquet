@@ -102,8 +102,7 @@ void RParquetReader::init(RParquetFilter &filter) {
 
   for (auto i = 0, idx = 0, meta_idx = 0; i < metadata.num_cols; i++) {
     // skip non-leaf columns
-    if (file_meta_data_.schema[i].__isset.num_children &&
-        file_meta_data_.schema[i].num_children > 0) {
+    if (!is_leaf[i]) {
       continue;
     }
     // skips columns the reader does not want
