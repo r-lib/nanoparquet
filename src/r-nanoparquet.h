@@ -7,11 +7,24 @@
 #include "lib/ParquetOutFile.h"
 
 void r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel);
-void nanoparquet_map_to_parquet_type(
+nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_vecsxp(
   SEXP x,
   SEXP options,
-  parquet::SchemaElement &sel,
-  std::string &rtype);
+  std::string &rtype,
+  const std::string &name,
+  bool req);
+nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_atomic(
+  SEXP x,
+  SEXP options,
+  std::string &rtype,
+  const std::string &name,
+  bool req);
+nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type(
+  SEXP x,
+  SEXP options,
+  std::string &rtype,
+  const std::string &name,
+  bool req);
 
 extern "C" {
 

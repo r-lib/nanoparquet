@@ -37,6 +37,10 @@ each "real" column. For nested schemas, the rows are in depth-first
 search order. Most important columns are:
 \itemize{
 \item \code{file_name}: file name.
+\item \code{r_col}: integer, the column index in R, starting from one.
+\code{NA} for the root node. For Parquet files without list columns
+this is simply the column index in the file. A list column has
+multiple schema rows, and they all have the same \code{r_col}.
 \item \code{name}: column name.
 \item \code{r_type}: the R type that corresponds to the Parquet type.
 Might be \code{NA} if \code{\link[=read_parquet]{read_parquet()}} cannot read this column. See

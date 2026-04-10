@@ -27,12 +27,6 @@ test_that("write_parquet -> INT32", {
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("INT32"))
   })
-
-  # list -> INT32
-  d <- data.frame(d = I(as.list(1:10)))
-  expect_snapshot(error = TRUE, {
-    write_parquet(d, tmp, schema = parquet_schema("INT32"))
-  })
 })
 
 test_that("write_parquet -> INT64", {

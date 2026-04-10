@@ -158,6 +158,10 @@ void r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
     lt.__set_FLOAT16(parquet::Float16Type());
     sel.__set_logicalType(lt);
 
+  } else if (!strcmp(ctype, "LIST")) {
+    lt.__set_LIST(parquet::ListType());
+    sel.__set_logicalType(lt);
+
   } else {
     // this is ok, it is rare, and only happens on error
     r_call([&] {
@@ -169,11 +173,75 @@ void r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
   }
 }
 
-void nanoparquet_map_to_parquet_type(
+nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_vecsxp(
   SEXP x,
   SEXP options,
-  parquet::SchemaElement &sel,
-  std::string &rtype) {
+  std::string &rtype,
+  const std::string &name,
+  bool req) {
+
+  // Find a representative element to determine the atomic type
+  SEXP elt = R_NilValue;
+  r_call([&] {
+    R_xlen_t len = Rf_xlength(x);
+    for (R_xlen_t i = 0; i < len; i++) {
+      SEXP e = VECTOR_ELT(x, i);
+      if (!Rf_isNull(e) && Rf_xlength(e) > 0) {
+        elt = e;
+        break;
+      }
+    }
+  });
+
+  int elt_type = TYPEOF(elt);
+  if (!Rf_isNull(elt) && elt_type != VECSXP && elt_type != RAWSXP) {
+    // Atomic element type: build a 3-layer LIST schema
+    std::string inner_rtype;
+    nanoparquet::SchemaElementEx inner =
+      nanoparquet_map_to_parquet_type_atomic(
+        elt, options, inner_rtype, "element", false
+      );
+    rtype = "list(" + inner_rtype + ")";
+
+    // Layer 1: the outer group with LIST logical type
+    parquet::SchemaElement sel0;
+    sel0.__set_name(name);
+    sel0.__set_repetition_type(parquet::FieldRepetitionType::OPTIONAL);
+    sel0.__set_num_children(1);
+    parquet::LogicalType lt;
+    lt.__set_LIST(parquet::ListType());
+    sel0.__set_logicalType(lt);
+    sel0.__set_converted_type(parquet::ConvertedType::LIST);
+
+    // Layer 2: the repeated "list" group (group node — type intentionally unset)
+    parquet::SchemaElement sel1;
+    sel1.__set_name("list");
+    sel1.__set_repetition_type(parquet::FieldRepetitionType::REPEATED);
+    sel1.__set_num_children(1);
+    // sel1.__isset.type remains false — this is a group, not a primitive
+
+    nanoparquet::SchemaElementEx sex;
+    sex.elements = {sel0, sel1, inner.element()};
+    return sex;
+  }
+
+  // VECSXP, RAWSXP, or empty list: single BYTE_ARRAY column
+  rtype = "raw";
+  parquet::SchemaElement sel;
+  sel.__set_name(name);
+  sel.__set_repetition_type(
+    req ? parquet::FieldRepetitionType::REQUIRED
+        : parquet::FieldRepetitionType::OPTIONAL);
+  sel.__set_type(parquet::Type::BYTE_ARRAY);
+  return nanoparquet::SchemaElementEx(sel);
+}
+
+nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_atomic(
+  SEXP x,
+  SEXP options,
+  std::string &rtype,
+  const std::string &name,
+  bool req) {
 
   // to minimize R API calls, we do all this up front
   int rtypeof;
@@ -207,6 +275,12 @@ void nanoparquet_map_to_parquet_type(
       break;
     }
   });
+
+  parquet::SchemaElement sel;
+  sel.__set_name(name);
+  sel.__set_repetition_type(
+    req ? parquet::FieldRepetitionType::REQUIRED
+        : parquet::FieldRepetitionType::OPTIONAL);
 
   switch (rtypeof) {
   case INTSXP: {
@@ -297,12 +371,6 @@ void nanoparquet_map_to_parquet_type(
     sel.__set_type(parquet::Type::BOOLEAN);
     break;
   }
-  case VECSXP: {
-    // assume a list of RAW vectors, for now
-    rtype = "raw";
-    sel.__set_type(parquet::Type::BYTE_ARRAY);
-    break;
-  }
   default:
     r_call([&] {
       Rf_errorcall(
@@ -314,4 +382,22 @@ void nanoparquet_map_to_parquet_type(
   }
 
   fill_converted_type_for_logical_type(sel);
+  return nanoparquet::SchemaElementEx(sel);
+}
+
+nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type(
+  SEXP x,
+  SEXP options,
+  std::string &rtype,
+  const std::string &name,
+  bool req) {
+
+  int rtypeof;
+  r_call([&] { rtypeof = TYPEOF(x); });
+
+  if (rtypeof == VECSXP) {
+    return nanoparquet_map_to_parquet_type_vecsxp(x, options, rtype, name, req);
+  } else {
+    return nanoparquet_map_to_parquet_type_atomic(x, options, rtype, name, req);
+  }
 }

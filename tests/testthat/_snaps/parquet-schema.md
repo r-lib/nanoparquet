@@ -825,11 +825,6 @@
       Error in `timestamp()`:
       ! unit %in% c("MILLIS", "MICROS", "NANOS") is not TRUE
     Code
-      parquet_type("LIST")
-    Condition
-      Error in `err()`:
-      ! Parquet type 'LIST' is not supported by nanoparquet
-    Code
       parquet_type("MAP")
     Condition
       Error in `err()`:
@@ -855,15 +850,15 @@
     Code
       as.data.frame(sch)
     Output
-        file_name name r_type                 type type_length repetition_type
-      1      <NA> <NA>   <NA>                INT32          NA            <NA>
-      2      <NA> <NA>   <NA>              BOOLEAN          NA            <NA>
-      3      <NA> <NA>   <NA>                INT32          NA            <NA>
-      4      <NA> <NA>   <NA>                INT64          NA            <NA>
-      5      <NA> <NA>   <NA>                INT96          NA            <NA>
-      6      <NA> <NA>   <NA>                FLOAT          NA            <NA>
-      7      <NA> <NA>   <NA>           BYTE_ARRAY          NA            <NA>
-      8      <NA> <NA>   <NA> FIXED_LEN_BYTE_ARRAY          10            <NA>
+        file_name r_col name r_type                 type type_length repetition_type
+      1      <NA>     1 <NA>   <NA>                INT32          NA            <NA>
+      2      <NA>     2 <NA>   <NA>              BOOLEAN          NA            <NA>
+      3      <NA>     3 <NA>   <NA>                INT32          NA            <NA>
+      4      <NA>     4 <NA>   <NA>                INT64          NA            <NA>
+      5      <NA>     5 <NA>   <NA>                INT96          NA            <NA>
+      6      <NA>     6 <NA>   <NA>                FLOAT          NA            <NA>
+      7      <NA>     7 <NA>   <NA>           BYTE_ARRAY          NA            <NA>
+      8      <NA>     8 <NA>   <NA> FIXED_LEN_BYTE_ARRAY          10            <NA>
         converted_type logical_type num_children scale precision field_id
       1           <NA>                        NA    NA        NA       NA
       2           <NA>                        NA    NA        NA       NA
@@ -879,15 +874,15 @@
     Code
       as.data.frame(sch2)
     Output
-        file_name name r_type                 type type_length repetition_type
-      a      <NA>    a   <NA>                INT32          NA            <NA>
-      b      <NA>    b   <NA>              BOOLEAN          NA            <NA>
-      c      <NA>    c   <NA>                INT32          NA            <NA>
-      d      <NA>    d   <NA>                INT64          NA            <NA>
-      e      <NA>    e   <NA>                INT96          NA            <NA>
-      f      <NA>    f   <NA>                FLOAT          NA            <NA>
-      g      <NA>    g   <NA>           BYTE_ARRAY          NA            <NA>
-             <NA> <NA>   <NA> FIXED_LEN_BYTE_ARRAY          10            <NA>
+        file_name r_col name r_type                 type type_length repetition_type
+      a      <NA>     1    a   <NA>                INT32          NA            <NA>
+      b      <NA>     2    b   <NA>              BOOLEAN          NA            <NA>
+      c      <NA>     3    c   <NA>                INT32          NA            <NA>
+      d      <NA>     4    d   <NA>                INT64          NA            <NA>
+      e      <NA>     5    e   <NA>                INT96          NA            <NA>
+      f      <NA>     6    f   <NA>                FLOAT          NA            <NA>
+      g      <NA>     7    g   <NA>           BYTE_ARRAY          NA            <NA>
+             <NA>     8 <NA>   <NA> FIXED_LEN_BYTE_ARRAY          10            <NA>
         converted_type logical_type num_children scale precision field_id
       a           <NA>                        NA    NA        NA       NA
       b           <NA>                        NA    NA        NA       NA
@@ -903,15 +898,15 @@
     Code
       as.data.frame(sch3)
     Output
-        file_name name r_type                 type type_length repetition_type
-      a      <NA>    a   <NA>                INT32          NA            <NA>
-      b      <NA>    b   <NA>              BOOLEAN          NA            <NA>
-      c      <NA>    c   <NA>                INT32          NA            <NA>
-      d      <NA>    d   <NA>                INT64          NA            <NA>
-      e      <NA>    e   <NA>                INT96          NA            <NA>
-      f      <NA>    f   <NA>                FLOAT          NA            <NA>
-      g      <NA>    g   <NA>           BYTE_ARRAY          NA            <NA>
-      h      <NA>    h   <NA> FIXED_LEN_BYTE_ARRAY          10            <NA>
+        file_name r_col name r_type                 type type_length repetition_type
+      a      <NA>     1    a   <NA>                INT32          NA            <NA>
+      b      <NA>     2    b   <NA>              BOOLEAN          NA            <NA>
+      c      <NA>     3    c   <NA>                INT32          NA            <NA>
+      d      <NA>     4    d   <NA>                INT64          NA            <NA>
+      e      <NA>     5    e   <NA>                INT96          NA            <NA>
+      f      <NA>     6    f   <NA>                FLOAT          NA            <NA>
+      g      <NA>     7    g   <NA>           BYTE_ARRAY          NA            <NA>
+      h      <NA>     8    h   <NA> FIXED_LEN_BYTE_ARRAY          10            <NA>
         converted_type logical_type num_children scale precision field_id
       a           <NA>                        NA    NA        NA       NA
       b           <NA>                        NA    NA        NA       NA
@@ -927,17 +922,17 @@
     Code
       as.data.frame(sch4)
     Output
-         file_name name r_type                 type type_length repetition_type
-      1       <NA> <NA>   <NA>           BYTE_ARRAY          NA            <NA>
-      2       <NA> <NA>   <NA>           BYTE_ARRAY          NA            <NA>
-      3       <NA> <NA>   <NA> FIXED_LEN_BYTE_ARRAY          16            <NA>
-      4       <NA> <NA>   <NA>                INT32          NA            <NA>
-      5       <NA> <NA>   <NA>                INT64          NA            <NA>
-      6       <NA> <NA>   <NA>                INT64          NA            <NA>
-      7       <NA> <NA>   <NA> FIXED_LEN_BYTE_ARRAY           2            <NA>
-      8       <NA> <NA>   <NA>                INT32          NA            <NA>
-      9       <NA> <NA>   <NA>           BYTE_ARRAY          NA            <NA>
-      10      <NA> <NA>   <NA>           BYTE_ARRAY          NA            <NA>
+         file_name r_col name r_type                 type type_length repetition_type
+      1       <NA>     1 <NA>   <NA>           BYTE_ARRAY          NA            <NA>
+      2       <NA>     2 <NA>   <NA>           BYTE_ARRAY          NA            <NA>
+      3       <NA>     3 <NA>   <NA> FIXED_LEN_BYTE_ARRAY          16            <NA>
+      4       <NA>     4 <NA>   <NA>                INT32          NA            <NA>
+      5       <NA>     5 <NA>   <NA>                INT64          NA            <NA>
+      6       <NA>     6 <NA>   <NA>                INT64          NA            <NA>
+      7       <NA>     7 <NA>   <NA> FIXED_LEN_BYTE_ARRAY           2            <NA>
+      8       <NA>     8 <NA>   <NA>                INT32          NA            <NA>
+      9       <NA>     9 <NA>   <NA>           BYTE_ARRAY          NA            <NA>
+      10      <NA>    10 <NA>   <NA>           BYTE_ARRAY          NA            <NA>
          converted_type logical_type num_children scale precision field_id
       1            UTF8       STRING           NA    NA        NA       NA
       2            ENUM         ENUM           NA    NA        NA       NA
@@ -955,10 +950,10 @@
     Code
       as.data.frame(sch5)
     Output
-          file_name name r_type  type type_length repetition_type converted_type
-      foo      <NA>  foo   <NA>  <NA>          NA            <NA>           <NA>
-      bar      <NA>  bar   <NA> INT32          NA            <NA>           <NA>
-          logical_type num_children scale precision field_id
-      foo                        NA    NA        NA       NA
-      bar                        NA    NA        NA       NA
+          file_name r_col name r_type  type type_length repetition_type
+      foo      <NA>     1  foo   <NA>  <NA>          NA            <NA>
+      bar      <NA>     2  bar   <NA> INT32          NA            <NA>
+          converted_type logical_type num_children scale precision field_id
+      foo           <NA>                        NA    NA        NA       NA
+      bar           <NA>                        NA    NA        NA       NA
 

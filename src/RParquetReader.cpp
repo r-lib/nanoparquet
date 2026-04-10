@@ -90,14 +90,17 @@ void RParquetReader::init(RParquetFilter &filter) {
   R_PreserveObject(types);
   arrow_metadata = Rf_allocVector(STRSXP, 1);
   R_PreserveObject(arrow_metadata);
+  repeats = Rf_allocVector(VECSXP, metadata.num_cols_to_read);
+  R_PreserveObject(repeats);
 
   tmpdata.resize(metadata.num_cols_to_read);
   dicts.resize(metadata.num_cols_to_read);
   chunk_parts.resize(metadata.num_cols_to_read);
   byte_arrays.resize(metadata.num_cols_to_read);
   present.resize(metadata.num_cols_to_read);
+  metadata.rg_repeat_offsets.resize(metadata.num_cols_to_read);
 
-  for (auto i = 0, idx = 0; i < metadata.num_cols; i++) {
+  for (auto i = 0, idx = 0, meta_idx = 0; i < metadata.num_cols; i++) {
     // skip non-leaf columns
     if (file_meta_data_.schema[i].__isset.num_children &&
         file_meta_data_.schema[i].num_children > 0) {
@@ -105,16 +108,29 @@ void RParquetReader::init(RParquetFilter &filter) {
     }
     // skips columns the reader does not want
     if (filter.filter_columns && colmap[i] == 0) {
+      meta_idx++;
       continue;
     }
     rtype rt = metadata.r_types[idx];
-    SET_VECTOR_ELT(columns, idx, Rf_allocVector(rt.type, metadata.num_rows));
+    uint64_t num_values = metadata.num_rows;
+    if (rt.repeated) {
+      num_values = 0;
+      metadata.rg_repeat_offsets[idx].resize(metadata.num_row_groups);
+      for (size_t rgi = 0; rgi < file_meta_data_.row_groups.size(); rgi++) {
+        metadata.rg_repeat_offsets[idx][rgi] = (int64_t) num_values;
+        num_values += file_meta_data_.row_groups[rgi].columns[meta_idx].meta_data.num_values;
+      }
+      SET_VECTOR_ELT(repeats, idx, Rf_allocVector(RAWSXP, num_values));
+      metadata.repeatptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(repeats, idx));
+    }
+    SET_VECTOR_ELT(columns, idx, Rf_allocVector(rt.type, num_values));
     metadata.dataptr[idx] = (uint8_t*) DATAPTR_RO(VECTOR_ELT(columns, idx));
     if (rt.type != rt.tmptype && rt.tmptype != NILSXP) {
-      tmpdata[idx].resize(metadata.num_rows * rt.elsize);
+      tmpdata[idx].resize(num_values * rt.elsize);
     }
     INTEGER(types)[idx] = file_meta_data_.schema[i].type;
     idx++;
+    meta_idx++;
   }
 }
 
@@ -130,6 +146,9 @@ RParquetReader::~RParquetReader() {
   }
   if (!Rf_isNull(arrow_metadata)) {
     R_ReleaseObject(arrow_metadata);
+  }
+  if (!Rf_isNull(repeats)) {
+    R_ReleaseObject(repeats);
   }
 }
 
@@ -149,6 +168,8 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
   metadata.row_group_num_rows.resize(metadata.num_row_groups);
   metadata.row_group_offsets.resize(metadata.num_row_groups);
   metadata.dataptr.resize(metadata.num_cols_to_read);
+  metadata.repeatptr.resize(metadata.num_cols_to_read);
+  metadata.repetition_types.resize(metadata.num_cols);
 
   if (!filter.filter_row_groups) {
     for (auto i = 0; i < fmt.row_groups.size(); i++) {
@@ -203,11 +224,12 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
   // Only consider R types of columns that we read, the rest is NILSXP
   metadata.r_types.resize(metadata.num_cols_to_read);
   for (auto i = 0; i < metadata.num_cols; i++) {
+    metadata.repetition_types[i] = fmt.schema[i].repetition_type;
     // skips internals plus columns the reader does not want
     if (colmap[i] == 0) {
       continue;
     }
-    rtype rt(fmt.schema[i]);
+    rtype rt(fmt.schema, i, parent_column);
     metadata.r_types[colmap[i] - 1] = rt;
   }
 }
@@ -215,6 +237,7 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
 // ------------------------------------------------------------------------
 
 void RParquetReader::read_columns() {
+  check_meta_data();
   if (filter.filter_columns) {
     for (auto i = 0; i < filter.columns.size(); i++) {
       read_column(filter.columns[i] + 1);
@@ -226,7 +249,26 @@ void RParquetReader::read_columns() {
   }
 }
 
-rtype::rtype(parquet::SchemaElement &sel) {
+inline bool is_list(
+  std::vector<parquet::SchemaElement> &schema, uint32_t schema_col,
+  std::vector<int32_t> &parent_column
+) {
+  int32_t grandparent = parent_column[parent_column[schema_col]];
+  parquet::SchemaElement gp_schema = schema[grandparent];
+  return (gp_schema.__isset.converted_type &&
+    gp_schema.converted_type == parquet::ConvertedType::LIST) ||
+    (gp_schema.__isset.logicalType && gp_schema.logicalType.__isset.LIST);
+}
+
+rtype::rtype(
+    std::vector<parquet::SchemaElement> &schema,
+    uint32_t schema_col,
+    std::vector<int32_t> &parent_column
+) {
+  parquet::SchemaElement sel = schema[schema_col];
+  is_list3 = is_list(schema, schema_col, parent_column);
+  repeated = sel.repetition_type == parquet::FieldRepetitionType::REPEATED ||
+    is_list3;
   switch (sel.type) {
   case parquet::Type::BOOLEAN:
     type = tmptype = LGLSXP;
@@ -426,12 +468,13 @@ void RParquetReader::alloc_column_chunk(ColumnChunk &cc)  {
     }
   }
 
-  if (cc.optional) {
+  if (cc.max_def_level > 0) {
     if (present[cl].size() == 0) {
       present[cl].resize(metadata.num_row_groups);
     }
     present[cl][cc.row_group].num_present = 0;
-    present[cl][cc.row_group].map.resize(cc.num_rows);
+    // number of values can me more than the number of rows if REPEATED
+    present[cl][cc.row_group].map.resize(cc.cc.meta_data.num_values);
   }
 }
 
@@ -446,7 +489,7 @@ void RParquetReader::alloc_dict_page(DictPage &dict) {
   rtype rt = metadata.r_types[cl];
 
   dicts[cl][rg].dict_len = dict.dict_len;
-  dicts[cl][rg].indices.resize(dict.cc.num_rows);
+  dicts[cl][rg].indices.resize(dict.cc.cc.meta_data.num_values);
   if (rt.byte_array) {
     dicts[cl][rg].bytes.buffer.resize(dict.strs.total_len);
     dicts[cl][rg].bytes.offsets.resize(dict.dict_len);
@@ -481,7 +524,7 @@ void RParquetReader::alloc_data_page(DataPage &data) {
     chunk_part &last = cps.back();
     if (is_index == last.dict) {
       // same as last, extend chunk part
-      if (data.cc.optional) {
+      if (data.cc.max_def_level > 0) {
         page_off = last.offset + last.num_present;
       }
       last.num_values += data.num_values;
@@ -492,16 +535,32 @@ void RParquetReader::alloc_data_page(DataPage &data) {
     }
   }
 
-  if (data.cc.optional) {
+  if (data.cc.max_def_level > 0) {
     present[cl][rg].num_present += data.num_present;
     data.present = present[cl][rg].map.data() + data.from;
+  }
+
+  if (data.cc.max_rep_level > 0) {
+    int64_t rg_rep_off = metadata.rg_repeat_offsets[cl].empty()
+      ? 0 : metadata.rg_repeat_offsets[cl][rg];
+    data.repeat = metadata.repeatptr[cl] + rg_rep_off + data.from;
   }
 
   if (is_index) {
       data.data = (uint8_t*) (dicts[cl][rg].indices.data() + page_off);
 
   } else if (!rt.byte_array) {
-    int64_t off = metadata.row_group_offsets[rg];
+    int64_t off;
+    if (!metadata.rg_repeat_offsets[cl].empty() && !present[cl].empty()) {
+      // For repeated columns, use cumulative present count from previous row
+      // groups so that actual (non-NA) values are stored contiguously.
+      off = 0;
+      for (auto prev_rg = 0; prev_rg < rg; prev_rg++) {
+        off += present[cl][prev_rg].num_present;
+      }
+    } else {
+      off = metadata.row_group_offsets[rg];
+    }
     if (tmpdata[cl].size() > 0) {
       // only for int96 currently
       data.data = tmpdata[cl].data() + off * rt.elsize + page_off * rt.psize;
@@ -510,7 +569,16 @@ void RParquetReader::alloc_data_page(DataPage &data) {
     }
   } else {
     tmpbytes bapage;
-    bapage.from = metadata.row_group_offsets[rg] + page_off;
+    int64_t rg_off;
+    if (!metadata.rg_repeat_offsets[cl].empty() && !present[cl].empty()) {
+      rg_off = 0;
+      for (auto prev_rg = 0; prev_rg < rg; prev_rg++) {
+        rg_off += present[cl][prev_rg].num_present;
+      }
+    } else {
+      rg_off = metadata.row_group_offsets[rg];
+    }
+    bapage.from = rg_off + page_off;
     bapage.buffer.resize(data.strs.total_len);
     bapage.offsets.resize(data.num_present);
     bapage.lengths.resize(data.num_present);
@@ -543,7 +611,9 @@ void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     if (pp->dicts[cl][rg].dict_len == 0) continue;
     std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
-    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    int64_t rg_offset = pp->metadata.rg_repeat_offsets[cl].empty()
+      ? pp->metadata.row_group_offsets[rg]
+      : pp->metadata.rg_repeat_offsets[cl][rg];
     for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
       if (!cps[cpi].dict) continue;
       int64_t cp_offset = cps[cpi].offset;
@@ -587,6 +657,11 @@ void convert_column_to_r_dicts(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
   SEXP x = VECTOR_ELT(pp->columns, cl);
+  // For repeated (list) columns, the data vector is already a compact sequence
+  // of leaf values; the multi-level def levels are handled by the enlisting
+  // functions, so no in-place shift is needed here.
+  bool hasmiss = !pp->metadata.r_types[cl].repeated &&
+    pp->metadata.repetition_types[cl + 1] == 1;
   for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
     std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
     int64_t rg_offset = pp->metadata.row_group_offsets[rg];
@@ -594,7 +669,6 @@ void convert_column_to_r_dicts_na(postprocess *pp, uint32_t cl) {
       int64_t cp_offset = cps[cpi].offset;
       uint32_t cp_num_values = cps[cpi].num_values;
       int64_t cp_num_present = cps[cpi].num_present;
-      bool hasmiss = cp_num_present != cp_num_values;
       bool hasdict = cps[cpi].dict;
       if (!hasdict && !hasmiss) {
         continue;
@@ -823,7 +897,7 @@ void convert_column_to_r_int64_nodict_miss(postprocess *pp, uint32_t cl) {
     double *beg = REAL(x) + pp->metadata.row_group_offsets[rg];
     int64_t *ibeg = (int64_t*) beg;
     uint32_t num_present = pp->present[cl][rg].num_present;
-    bool hasmiss = num_present != num_values;
+    bool hasmiss = pp->metadata.repetition_types[cl + 1] == 1;
     if (!hasmiss) {
       double *end = beg + num_values;
       while (beg < end) {
@@ -857,7 +931,7 @@ void convert_column_to_r_int64_dict_miss(postprocess *pp, uint32_t cl) {
       uint32_t cp_num_values = cps[cpi].num_values;
       uint32_t cp_num_present = cps[cpi].num_present;
       bool hasdict = cps[cpi].dict;
-      bool hasmiss = cp_num_present != cp_num_values;
+      bool hasmiss = pp->metadata.repetition_types[cl + 1] == 1;
       double *beg = REAL(x) + rg_offset + cp_offset;
       if (!hasdict) {
         int64_t *ibeg = (int64_t *)beg;
@@ -921,7 +995,7 @@ void convert_column_to_r_int64_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_int64(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_int64_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1003,7 +1077,7 @@ void convert_column_to_r_float_nodict_miss(postprocess *pp, uint32_t cl) {
     double *endm1 = beg + num_values - 1;
     uint32_t num_present = pp->present[cl][rg].num_present;
     float *fendm1 = ((float*) beg) + num_present - 1;
-    bool hasmiss = num_present != num_values;
+    bool hasmiss = pp->metadata.repetition_types[cl + 1] == 1;
     if (!hasmiss) {
       while (beg <= endm1) {
         *endm1-- = static_cast<double>(*fendm1--);
@@ -1034,7 +1108,7 @@ void convert_column_to_r_float_dict_miss(postprocess *pp, uint32_t cl) {
       uint32_t cp_num_values = cp->num_values;
       uint32_t cp_num_present = cp->num_present;
       bool hasdict = cp->dict;
-      bool hasmiss = cp_num_present != cp_num_values;
+      bool hasmiss = pp->metadata.repetition_types[cl + 1] == 1;
       double *beg = REAL(x) + rg_offset + cp_offset;
       if (!hasdict) {
         if (!hasmiss) {
@@ -1100,7 +1174,7 @@ void convert_column_to_r_float_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_float(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_float_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1173,7 +1247,7 @@ void convert_column_to_r_int96_nodict_miss(postprocess *pp, uint32_t cl) {
     double *beg = REAL(x) + from;
     int96_t *ibeg = src0 + from;
     uint32_t num_present = pp->present[cl][rg].num_present;
-    bool hasmiss = num_present != num_values;
+    bool hasmiss = pp->metadata.repetition_types[cl + 1] == 1;
     if (!hasmiss) {
       double *end = beg + num_values;
       while (beg < end) {
@@ -1209,7 +1283,7 @@ void convert_column_to_r_int96_dict_miss(postprocess *pp, uint32_t cl) {
       uint32_t cp_num_values = cps[cpi].num_values;
       uint32_t cp_num_present = cps[cpi].num_present;
       bool hasdict = cps[cpi].dict;
-      bool hasmiss = cp_num_present != cp_num_values;
+      bool hasmiss = pp->metadata.repetition_types[cl + 1] == 1;
       double *beg = REAL(x) + rg_offset + cp_offset;
       if (!hasdict) {
         int96_t *ibeg = src0 + rg_offset + cp_offset;
@@ -1273,7 +1347,7 @@ void convert_column_to_r_int96_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_int96(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_int96_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1401,7 +1475,8 @@ void convert_column_to_r_ba_string_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_string(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = !pp->metadata.r_types[cl].repeated &&
+    pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_string_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1533,7 +1608,7 @@ void convert_column_to_r_ba_decimal_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_decimal(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_decimal_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1650,7 +1725,7 @@ void convert_column_to_r_ba_raw_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_raw(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_raw_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1757,7 +1832,7 @@ void convert_column_to_r_ba_uuid_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_uuid(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_uuid_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1845,7 +1920,7 @@ void convert_column_to_r_ba_float16_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_float16(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_float16_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -1929,7 +2004,7 @@ void convert_column_to_r_int32_decimal_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_int32_decimal(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_int32_decimal_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -2008,7 +2083,7 @@ void convert_column_to_r_int64_decimal_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_int64_decimal(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->present[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_int64_decimal_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {
@@ -2140,15 +2215,21 @@ void RParquetReader::convert_columns_to_r() {
 
 void RParquetReader::create_df() {
   SEXP nms = PROTECT(Rf_allocVector(STRSXP, metadata.num_cols_to_read));
+  R_xlen_t ri = 0;
   for (R_xlen_t i = 0; i < metadata.num_cols; i++) {
     // skip columns that were not requested
     if (colmap[i] == 0) {
       continue;
     }
+    R_xlen_t nm_col = i;
+    if (metadata.r_types[ri].is_list3) {
+      nm_col = parent_column[parent_column[i]];
+    }
     SET_STRING_ELT(
       nms, colmap[i] - 1,
-      Rf_mkCharCE(file_meta_data_.schema[i].name.c_str(), CE_UTF8)
+      Rf_mkCharCE(file_meta_data_.schema[nm_col].name.c_str(), CE_UTF8)
     );
+    ri++;
   }
   Rf_setAttrib(columns, R_NamesSymbol, nms);
   UNPROTECT(1);

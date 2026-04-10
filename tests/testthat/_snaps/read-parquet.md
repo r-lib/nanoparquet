@@ -500,15 +500,15 @@
     Code
       as.data.frame(read_parquet_schema(pf))
     Output
-                                     file_name   name r_type                 type
-      1 data/float16_nonzeros_and_nans.parquet schema   <NA>                 <NA>
-      2 data/float16_nonzeros_and_nans.parquet      x    raw FIXED_LEN_BYTE_ARRAY
-        type_length repetition_type converted_type logical_type num_children scale
-      1          NA        REQUIRED           <NA>                         1    NA
-      2           2        OPTIONAL           <NA>      FLOAT16           NA    NA
-        precision field_id
-      1        NA       NA
-      2        NA       NA
+                                     file_name r_col   name r_type
+      1 data/float16_nonzeros_and_nans.parquet    NA schema   <NA>
+      2 data/float16_nonzeros_and_nans.parquet     1      x    raw
+                        type type_length repetition_type converted_type logical_type
+      1                 <NA>          NA        REQUIRED           <NA>             
+      2 FIXED_LEN_BYTE_ARRAY           2        OPTIONAL           <NA>      FLOAT16
+        num_children scale precision field_id children
+      1            1    NA        NA       NA         
+      2           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet(pf))
     Output

@@ -78,7 +78,6 @@ test_that("parquet_type", {
     parquet_type("TIMESTAMP", unit = "MILLIS")
     parquet_type("TIMESTAMP", is_adjusted_utc = 1, unit = "MILLIS")
     parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "FOO")
-    parquet_type("LIST")
     parquet_type("MAP")
     parquet_type("UNKNOWN")
     parquet_type("INT32", repetition_type = TRUE)
@@ -88,7 +87,6 @@ test_that("parquet_type", {
   # Need this as well for covr, which does not handle stop()
   # in snapshots, apparently
   expect_error(parquet_type("FOO"), "not supported by nanoparquet")
-  expect_error(parquet_type("LIST"), "not supported by nanoparquet")
   expect_error(parquet_type("MAP"), "not supported by nanoparquet")
   expect_error(parquet_type("UNKNOWN"), "not supported by nanoparquet")
 })

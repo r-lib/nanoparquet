@@ -26,6 +26,7 @@ UUID
 WebAssembly
 ZSTD
 Zstd
+callout
 checksums
 codec
 codecs
@@ -34,6 +35,7 @@ duckdb
 duckplyr
 fastparquet
 hms
+interoperable
 millis
 multithreaded
 nanoparquet's

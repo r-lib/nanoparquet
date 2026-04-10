@@ -13,6 +13,26 @@ struct Int96 {
 
 namespace nanoparquet {
 
+// Wraps one or more parquet::SchemaElement objects. A single logical column
+// (e.g. a list column) may require multiple schema elements in the file.
+// For now every SchemaElementEx holds exactly one element.
+struct DefLevelsResult {
+  uint32_t num_present; // number of non-null leaf values (def == max_def)
+  uint32_t num_levels;  // total rep/def level pairs written (== total elements for lists, rows for scalars)
+};
+
+struct SchemaElementEx {
+  std::vector<parquet::SchemaElement> elements;
+
+  SchemaElementEx() = default;
+  SchemaElementEx(const parquet::SchemaElement &el) {
+    elements.push_back(el);
+  }
+
+  parquet::SchemaElement &element() { return elements[0]; }
+  const parquet::SchemaElement &element() const { return elements[0]; }
+};
+
 class ParquetOutFile {
 public:
   ParquetOutFile(
@@ -34,7 +54,7 @@ public:
   void set_num_rows(uint32_t nr);
   void set_num_rows(uint32_t nr, uint32_t ntotal);
   void schema_add_column(
-    parquet::SchemaElement &sel,
+    SchemaElementEx &sel,
     parquet::Encoding::type encoding
   );
   void add_key_value_metadata(std::string key, std::string value);
@@ -45,7 +65,7 @@ public:
   void append();
 
   // This makes the write inherently sequential and we might remove it
-  // latest. Currently, it makes it easier to keep track of minimume and
+  // later. Currently, it makes it easier to keep track of minimum and
   // maximum values per row group.
   virtual void write_row_group(uint32_t group) = 0;
 
@@ -74,23 +94,33 @@ public:
                                           uint32_t group, uint32_t page,
                                           uint64_t from, uint64_t until,
                                           parquet::SchemaElement &sel) = 0;
-  virtual void write_boolean(std::ostream &file, uint32_t idx, uint32_t group,
+  virtual void write_boolean_as_bitpacked(std::ostream &file, uint32_t idx, uint32_t group,
                              uint32_t page, uint64_t from, uint64_t until) = 0;
   virtual void write_boolean_as_int(std::ostream &file, uint32_t idx,
                                     uint32_t group, uint32_t page,
                                     uint64_t from, uint64_t until) = 0;
-
-  // callbacks for missing values
-  virtual uint32_t write_present(std::ostream &file, uint32_t idx,
-                                 uint64_t from, uint64_t until) = 0;
-  virtual void write_present_boolean(std::ostream &file, uint32_t idx,
-                                     uint32_t num_present, uint64_t from,
-                                     uint64_t until) = 0;
+  virtual void write_present_boolean_as_bitpacked(std::ostream &file, uint32_t idx,
+                                          uint32_t num_present, uint64_t from,
+                                          uint64_t until) = 0;
   virtual void write_present_boolean_as_int(std::ostream &file,
-                                            uint32_t idx,
-                                            uint32_t num_present,
-                                            uint64_t from,
-                                            uint64_t until) = 0;
+                                             uint32_t idx,
+                                             uint32_t num_present,
+                                             uint64_t from,
+                                             uint64_t until) = 0;
+
+  // callbacks for missing values and list columns
+  // rep_file receives raw (pre-RLE) repetition level ints for list columns;
+  // for non-list columns nothing is written to it.
+  // Returns the total number of rep/def level pairs that write_definition_levels
+  // will write: equals total list elements for list columns, rows for scalars.
+  virtual uint32_t get_num_levels(uint32_t idx,
+                                  uint64_t from, uint64_t until,
+                                  SchemaElementEx &sel) = 0;
+  virtual DefLevelsResult write_definition_levels(std::ostream &def_file,
+                                 std::ostream &rep_file,
+                                 uint32_t idx,
+                                 uint64_t from, uint64_t until,
+                                 SchemaElementEx &sel) = 0;
 
   // callbacks to write a dictionary
   virtual uint32_t get_size_byte_array(uint32_t idx,
@@ -129,7 +159,7 @@ private:
   int compression_level;
 
   std::vector<parquet::Encoding::type> encodings;
-  std::vector<parquet::SchemaElement> schemas;
+  std::vector<SchemaElementEx> schemas;
   std::vector<parquet::ColumnMetaData> column_meta_data;
   std::vector<parquet::KeyValue> kv;
 
@@ -149,10 +179,13 @@ private:
                     int64_t until);
   void write_dictionary_page(uint32_t idx, int64_t from, int64_t until);
   void write_data_pages(uint32_t idx, uint32_t group, int64_t from,
-                        int64_t until);
+                        int64_t until, uint32_t max_repetition_level,
+                        uint32_t max_definition_level);
   void write_data_page(uint32_t idx, uint32_t group, uint32_t page,
                        int64_t rg_from, int64_t rg_until,
-                       uint64_t from, uint64_t until);
+                       uint64_t from, uint64_t until,
+                       uint32_t max_repetition_level,
+                       uint32_t max_definition_level);
   void write_page_header(uint32_t idx, parquet::PageHeader &ph);
   void write_footer();
 
@@ -180,6 +213,8 @@ private:
 
   ByteBuffer buf_unc;
   ByteBuffer buf_com;
+  ByteBuffer buf_rep;
+  ByteBuffer buf_rep_rle; // RLE-encoded repetition levels (list columns only)
 
   uint64_t calculate_column_data_size(uint32_t idx, uint32_t num_present,
                                       uint64_t from, uint64_t until);

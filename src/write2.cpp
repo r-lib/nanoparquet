@@ -203,28 +203,44 @@ SEXP rf_nanoparquet_logical_to_converted(SEXP logical_type) noexcept {
 SEXP rf_nanoparquet_map_to_parquet_types(SEXP df, SEXP options) noexcept {
   R_xlen_t nc = Rf_xlength(df);
   SEXP res = PROTECT(Rf_allocVector(VECSXP, nc));
+  SEXP nms = PROTECT(Rf_getAttrib(df, R_NamesSymbol));
 
   CPP_INIT;
 
   for (R_xlen_t cl = 0; cl < nc; cl++) {
     SEXP col = VECTOR_ELT(df, cl);
-    parquet::SchemaElement sel;
+    std::string colname = CHAR(STRING_ELT(nms, cl));
+    nanoparquet::SchemaElementEx sex;
     std::string rtype;
     CPP_BEGIN;
-    nanoparquet_map_to_parquet_type(col, options, sel, rtype);
+    sex = nanoparquet_map_to_parquet_type(col, options, rtype, colname, false);
     CPP_END;
-    SEXP typ = Rf_allocVector(VECSXP, 3);
+    R_xlen_t ns = sex.elements.size();
+    SEXP typ = PROTECT(Rf_allocVector(VECSXP, ns));
     SET_VECTOR_ELT(res, cl, typ);
-    SET_VECTOR_ELT(typ, 0, Rf_mkString(to_string(sel.type).c_str()));
-    SET_VECTOR_ELT(typ, 1, Rf_mkString(rtype.c_str()));
-    if (sel.__isset.logicalType) {
-      SET_VECTOR_ELT(typ, 2, rf_convert_logical_type(sel.logicalType));
-    } else {
-      SET_VECTOR_ELT(typ, 2, R_NilValue);
+    UNPROTECT(1);
+    for (R_xlen_t si = 0; si < ns; si++) {
+      parquet::SchemaElement &sel = sex.elements[si];
+      SEXP el = PROTECT(Rf_allocVector(VECSXP, 4));
+      SET_VECTOR_ELT(typ, si, el);
+      UNPROTECT(1);
+      SEXP type_sexp = sel.__isset.type ? Rf_mkString(to_string(sel.type).c_str())
+                                        : Rf_ScalarString(NA_STRING);
+      SET_VECTOR_ELT(el, 0, type_sexp);
+      const std::string &el_rtype = si == 0 ? rtype : "";
+      SEXP rtype_sexp = el_rtype.empty() ? Rf_ScalarString(NA_STRING)
+                                         : Rf_mkString(el_rtype.c_str());
+      SET_VECTOR_ELT(el, 1, rtype_sexp);
+      if (sel.__isset.logicalType) {
+        SET_VECTOR_ELT(el, 2, rf_convert_logical_type(sel.logicalType));
+      } else {
+        SET_VECTOR_ELT(el, 2, R_NilValue);
+      }
+      SET_VECTOR_ELT(el, 3, Rf_mkString(sel.name.c_str()));
     }
   }
 
-  UNPROTECT(1);
+  UNPROTECT(2);
   return res;
 }
 

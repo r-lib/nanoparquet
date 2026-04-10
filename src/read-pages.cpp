@@ -243,6 +243,11 @@ static PageData find_page(ParquetReader &file, int64_t page_header_offset) {
           pd.compressed_page_size = ph.first.compressed_page_size;
           pd.uncompressed_page_size = ph.first.uncompressed_page_size;
           pd.codec = cmd.codec;
+          if (ph.first.__isset.data_page_header_v2 &&
+              ph.first.data_page_header_v2.__isset.is_compressed &&
+              !ph.first.data_page_header_v2.is_compressed) {
+            pd.codec = parquet::CompressionCodec::UNCOMPRESSED;
+          }
           pd.definition_level_encoding =
             (parquet::Encoding::type) NA_INTEGER;
           pd.repetition_level_encoding =
@@ -271,10 +276,42 @@ static PageData find_page(ParquetReader &file, int64_t page_header_offset) {
             pd.num_values = ph.first.dictionary_page_header.num_values;
             pd.encoding = ph.first.dictionary_page_header.encoding;
           }
-          pd.has_repetition_levels =
-            (pd.page_type == parquet::PageType::DATA_PAGE ||
-             pd.page_type == parquet::PageType::DATA_PAGE_V2) &&
-            cmd.path_in_schema.size() >= 2;
+          // Walk schema DFS to check if any ancestor or the leaf itself
+          // is REPEATED. A column has repetition levels iff at least one
+          // node in its path from root to leaf is REPEATED.
+          {
+            auto &sc = fmd.schema;
+            struct RepFrame { int remaining; bool repeated; };
+            std::vector<RepFrame> stk;
+            int rleafs = 0;
+            bool any_repeated = false;
+            for (int si = 0; si < (int)sc.size(); si++) {
+              parquet::SchemaElement &se2 = sc[si];
+              while (!stk.empty() && stk.back().remaining == 0) {
+                stk.pop_back();
+              }
+              bool is_rep = se2.__isset.repetition_type &&
+                se2.repetition_type == parquet::FieldRepetitionType::REPEATED;
+              if (se2.__isset.num_children) {
+                if (!stk.empty()) stk.back().remaining--;
+                stk.push_back({se2.num_children, is_rep});
+              } else {
+                if (rleafs == j) {
+                  any_repeated = is_rep;
+                  for (auto &f : stk) {
+                    if (f.repeated) { any_repeated = true; break; }
+                  }
+                  break;
+                }
+                rleafs++;
+                if (!stk.empty()) stk.back().remaining--;
+              }
+            }
+            pd.has_repetition_levels =
+              (pd.page_type == parquet::PageType::DATA_PAGE ||
+               pd.page_type == parquet::PageType::DATA_PAGE_V2) &&
+              any_repeated;
+          }
           return pd;
         }
         ofs += ph.second;
@@ -302,23 +339,43 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
   PageData pd = find_page(f, page_header_offset);
   // Need to find some metadata about this column
   auto schema = f.file_meta_data_.schema;
+  // Walk schema DFS tracking ancestors to correctly compute has_definition_levels.
+  // Definition levels are present when any ancestor or the leaf itself is
+  // OPTIONAL or REPEATED (e.g. list columns have a REPEATED parent group but
+  // a REQUIRED leaf).
+  struct AncestorInfo { int remaining; bool opt_or_rep; };
+  std::vector<AncestorInfo> ancestor_stack;
   int leafs = 0;
-  for (int i = 0; i < schema.size(); i++) {
+  for (int i = 0; i < (int)schema.size(); i++) {
     parquet::SchemaElement se = schema[i];
-    if (se.__isset.num_children) { continue; }
-    if (leafs == pd.column_no) {
-      pd.schema_column_no = i;
-      pd.data_type = se.type;
-      // all columns but the root have one, so this must have one
-      pd.repetition_type = se.repetition_type;
-      pd.has_definition_levels =
-        (pd.page_type == parquet::PageType::DATA_PAGE ||
-         pd.page_type == parquet::PageType::DATA_PAGE_V2) &&
-        se.repetition_type !=
-        parquet::FieldRepetitionType::REQUIRED;
-      break;
+    // Pop ancestors whose children have all been visited
+    while (!ancestor_stack.empty() && ancestor_stack.back().remaining == 0) {
+      ancestor_stack.pop_back();
     }
-    leafs++;
+    bool is_opt_or_rep = se.__isset.repetition_type &&
+      se.repetition_type != parquet::FieldRepetitionType::REQUIRED;
+    if (se.__isset.num_children) {
+      if (!ancestor_stack.empty()) ancestor_stack.back().remaining--;
+      ancestor_stack.push_back({se.num_children, is_opt_or_rep});
+    } else {
+      if (leafs == pd.column_no) {
+        pd.schema_column_no = i;
+        pd.data_type = se.type;
+        // all columns but the root have one, so this must have one
+        pd.repetition_type = se.repetition_type;
+        bool any_opt_or_rep = is_opt_or_rep;
+        for (auto &anc : ancestor_stack) {
+          if (anc.opt_or_rep) { any_opt_or_rep = true; break; }
+        }
+        pd.has_definition_levels =
+          (pd.page_type == parquet::PageType::DATA_PAGE ||
+           pd.page_type == parquet::PageType::DATA_PAGE_V2) &&
+          any_opt_or_rep;
+        break;
+      }
+      leafs++;
+      if (!ancestor_stack.empty()) ancestor_stack.back().remaining--;
+    }
   }
   if (leafs != pd.column_no) {
     throw runtime_error(

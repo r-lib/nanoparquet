@@ -13,7 +13,7 @@ here, and then \code{parquet_schema} behaves as \code{\link[=read_parquet_schema
 }
 \value{
 Data frame with the same columns as \code{\link[=read_parquet_schema]{read_parquet_schema()}}:
-\code{file_name}, \code{name}, \code{r_type}, \code{type}, \code{type_length}, \code{repetition_type}, \code{converted_type}, \code{logical_type}, \code{num_children}, \code{scale}, \code{precision}, \code{field_id}.
+\code{file_name}, \code{r_col}, \code{name}, \code{r_type}, \code{type}, \code{type_length}, \code{repetition_type}, \code{converted_type}, \code{logical_type}, \code{num_children}, \code{scale}, \code{precision}, \code{field_id}.
 }
 \description{
 You can use this schema to specify how to write out a data frame to
@@ -69,9 +69,14 @@ supports the \code{scale} parameter, it defaults to zero if not specified.
 \code{unit} parameter. \code{unit} must be \code{"MILLIS"}, \code{"MICROS"} or \code{"NANOS"}.
 \item \code{"JSON"}
 \item \code{"BSON"}
+\item \code{"LIST"}: list of some other type. It needs an \code{element} parameter,
+which is a type specification for the list elements. Currently
+\code{element} can be only \code{"INT32"}, \code{"DOUBLE"} or \code{"STRING"}.
+Also, currently nanoparquet always write LIST columns that are
+\code{"OPTIONAL"}, both for the list elements and the list itself.
 }
 
-Logical types \code{MAP}, \code{LIST} and \code{UNKNOWN} are not supported currently.
+Logical types \code{MAP}, and \code{UNKNOWN} are not supported currently.
 
 Converted types are deprecated in the Parquet specification in favor of
 logical types, but \code{parquet_schema()} accepts some converted types as a
@@ -104,6 +109,7 @@ columns. \code{"REPEATED"} columns are currently not supported in
 parquet_schema(
   c1 = "INT32",
   c2 = list("INT", bit_width = 64, is_signed = TRUE),
-  c3 = list("STRING", repetition_type = "OPTIONAL")
+  c3 = list("STRING", repetition_type = "OPTIONAL"),
+  l = list("LIST", element = "DOUBLE")
 )
 }

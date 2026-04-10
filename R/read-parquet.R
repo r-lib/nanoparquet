@@ -80,9 +80,67 @@ post_process_read_result <- function(res, file, options, col_select) {
   dicts <- res[[2]]
   types <- res[[3]]
   arrow_schema <- res[[4]]
+  repeats <- res[[5]]
+  presents <- res[[6]]
+  parents <- res[[7]]
+  rep_types <- res[[8]]
+  leaf_cols <- res[[9]]
   res <- res[[1]]
   if (options[["use_arrow_metadata"]] && !is.na(arrow_schema)) {
     res <- apply_arrow_schema(res, file, arrow_schema, dicts, types, col_select)
+  }
+
+  to_leaf_col <- which(leaf_cols >= 0)
+
+  # fix up repeated columns, if any
+  has_reps <- lengths(repeats) > 0
+  for (idx in which(has_reps)) {
+    leaf_idx <- to_leaf_col[idx]
+    rep_type <- rep_types[leaf_idx]
+    if (rep_type == 2) {
+      # single REPEATED column
+      bpos <- .Call(
+        nanoparquet_repeated_positions,
+        res[[idx]],
+        repeats[[idx]],
+        presents[[idx]],
+        nrow(res)
+      )
+      res[[idx]] <- split_at(res[[idx]], bpos)
+    } else {
+      # LIST column, 3 layers
+      lst_rep <- rep_types[parents[parents[leaf_idx] + 1] + 1]
+      elt_rep <- rep_types[leaf_idx]
+      if (lst_rep == 0 && elt_rep == 0) {
+        res[[idx]] <- enlist_req_req(
+          res[[idx]],
+          repeats[[idx]],
+          presents[[idx]],
+          nrow(res)
+        )
+      } else if (lst_rep == 0 && elt_rep == 1) {
+        res[[idx]] <- enlist_req_opt(
+          res[[idx]],
+          repeats[[idx]],
+          presents[[idx]],
+          nrow(res)
+        )
+      } else if (lst_rep == 1 && elt_rep == 0) {
+        res[[idx]] <- enlist_opt_req(
+          res[[idx]],
+          repeats[[idx]],
+          presents[[idx]],
+          nrow(res)
+        )
+      } else if (lst_rep == 1 && elt_rep == 1) {
+        res[[idx]] <- enlist_opt_opt(
+          res[[idx]],
+          repeats[[idx]],
+          presents[[idx]],
+          nrow(res)
+        )
+      }
+    }
   }
 
   # convert hms from milliseconds to seconds, also integer -> double
@@ -108,6 +166,27 @@ post_process_read_result <- function(res, file, options, col_select) {
   }
 
   res
+}
+
+enlist_req_req <- function(x, rep, def, nrows) {
+  # def = 0 => empty list
+  sizes <- .Call(nanoparquet_enlist_sizes_req_req, rep, def, as.double(nrows))
+  split_at(x, sizes)
+}
+
+enlist_req_opt <- function(x, rep, def, nrows) {
+  # def = 0 => empty list, 1 => NA
+  .Call(nanoparquet_enlist_req_opt, x, rep, def, as.double(nrows))
+}
+
+enlist_opt_req <- function(x, rep, def, nrows) {
+  # def = 0 => NULL, 1 => list()
+  .Call(nanoparquet_enlist_opt_req, x, rep, def, as.double(nrows))
+}
+
+enlist_opt_opt <- function(x, rep, def, nrows) {
+  # def = 0 => NULL ,1 => list(), 2 => NA
+  .Call(nanoparquet_enlist_opt_opt, x, rep, def, as.double(nrows))
 }
 
 # dump the contents of a connection to path

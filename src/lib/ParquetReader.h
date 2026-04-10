@@ -18,13 +18,13 @@ enum parquet_input_type {
 struct ColumnChunk {
 public:
   ColumnChunk(parquet::ColumnChunk &cc, parquet::SchemaElement &sel,
-              uint32_t column, uint32_t row_group, int64_t num_rows)
+              uint32_t column, uint32_t row_group, int64_t num_rows,
+              uint32_t max_rep_level, uint32_t max_def_level)
     : cc(cc), sel(sel), column(column), row_group(row_group),
-      num_rows(num_rows) {
+      num_rows(num_rows), max_rep_level(max_rep_level),
+      max_def_level(max_def_level) {
     parquet::ColumnMetaData cmd = cc.meta_data;
     has_dictionary = cmd.__isset.dictionary_page_offset;
-    optional = sel.repetition_type !=
-      parquet::FieldRepetitionType::REQUIRED;
   }
   parquet::ColumnChunk &cc;
   parquet::SchemaElement &sel;
@@ -32,7 +32,8 @@ public:
   uint32_t row_group;
   int64_t num_rows;
   bool has_dictionary;
-  bool optional;
+  uint32_t max_rep_level;
+  uint32_t max_def_level;
 };
 
 struct StringSet {
@@ -69,8 +70,8 @@ struct DataPage {
 public:
   DataPage(ColumnChunk &cc, parquet::PageHeader &ph, uint32_t page,
            uint32_t from)
-    : cc(cc), ph(ph), page(page), data(nullptr), present(nullptr),
-      num_values(0), num_present(0), from(from) {
+    : cc(cc), ph(ph), page(page), data(nullptr), repeat(nullptr),
+      present(nullptr), num_values(0), num_present(0), from(from) {
     if (ph.__isset.data_page_header) {
       encoding = ph.data_page_header.encoding;
     } else {
@@ -95,6 +96,7 @@ public:
   parquet::PageHeader &ph;
   uint32_t page;
   uint8_t *data;
+  uint8_t *repeat;
   uint8_t *present;
   uint32_t num_values;
   uint32_t num_present;
@@ -125,7 +127,6 @@ public:
   }
 
   // read data
-  void read_all_columns();
   void read_column(uint32_t idx);
   void read_row_group(uint32_t row_group);
   void read_column_chunk(uint32_t row_group, uint32_t column);
@@ -137,6 +138,10 @@ public:
   virtual void alloc_data_page(DataPage &data) = 0;
 
   parquet::FileMetaData file_meta_data_;
+
+  std::vector<int32_t> parent_column;
+  std::vector<int32_t> repetition_types;
+  std::vector<int> leaf_cols; // map schema columns to leaf columns in chunks
 
   std::pair<parquet::PageHeader, int64_t> read_page_header(int64_t pos);
   void read_chunk(int64_t offset, int64_t size, int8_t *buffer);
@@ -150,14 +155,18 @@ protected:
   size_t file_size;
 
   bool has_file_meta_data_;
-  std::vector<int> leaf_cols; // map schema columns to leaf columns in chunks
   uint32_t num_leaf_cols;
+
+  std::vector<bool> is_leaf;
+  std::vector<uint32_t> max_repetition_level;
+  std::vector<uint32_t> max_definition_level;
 
   // A set of managed buffers for the column chunk data
   std::unique_ptr<BufferManager> bufman_cc = nullptr;
   // A set of managed buffers for the missing data. We use a separate set of
   // buffers for theese because they should be of the same size, so we can
   // avoid multiple re-allocations
+  std::unique_ptr<BufferManager> bufman_rep = nullptr;
   std::unique_ptr<BufferManager> bufman_na = nullptr;
   // These buffers are for the individual pages, which, again tend ro be
   // smaller than the whole column chunks.

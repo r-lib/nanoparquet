@@ -81,7 +81,7 @@ List of nanoparquet options.
 Create a list of nanoparquet options.
 }
 \examples{
-\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 # the effect of using Arrow metadata
 tmp <- tempfile(fileext = ".parquet")
 d <- data.frame(

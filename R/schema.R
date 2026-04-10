@@ -57,8 +57,13 @@
 #'   `unit` parameter. `unit` must be `"MILLIS"`, `"MICROS"` or `"NANOS"`.
 #' * `"JSON"`
 #' * `"BSON"`
+#' * `"LIST"`: list of some other type. It needs an `element` parameter,
+#'   which is a type specification for the list elements. Currently
+#'   `element` can be only `"INT32"`, `"DOUBLE"` or `"STRING"`.
+#'   Also, currently nanoparquet always write LIST columns that are
+#'   `"OPTIONAL"`, both for the list elements and the list itself.
 #'
-#' Logical types `MAP`, `LIST` and `UNKNOWN` are not supported currently.
+#' Logical types `MAP`, and `UNKNOWN` are not supported currently.
 #'
 #' Converted types are deprecated in the Parquet specification in favor of
 #' logical types, but `parquet_schema()` accepts some converted types as a
@@ -90,7 +95,8 @@
 #' parquet_schema(
 #'   c1 = "INT32",
 #'   c2 = list("INT", bit_width = 64, is_signed = TRUE),
-#'   c3 = list("STRING", repetition_type = "OPTIONAL")
+#'   c3 = list("STRING", repetition_type = "OPTIONAL"),
+#'   l = list("LIST", element = "DOUBLE")
 #' )
 
 parquet_schema <- function(...) {
@@ -116,36 +122,68 @@ parquet_schema_create <- function(types) {
   ptypes <- lapply(types, function(t) do.call(parquet_type, as.list(t)))
   nms <- names(types) %||% rep("", length(types))
   nms[nms == ""] <- NA_character_
-  na <- rep(NA, length(ptypes))
+
+  normalize <- function(x, nm) {
+    na <- rep(NA_character_, length(x$type))
+    nai <- rep(NA_integer_, length(x$type))
+    x$file_name <- na
+    if (is.null(x$name)) {
+      x$name <- nm
+    } else {
+      x$name[1] <- nm
+    }
+    x$type <- x$type %||% NA_character_
+    x$r_type <- na
+    x$type_length <- x$type_length %||% nai
+    x$repetition_type <- x$repetition_type %||% na
+    x$converted_type <- x$converted_type %||% na
+    x$num_children <- x$num_children %||% nai
+    x$scale <- x$scale %||% nai
+    x$precision <- x$precision %||% nai
+    x$field_id <- nai
+    x
+  }
+
+  ptypes <- mapply(FUN = normalize, ptypes, nms, SIMPLIFY = FALSE)
+
+  r_col <- unlist(mapply(
+    function(x, idx) rep(as.integer(idx), length(x$type)),
+    ptypes,
+    seq_along(ptypes),
+    SIMPLIFY = FALSE
+  ))
+
   ptdf <- data.frame(
-    file_name = as.character(na),
-    name = nms,
-    r_type = as.character(na),
-    type = map_chr(ptypes, "[[", "type"),
-    type_length = map_int(
-      ptypes,
-      function(x) x[["type_length"]] %||% NA_integer_
-    ),
-    repetition_type = map_chr(
-      ptypes,
-      function(x) x[["repetition_type"]] %||% NA_character_
-    ),
-    converted_type = map_chr(
-      ptypes,
-      function(x) x[["converted_type"]] %||% NA_character_
-    ),
-    logical_type = I(unname(lapply(ptypes, "[[", "logical_type"))),
-    num_children = as.integer(na),
-    scale = map_int(
-      ptypes,
-      function(x) x[["scale"]] %||% NA_integer_
-    ),
-    precision = map_int(
-      ptypes,
-      function(x) x[["precision"]] %||% NA_integer_
-    ),
-    field_id = as.integer(na)
+    file_name = unlist(lapply(ptypes, "[[", "file_name")),
+    r_col = r_col,
+    name = unlist(lapply(ptypes, "[[", "name")),
+    r_type = unlist(lapply(ptypes, "[[", "r_type")),
+    type = unlist(lapply(ptypes, "[[", "type")),
+    type_length = unlist(lapply(ptypes, "[[", "type_length")),
+    repetition_type = unlist(lapply(ptypes, "[[", "repetition_type")),
+    converted_type = unlist(lapply(ptypes, "[[", "converted_type")),
+    logical_type = if (length(ptypes) == 0) {
+      I(list())
+    } else {
+      I(unlist(
+        lapply(ptypes, function(x) {
+          lt <- x$logical_type
+          if (is.null(lt) || inherits(lt, "nanoparquet_logical_type")) {
+            list(lt)
+          } else {
+            lt
+          }
+        }),
+        recursive = FALSE,
+        use.names = FALSE
+      ))
+    },
+    num_children = unlist(lapply(ptypes, "[[", "num_children")),
+    scale = unlist(lapply(ptypes, "[[", "scale")),
+    precision = unlist(lapply(ptypes, "[[", "precision")),
+    field_id = unlist(lapply(ptypes, "[[", "field_id"))
   )
+
   class(ptdf) <- c("nanoparquet_schema", "tbl", class(ptdf))
   ptdf
 }
@@ -161,7 +199,8 @@ parquet_type <- function(
   unit = NULL,
   primitive_type = NULL,
   repetition_type = NULL,
-  encoding = NULL
+  encoding = NULL,
+  element = NULL
 ) {
   fixed_len_byte_array <- function() {
     stopifnot(
@@ -185,11 +224,11 @@ parquet_type <- function(
     )
     r <- list(
       type = if (bit_width <= 32L) "INT32" else "INT64",
-      logical_type = list(
+      logical_type = nanoparquet_logical_type(list(
         type = "INT",
         bit_width = as.integer(bit_width),
         is_signed = is_signed
-      )
+      ))
     )
     bit_width <<- NULL
     is_signed <<- NULL
@@ -220,11 +259,11 @@ parquet_type <- function(
     }
     r <- list(
       type = primitive_type,
-      logical_type = list(
+      logical_type = nanoparquet_logical_type(list(
         type = "DECIMAL",
         scale = if (!is.null(scale)) as.integer(scale),
         precision = as.integer(precision)
-      ),
+      )),
       scale = as.integer(scale %||% 0),
       precision = as.integer(precision)
     )
@@ -248,11 +287,11 @@ parquet_type <- function(
     )
     r <- list(
       type = if (unit == "MILLIS") "INT32" else "INT64",
-      logical_type = list(
+      logical_type = nanoparquet_logical_type(list(
         type = "TIME",
         is_adjusted_utc = is_adjusted_utc,
         unit = unit
-      )
+      ))
     )
     is_adjusted_utc <<- NULL
     unit <<- NULL
@@ -269,14 +308,24 @@ parquet_type <- function(
     )
     r <- list(
       type = "INT64",
-      logical_type = list(
+      logical_type = nanoparquet_logical_type(list(
         type = "TIMESTAMP",
         is_adjusted_utc = is_adjusted_utc,
         unit = unit
-      )
+      ))
     )
     is_adjusted_utc <<- NULL
     unit <<- NULL
+    r
+  }
+
+  nested_list <- function() {
+    stopifnot(!is.null(element))
+    if (is.list(element) && !is.null(element$repetition_type)) {
+      stop("Custom repetition_type is not yet supported for LIST columns")
+    }
+    r <- do.call("parquet_type", as.list(element))
+    element <<- NULL
     r
   }
 
@@ -304,15 +353,15 @@ parquet_type <- function(
     # logical types
     STRING = list(
       type = "BYTE_ARRAY",
-      logical_type = list(type = "STRING")
+      logical_type = nanoparquet_logical_type(list(type = "STRING"))
     ),
     ENUM = list(
       type = "BYTE_ARRAY",
-      logical_type = list(type = "ENUM")
+      logical_type = nanoparquet_logical_type(list(type = "ENUM"))
     ),
     UUID = list(
       type = "FIXED_LEN_BYTE_ARRAY",
-      logical_type = list(type = "UUID"),
+      logical_type = nanoparquet_logical_type(list(type = "UUID")),
       type_length = 16L
     ),
     INTEGER = int(),
@@ -320,27 +369,48 @@ parquet_type <- function(
     DECIMAL = decimal(),
     FLOAT16 = list(
       type = "FIXED_LEN_BYTE_ARRAY",
-      logical_type = list(type = "FLOAT16"),
+      logical_type = nanoparquet_logical_type(list(type = "FLOAT16")),
       type_length = 2L
     ),
-    DATE = list(type = "INT32", logical_type = list(type = "DATE")),
+    DATE = list(
+      type = "INT32",
+      logical_type = nanoparquet_logical_type(list(type = "DATE"))
+    ),
     TIME = time(),
     TIMESTAMP = timestamp(),
     # There is no INTERVAL logical type? What's going on here?
     # INTERVAL = list(
     #   type = "FIXED_LEN_BYTE_ARRAY",
-    #   logical_type = list(type = "INTERVAL"),
+    #   logical_type = nanoparquet_logical_type(list(type = "INTERVAL")),
     #   type_length = 12L
     # ),
     JSON = list(
       type = "BYTE_ARRAY",
-      logical_type = list(type = "JSON")
+      logical_type = nanoparquet_logical_type(list(type = "JSON"))
     ),
     BSON = list(
       type = "BYTE_ARRAY",
-      logical_type = list(type = "BSON")
+      logical_type = nanoparquet_logical_type(list(type = "BSON"))
     ),
-    LIST = err("LIST"),
+    LIST = {
+      nl <- nested_list()
+      list(
+        name = c(NA_character_, "list", "element"),
+        type = c(NA_character_, NA_character_, nl$type),
+        logical_type = list(
+          nanoparquet_logical_type(list(type = "LIST")),
+          NULL,
+          nl$logical_type
+        ),
+        converted_type = c(
+          "LIST",
+          NA_character_,
+          nl$converted_type %||% NA_character_
+        ),
+        repetition_type = c("OPTIONAL", "REPEATED", "OPTIONAL"),
+        num_children = c(1L, 1L, NA_integer_)
+      )
+    },
     MAP = err("MAP"),
     UNKNOWN = err("UNKNOWN"),
 
@@ -435,12 +505,18 @@ parquet_type <- function(
   )
 
   if (!is.null(ptype[["logical_type"]])) {
-    class(ptype[["logical_type"]]) <- "nanoparquet_logical_type"
-    ct <- logical_to_converted(ptype[["logical_type"]])
-    ptype[names(ct)] <- ct
+    if (is.null(ptype[["converted_type"]])) {
+      ct <- logical_to_converted(ptype[["logical_type"]])
+      ptype[names(ct)] <- ct
+    }
   }
 
   ptype
+}
+
+nanoparquet_logical_type <- function(x) {
+  class(x) <- "nanoparquet_logical_type"
+  x
 }
 
 logical_to_converted <- function(logical_type) {
@@ -454,37 +530,61 @@ map_schema_to_df <- function(schema, df, options) {
     is.null(schema) || is.data.frame(schema),
     is.data.frame(df)
   )
-  # no need to deal with internal nodes for now
-  schema <- schema[is.na(schema[["num_children"]]), ]
-  nms <- schema$name
+  # Remove root node (r_col = NA, present only in file-read schemas).
+  schema <- schema[!is.na(schema[["r_col"]]), ]
 
-  schema <- if (is.null(schema)) {
+  # All remaining rows are passed to C++. Use r_col to find the top-level row
+  # of each R column (first row per r_col group), which carries the column name.
+  rcol <- schema[["r_col"]]
+  top <- !duplicated(rcol)
+  nms <- schema$name[top]
+
+  if (is.null(schema)) {
     # no schema at all, everything auto-detected
-    do.call(
+    schema <- do.call(
       "parquet_schema",
       structure(as.list(rep("AUTO", ncol(df))), names = names(df))
     )
   } else if (!is.null(nms) && !anyNA(nms) && !any(nms == "")) {
-    # all properly named
+    # all properly named — match against df columns
     dfmiss <- setdiff(nms, names(df))
     if (length(dfmiss) > 0) {
       stop(
         "Parquet schema column",
         if (length(dfmiss) > 1) "s",
-        "missing from the data: ",
+        " missing from the data: ",
         paste(dfmiss, collapse = ", ")
       )
     }
-    # add AUTO to missing columns
+    # add AUTO rows for df columns not in the schema
     smiss <- setdiff(names(df), nms)
     auto <- do.call(
       "parquet_schema",
       structure(as.list(rep("AUTO", length(smiss))), names = smiss)
     )
-    schema <- rbind(schema, auto)
-    schema[match(names(df), schema$name), ]
+    # Reorder all rows (grouped by r_col) to match df column order.
+    top_rcols <- rcol[top]
+    schema_nms <- setdiff(names(df), smiss)
+    col_order <- match(schema_nms, nms)
+    ordered_rows <- unlist(lapply(col_order, function(i) {
+      which(rcol == top_rcols[i])
+    }))
+    schema <- schema[ordered_rows, ]
+    # Renumber r_col: each column gets its position in the df.
+    new_rcol <- unlist(lapply(seq_along(col_order), function(i) {
+      rep(match(schema_nms[i], names(df)), sum(rcol == top_rcols[col_order[i]]))
+    }))
+    schema[["r_col"]] <- new_rcol
+    # Append AUTO rows (one row each, r_col = position in df).
+    if (nrow(auto) > 0) {
+      auto[["r_col"]] <- match(smiss, names(df))
+      schema <- rbind(schema, auto)
+    }
+    schema <- schema[order(schema[["r_col"]]), ]
   } else {
-    if (nrow(schema) != ncol(df)) {
+    # unnamed / partially named
+    n_top <- sum(top)
+    if (n_top != ncol(df)) {
       stop(
         "Parquet schema size does not match data size. ",
         "They must match, unless the schema is fully named."
@@ -492,7 +592,6 @@ map_schema_to_df <- function(schema, df, options) {
     }
     if (is.null(nms) || all(is.na(nms) | nms == "")) {
       # no names at all, ok
-      schema
     } else {
       # some names, those must match
       if (is.na(nms) | nms == names(df)) {
@@ -500,7 +599,6 @@ map_schema_to_df <- function(schema, df, options) {
           "Parquet schema names do not fully match data frame names."
         )
       }
-      schema
     }
   }
 

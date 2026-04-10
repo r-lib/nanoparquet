@@ -317,7 +317,6 @@ test_that("BYTE_ARRAY, RAW", {
     # not implemented yet
     write_parquet(d, tmp, schema = schema, encoding = "DELTA_LENGTH_BYTE_ARRAY")
     write_parquet(d, tmp, schema = schema, encoding = "DELTA_BYTE_ARRAY")
-    write_parquet(d, tmp, schema = schema, encoding = "PLAIN_DICTIONARY")
     # unsupported for BYTE_ARRAY
     write_parquet(d, tmp, schema = schema, encoding = "RLE")
   })

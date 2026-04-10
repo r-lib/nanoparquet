@@ -23,7 +23,11 @@ enum r_type_conversion {
 class rtype {
 public:
   rtype() { }
-  rtype(parquet::SchemaElement &sel);
+  rtype(
+    std::vector<parquet::SchemaElement> &schema,
+    uint32_t schema_col,
+    std::vector<int32_t> &parent_column
+  );
   // final type
   int type;
   r_type_conversion type_conversion = NONE;
@@ -43,6 +47,10 @@ public:
   bool byte_array = false;
   // for DECIMAL
   int32_t scale;
+  // REPEATED columns are always converted to lists
+  bool repeated = false;
+  // bottom layer of 3-layer list column
+  bool is_list3 = false;
 };
 
 struct rmetadata {
@@ -54,8 +62,13 @@ public:
   size_t num_row_groups;
   std::vector<int64_t> row_group_num_rows;
   std::vector<int64_t> row_group_offsets;
+  // For repeated (list) columns: cumulative rep/def entry count before each
+  // row group, per column. Indexed [col][rg]. Empty for non-repeated columns.
+  std::vector<std::vector<int64_t>> rg_repeat_offsets;
   std::vector<rtype> r_types;
   std::vector<uint8_t*> dataptr;
+  std::vector<uint8_t*> repeatptr;
+  std::vector<int32_t> repetition_types;
 };
 
 struct tmpbytes {
@@ -122,6 +135,7 @@ public:
   SEXP facdicts = R_NilValue;
   SEXP types = R_NilValue;
   SEXP arrow_metadata = R_NilValue;
+  SEXP repeats = R_NilValue;
 
   std::vector<std::vector<uint8_t>> tmpdata;
   std::vector<std::vector<tmpdict>> dicts;

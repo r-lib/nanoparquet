@@ -110,6 +110,10 @@ format_schema_result <- function(mtd, sch, options) {
 #'     each "real" column. For nested schemas, the rows are in depth-first
 #'     search order. Most important columns are:
 #'     - `file_name`: file name.
+#'     - `r_col`: integer, the column index in R, starting from one.
+#'       `NA` for the root node. For Parquet files without list columns
+#'       this is simply the column index in the file. A list column has
+#'       multiple schema rows, and they all have the same `r_col`.
 #'     - `name`: column name.
 #'     - `r_type`: the R type that corresponds to the Parquet type.
 #'       Might be `NA` if [read_parquet()] cannot read this column. See
@@ -256,6 +260,10 @@ parquet_metadata <- function(file) {
 #'     each "real" column. For nested schemas, the rows are in depth-first
 #'     search order. Most important columns are:
 #'     - `file_name`: file name.
+#'     - `r_col`: integer, the column index in R, starting from one.
+#'       `NA` for the root node. For Parquet files without list columns
+#'       this is simply the column index in the file. A list column has
+#'       multiple schema rows, and they all have the same `r_col`.
 #'     - `name`: column name.
 #'     - `r_type`: the R type that corresponds to the Parquet type.
 #'       Might be `NA` if [read_parquet()] cannot read this column. See
@@ -287,7 +295,8 @@ read_parquet_schema <- function(file, options = parquet_options()) {
 #' @param file Path to a Parquet file.
 #' @return Data frame with columns:
 #'   * `file_name`: file name.
-#'   * `num_cols`: number of (leaf) columns.
+#'   * `num_cols`: number of columns. (The number of child nodes of the
+#'      root node in the schema.)
 #'   * `num_rows`: number of rows.
 #'   * `num_row_groups`: number of row groups.
 #'   * `file_size`: file size in bytes.
@@ -306,7 +315,7 @@ read_parquet_info <- function(file) {
   info <- data.frame(
     stringsAsFactors = FALSE,
     file_name = file,
-    num_cols = sum(is.na(mtd$schema$num_children)),
+    num_cols = mtd$schema$num_children[1],
     num_rows = mtd$file_meta_data$num_rows,
     num_row_groups = nrow(mtd$row_groups),
     file_size = file.size(file),

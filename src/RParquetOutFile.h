@@ -52,19 +52,28 @@ public:
                                   uint64_t until, parquet::SchemaElement &sel);
   uint32_t get_size_byte_array(uint32_t idx, uint32_t num_present,
                                uint64_t from, uint64_t until);
-  void write_boolean(std::ostream &file, uint32_t idx, uint32_t group,
+  void write_boolean_as_bitpacked(std::ostream &file, uint32_t idx, uint32_t group,
                      uint32_t page, uint64_t from, uint64_t until);
   void write_boolean_as_int(std::ostream &file, uint32_t idx, uint32_t group,
                             uint32_t page, uint64_t from, uint64_t until);
 
-  uint32_t write_present(std::ostream &file, uint32_t idx, uint64_t from,
-                         uint64_t until);
-  void write_present_boolean(std::ostream &file, uint32_t idx,
-                             uint32_t num_present, uint64_t from,
-                             uint64_t until);
+  void write_present_boolean_as_bitpacked(std::ostream &file, uint32_t idx,
+                                  uint32_t num_present, uint64_t from,
+                                  uint64_t until);
   void write_present_boolean_as_int(std::ostream &file, uint32_t idx,
-                                    uint32_t num_present, uint64_t from,
-                                    uint64_t until);
+                                     uint32_t num_present, uint64_t from,
+                                     uint64_t until);
+
+  uint32_t get_num_levels(uint32_t idx, uint64_t from, uint64_t until,
+                          nanoparquet::SchemaElementEx &sel);
+  nanoparquet::DefLevelsResult write_definition_levels(std::ostream &def_file,
+                         std::ostream &rep_file,
+                         uint32_t idx, uint64_t from,
+                         uint64_t until, nanoparquet::SchemaElementEx &sel);
+  nanoparquet::DefLevelsResult write_definition_levels_list(std::ostream &def_file,
+                         std::ostream &rep_file, uint32_t idx,
+                         uint64_t from, uint64_t until,
+                         nanoparquet::SchemaElementEx &sel);
 
   // for dictionaries
   uint32_t get_num_values_dictionary(uint32_t idx,
@@ -84,6 +93,18 @@ public:
                                parquet::SchemaElement &sel,
                                std::string &min_value,
                                std::string &max_value);
+
+  nanoparquet::SchemaElementEx schema_from_supplied(
+    const std::string &name,
+    bool req,
+    R_xlen_t idx,
+    int type,
+    int *type_length,
+    int *converted_type,
+    SEXP logical_type,
+    int *scale,
+    int *precision
+  );
 
   void init_metadata(
     SEXP dfsxp,
@@ -132,6 +153,9 @@ private:
   void write_integer_int32(std::ostream &file, SEXP col, uint32_t idx,
                            uint64_t from, uint64_t until,
                            parquet::SchemaElement &sel);
+  void write_list_int32(std::ostream &file, SEXP col, uint32_t idx,
+                        uint64_t from, uint64_t until,
+                        parquet::SchemaElement &sel);
   void write_double_int32_time(std::ostream &file, SEXP col, uint32_t idx,
                                uint64_t from, uint64_t until,
                                parquet::SchemaElement &sel, double factor);
