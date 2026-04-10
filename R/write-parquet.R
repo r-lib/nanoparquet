@@ -205,7 +205,7 @@ prepare_write_df <- function(x) {
 check_schema_required_cols <- function(x, schema) {
   # if schema has REQUIRED, but the column has NAs, that's an error
   rt <- schema[["repetition_type"]]
-  req <- !is.na(rt) & rt == "REQUIRED"
+  req <- !is.na(rt) & (rt == "REQUIRED" | rt == 0L)
   hasna <- vapply(x, any_na, logical(1))
   bad <- which(req & hasna)
   if (length(bad) > 0) {
@@ -217,7 +217,7 @@ check_schema_required_cols <- function(x, schema) {
     )
   }
   schema[["repetition_type"]][is.na(rt)] <-
-    ifelse(hasna[is.na(rt)], "OPITONAL", "REQUIRED")
+    ifelse(hasna[is.na(rt)], "OPTIONAL", "REQUIRED")
   schema
 }
 

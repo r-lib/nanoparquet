@@ -72,6 +72,27 @@ test_that("overwrite last row group", {
   expect_equal(ccs1$file_offset[idx1], ccs2$file_offset[idx2])
 })
 
+test_that("appending all-NA rows to REQUIRED columns gives a clear error", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df_valid <- data.frame(
+    id = as.integer(1:5),
+    value = as.numeric(1:5),
+    label = c("A", "B", "C", "D", "E")
+  )
+  df_nas <- data.frame(
+    id = as.integer(c(NA, NA, NA)),
+    value = c(NA_real_, NA_real_, NA_real_),
+    label = c(NA_character_, NA_character_, NA_character_)
+  )
+
+  write_parquet(df_valid, tmp)
+  expect_snapshot(error = TRUE, {
+    append_parquet(df_nas, tmp)
+  })
+})
+
 test_that("overwrite a single row groups", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
