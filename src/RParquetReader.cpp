@@ -1491,18 +1491,21 @@ void convert_column_to_r_ba_string(postprocess *pp, uint32_t cl) {
 
 inline double parse_decimal(uint8_t *d, uint32_t len) {
   if (len == 0) return 0;
-  uint64_t val = 0;
   bool neg = d[0] >= 128;
+  double val = 0;
   if (neg) {
+    // Two's complement: complement all bytes, accumulate, add 1, negate.
+    // Use double arithmetic to handle byte arrays wider than 8 bytes (e.g.
+    // 16-byte / 128-bit decimals).
     for (auto j = 0; j < len; j++) {
       uint8_t n = ~ d[j];
-      val = (val << 8) | n;
+      val = val * 256.0 + n;
     }
-    return - ((double) val + 1);
+    return -(val + 1.0);
 
   } else {
     for (auto j = 0; j < len; j++) {
-      val = (val << 8) | d[j];
+      val = val * 256.0 + d[j];
     }
     return val;
   }

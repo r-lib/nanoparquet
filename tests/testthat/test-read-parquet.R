@@ -450,6 +450,15 @@ test_that("More BYTE_STREAM_SPLIT", {
   }
 })
 
+test_that("DECIMAL in FIXED_LEN_BYTE_ARRAY (128-bit)", {
+  # 16-byte / 128-bit decimals; previously only low 64 bits were read (#148)
+  pf <- test_path("data/decimal128.parquet")
+  df <- read_parquet(pf)
+  expect_equal(typeof(df$Value), "double")
+  expect_equal(typeof(df$DataCapture), "double")
+  expect_snapshot(as.data.frame(df))
+})
+
 test_that("DECIMAL in INT32, INT64", {
   pf <- test_path("data/int32_decimal.parquet")
   expect_equal(typeof(read_parquet(pf)[[1]]), "double")
