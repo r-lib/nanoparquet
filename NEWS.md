@@ -2,6 +2,20 @@
 
 * `append_parquet()` now creates a new file if `file` does not exist (#155).
 
+* `read_parquet()` now correctly reads `DECIMAL` values stored as
+  `FIXED_LEN_BYTE_ARRAY` with a byte length greater than 8 (e.g. 128-bit
+  decimals). Previously only the lower 64 bits were used, producing wrong
+  results (#148).
+
+* `write_parquet()` now sets the `definition_level_encoding` and
+  `repetition_level_encoding` fields in data page headers to `RLE` for all
+  columns, fixing an interoperability issue with the Apache Parquet Java
+  library (#98).
+
+* `write_parquet()` now writes the `ARROW:schema` metadata with correct
+  flatbuffer alignment, fixing an interoperability issue with the Rust
+  arrow-rs parquet reader (#152).
+
 * `read_parquet()` now reads logical (BOOLEAN) columns correctly when the
   column spans multiple data pages (#142).
 

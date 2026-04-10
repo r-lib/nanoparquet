@@ -106,3 +106,27 @@ test_that("temporal types", {
     np[["columns"]][["type"]]
   })
 })
+
+test_that("arrow-rs can read ARROW:schema (issue #152)", {
+  skip_on_cran()
+  skip_without_cargo()
+
+  crate <- normalizePath(
+    testthat::test_path("fixtures/arrow-rs-reader"),
+    mustWork = TRUE
+  )
+  processx::run(
+    "cargo",
+    c("build", "--manifest-path", file.path(crate, "Cargo.toml")),
+    error_on_status = TRUE
+  )
+  bin <- file.path(crate, "target", "debug", "arrow-rs-reader")
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  withr::local_options(nanoparquet.write_arrow_metadata = TRUE)
+
+  write_parquet(data.frame(a = c(1, 2), b = c(3, 4)), tmp)
+  result <- processx::run(bin, tmp, error_on_status = TRUE)
+  expect_equal(trimws(result$stdout), "OK")
+})

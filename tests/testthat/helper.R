@@ -1,3 +1,17 @@
+skip_without_parquet_cli <- function() {
+  skip_on_cran()
+  if (Sys.which("parquet") == "") {
+    skip("parquet CLI not found on PATH")
+  }
+}
+
+skip_without_cargo <- function() {
+  skip_on_cran()
+  if (Sys.which("cargo") == "") {
+    skip("cargo not found on PATH")
+  }
+}
+
 skip_without_pyarrow <- function() {
   skip_on_cran()
   if (tolower(Sys.getenv("_R_CHECK_FORCE_SUGGESTS_")) != "false") {

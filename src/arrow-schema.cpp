@@ -552,16 +552,25 @@ SEXP nanoparquet_encode_arrow_schema(SEXP rschema) {
   auto metadata = builder.CreateVector(metadata_vector);
 
   std::vector<int64_t> features_vector;
-  auto features = builder.CreateVector(features_vector);
   for (auto i = 0; i < Rf_xlength(rfeatures); i++) {
     features_vector.push_back(INTEGER(rfeatures)[i]);
+  }
+  // Only create the vector when non-empty. An empty int64_t vector would be
+  // placed without 8-byte alignment (flatbuffers skips PreAlign when len==0),
+  // causing arrow-rs's strict flatbuffer verifier to reject the schema.
+  flatbuffers::Offset<flatbuffers::Vector<int64_t>> features_offset;
+  bool has_features = !features_vector.empty();
+  if (has_features) {
+    features_offset = builder.CreateVector(features_vector);
   }
 
   SchemaBuilder schema_builder(builder);
   schema_builder.add_endianness((Endianness) INTEGER(rendianness)[0]);
   schema_builder.add_fields(fields);
   schema_builder.add_custom_metadata(metadata);
-  schema_builder.add_features(features);
+  if (has_features) {
+    schema_builder.add_features(features_offset);
+  }
   auto schema = schema_builder.Finish();
 
   MessageBuilder message_builder(builder);
