@@ -401,9 +401,9 @@ void ParquetOutFile::write_dictionary_(
   int64_t until) {
 
   ColumnMetaData *cmd = &(column_meta_data[idx]);
-  uint32_t start = file.tellp();
+  int64_t start = file.tellp();
   write_dictionary(file, idx, sel, from, until);
-  uint32_t end = file.tellp();
+  int64_t end = file.tellp();
   if (end - start != size) {
     throw runtime_error(
       string("Wrong number of bytes (") + to_string(end - start) +
@@ -584,11 +584,11 @@ void ParquetOutFile::append() {
 
 int64_t ParquetOutFile::write_columns(uint32_t group, int64_t from,
                                       int64_t until) {
-  uint32_t start = pfile.tellp();
+  int64_t start = pfile.tellp();
   for (uint32_t idx = 0; idx < num_cols; idx++) {
     write_column(idx, group, from, until);
   }
-  uint32_t end = pfile.tellp();
+  int64_t end = pfile.tellp();
   // return total size
   return end - start;
 }
@@ -597,7 +597,7 @@ void ParquetOutFile::write_column(uint32_t idx, uint32_t group,
                                   int64_t from, int64_t until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1].element();
-  uint32_t col_start = pfile.tellp();
+  int64_t col_start = pfile.tellp();
   // we increase this as needed
   cmd->__set_total_uncompressed_size(0);
   Statistics stat;
@@ -605,11 +605,11 @@ void ParquetOutFile::write_column(uint32_t idx, uint32_t group,
   stat.__set_null_count(0);
   cmd->__set_statistics(stat);
   if (encodings[idx] == Encoding::RLE_DICTIONARY) {
-    uint32_t dictionary_page_offset = pfile.tellp();
+    int64_t dictionary_page_offset = pfile.tellp();
     write_dictionary_page(idx, from, until);
     cmd->__set_dictionary_page_offset(dictionary_page_offset);
   }
-  uint32_t data_offset = pfile.tellp();
+  int64_t data_offset = pfile.tellp();
   // For list columns (3 schema elements): max_rep=1, max_def=3.
   // For optional scalar columns: max_rep=0, max_def=1.
   // For required scalar columns: max_rep=0, max_def=0.
@@ -620,7 +620,7 @@ void ParquetOutFile::write_column(uint32_t idx, uint32_t group,
   write_data_pages(
     idx, group, from, until, max_repetition_level, max_definition_level
   );
-  int32_t column_bytes = ((int32_t) pfile.tellp()) - col_start;
+  int64_t column_bytes = (int64_t) pfile.tellp() - col_start;
   uint32_t col_num_values = is_list
     ? get_num_levels(idx, from, until, schemas[idx + 1])
     : (until - from);
