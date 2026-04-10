@@ -1,5 +1,9 @@
 # nanoparquet (development version)
 
+* `write_parquet()` now writes the `ARROW:schema` metadata with correct
+  flatbuffer alignment, fixing an interoperability issue with the Rust
+  arrow-rs parquet reader (#152).
+
 * `read_parquet()` now reads logical (BOOLEAN) columns correctly when the
   column spans multiple data pages (#142).
 

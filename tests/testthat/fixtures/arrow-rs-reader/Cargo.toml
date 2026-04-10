@@ -1,0 +1,7 @@
+[package]
+name = "arrow-rs-reader"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+parquet = { version = "57", features = ["arrow"] }
