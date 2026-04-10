@@ -64,3 +64,39 @@ test_that("LIST", {
     read_parquet_page(pf5, pgoff5)[elts]
   })
 })
+
+test_that("write and read list(integer())", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame(id = 1:4)
+  df$x <- list(1L, c(2L, 3L), NULL, c(4L, NA_integer_, 6L))
+  write_parquet(df, tmp)
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+})
+
+test_that("write and read list(double())", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame(id = 1:4)
+  df$x <- list(1.5, c(2.5, 3.5), NULL, c(4.5, NA_real_, 6.5))
+  write_parquet(df, tmp)
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+})
+
+test_that("write and read list(character())", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame(id = 1:4)
+  df$x <- list("a", c("b", "c"), NULL, c("d", NA_character_, "f"))
+  write_parquet(df, tmp)
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+})

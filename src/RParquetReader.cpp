@@ -1449,7 +1449,8 @@ void convert_column_to_r_ba_string_dict_miss(postprocess *pp, uint32_t cl) {
 
 void convert_column_to_r_ba_string(postprocess *pp, uint32_t cl) {
   bool hasdict0 = pp->dicts[cl].size() > 0;
-  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
+  bool hasmiss0 = !pp->metadata.r_types[cl].repeated &&
+    pp->metadata.repetition_types[cl + 1] == 1;
   if (!hasdict0 && !hasmiss0) {
     convert_column_to_r_ba_string_nodict_nomiss(pp, cl);
   } else if (hasdict0 && !hasmiss0) {

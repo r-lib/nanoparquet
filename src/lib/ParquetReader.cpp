@@ -667,6 +667,16 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
       (uint8_t*) def_levels.ptr,
       dp.num_values
     );
+    // For multi-level definition (list columns), GetBatchCount counts non-zero
+    // entries but we need entries == max_def_level only. For simple optional
+    // columns (max_def=1), non-zero == max_def_level so no correction needed.
+    if (dp.cc.max_def_level > 1) {
+      num_present = 0;
+      uint8_t *dl = (uint8_t*) def_levels.ptr;
+      for (uint32_t i = 0; i < dp.num_values; i++) {
+        if (dl[i] == (uint8_t) dp.cc.max_def_level) num_present++;
+      }
+    }
     dp.set_num_present(num_present);
   }
   update_data_page_size(dp, buf, len);
