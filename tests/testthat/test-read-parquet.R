@@ -456,7 +456,8 @@ test_that("DECIMAL in FIXED_LEN_BYTE_ARRAY (128-bit)", {
   df <- read_parquet(pf)
   expect_equal(typeof(df$Value), "double")
   expect_equal(typeof(df$DataCapture), "double")
-  expect_snapshot(as.data.frame(df))
+  expect_equal(df$Value, c(51.70559, 49.52529, 51.69562, 49.90946, 50.06762, 54.69116))
+  expect_equal(df$DataCapture, rep(-99, 6))
 })
 
 test_that("DECIMAL in INT32, INT64", {
