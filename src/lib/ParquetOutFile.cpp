@@ -779,12 +779,8 @@ void ParquetOutFile::write_data_page(uint32_t idx, uint32_t group,
     DataPageHeader dph;
     dph.__set_num_values(page_num_levels);
     dph.__set_encoding(encodings[idx]);
-    if (max_repetition_level > 0) {
-      dph.__set_repetition_level_encoding(Encoding::RLE);
-    }
-    if (max_definition_level > 0) {
-      dph.__set_definition_level_encoding(Encoding::RLE);
-    }
+    dph.__set_repetition_level_encoding(Encoding::RLE);
+    dph.__set_definition_level_encoding(Encoding::RLE);
     // for version 1 we can set it here
     ph.__set_data_page_header(dph);
   } else if (data_page_version == 2) {
