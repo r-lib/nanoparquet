@@ -1,5 +1,7 @@
 # nanoparquet (development version)
 
+* `append_parquet()` now creates a new file if `file` does not exist (#155).
+
 * `write_parquet()` now handles data frames with zero rows correctly,
   including zero-column data frames (#138).
 
