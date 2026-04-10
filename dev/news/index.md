@@ -3,6 +3,12 @@
 ## nanoparquet (development version)
 
 - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now sets the `definition_level_encoding` and
+  `repetition_level_encoding` fields in data page headers to `RLE` for
+  all columns, fixing an interoperability issue with the Apache Parquet
+  Java library ([\#98](https://github.com/r-lib/nanoparquet/issues/98)).
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
   now writes the `ARROW:schema` metadata with correct flatbuffer
   alignment, fixing an interoperability issue with the Rust arrow-rs
   parquet reader
