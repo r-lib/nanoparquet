@@ -1,4 +1,4 @@
-# nanoparquet (development version)
+# nanoparquet 0.5.0
 
 * `append_parquet()` now gives a clear error when appending data with
   missing values (`NA`) to a column that was written as `REQUIRED` (i.e.
