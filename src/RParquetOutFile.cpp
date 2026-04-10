@@ -2811,12 +2811,12 @@ void RParquetOutFile::init_metadata(
   dicts_from = Rf_allocVector(INTSXP, Rf_length(df));
   R_PreserveObject(dicts_from);
   SEXP nms = PROTECT(Rf_getAttrib(dfsxp, R_NamesSymbol));
-  int *type = INTEGER(VECTOR_ELT(schema, 3));
-  int *type_length = INTEGER(VECTOR_ELT(schema, 4));
-  int *converted_type = INTEGER(VECTOR_ELT(schema, 6));
-  SEXP logical_type = VECTOR_ELT(schema, 7);
-  int *scale = INTEGER(VECTOR_ELT(schema, 9));
-  int *precision = INTEGER(VECTOR_ELT(schema, 10));
+  int *type = INTEGER(VECTOR_ELT(schema, 4));
+  int *type_length = INTEGER(VECTOR_ELT(schema, 5));
+  int *converted_type = INTEGER(VECTOR_ELT(schema, 7));
+  SEXP logical_type = VECTOR_ELT(schema, 8);
+  int *scale = INTEGER(VECTOR_ELT(schema, 10));
+  int *precision = INTEGER(VECTOR_ELT(schema, 11));
 
   R_xlen_t nc = INTEGER(dim)[1];
   write_minmax_values = LOGICAL(rf_get_list_element(options, "write_minmax_values"))[0];

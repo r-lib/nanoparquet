@@ -140,8 +140,15 @@ parquet_schema_create <- function(types) {
 
   ptypes <- mapply(FUN = normalize, ptypes, nms, SIMPLIFY = FALSE)
 
+  r_col <- unlist(mapply(
+    function(x, idx) rep(as.integer(idx), length(x$type)),
+    ptypes, seq_along(ptypes),
+    SIMPLIFY = FALSE
+  ))
+
   ptdf <- data.frame(
     file_name = unlist(lapply(ptypes, "[[", "file_name")),
+    r_col = r_col,
     name = unlist(lapply(ptypes, "[[", "name")),
     r_type = unlist(lapply(ptypes, "[[", "r_type")),
     type = unlist(lapply(ptypes, "[[", "type")),
@@ -532,7 +539,7 @@ map_schema_to_df <- function(schema, df, options) {
       stop(
         "Parquet schema column",
         if (length(dfmiss) > 1) "s",
-        "missing from the data: ",
+        " missing from the data: ",
         paste(dfmiss, collapse = ", ")
       )
     }

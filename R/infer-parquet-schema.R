@@ -41,6 +41,7 @@ infer_parquet_schema <- function(df, options = parquet_options()) {
 
   type_tab <- data.frame(
     file_name = rep(NA_character_, length(all_sels)),
+    r_col = as.integer(col_idx),
     name = vapply(all_sels, function(x) x[[4]], ""),
     r_type = vapply(all_sels, function(x) x[[2]], ""),
     type = vapply(all_sels, function(x) x[[1]], ""),

@@ -8,9 +8,9 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name  r_type  type type_length repetition_type   converted_type
-      1 schema    <NA>  <NA>          NA            <NA>             <NA>
-      2     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MILLIS
+        r_col   name  r_type  type type_length repetition_type   converted_type
+      1    NA schema    <NA>  <NA>          NA            <NA>             <NA>
+      2     1     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MILLIS
         logical_type num_children scale precision field_id children
       1                         1    NA        NA       NA         
       2 TIMESTAM....           NA    NA        NA       NA         
@@ -44,9 +44,9 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name  r_type  type type_length repetition_type   converted_type
-      1 schema    <NA>  <NA>          NA            <NA>             <NA>
-      2     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MICROS
+        r_col   name  r_type  type type_length repetition_type   converted_type
+      1    NA schema    <NA>  <NA>          NA            <NA>             <NA>
+      2     1     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MICROS
         logical_type num_children scale precision field_id children
       1                         1    NA        NA       NA         
       2 TIMESTAM....           NA    NA        NA       NA         
@@ -80,12 +80,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name  r_type  type type_length repetition_type converted_type logical_type
-      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2     ts POSIXct INT64          NA        REQUIRED           <NA> TIMESTAM....
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name  r_type  type type_length repetition_type converted_type
+      1    NA schema    <NA>  <NA>          NA            <NA>           <NA>
+      2     1     ts POSIXct INT64          NA        REQUIRED           <NA>
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2 TIMESTAM....           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -116,9 +116,9 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name  r_type  type type_length repetition_type   converted_type
-      1 schema    <NA>  <NA>          NA            <NA>             <NA>
-      2     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MILLIS
+        r_col   name  r_type  type type_length repetition_type   converted_type
+      1    NA schema    <NA>  <NA>          NA            <NA>             <NA>
+      2     1     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MILLIS
         logical_type num_children scale precision field_id children
       1                         1    NA        NA       NA         
       2 TIMESTAM....           NA    NA        NA       NA         
@@ -158,9 +158,9 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name  r_type  type type_length repetition_type   converted_type
-      1 schema    <NA>  <NA>          NA            <NA>             <NA>
-      2     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MICROS
+        r_col   name  r_type  type type_length repetition_type   converted_type
+      1    NA schema    <NA>  <NA>          NA            <NA>             <NA>
+      2     1     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MICROS
         logical_type num_children scale precision field_id children
       1                         1    NA        NA       NA         
       2 TIMESTAM....           NA    NA        NA       NA         
@@ -200,12 +200,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name  r_type  type type_length repetition_type converted_type logical_type
-      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2     ts POSIXct INT64          NA        REQUIRED           <NA> TIMESTAM....
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name  r_type  type type_length repetition_type converted_type
+      1    NA schema    <NA>  <NA>          NA            <NA>           <NA>
+      2     1     ts POSIXct INT64          NA        REQUIRED           <NA>
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2 TIMESTAM....           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -242,12 +242,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type   converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>             <NA>             
-      2     ts double INT64          NA        REQUIRED TIMESTAMP_MILLIS             
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type   converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>             <NA>
+      2     1     ts double INT64          NA        REQUIRED TIMESTAMP_MILLIS
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
 
 ---
 
@@ -259,9 +259,9 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name  r_type  type type_length repetition_type   converted_type
-      1 schema    <NA>  <NA>          NA            <NA>             <NA>
-      2     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MICROS
+        r_col   name  r_type  type type_length repetition_type   converted_type
+      1    NA schema    <NA>  <NA>          NA            <NA>             <NA>
+      2     1     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MICROS
         logical_type num_children scale precision field_id children
       1                         1    NA        NA       NA         
       2                        NA    NA        NA       NA         
@@ -276,12 +276,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type   converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>             <NA>             
-      2     ts double INT64          NA        REQUIRED TIMESTAMP_MILLIS             
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type   converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>             <NA>
+      2     1     ts double INT64          NA        REQUIRED TIMESTAMP_MILLIS
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       read_parquet_metadata(tmp)[["column_chunks"]][["encodings"]]
     Output
@@ -299,9 +299,9 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name  r_type  type type_length repetition_type   converted_type
-      1 schema    <NA>  <NA>          NA            <NA>             <NA>
-      2     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MICROS
+        r_col   name  r_type  type type_length repetition_type   converted_type
+      1    NA schema    <NA>  <NA>          NA            <NA>             <NA>
+      2     1     ts POSIXct INT64          NA        REQUIRED TIMESTAMP_MICROS
         logical_type num_children scale precision field_id children
       1                         1    NA        NA       NA         
       2                        NA    NA        NA       NA         
@@ -322,12 +322,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2     dt    hms INT32          NA        REQUIRED    TIME_MILLIS TIME, TR....
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>           <NA>
+      2     1     dt    hms INT32          NA        REQUIRED    TIME_MILLIS
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2 TIME, TR....           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -358,12 +358,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2     dt    hms INT64          NA        REQUIRED    TIME_MICROS TIME, TR....
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>           <NA>
+      2     1     dt    hms INT64          NA        REQUIRED    TIME_MICROS
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2 TIME, TR....           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -394,12 +394,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2     dt    hms INT64          NA        REQUIRED           <NA> TIME, TR....
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>           <NA>
+      2     1     dt    hms INT64          NA        REQUIRED           <NA>
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2 TIME, TR....           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -430,12 +430,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2     dt    hms INT32          NA        REQUIRED    TIME_MILLIS             
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>           <NA>
+      2     1     dt    hms INT32          NA        REQUIRED    TIME_MILLIS
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -456,12 +456,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2     dt    hms INT64          NA        REQUIRED    TIME_MICROS             
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>           <NA>
+      2     1     dt    hms INT64          NA        REQUIRED    TIME_MICROS
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -482,12 +482,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2     dt    hms INT32          NA        REQUIRED    TIME_MILLIS TIME, TR....
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>           <NA>
+      2     1     dt    hms INT32          NA        REQUIRED    TIME_MILLIS
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2 TIME, TR....           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -524,12 +524,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2     dt    hms INT64          NA        REQUIRED    TIME_MICROS TIME, TR....
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>           <NA>
+      2     1     dt    hms INT64          NA        REQUIRED    TIME_MICROS
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2 TIME, TR....           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -566,12 +566,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2     dt    hms INT64          NA        REQUIRED           <NA> TIME, TR....
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>           <NA>
+      2     1     dt    hms INT64          NA        REQUIRED           <NA>
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2 TIME, TR....           NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -608,12 +608,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2     dt    hms INT32          NA        REQUIRED    TIME_MILLIS             
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>           <NA>
+      2     1     dt    hms INT32          NA        REQUIRED    TIME_MILLIS
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output
@@ -640,12 +640,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name r_type  type type_length repetition_type converted_type logical_type
-      1 schema   <NA>  <NA>          NA            <NA>           <NA>             
-      2     dt    hms INT64          NA        REQUIRED    TIME_MICROS             
-        num_children scale precision field_id children
-      1            1    NA        NA       NA         
-      2           NA    NA        NA       NA         
+        r_col   name r_type  type type_length repetition_type converted_type
+      1    NA schema   <NA>  <NA>          NA            <NA>           <NA>
+      2     1     dt    hms INT64          NA        REQUIRED    TIME_MICROS
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA    NA        NA       NA         
     Code
       as.data.frame(read_parquet_schema(tmp))[["logical_type"]]
     Output

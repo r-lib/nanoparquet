@@ -124,17 +124,46 @@ add_r_type_to_schema <- function(mtd, sch, options, col_select = NULL) {
     sch$converted_type == "TIMESTAMP_MICROS"
   sch$r_type[poscts] <- "POSIXct"
 
+  sch$r_col <- compute_r_col(sch)
   cols <- c(
     "file_name",
+    "r_col",
     "name",
     "r_type",
-    setdiff(colnames(sch), c("file_name", "name", "r_type"))
+    setdiff(colnames(sch), c("file_name", "r_col", "name", "r_type"))
   )
   sch <- sch[, cols]
 
   sch <- process_nested_columns(sch)
 
   sch
+}
+
+compute_r_col <- function(sch) {
+  n <- nrow(sch)
+  r_col <- rep(NA_integer_, n)
+  if (n <= 1L) return(r_col)
+
+  subtree_end <- function(i) {
+    nc <- sch$num_children[i]
+    if (is.na(nc) || nc == 0L) return(i)
+    end <- i
+    for (k in seq_len(nc)) {
+      end <- subtree_end(end + 1L)
+    }
+    end
+  }
+
+  col_idx <- 0L
+  i <- 2L
+  while (i <= n) {
+    col_idx <- col_idx + 1L
+    end <- subtree_end(i)
+    r_col[i:end] <- col_idx
+    i <- end + 1L
+  }
+
+  r_col
 }
 
 process_nested_columns <- function(sch) {
