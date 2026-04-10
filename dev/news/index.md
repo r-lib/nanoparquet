@@ -2,6 +2,12 @@
 
 ## nanoparquet (development version)
 
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now correctly reads `DECIMAL` values stored as `FIXED_LEN_BYTE_ARRAY`
+  with a byte length greater than 8 (e.g. 128-bit decimals). Previously
+  only the lower 64 bits were used, producing wrong results
+  ([\#148](https://github.com/r-lib/nanoparquet/issues/148)).
+
 - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
   now sets the `definition_level_encoding` and
   `repetition_level_encoding` fields in data page headers to `RLE` for
