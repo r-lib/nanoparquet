@@ -11,7 +11,7 @@ When writing out a data frame, nanoparquet maps R's data types to Parquet
 logical types. The following table is a summary of the mapping. For the
 details see below.\tabular{llcl}{
    R type \tab Parquet type \tab Default \tab Notes \cr
-   character \tab STRING (BYTE_ARRAY) \tab x \tab I.e. STRSXP. Converted to UTF-8. \cr
+   character \tab STRING(BYTE_ARRAY) \tab x \tab I.e. STRSXP. Converted to UTF-8. \cr
    " \tab BYTE_ARRAY \tab  \tab  \cr
    " \tab FIXED_LEN_BYTE_ARRAY \tab  \tab  \cr
    " \tab ENUM \tab  \tab  \cr
@@ -24,19 +24,22 @@ details see below.\tabular{llcl}{
    integer \tab INT(32, true) \tab x \tab I.e. INTSXP. \cr
    " \tab INT64 \tab  \tab  \cr
    " \tab INT96 \tab  \tab  \cr
-   " \tab DECIMAL (INT32) \tab  \tab  \cr
-   " \tab DECIMAL (INT64) \tab  \tab  \cr
+   " \tab DECIMAL(INT32) \tab  \tab  \cr
+   " \tab DECIMAL(INT64) \tab  \tab  \cr
    " \tab INT(8, *) \tab  \tab  \cr
    " \tab INT(16, *) \tab  \tab  \cr
    " \tab INT(32, signed) \tab  \tab  \cr
-   list \tab BYTE_ARRAY \tab  \tab Must be a list of raw vectors. Messing values are \code{NULL}. \cr
+   list \tab LIST(INT32 elements) \tab x \tab List of integer vectors. \code{NULL} entries and \code{NA} elements are supported. \cr
+   " \tab LIST(DOUBLE elements) \tab x \tab List of double vectors. \code{NULL} entries and \code{NA} elements are supported. \cr
+   " \tab LIST(STRING elements) \tab x \tab List of character vectors. \code{NULL} entries and \code{NA} elements are supported. \cr
+   " \tab BYTE_ARRAY \tab  \tab Must be a list of raw vectors. Missing values are \code{NULL}. \cr
    " \tab FIXED_LEN_BYTE_ARRAY \tab  \tab Must be a list of raw vectors of the same length. Missing values are \code{NULL}. \cr
    logical \tab BOOLEAN \tab x \tab I.e. LGLSXP. \cr
    numeric \tab DOUBLE \tab x \tab I.e. REALSXP. \cr
    " \tab INT96 \tab  \tab  \cr
    " \tab FLOAT \tab  \tab  \cr
-   " \tab DECIMAL (INT32) \tab  \tab  \cr
-   " \tab DECIMAL (INT64) \tab  \tab  \cr
+   " \tab DECIMAL(INT32) \tab  \tab  \cr
+   " \tab DECIMAL(INT64) \tab  \tab  \cr
    " \tab INT(*, *) \tab  \tab  \cr
    " \tab FLOAT16 \tab  \tab  \cr
    POSIXct \tab TIMESTAMP(true, MICROS) \tab x \tab Sub-microsecond precision is lost. \cr
@@ -102,6 +105,9 @@ non-default mappings are:
 \item \code{double} to \verb{INT(*, *)},
 \item \code{character} to \code{UUID},
 \item \code{double} to \code{FLOAT16},
+\item \code{list} of \code{integer} vectors to \code{LIST} with \code{INT32} elements,
+\item \code{list} of \code{double} vectors to \code{LIST} with \code{DOUBLE} elements,
+\item \code{list} of \code{character} vectors to \code{LIST} with \code{STRING} elements,
 \item \code{list} of \code{raw} vectors to \code{BYTE_ARRAY},
 \item \code{list} of \code{raw} vectors to \code{FIXED_LEN_BYTE_ARRAY}.
 }
@@ -125,7 +131,7 @@ below.\tabular{lll}{
    INT(64, *) \tab numeric \tab REALSXP \cr
    INTERVAL \tab list(raw) \tab Missing values are \code{NULL}. \cr
    JSON \tab character \tab  \cr
-   LIST \tab  \tab Not supported. \cr
+   LIST \tab list \tab Elements are read as their corresponding R type. \cr
    MAP \tab  \tab Not supported. \cr
    STRING \tab factor \tab If Arrow metadata says it is a factor. Also UTF8. \cr
    " \tab character \tab Otherwise. Also UTF8. \cr
@@ -200,7 +206,8 @@ a list of raw vectors. Missing values are denoted by \code{NULL}.
 
 These types are not yet supported:
 \enumerate{
-\item Nested types (\code{LIST}, \code{MAP}) are not supported.
+\item Nested \code{LIST} types (lists of lists) are not supported.
+\item The \code{MAP} logical type is not supported.
 \item The \code{UNKNOWN} logical type is not supported.
 }
 

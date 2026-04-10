@@ -15,7 +15,7 @@ R to Parquet type mappings.}
 \value{
 Data frame, the inferred schema. It has the same columns as
 the return value of \code{\link[=read_parquet_schema]{read_parquet_schema()}}:
-\code{file_name}, \code{name}, \code{r_type}, \code{type}, \code{type_length}, \code{repetition_type}, \code{converted_type}, \code{logical_type}, \code{num_children}, \code{scale}, \code{precision}, \code{field_id}.
+\code{file_name}, \code{r_col}, \code{name}, \code{r_type}, \code{type}, \code{type_length}, \code{repetition_type}, \code{converted_type}, \code{logical_type}, \code{num_children}, \code{scale}, \code{precision}, \code{field_id}.
 }
 \description{
 Infer Parquet schema of a data frame

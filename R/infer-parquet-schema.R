@@ -11,15 +11,6 @@
 #'   [parquet_schema()] to create a Parquet schema from scratch.
 #' @export
 
-infer_repetition_type <- function(col, nsels, pos) {
-  if (nsels == 1L) {
-    if (anyNA(col)) "OPTIONAL" else "REQUIRED"
-  } else {
-    # LIST column: OPTIONAL, REPEATED, OPTIONAL
-    c("OPTIONAL", "REPEATED", "OPTIONAL")[pos]
-  }
-}
-
 infer_parquet_schema <- function(df, options = parquet_options()) {
   types <- .Call(rf_nanoparquet_map_to_parquet_types, df, options)
 
@@ -68,4 +59,13 @@ infer_parquet_schema <- function(df, options = parquet_options()) {
   rownames(type_tab) <- NULL
   class(type_tab) <- c("tbl", class(type_tab))
   type_tab
+}
+
+infer_repetition_type <- function(col, nsels, pos) {
+  if (nsels == 1L) {
+    if (anyNA(col)) "OPTIONAL" else "REQUIRED"
+  } else {
+    # LIST column: OPTIONAL, REPEATED, OPTIONAL
+    c("OPTIONAL", "REPEATED", "OPTIONAL")[pos]
+  }
 }

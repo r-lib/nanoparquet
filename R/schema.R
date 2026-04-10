@@ -57,8 +57,13 @@
 #'   `unit` parameter. `unit` must be `"MILLIS"`, `"MICROS"` or `"NANOS"`.
 #' * `"JSON"`
 #' * `"BSON"`
+#' * `"LIST"`: list of some other type. It needs an `element` parameter,
+#'   which is a type specification for the list elements. Currently
+#'   `element` can be only `"INT32"`, `"DOUBLE"` or `"STRING"`.
+#'   Also, currently nanoparquet always write LIST columns that are
+#'   `"OPTIONAL"`, both for the list elements and the list itself.
 #'
-#' Logical types `MAP`, `LIST` and `UNKNOWN` are not supported currently.
+#' Logical types `MAP`, and `UNKNOWN` are not supported currently.
 #'
 #' Converted types are deprecated in the Parquet specification in favor of
 #' logical types, but `parquet_schema()` accepts some converted types as a
@@ -90,7 +95,8 @@
 #' parquet_schema(
 #'   c1 = "INT32",
 #'   c2 = list("INT", bit_width = 64, is_signed = TRUE),
-#'   c3 = list("STRING", repetition_type = "OPTIONAL")
+#'   c3 = list("STRING", repetition_type = "OPTIONAL"),
+#'   l = list("LIST", element = "DOUBLE")
 #' )
 
 parquet_schema <- function(...) {
@@ -142,7 +148,8 @@ parquet_schema_create <- function(types) {
 
   r_col <- unlist(mapply(
     function(x, idx) rep(as.integer(idx), length(x$type)),
-    ptypes, seq_along(ptypes),
+    ptypes,
+    seq_along(ptypes),
     SIMPLIFY = FALSE
   ))
 
@@ -529,8 +536,8 @@ map_schema_to_df <- function(schema, df, options) {
   # All remaining rows are passed to C++. Use r_col to find the top-level row
   # of each R column (first row per r_col group), which carries the column name.
   rcol <- schema[["r_col"]]
-  top  <- !duplicated(rcol)
-  nms  <- schema$name[top]
+  top <- !duplicated(rcol)
+  nms <- schema$name[top]
 
   if (is.null(schema)) {
     # no schema at all, everything auto-detected
@@ -551,22 +558,21 @@ map_schema_to_df <- function(schema, df, options) {
     }
     # add AUTO rows for df columns not in the schema
     smiss <- setdiff(names(df), nms)
-    auto  <- do.call(
+    auto <- do.call(
       "parquet_schema",
       structure(as.list(rep("AUTO", length(smiss))), names = smiss)
     )
     # Reorder all rows (grouped by r_col) to match df column order.
-    top_rcols  <- rcol[top]
+    top_rcols <- rcol[top]
     schema_nms <- setdiff(names(df), smiss)
-    col_order  <- match(schema_nms, nms)
+    col_order <- match(schema_nms, nms)
     ordered_rows <- unlist(lapply(col_order, function(i) {
       which(rcol == top_rcols[i])
     }))
     schema <- schema[ordered_rows, ]
     # Renumber r_col: each column gets its position in the df.
     new_rcol <- unlist(lapply(seq_along(col_order), function(i) {
-      rep(match(schema_nms[i], names(df)),
-          sum(rcol == top_rcols[col_order[i]]))
+      rep(match(schema_nms[i], names(df)), sum(rcol == top_rcols[col_order[i]]))
     }))
     schema[["r_col"]] <- new_rcol
     # Append AUTO rows (one row each, r_col = position in df).

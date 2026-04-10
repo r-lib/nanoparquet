@@ -41,7 +41,7 @@ is the same as \code{compressed_data}.
 Read a page from a Parquet file
 }
 \examples{
-\dontshow{if (Sys.getenv("IN_PKGDOWN") == "true") (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (Sys.getenv("IN_PKGDOWN") == "true") withAutoprint(\{ # examplesIf}
 file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
 nanoparquet:::read_parquet_pages(file_name)
 options(max.print = 100)  # otherwise long raw vector

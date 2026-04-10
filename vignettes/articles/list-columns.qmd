@@ -1,0 +1,177 @@
+---
+title: "List columns"
+---
+
+```{r, setup, include = FALSE}
+knitr::opts_chunk$set(
+    comment = "#>"
+)
+pkgload::load_all()
+library(pillar)
+options(width = 160)
+```
+
+Parquet has a `LIST` logical type for columns whose values are variable-length
+sequences of a scalar type. nanoparquet maps these to and from R list columns,
+i.e. R list vectors whose elements are atomic vectors.
+
+::: callout-note
+Parquet supports nested lists (lists of lists), but nanoparquet cannot
+currently read or write them. Only flat lists with scalar elements are
+supported.
+:::
+
+## Supported element types
+
+When *reading*, nanoparquet supports any scalar element type that it can
+read in general (see [nanoparquet-types]), including `INT32`, `DOUBLE`,
+`STRING`, `DATE`, `TIMESTAMP`, `BOOLEAN`, and so on. Nested `LIST`
+elements and unsupported types such as `MAP` are not supported.
+
+When *writing*, nanoparquet currently supports three element types:
+
+| Parquet element type | R element type  |
+|:---------------------|:----------------|
+| `INT32`              | `integer`       |
+| `DOUBLE`             | `double`        |
+| `STRING`             | `character`     |
+
+## Writing list columns
+
+To write a data frame with a list column, put the column in the data
+frame as a list. Each element of the list must be an atomic vector of a
+supported type, `NULL` (missing value), or an empty vector. The elements
+may contain missing values (`NA`).
+
+```{r}
+df <- data.frame(id = 1:4)
+df$ints <- list(1L, c(2L, 3L), NULL, c(4L, NA_integer_, 6L))
+df$doubles <- list(1.5, c(2.5, 3.5), NULL, c(4.5, NA_real_, 6.5))
+df$strings <- list("a", c("b", "c"), NULL, c("d", NA_character_, "f"))
+df
+```
+
+```{r}
+tmp <- tempfile(fileext = ".parquet")
+write_parquet(df, tmp)
+```
+
+## Reading list columns
+
+`read_parquet()` reads `LIST` Parquet columns back as R list columns:
+
+```{r}
+as.data.frame(read_parquet(tmp))
+```
+
+The round-trip preserves both the structure and the missing value pattern.
+
+## Missing values
+
+nanoparquet distinguishes two kinds of missingness in list columns:
+
+* `NULL` — the entire list entry is missing. In Parquet this is an
+  absent (optional) outer list value.
+* `NA` within an element vector — a missing scalar inside a present list.
+  In Parquet this is an absent (optional) inner element value.
+* An empty vector — the list is present but has zero elements.
+
+```{r}
+df2 <- data.frame(id = 1:4)
+df2$x <- list(
+    c(1L, 2L, 3L), # normal, three elements
+    integer(0), # present, but empty
+    NULL, # entirely missing
+    c(4L, NA, 6L) # present, with an NA element
+)
+df2
+```
+
+```{r}
+tmp2 <- tempfile(fileext = ".parquet")
+write_parquet(df2, tmp2)
+as.data.frame(read_parquet(tmp2))
+```
+
+## Inspecting the schema
+
+`infer_parquet_schema()` shows how nanoparquet would encode each column:
+
+```{r}
+infer_parquet_schema(df)
+```
+
+A `LIST` column occupies three rows in the schema table: the outer list node
+(logical type `LIST`), the middle repeated group node (`list`), and the leaf
+element node (`element`). These three rows all share the same `r_col` value.
+
+To inspect the schema of an existing file use `read_parquet_schema()`:
+
+```{r}
+read_parquet_schema(tmp)
+```
+
+The `r_type` column shows `list(integer)`, `list(double)`, and
+`list(character)` for the three list columns.
+
+## Explicit schema with `parquet_schema()`
+
+nanoparquet infers the element type from the R list contents automatically.
+You can also specify it explicitly with `parquet_schema()` using
+`list("LIST", element = <type>)`:
+
+```{r}
+schema <- parquet_schema(
+    id     = "INT32",
+    values = list("LIST", element = "DOUBLE")
+)
+schema
+```
+
+```{r}
+df3 <- data.frame(id = 1:3)
+df3$values <- list(c(1.1, 2.2), c(3.3), NULL)
+tmp3 <- tempfile(fileext = ".parquet")
+write_parquet(df3, tmp3, schema = schema)
+as.data.frame(read_parquet(tmp3))
+```
+
+## Dictionary encoding
+
+List columns support dictionary encoding, which can reduce file size when
+list elements repeat frequently:
+
+```{r}
+df4 <- data.frame(id = 1:6)
+df4$x <- list(
+    c(1L, 2L), c(2L, 3L), c(1L, 2L),
+    c(2L, 3L), c(1L, 2L), c(2L, 3L)
+)
+tmp4 <- tempfile(fileext = ".parquet")
+write_parquet(df4, tmp4, encoding = c(x = "RLE_DICTIONARY"))
+as.data.frame(read_parquet(tmp4))
+```
+
+## Interoperability
+
+nanoparquet can read standard `LIST` Parquet columns written by other
+tools, such as Arrow or DuckDB. The standard three-layer representation
+(`OPTIONAL` or `REQUIRED` list → `REPEATED` group → `OPTIONAL` or
+`REQUIRED` element) is fully supported, for both data page version 1 and
+version 2.
+
+The four combinations of optional/required outer list and optional/required
+element are all handled:
+
+| Outer list   | Element      | `NULL` entry? | `NA` element? |
+|:-------------|:-------------|:--------------|:--------------|
+| `OPTIONAL`   | `OPTIONAL`   | yes           | yes           |
+| `OPTIONAL`   | `REQUIRED`   | yes           | no            |
+| `REQUIRED`   | `OPTIONAL`   | no            | yes           |
+| `REQUIRED`   | `REQUIRED`   | no            | no            |
+
+Empty vectors (e.g. `integer(0)`) are supported in all four combinations.
+
+nanoparquet always writes `OPTIONAL`/`OPTIONAL` lists (i.e. both the list
+entry and each element may be missing), which is the most general case and
+is interoperable with all Parquet readers.
