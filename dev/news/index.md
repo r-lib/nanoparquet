@@ -3,6 +3,12 @@
 ## nanoparquet (development version)
 
 - [`append_parquet()`](https://nanoparquet.r-lib.org/dev/reference/append_parquet.md)
+  now gives a clear error when appending data with missing values (`NA`)
+  to a column that was written as `REQUIRED` (i.e. non-nullable).
+  Previously this caused a cryptic internal error
+  ([\#146](https://github.com/r-lib/nanoparquet/issues/146)).
+
+- [`append_parquet()`](https://nanoparquet.r-lib.org/dev/reference/append_parquet.md)
   now creates a new file if `file` does not exist
   ([\#155](https://github.com/r-lib/nanoparquet/issues/155)).
 
