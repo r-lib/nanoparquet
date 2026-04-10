@@ -714,7 +714,7 @@ void ParquetOutFile::write_data_pages(uint32_t idx, uint32_t group,
   }
 
   uint32_t page_size = 1024 * 1024;
-  const char *ev = std::getenv("NANOPARQUEST_PAGE_SIZE");
+  const char *ev = std::getenv("NANOPARQUET_PAGE_SIZE");
   if (ev && strlen(ev) > 0) {
     try {
       page_size = std::stoi(ev);
