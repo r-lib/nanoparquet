@@ -68,6 +68,12 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
     });
   }
 
+  // PLAIN_DICTIONARY (deprecated) is equivalent to RLE_DICTIONARY; convert it
+  // so the write path only needs to handle one dictionary encoding.
+  if (renc == parquet::Encoding::PLAIN_DICTIONARY) {
+    renc = parquet::Encoding::RLE_DICTIONARY;
+  }
+
   // otherwise we need to check if the encoding is allowed and implemented
   switch (sel.type) {
   case parquet::Type::BOOLEAN:
@@ -186,10 +192,8 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
   case parquet::Type::BYTE_ARRAY: {
     SEXP col = VECTOR_ELT(df, idx);
     if (TYPEOF(col) == VECSXP) {
-      if (renc == parquet::Encoding::DELTA_LENGTH_BYTE_ARRAY||
-          renc == parquet::Encoding::DELTA_BYTE_ARRAY ||
-          renc == parquet::Encoding::RLE_DICTIONARY ||
-          renc == parquet::Encoding::PLAIN_DICTIONARY) {
+      if (renc == parquet::Encoding::DELTA_LENGTH_BYTE_ARRAY ||
+          renc == parquet::Encoding::DELTA_BYTE_ARRAY) {
         r_call([&] {
           Rf_errorcall(
             nanoparquet_call,
@@ -198,7 +202,9 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
           );
         });
       }
-      if (renc != parquet::Encoding::PLAIN) {
+      if (renc != parquet::Encoding::PLAIN &&
+          renc != parquet::Encoding::RLE_DICTIONARY &&
+          renc != parquet::Encoding::PLAIN_DICTIONARY) {
         r_call([&] {
           Rf_errorcall(
             nanoparquet_call,
@@ -2172,6 +2178,26 @@ uint32_t RParquetOutFile::get_size_dictionary(
     return l / 8 + (l % 8 > 0);                              // # nocov
     break;
   }
+  case VECSXP: {
+    // For list columns the passed sel is the outer group element (not the leaf);
+    // derive the size directly from the element type of unique_vals.
+    create_dictionary(idx, from, until, sel);
+    SEXP unique_vals = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
+    R_xlen_t nvals = Rf_xlength(unique_vals);
+    if (TYPEOF(unique_vals) == INTSXP) {
+      return nvals * sizeof(int32_t);
+    } else if (TYPEOF(unique_vals) == REALSXP) {
+      return nvals * sizeof(double);
+    } else if (TYPEOF(unique_vals) == STRSXP) {
+      uint32_t size = nvals * 4;
+      for (R_xlen_t i = 0; i < nvals; i++) {
+        size += strlen(CHAR(STRING_ELT(unique_vals, i)));
+      }
+      return size;
+    }
+    return 0; // # nocov
+    break;
+  }
   default:
     throw std::runtime_error("Uninmplemented R type");  // # nocov
   }
@@ -2698,6 +2724,25 @@ void RParquetOutFile::write_dictionary(
     UNPROTECT(1);
     break;
   }                                                        // # nocov end
+  case VECSXP: {
+    // For list columns the passed sel is the outer group element (not the leaf);
+    // derive the write format directly from the element type of unique_vals.
+    SEXP unique_vals = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
+    R_xlen_t nvals = Rf_xlength(unique_vals);
+    if (TYPEOF(unique_vals) == INTSXP) {
+      file.write((const char *) INTEGER(unique_vals), sizeof(int32_t) * nvals);
+    } else if (TYPEOF(unique_vals) == REALSXP) {
+      file.write((const char *) REAL(unique_vals), sizeof(double) * nvals);
+    } else if (TYPEOF(unique_vals) == STRSXP) {
+      for (R_xlen_t i = 0; i < nvals; i++) {
+        const char *c = CHAR(STRING_ELT(unique_vals, i));
+        uint32_t len1 = strlen(c);
+        file.write((const char *) &len1, 4);
+        file.write(c, len1);
+      }
+    }
+    break;
+  }
   default:
     throw std::runtime_error("Uninmplemented R type");          // # nocov
   }
@@ -2723,6 +2768,18 @@ void RParquetOutFile::write_dictionary_indices(
         el--;
         file.write((const char *) &el, sizeof(int));
       }
+    }
+  } else if (TYPEOF(col) == VECSXP) {
+    // flat_idx holds dict indices for all non-NA leaf values in the row group;
+    // offsets[i] gives the cumulative non-NA leaf count for rows 0..i
+    SEXP flat_idx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 1);
+    SEXP offsets  = VECTOR_ELT(VECTOR_ELT(dicts, idx), 2);
+    int *ioffsets  = INTEGER(offsets);
+    int leaf_from  = ioffsets[page_from - rg_from];
+    int leaf_until = ioffsets[page_until - rg_from];
+    int *iflat_idx = INTEGER(flat_idx);
+    for (int i = leaf_from; i < leaf_until; i++) {
+      file.write((const char *) &iflat_idx[i], sizeof(int));
     }
   } else {
     SEXP dictmap = VECTOR_ELT(VECTOR_ELT(dicts, idx), 1);

@@ -100,3 +100,126 @@ test_that("write and read list(character())", {
   expect_equal(df2$id, df$id)
   expect_equal(df2$x, df$x)
 })
+
+test_that("list(integer()) multiple data pages", {
+  withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  N <- 1000
+  pattern <- list(1L, c(2L, 3L), NULL, c(4L, NA_integer_, 6L))
+  df <- data.frame(id = seq_len(N))
+  df$x <- rep_len(pattern, N)
+
+  write_parquet(df, tmp)
+  pgs <- read_parquet_pages(tmp)
+  expect_gt(sum(pgs$page_type == "DATA_PAGE"), 1)
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+
+  # data page v2
+  write_parquet(df, tmp, options = parquet_options(write_data_page_version = 2))
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+})
+
+test_that("list(double()) multiple data pages", {
+  withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  N <- 1000
+  pattern <- list(1.5, c(2.5, 3.5), NULL, c(4.5, NA_real_, 6.5))
+  df <- data.frame(id = seq_len(N))
+  df$x <- rep_len(pattern, N)
+
+  write_parquet(df, tmp)
+  pgs <- read_parquet_pages(tmp)
+  expect_gt(sum(pgs$page_type == "DATA_PAGE"), 1)
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+
+  # data page v2
+  write_parquet(df, tmp, options = parquet_options(write_data_page_version = 2))
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+})
+
+test_that("list(character()) multiple data pages", {
+  withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  N <- 1000
+  pattern <- list("a", c("b", "c"), NULL, c("d", NA_character_, "f"))
+  df <- data.frame(id = seq_len(N))
+  df$x <- rep_len(pattern, N)
+
+  write_parquet(df, tmp)
+  pgs <- read_parquet_pages(tmp)
+  expect_gt(sum(pgs$page_type == "DATA_PAGE"), 1)
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+
+  # data page v2
+  write_parquet(df, tmp, options = parquet_options(write_data_page_version = 2))
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+})
+
+test_that("list(integer()) dictionary encoding", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame(id = 1:4)
+  df$x <- list(1L, c(2L, 3L), NULL, c(4L, NA_integer_, 6L))
+  df$y <- c("a", "b", "a", "b")
+
+  write_parquet(df, tmp, encoding = c(x = "RLE_DICTIONARY"))
+  pgs <- read_parquet_pages(tmp)
+  expect_true(any(pgs$page_type == "DICTIONARY_PAGE"))
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+  expect_equal(df2$y, df$y)
+})
+
+test_that("list(double()) dictionary encoding", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame(id = 1:4)
+  df$x <- list(1.5, c(2.5, 3.5), NULL, c(4.5, NA_real_, 6.5))
+  df$y <- c("a", "b", "a", "b")
+
+  write_parquet(df, tmp, encoding = c(x = "RLE_DICTIONARY"))
+  pgs <- read_parquet_pages(tmp)
+  expect_true(any(pgs$page_type == "DICTIONARY_PAGE"))
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+  expect_equal(df2$y, df$y)
+})
+
+test_that("list(character()) dictionary encoding", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame(id = 1:4)
+  df$x <- list("a", c("b", "c"), NULL, c("d", NA_character_, "f"))
+  df$y <- c("a", "b", "a", "b")
+
+  write_parquet(df, tmp, encoding = c(x = "RLE_DICTIONARY"))
+  pgs <- read_parquet_pages(tmp)
+  expect_true(any(pgs$page_type == "DICTIONARY_PAGE"))
+  df2 <- as.data.frame(read_parquet(tmp))
+  expect_equal(df2$id, df$id)
+  expect_equal(df2$x, df$x)
+  expect_equal(df2$y, df$y)
+})

@@ -3957,11 +3957,6 @@
       Error in `write_parquet()`:
       ! Unimplemented encoding for list(raw) BYTE_ARRAY column: DELTA_BYTE_ARRAY
     Code
-      write_parquet(d, tmp, schema = schema, encoding = "PLAIN_DICTIONARY")
-    Condition
-      Error in `write_parquet()`:
-      ! Unimplemented encoding for list(raw) BYTE_ARRAY column: PLAIN_DICTIONARY
-    Code
       write_parquet(d, tmp, schema = schema, encoding = "RLE")
     Condition
       Error in `write_parquet()`:
@@ -4285,7 +4280,7 @@
       write_parquet(d, tmp, schema = schema, encoding = "PLAIN_DICTIONARY")
     Condition
       Error in `write_parquet()`:
-      ! Unimplemented encoding for list(raw) FIXED_LEN_BYTE_ARRAY column: PLAIN_DICTIONARY
+      ! Unimplemented encoding for list(raw) FIXED_LEN_BYTE_ARRAY column: RLE_DICTIONARY
     Code
       write_parquet(d, tmp, schema = schema, encoding = "RLE")
     Condition
