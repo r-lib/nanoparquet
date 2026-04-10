@@ -108,6 +108,7 @@ test_that("temporal types", {
 })
 
 test_that("arrow-rs can read ARROW:schema (issue #152)", {
+  skip_on_cran()
   skip_without_cargo()
 
   crate <- normalizePath(
@@ -115,7 +116,8 @@ test_that("arrow-rs can read ARROW:schema (issue #152)", {
     mustWork = TRUE
   )
   processx::run(
-    "cargo", c("build", "--manifest-path", file.path(crate, "Cargo.toml")),
+    "cargo",
+    c("build", "--manifest-path", file.path(crate, "Cargo.toml")),
     error_on_status = TRUE
   )
   bin <- file.path(crate, "target", "debug", "arrow-rs-reader")
@@ -128,4 +130,3 @@ test_that("arrow-rs can read ARROW:schema (issue #152)", {
   result <- processx::run(bin, tmp, error_on_status = TRUE)
   expect_equal(trimws(result$stdout), "OK")
 })
-
