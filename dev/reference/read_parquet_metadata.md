@@ -52,6 +52,11 @@ A named list with entries:
 
   - `file_name`: file name.
 
+  - `r_col`: integer, the column index in R, starting from one. `NA` for
+    the root node. For Parquet files without list columns this is simply
+    the column index in the file. A list column has multiple schema
+    rows, and they all have the same `r_col`.
+
   - `name`: column name.
 
   - `r_type`: the R type that corresponds to the Parquet type. Might be
@@ -190,25 +195,26 @@ nanoparquet::read_parquet_metadata(file_name)
 #> 1 /home/runner/work/_te…       1     1000 <tbl [1 × 2]>      https://g…
 #> 
 #> $schema
-#> # A data frame: 14 × 12
-#>    file_name             name  r_type type  type_length repetition_type
-#>    <chr>                 <chr> <chr>  <chr>       <int> <chr>          
-#>  1 /home/runner/work/_t… sche… NA     NA             NA NA             
-#>  2 /home/runner/work/_t… regi… POSIX… INT64          NA REQUIRED       
-#>  3 /home/runner/work/_t… id    integ… INT32          NA REQUIRED       
-#>  4 /home/runner/work/_t… firs… chara… BYTE…          NA OPTIONAL       
-#>  5 /home/runner/work/_t… last… chara… BYTE…          NA REQUIRED       
-#>  6 /home/runner/work/_t… email factor BYTE…          NA OPTIONAL       
-#>  7 /home/runner/work/_t… gend… chara… BYTE…          NA OPTIONAL       
-#>  8 /home/runner/work/_t… ip_a… chara… BYTE…          NA REQUIRED       
-#>  9 /home/runner/work/_t… cc    chara… BYTE…          NA OPTIONAL       
-#> 10 /home/runner/work/_t… coun… chara… BYTE…          NA REQUIRED       
-#> 11 /home/runner/work/_t… birt… Date   INT32          NA OPTIONAL       
-#> 12 /home/runner/work/_t… sala… double DOUB…          NA OPTIONAL       
-#> 13 /home/runner/work/_t… title chara… BYTE…          NA OPTIONAL       
-#> 14 /home/runner/work/_t… comm… chara… BYTE…          NA OPTIONAL       
-#> # ℹ 6 more variables: converted_type <chr>, logical_type <I<list>>,
-#> #   num_children <int>, scale <int>, precision <int>, field_id <int>
+#> # A data frame: 14 × 14
+#>    file_name       r_col name  r_type type  type_length repetition_type
+#>    <chr>           <int> <chr> <chr>  <chr>       <int> <chr>          
+#>  1 /home/runner/w…    NA sche… NA     NA             NA NA             
+#>  2 /home/runner/w…     1 regi… POSIX… INT64          NA REQUIRED       
+#>  3 /home/runner/w…     2 id    integ… INT32          NA REQUIRED       
+#>  4 /home/runner/w…     3 firs… chara… BYTE…          NA OPTIONAL       
+#>  5 /home/runner/w…     4 last… chara… BYTE…          NA REQUIRED       
+#>  6 /home/runner/w…     5 email factor BYTE…          NA OPTIONAL       
+#>  7 /home/runner/w…     6 gend… chara… BYTE…          NA OPTIONAL       
+#>  8 /home/runner/w…     7 ip_a… chara… BYTE…          NA REQUIRED       
+#>  9 /home/runner/w…     8 cc    chara… BYTE…          NA OPTIONAL       
+#> 10 /home/runner/w…     9 coun… chara… BYTE…          NA REQUIRED       
+#> 11 /home/runner/w…    10 birt… Date   INT32          NA OPTIONAL       
+#> 12 /home/runner/w…    11 sala… double DOUB…          NA OPTIONAL       
+#> 13 /home/runner/w…    12 title chara… BYTE…          NA OPTIONAL       
+#> 14 /home/runner/w…    13 comm… chara… BYTE…          NA OPTIONAL       
+#> # ℹ 7 more variables: converted_type <chr>, logical_type <I<list>>,
+#> #   num_children <int>, scale <int>, precision <int>, field_id <int>,
+#> #   children <list>
 #> 
 #> $row_groups
 #> # A data frame: 1 × 7

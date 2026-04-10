@@ -22,7 +22,8 @@ Data frame with columns:
 
 - `file_name`: file name.
 
-- `num_cols`: number of (leaf) columns.
+- `num_cols`: number of columns. (The number of child nodes of the root
+  node in the schema.)
 
 - `num_rows`: number of rows.
 

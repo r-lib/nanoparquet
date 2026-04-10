@@ -11,7 +11,7 @@ For the details see below.
 |           |                         |         |                                                                              |
 |-----------|-------------------------|---------|------------------------------------------------------------------------------|
 | R type    | Parquet type            | Default | Notes                                                                        |
-| character | STRING (BYTE_ARRAY)     | x       | I.e. STRSXP. Converted to UTF-8.                                             |
+| character | STRING(BYTE_ARRAY)      | x       | I.e. STRSXP. Converted to UTF-8.                                             |
 | "         | BYTE_ARRAY              |         |                                                                              |
 | "         | FIXED_LEN_BYTE_ARRAY    |         |                                                                              |
 | "         | ENUM                    |         |                                                                              |
@@ -24,19 +24,22 @@ For the details see below.
 | integer   | INT(32, true)           | x       | I.e. INTSXP.                                                                 |
 | "         | INT64                   |         |                                                                              |
 | "         | INT96                   |         |                                                                              |
-| "         | DECIMAL (INT32)         |         |                                                                              |
-| "         | DECIMAL (INT64)         |         |                                                                              |
+| "         | DECIMAL(INT32)          |         |                                                                              |
+| "         | DECIMAL(INT64)          |         |                                                                              |
 | "         | INT(8, \*)              |         |                                                                              |
 | "         | INT(16, \*)             |         |                                                                              |
 | "         | INT(32, signed)         |         |                                                                              |
-| list      | BYTE_ARRAY              |         | Must be a list of raw vectors. Messing values are `NULL`.                    |
+| list      | LIST(INT32 elements)    | x       | List of integer vectors. `NULL` entries and `NA` elements are supported.     |
+| "         | LIST(DOUBLE elements)   | x       | List of double vectors. `NULL` entries and `NA` elements are supported.      |
+| "         | LIST(STRING elements)   | x       | List of character vectors. `NULL` entries and `NA` elements are supported.   |
+| "         | BYTE_ARRAY              |         | Must be a list of raw vectors. Missing values are `NULL`.                    |
 | "         | FIXED_LEN_BYTE_ARRAY    |         | Must be a list of raw vectors of the same length. Missing values are `NULL`. |
 | logical   | BOOLEAN                 | x       | I.e. LGLSXP.                                                                 |
 | numeric   | DOUBLE                  | x       | I.e. REALSXP.                                                                |
 | "         | INT96                   |         |                                                                              |
 | "         | FLOAT                   |         |                                                                              |
-| "         | DECIMAL (INT32)         |         |                                                                              |
-| "         | DECIMAL (INT64)         |         |                                                                              |
+| "         | DECIMAL(INT32)          |         |                                                                              |
+| "         | DECIMAL(INT64)          |         |                                                                              |
 | "         | INT(\*, \*)             |         |                                                                              |
 | "         | FLOAT16                 |         |                                                                              |
 | POSIXct   | TIMESTAMP(true, MICROS) | x       | Sub-microsecond precision is lost.                                           |
@@ -128,6 +131,12 @@ Currently supported non-default mappings are:
 
 - `double` to `FLOAT16`,
 
+- `list` of `integer` vectors to `LIST` with `INT32` elements,
+
+- `list` of `double` vectors to `LIST` with `DOUBLE` elements,
+
+- `list` of `character` vectors to `LIST` with `STRING` elements,
+
 - `list` of `raw` vectors to `BYTE_ARRAY`,
 
 - `list` of `raw` vectors to `FIXED_LEN_BYTE_ARRAY`.
@@ -154,7 +163,7 @@ details below.
 | INT(64, \*)          | numeric   | REALSXP                                           |
 | INTERVAL             | list(raw) | Missing values are `NULL`.                        |
 | JSON                 | character |                                                   |
-| LIST                 |           | Not supported.                                    |
+| LIST                 | list      | Elements are read as their corresponding R type.  |
 | MAP                  |           | Not supported.                                    |
 | STRING               | factor    | If Arrow metadata says it is a factor. Also UTF8. |
 | "                    | character | Otherwise. Also UTF8.                             |
@@ -244,9 +253,11 @@ types:
 
 These types are not yet supported:
 
-1.  Nested types (`LIST`, `MAP`) are not supported.
+1.  Nested `LIST` types (lists of lists) are not supported.
 
-2.  The `UNKNOWN` logical type is not supported.
+2.  The `MAP` logical type is not supported.
+
+3.  The `UNKNOWN` logical type is not supported.
 
 You can use the
 [`read_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_schema.md)

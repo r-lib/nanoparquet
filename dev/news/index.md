@@ -2,6 +2,33 @@
 
 ## nanoparquet (development version)
 
+- nanoparquet now supports Parquet `LIST` columns:
+
+  - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+    can write R list columns whose elements are integer, double, or
+    character vectors. `NULL` entries encode a missing list, `NA` values
+    inside an element vector encode a missing element, and zero-length
+    vectors encode an empty list.
+
+  - [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+    can read `LIST` columns with any supported scalar element type. All
+    four combinations of optional/required outer list and
+    optional/required element are supported, for both data page version
+    1 and version 2.
+
+  - [`parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/parquet_schema.md)
+    accepts `list("LIST", element = <type>)` to specify a `LIST` column
+    type explicitly.
+
+  - [`infer_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/infer_parquet_schema.md)
+    and
+    [`read_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_schema.md)
+    report list columns with `r_type` `list(...)`, e.g. `list(double)`
+    or `list(list(characer))`, etc.
+
+  - Dictionary encoding (`RLE_DICTIONARY`) is supported for `LIST`
+    columns.
+
 ## nanoparquet 0.4.3
 
 CRAN release: 2025-12-17

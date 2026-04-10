@@ -182,6 +182,8 @@ Useful links:
 
 Authors:
 
+- Gábor Csárdi <csardi.gabor@gmail.com>
+
 - Hannes Mühleisen ([ORCID](https://orcid.org/0000-0001-8552-0029))
   \[copyright holder\]
 
