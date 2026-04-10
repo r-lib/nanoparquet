@@ -2,6 +2,12 @@
 
 ## nanoparquet (development version)
 
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now writes the `ARROW:schema` metadata with correct flatbuffer
+  alignment, fixing an interoperability issue with the Rust arrow-rs
+  parquet reader
+  ([\#152](https://github.com/r-lib/nanoparquet/issues/152)).
+
 - [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
   now reads logical (BOOLEAN) columns correctly when the column spans
   multiple data pages
