@@ -143,6 +143,12 @@ post_process_read_result <- function(res, file, options, col_select) {
     }
   }
 
+  # add ptype attribute to blob columns for vctrs compatibility
+  blobs <- which(vapply(res, "inherits", "blob", FUN.VALUE = logical(1)))
+  for (idx in blobs) {
+    attr(res[[idx]], "ptype") <- raw()
+  }
+
   # convert hms from milliseconds to seconds, also integer -> double
   hmss <- which(vapply(res, "inherits", "hms", FUN.VALUE = logical(1)))
   for (idx in hmss) {

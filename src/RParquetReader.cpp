@@ -444,6 +444,10 @@ rtype::rtype(
       type = VECSXP;
       tmptype = NILSXP;
       type_conversion = BA_RAW;
+      classes.push_back("blob");
+      classes.push_back("vctrs_list_of");
+      classes.push_back("vctrs_vctr");
+      classes.push_back("list");
     }
     break;
   }

@@ -1,5 +1,10 @@
 # nanoparquet (development version)
 
+* `read_parquet()` now returns `BYTE_ARRAY` and `FIXED_LEN_BYTE_ARRAY`
+  columns (without a string/UUID/decimal annotation) as `blob::blob` objects
+  instead of plain lists of raw vectors. `write_parquet()` now also accepts
+  `blob::blob` columns (#115).
+
 * `read_parquet()` can now read empty data frames (zero rows) written by the
   arrow package (#160).
 
