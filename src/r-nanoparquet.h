@@ -64,6 +64,7 @@ uint16_t double_to_float16(double x) noexcept;
 // these use the R API
 SEXP rf_get_list_element(SEXP list, const char *str) noexcept;
 SEXP rf_nanoparquet_any_na(SEXP x) noexcept;
+SEXP rf_nanoparquet_any_na_int64(SEXP x) noexcept;
 SEXP rf_nanoparquet_any_null(SEXP x) noexcept;
 SEXP rf_convert_logical_type(parquet::LogicalType ltype) noexcept;
 

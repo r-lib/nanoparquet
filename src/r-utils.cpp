@@ -101,6 +101,18 @@ SEXP rf_nanoparquet_any_na(SEXP x) noexcept {
   return Rf_ScalarLogical(0);
 }
 
+SEXP rf_nanoparquet_any_na_int64(SEXP x) noexcept {
+  R_xlen_t l = Rf_xlength(x);
+  int64_t *ptr = (int64_t *) REAL(x);
+  int64_t *end = ptr + l;
+  for (; ptr < end; ptr++) {
+    if (*ptr == INT64_MIN) {
+      return Rf_ScalarLogical(1);
+    }
+  }
+  return Rf_ScalarLogical(0);
+}
+
 SEXP rf_nanoparquet_any_null(SEXP x) noexcept {
   R_xlen_t l = Rf_xlength(x);
   for (R_xlen_t i = 0; i < l; i++) {

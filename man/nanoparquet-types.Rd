@@ -11,6 +11,8 @@ When writing out a data frame, nanoparquet maps R's data types to Parquet
 logical types. The following table is a summary of the mapping. For the
 details see below.\tabular{llcl}{
    R type \tab Parquet type \tab Default \tab Notes \cr
+   blob::blob \tab BYTE_ARRAY \tab x \tab Missing values are \code{NULL}. \cr
+   " \tab FIXED_LEN_BYTE_ARRAY \tab  \tab All entries must have the same length. Missing values are \code{NULL}. \cr
    character \tab STRING(BYTE_ARRAY) \tab x \tab I.e. STRSXP. Converted to UTF-8. \cr
    " \tab BYTE_ARRAY \tab  \tab  \cr
    " \tab FIXED_LEN_BYTE_ARRAY \tab  \tab  \cr
@@ -55,6 +57,10 @@ to write out a factor column called 'name' as \code{ENUM}, use
 The detailed mapping rules are listed below, in order of preference.
 These rules will likely change until nanoparquet reaches version 1.0.0.
 \enumerate{
+\item \code{blob::blob} objects (from the blob package) are written as \code{BYTE_ARRAY}.
+\code{blob::blob} is a list of raw vectors, and nanoparquet handles any object
+that inherits the \code{blob} class this way, even if the blob package is not
+installed. Missing values (i.e. \code{NULL} list entries) are supported.
 \item Factors (i.e. vectors that inherit the \emph{factor} class) are converted
 to character vectors using \code{as.character()}, then written as a
 \code{STRSXP} (character vector) type. The fact that a column is a factor
@@ -109,7 +115,8 @@ non-default mappings are:
 \item \code{list} of \code{double} vectors to \code{LIST} with \code{DOUBLE} elements,
 \item \code{list} of \code{character} vectors to \code{LIST} with \code{STRING} elements,
 \item \code{list} of \code{raw} vectors to \code{BYTE_ARRAY},
-\item \code{list} of \code{raw} vectors to \code{FIXED_LEN_BYTE_ARRAY}.
+\item \code{list} of \code{raw} vectors to \code{FIXED_LEN_BYTE_ARRAY},
+\item \code{blob::blob} to \code{FIXED_LEN_BYTE_ARRAY}.
 }
 }
 
@@ -142,9 +149,9 @@ below.\tabular{lll}{
    \emph{Primitive types} \tab  \tab  \cr
    BOOLEAN \tab logical \tab  \cr
    BYTE_ARRAY \tab factor \tab If Arrow metadata says it is a factor. \cr
-   " \tab list(raw) \tab Otherwise. Missing values are \code{NULL}. \cr
+   " \tab blob::blob \tab Otherwise. Missing values are \code{NULL}. \cr
    DOUBLE \tab numeric \tab REALSXP \cr
-   FIXED_LEN_BYTE_ARRAY \tab list(raw) \tab Missing values are \code{NULL}. \cr
+   FIXED_LEN_BYTE_ARRAY \tab blob::blob \tab Missing values are \code{NULL}. \cr
    FLOAT \tab numeric \tab REALSXP \cr
    INT32 \tab integer \tab  \cr
    INT64 \tab numeric \tab REALSXP \cr
@@ -181,8 +188,11 @@ precision.
 \item \code{BYTE_ARRAY} is read as a \emph{factor} object if the file was written
 by Arrow and the original data type of the column was a factor.
 (See 'The Arrow metadata below.)
-\item Otherwise \code{BYTE_ARRAY} is read a list of raw vectors, with missing
-values denoted by \code{NULL}.
+\item Otherwise \code{BYTE_ARRAY} and \code{FIXED_LEN_BYTE_ARRAY} are read as a
+\code{blob::blob} object. \code{blob::blob} is a list of raw vectors with class
+\code{blob} (and related vctrs classes). The blob package is not required to
+use this object; it is simply a list of raw vectors. Missing values are
+denoted by \code{NULL}.
 }
 
 Other logical and converted types are read as their annotated low level

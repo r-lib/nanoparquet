@@ -1976,11 +1976,20 @@ nanoparquet::DefLevelsResult RParquetOutFile::write_definition_levels(
     break;
   }
   case REALSXP: {
-    double *dblptr = REAL(col) + from;
-    double *end = dblptr + len;
-    for (; dblptr < end; dblptr++, presptr++) {
-      *presptr = ! R_IsNA(*dblptr);
-      num_pres += *presptr;
+    if (Rf_inherits(col, "integer64")) {
+      int64_t *iptr = (int64_t *) REAL(col) + from;
+      int64_t *end = iptr + len;
+      for (; iptr < end; iptr++, presptr++) {
+        *presptr = (*iptr != INT64_MIN);
+        num_pres += *presptr;
+      }
+    } else {
+      double *dblptr = REAL(col) + from;
+      double *end = dblptr + len;
+      for (; dblptr < end; dblptr++, presptr++) {
+        *presptr = ! R_IsNA(*dblptr);
+        num_pres += *presptr;
+      }
     }
     break;
   }

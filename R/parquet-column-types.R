@@ -115,7 +115,9 @@ add_r_type_to_schema <- function(mtd, sch, options, col_select = NULL) {
     },
     logical(1)
   ) | (!is.na(sch$converted_type) & sch$converted_type == "INT_64")
-  sch$r_type[int64s] <- "integer64"
+  if (options[["read_int64_type"]] != "double") {
+    sch$r_type[int64s] <- "integer64"
+  }
 
   hmss <- vapply(
     sch$logical_type,
