@@ -182,8 +182,10 @@ nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_vecsxp(
 
   // Find a representative element to determine the atomic type
   SEXP elt = R_NilValue;
+  bool is_blob = false;
   r_call([&] {
     R_xlen_t len = Rf_xlength(x);
+    is_blob = Rf_inherits(x, "blob");
     for (R_xlen_t i = 0; i < len; i++) {
       SEXP e = VECTOR_ELT(x, i);
       if (!Rf_isNull(e) && Rf_xlength(e) > 0) {
@@ -194,7 +196,7 @@ nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_vecsxp(
   });
 
   int elt_type = TYPEOF(elt);
-  if (!Rf_isNull(elt) && elt_type != VECSXP && elt_type != RAWSXP) {
+  if (!is_blob && !Rf_isNull(elt) && elt_type != VECSXP && elt_type != RAWSXP) {
     // Atomic element type: build a 3-layer LIST schema
     std::string inner_rtype;
     nanoparquet::SchemaElementEx inner =
@@ -226,7 +228,7 @@ nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_vecsxp(
   }
 
   // VECSXP, RAWSXP, or empty list: single BYTE_ARRAY column
-  rtype = "raw";
+  rtype = is_blob ? "blob" : "raw";
   parquet::SchemaElement sel;
   sel.__set_name(name);
   sel.__set_repetition_type(

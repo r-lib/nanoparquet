@@ -701,7 +701,7 @@
     Output
         r_col   name r_type       type type_length repetition_type converted_type
       1    NA schema   <NA>       <NA>          NA            <NA>           <NA>
-      2     1      l    raw BYTE_ARRAY          NA        REQUIRED           <NA>
+      2     1      l   blob BYTE_ARRAY          NA        REQUIRED           <NA>
         logical_type num_children scale precision field_id children
       1                         1    NA        NA       NA         
       2                        NA    NA        NA       NA         
@@ -721,7 +721,7 @@
     Output
         r_col   name r_type       type type_length repetition_type converted_type
       1    NA schema   <NA>       <NA>          NA            <NA>           <NA>
-      2     1      l    raw BYTE_ARRAY          NA        OPTIONAL           <NA>
+      2     1      l   blob BYTE_ARRAY          NA        OPTIONAL           <NA>
         logical_type num_children scale precision field_id children
       1                         1    NA        NA       NA         
       2                        NA    NA        NA       NA         
@@ -788,7 +788,7 @@
     Output
         r_col   name r_type                 type type_length repetition_type
       1    NA schema   <NA>                 <NA>          NA            <NA>
-      2     1      l    raw FIXED_LEN_BYTE_ARRAY          10        REQUIRED
+      2     1      l   blob FIXED_LEN_BYTE_ARRAY          10        REQUIRED
         converted_type logical_type num_children scale precision field_id children
       1           <NA>                         1    NA        NA       NA         
       2           <NA>                        NA    NA        NA       NA         
@@ -808,7 +808,7 @@
     Output
         r_col   name r_type                 type type_length repetition_type
       1    NA schema   <NA>                 <NA>          NA            <NA>
-      2     1      l    raw FIXED_LEN_BYTE_ARRAY          10        OPTIONAL
+      2     1      l   blob FIXED_LEN_BYTE_ARRAY          10        OPTIONAL
         converted_type logical_type num_children scale precision field_id children
       1           <NA>                         1    NA        NA       NA         
       2           <NA>                        NA    NA        NA       NA         
@@ -832,7 +832,7 @@
     Output
         r_col   name r_type                 type type_length repetition_type
       1    NA schema   <NA>                 <NA>          NA            <NA>
-      2     1      s    raw FIXED_LEN_BYTE_ARRAY           3        REQUIRED
+      2     1      s   blob FIXED_LEN_BYTE_ARRAY           3        REQUIRED
         converted_type logical_type num_children scale precision field_id children
       1           <NA>                         1    NA        NA       NA         
       2           <NA>                        NA    NA        NA       NA         
@@ -855,7 +855,7 @@
     Output
         r_col   name r_type                 type type_length repetition_type
       1    NA schema   <NA>                 <NA>          NA            <NA>
-      2     1      s    raw FIXED_LEN_BYTE_ARRAY           3        OPTIONAL
+      2     1      s   blob FIXED_LEN_BYTE_ARRAY           3        OPTIONAL
         converted_type logical_type num_children scale precision field_id children
       1           <NA>                         1    NA        NA       NA         
       2           <NA>                        NA    NA        NA       NA         

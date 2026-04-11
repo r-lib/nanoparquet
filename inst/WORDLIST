@@ -41,6 +41,7 @@ millis
 multithreaded
 nanoparquet's
 nanos
+nullable
 nycflights
 readr
 schemas

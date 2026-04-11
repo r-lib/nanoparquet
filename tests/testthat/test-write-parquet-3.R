@@ -712,3 +712,86 @@ test_that("list of RAW to FIXED_LEN_BYTE_ARRAY", {
     as.data.frame(read_parquet(tmp))
   })
 })
+
+test_that("blob::blob to BYTE_ARRAY", {
+  skip_without("blob")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    d = blob::blob(
+      charToRaw("foo"),
+      charToRaw("bar"),
+      charToRaw("foobar")
+    )
+  )
+  write_parquet(d, tmp)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$d, "blob")
+  expect_equal(d2$d, d$d)
+
+  # with NAs (NULL entries in blob)
+  d_na <- data.frame(
+    d = blob::blob(
+      charToRaw("foo"),
+      NULL,
+      charToRaw("bar"),
+      charToRaw("foobar"),
+      NULL
+    )
+  )
+  write_parquet(d_na, tmp)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d3 <- read_parquet(tmp)
+  expect_s3_class(d3$d, "blob")
+  expect_equal(d3$d, d_na$d)
+})
+
+test_that("blob::blob to FIXED_LEN_BYTE_ARRAY", {
+  skip_without("blob")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
+
+  d <- data.frame(
+    d = blob::blob(
+      charToRaw("foo"),
+      charToRaw("bar"),
+      charToRaw("aaa")
+    )
+  )
+  write_parquet(d, tmp, schema = schema)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$d, "blob")
+  expect_equal(d2$d, d$d)
+
+  # with NAs
+  d_na <- data.frame(
+    d = blob::blob(
+      charToRaw("foo"),
+      NULL,
+      charToRaw("bar"),
+      charToRaw("aaa"),
+      NULL
+    )
+  )
+  write_parquet(d_na, tmp, schema = schema)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d3 <- read_parquet(tmp)
+  expect_s3_class(d3$d, "blob")
+  expect_equal(d3$d, d_na$d)
+})

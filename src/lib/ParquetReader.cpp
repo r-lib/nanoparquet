@@ -333,7 +333,7 @@ void ParquetReader::read_column_chunk_int(ColumnChunk &cc) {
   // Sadly, this means that we are parsing the header of the first data
   // page twice, for files that adhere to the spec and don't have dict
   // pages. :((
-  if (!cc.has_dictionary) {
+  if (!cc.has_dictionary && ptr < end) {
     PageHeader dph;
     uint32_t ph_size = cmd.total_compressed_size;
     thrift_unpack(ptr, &ph_size, &dph, filename_);

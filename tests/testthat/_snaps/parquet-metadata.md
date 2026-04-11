@@ -178,22 +178,22 @@
       13 data/enum.parquet     7                v_int64
       14 data/enum.parquet     7              v_float64
       15 data/enum.parquet     7               v_binary
-                                                                            r_type
-      1                                                                       <NA>
-      2                                                                        raw
-      3                                                                        raw
-      4                                                                        raw
-      5                                                                  character
-      6                                                                     double
-      7                                                                     double
-      8  list(list(character, character, character, logical, double, double, raw))
-      9                                                                       <NA>
-      10                                                                      <NA>
-      11                                                                      <NA>
-      12                                                                      <NA>
-      13                                                                      <NA>
-      14                                                                      <NA>
-      15                                                                      <NA>
+                                                                             r_type
+      1                                                                        <NA>
+      2                                                                        blob
+      3                                                                        blob
+      4                                                                        blob
+      5                                                                   character
+      6                                                                      double
+      7                                                                      double
+      8  list(list(character, character, character, logical, double, double, blob))
+      9                                                                        <NA>
+      10                                                                       <NA>
+      11                                                                       <NA>
+      12                                                                       <NA>
+      13                                                                       <NA>
+      14                                                                       <NA>
+      15                                                                       <NA>
                type type_length repetition_type converted_type logical_type
       1        <NA>          NA            <NA>           <NA>             
       2  BYTE_ARRAY          NA        OPTIONAL           <NA>             

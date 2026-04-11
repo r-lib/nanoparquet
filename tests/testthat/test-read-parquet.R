@@ -149,6 +149,24 @@ test_that("round trip with arrow", {
   expect_equal(read_parquet(tmp), mt)
 })
 
+test_that("round trip with arrow, empty data frame", {
+  # https://github.com/r-lib/nanoparquet/issues/160
+  skip_on_cran()
+  skip_without("arrow")
+  df <- data.frame(
+    a = character(0),
+    b = numeric(0),
+    c = logical(0)
+  )
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  arrow::write_parquet(df, tmp)
+  result <- read_parquet(tmp)
+  expect_equal(nrow(result), 0L)
+  expect_equal(ncol(result), 3L)
+  expect_equal(names(result), c("a", "b", "c"))
+})
+
 test_that("round trip with duckdb", {
   skip_on_cran()
   skip_without("duckdb")
