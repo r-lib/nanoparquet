@@ -26,7 +26,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/r-lib/nanoparquet/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/r-lib/nanoparquet/blob/v0.5.0/DESCRIPTION)
 
 Csárdi G, Mühleisen H (2026). *nanoparquet: Read and Write 'Parquet'
 Files*. R package version 0.5.0, <https://github.com/r-lib/nanoparquet>.
