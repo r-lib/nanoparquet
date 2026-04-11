@@ -1120,6 +1120,24 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
       file.write((const char *)&el, sizeof(int64_t));
     }
     has_minmax_value[idx] = has_minmax_value[idx] || has_min;
+  } else if (Rf_inherits(col, "integer64")) {
+    // integer64 (bit64 package) stores int64 values as raw bytes in REALSXP.
+    // NA_integer64_ is INT64_MIN (0x8000000000000000).
+    for (uint64_t i = from; i < until; i++) {
+      int64_t el;
+      memcpy(&el, &REAL(col)[i], sizeof(int64_t));
+      if (el == INT64_MIN) continue;  // NA_integer64_
+      if (minmax && (!has_min || el < min_value)) {
+        has_min = true;
+        SAVE_MIN2(min_value, idx, el);
+      }
+      if (minmax && (!has_max || el > max_value)) {
+        has_max = true;
+        SAVE_MAX2(max_value, idx, el);
+      }
+      file.write((const char *)&el, sizeof(int64_t));
+    }
+    has_minmax_value[idx] = has_minmax_value[idx] || has_min;
   } else {
     bool is_signed = TRUE;
     int bit_width = 64;
