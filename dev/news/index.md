@@ -3,6 +3,16 @@
 ## nanoparquet (development version)
 
 - [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now returns `BYTE_ARRAY` and `FIXED_LEN_BYTE_ARRAY` columns (without a
+  string/UUID/decimal annotation) as
+  [`blob::blob`](https://blob.tidyverse.org/reference/blob.html) objects
+  instead of plain lists of raw vectors.
+  [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now also accepts
+  [`blob::blob`](https://blob.tidyverse.org/reference/blob.html) columns
+  ([\#115](https://github.com/r-lib/nanoparquet/issues/115)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
   can now read empty data frames (zero rows) written by the arrow
   package ([\#160](https://github.com/r-lib/nanoparquet/issues/160)).
 
