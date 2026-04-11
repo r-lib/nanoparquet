@@ -22,9 +22,9 @@ parquet_schema(...)
 
 Data frame with the same columns as
 [`read_parquet_schema()`](https://nanoparquet.r-lib.org/reference/read_parquet_schema.md):
-`file_name`, `name`, `r_type`, `type`, `type_length`, `repetition_type`,
-`converted_type`, `logical_type`, `num_children`, `scale`, `precision`,
-`field_id`.
+`file_name`, `r_col`, `name`, `r_type`, `type`, `type_length`,
+`repetition_type`, `converted_type`, `logical_type`, `num_children`,
+`scale`, `precision`, `field_id`.
 
 ## Details
 
@@ -96,7 +96,13 @@ Parquet logical types:
 
 - `"BSON"`
 
-Logical types `MAP`, `LIST` and `UNKNOWN` are not supported currently.
+- `"LIST"`: list of some other type. It needs an `element` parameter,
+  which is a type specification for the list elements. Currently
+  `element` can be only `"INT32"`, `"DOUBLE"` or `"STRING"`. Also,
+  currently nanoparquet always write LIST columns that are `"OPTIONAL"`,
+  both for the list elements and the list itself.
+
+Logical types `MAP`, and `UNKNOWN` are not supported currently.
 
 Converted types are deprecated in the Parquet specification in favor of
 logical types, but `parquet_schema()` accepts some converted types as a
@@ -144,14 +150,18 @@ columns. `"REPEATED"` columns are currently not supported in
 parquet_schema(
   c1 = "INT32",
   c2 = list("INT", bit_width = 64, is_signed = TRUE),
-  c3 = list("STRING", repetition_type = "OPTIONAL")
+  c3 = list("STRING", repetition_type = "OPTIONAL"),
+  l = list("LIST", element = "DOUBLE")
 )
-#> # A data frame: 3 × 12
-#>   file_name name  r_type type       type_length repetition_type
-#> * <chr>     <chr> <chr>  <chr>            <int> <chr>          
-#> 1 NA        c1    NA     INT32               NA NA             
-#> 2 NA        c2    NA     INT64               NA NA             
-#> 3 NA        c3    NA     BYTE_ARRAY          NA OPTIONAL       
+#> # A data frame: 6 × 13
+#>   file_name r_col name    r_type type       type_length repetition_type
+#> * <chr>     <int> <chr>   <chr>  <chr>            <int> <chr>          
+#> 1 NA            1 c1      NA     INT32               NA NA             
+#> 2 NA            2 c2      NA     INT64               NA NA             
+#> 3 NA            3 c3      NA     BYTE_ARRAY          NA OPTIONAL       
+#> 4 NA            4 l       NA     NA                  NA OPTIONAL       
+#> 5 NA            4 list    NA     NA                  NA REPEATED       
+#> 6 NA            4 element NA     DOUBLE              NA OPTIONAL       
 #> # ℹ 6 more variables: converted_type <chr>, logical_type <I<list>>,
 #> #   num_children <int>, scale <int>, precision <int>, field_id <int>
 ```

@@ -11,7 +11,7 @@ compression or other reason."><script src="https://cdn.jsdelivr.net/gh/posit-dev
 
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@ compression or other reason."><script src="https://cdn.jsdelivr.net/gh/posit-dev
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks</a></li>
+    <li><a class="dropdown-item" href="../articles/list-columns.html">List columns</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
@@ -44,7 +45,7 @@ compression or other reason."><script src="https://cdn.jsdelivr.net/gh/posit-dev
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Read the schema of a Parquet file</h1>
-      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/cran-0-4-3/R/parquet-metadata.R" class="external-link"><code>R/parquet-metadata.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/main/R/parquet-metadata.R" class="external-link"><code>R/parquet-metadata.R</code></a></small>
       <div class="d-none name"><code>read_parquet_schema.Rd</code></div>
     </div>
 
@@ -80,19 +81,23 @@ potentially modify the Parquet to R type mappings.</p></dd>
 <span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>each <span class="st">"real"</span> column. For nested schemas, the rows are <span class="cf">in</span> depth<span class="sc">-</span>first</span>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>search order. Most important columns are<span class="sc">:</span></span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">file_name</span><span class="st">`</span><span class="sc">:</span> file name.</span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">name</span><span class="st">`</span><span class="sc">:</span> column name.</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">r_type</span><span class="st">`</span><span class="sc">:</span> the R type that corresponds to the Parquet type.</span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>  Might be <span class="st">`</span><span class="at">NA</span><span class="st">`</span> <span class="cf">if</span> [<span class="fu">read_parquet</span>()] cannot read this column. See</span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>  [nanoparquet<span class="sc">-</span>types] <span class="cf">for</span> the type mapping rules.</span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">type</span><span class="st">`</span><span class="sc">:</span> data type. One of the low level data types.</span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">type_length</span><span class="st">`</span><span class="sc">:</span> length <span class="cf">for</span> fixed length byte arrays.</span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">repettion_type</span><span class="st">`</span><span class="sc">:</span> character, one of <span class="st">`</span><span class="at">REQUIRED</span><span class="st">`</span>, <span class="st">`</span><span class="at">OPTIONAL</span><span class="st">`</span> or</span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>  <span class="st">`</span><span class="at">REPEATED</span><span class="st">`</span>.</span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">logical_type</span><span class="st">`</span><span class="sc">:</span> a list column, the logical types of the columns.</span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>  An element has at least an entry called <span class="st">`</span><span class="at">type</span><span class="st">`</span>, and potentially</span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>  additional entries, e.g. <span class="st">`</span><span class="at">bit_width</span><span class="st">`</span>, <span class="st">`</span><span class="at">is_signed</span><span class="st">`</span>, etc.</span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">num_children</span><span class="st">`</span><span class="sc">:</span> number of child nodes. Should be a non<span class="sc">-</span>negative</span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>  integer <span class="cf">for</span> the root node, and <span class="st">`</span><span class="at">NA</span><span class="st">`</span> <span class="cf">for</span> a leaf node.</span></code></pre><p></p></div>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">r_col</span><span class="st">`</span><span class="sc">:</span> integer, the column index <span class="cf">in</span> R, starting from one.</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="st">`</span><span class="at">NA</span><span class="st">`</span> <span class="cf">for</span> the root node. For Parquet files without list columns</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>  this is simply the column index <span class="cf">in</span> the file. A list column has</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>  multiple schema rows, and they all have the same <span class="st">`</span><span class="at">r_col</span><span class="st">`</span>.</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">name</span><span class="st">`</span><span class="sc">:</span> column name.</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">r_type</span><span class="st">`</span><span class="sc">:</span> the R type that corresponds to the Parquet type.</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>  Might be <span class="st">`</span><span class="at">NA</span><span class="st">`</span> <span class="cf">if</span> [<span class="fu">read_parquet</span>()] cannot read this column. See</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>  [nanoparquet<span class="sc">-</span>types] <span class="cf">for</span> the type mapping rules.</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">type</span><span class="st">`</span><span class="sc">:</span> data type. One of the low level data types.</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">type_length</span><span class="st">`</span><span class="sc">:</span> length <span class="cf">for</span> fixed length byte arrays.</span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">repettion_type</span><span class="st">`</span><span class="sc">:</span> character, one of <span class="st">`</span><span class="at">REQUIRED</span><span class="st">`</span>, <span class="st">`</span><span class="at">OPTIONAL</span><span class="st">`</span> or</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>  <span class="st">`</span><span class="at">REPEATED</span><span class="st">`</span>.</span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">logical_type</span><span class="st">`</span><span class="sc">:</span> a list column, the logical types of the columns.</span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>  An element has at least an entry called <span class="st">`</span><span class="at">type</span><span class="st">`</span>, and potentially</span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>  additional entries, e.g. <span class="st">`</span><span class="at">bit_width</span><span class="st">`</span>, <span class="st">`</span><span class="at">is_signed</span><span class="st">`</span>, etc.</span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a><span class="sc">-</span> <span class="st">`</span><span class="at">num_children</span><span class="st">`</span><span class="sc">:</span> number of child nodes. Should be a non<span class="sc">-</span>negative</span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a>  integer <span class="cf">for</span> the root node, and <span class="st">`</span><span class="at">NA</span><span class="st">`</span> <span class="cf">for</span> a leaf node.</span></code></pre><p></p></div>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

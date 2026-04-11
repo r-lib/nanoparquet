@@ -11,7 +11,7 @@ compression or other reason."><script src="https://cdn.jsdelivr.net/gh/posit-dev
 
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@ compression or other reason."><script src="https://cdn.jsdelivr.net/gh/posit-dev
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks</a></li>
+    <li><a class="dropdown-item" href="../articles/list-columns.html">List columns</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
@@ -44,7 +45,7 @@ compression or other reason."><script src="https://cdn.jsdelivr.net/gh/posit-dev
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Read the metadata of a Parquet file</h1>
-      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/cran-0-4-3/R/parquet-metadata.R" class="external-link"><code>R/parquet-metadata.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/main/R/parquet-metadata.R" class="external-link"><code>R/parquet-metadata.R</code></a></small>
       <div class="d-none name"><code>read_parquet_metadata.Rd</code></div>
     </div>
 
@@ -91,6 +92,10 @@ each node (inner node or leaf node). For flat files this means one
 root node (inner node), always the first one, and then one row for
 each "real" column. For nested schemas, the rows are in depth-first
 search order. Most important columns are:</p><ul><li><p><code>file_name</code>: file name.</p></li>
+<li><p><code>r_col</code>: integer, the column index in R, starting from one.
+<code>NA</code> for the root node. For Parquet files without list columns
+this is simply the column index in the file. A list column has
+multiple schema rows, and they all have the same <code>r_col</code>.</p></li>
 <li><p><code>name</code>: column name.</p></li>
 <li><p><code>r_type</code>: the R type that corresponds to the Parquet type.
 Might be <code>NA</code> if <code><a href="read_parquet.html">read_parquet()</a></code> cannot read this column. See
@@ -182,25 +187,26 @@ value of a column, or a bound. It may be <code>NA</code>.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> /home/runner/work/_te…       1     <span style="text-decoration: underline;">1</span>000 <span style="color: #949494;">&lt;tbl [1 × 2]&gt;</span>      https://g…</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $schema</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 14 × 12</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    file_name             name  r_type type  type_length repetition_type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> /home/runner/work/_t… sche… <span style="color: #BB0000;">NA</span>     <span style="color: #BB0000;">NA</span>             <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> /home/runner/work/_t… regi… POSIX… INT64          <span style="color: #BB0000;">NA</span> REQUIRED       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> /home/runner/work/_t… id    integ… INT32          <span style="color: #BB0000;">NA</span> REQUIRED       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> /home/runner/work/_t… firs… chara… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> /home/runner/work/_t… last… chara… BYTE…          <span style="color: #BB0000;">NA</span> REQUIRED       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> /home/runner/work/_t… email factor BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> /home/runner/work/_t… gend… chara… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> /home/runner/work/_t… ip_a… chara… BYTE…          <span style="color: #BB0000;">NA</span> REQUIRED       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> /home/runner/work/_t… cc    chara… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> /home/runner/work/_t… coun… chara… BYTE…          <span style="color: #BB0000;">NA</span> REQUIRED       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span> /home/runner/work/_t… birt… Date   INT32          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> /home/runner/work/_t… sala… double DOUB…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span> /home/runner/work/_t… title chara… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span> /home/runner/work/_t… comm… chara… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 6 more variables: converted_type &lt;chr&gt;, logical_type &lt;I&lt;list&gt;&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   num_children &lt;int&gt;, scale &lt;int&gt;, precision &lt;int&gt;, field_id &lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 14 × 14</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    file_name       r_col name  r_type type  type_length repetition_type</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> /home/runner/w…    <span style="color: #BB0000;">NA</span> sche… <span style="color: #BB0000;">NA</span>     <span style="color: #BB0000;">NA</span>             <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> /home/runner/w…     1 regi… POSIX… INT64          <span style="color: #BB0000;">NA</span> REQUIRED       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> /home/runner/w…     2 id    integ… INT32          <span style="color: #BB0000;">NA</span> REQUIRED       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> /home/runner/w…     3 firs… chara… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> /home/runner/w…     4 last… chara… BYTE…          <span style="color: #BB0000;">NA</span> REQUIRED       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> /home/runner/w…     5 email factor BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> /home/runner/w…     6 gend… chara… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> /home/runner/w…     7 ip_a… chara… BYTE…          <span style="color: #BB0000;">NA</span> REQUIRED       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> /home/runner/w…     8 cc    chara… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> /home/runner/w…     9 coun… chara… BYTE…          <span style="color: #BB0000;">NA</span> REQUIRED       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span> /home/runner/w…    10 birt… Date   INT32          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> /home/runner/w…    11 sala… double DOUB…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span> /home/runner/w…    12 title chara… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span> /home/runner/w…    13 comm… chara… BYTE…          <span style="color: #BB0000;">NA</span> OPTIONAL       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 7 more variables: converted_type &lt;chr&gt;, logical_type &lt;I&lt;list&gt;&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   num_children &lt;int&gt;, scale &lt;int&gt;, precision &lt;int&gt;, field_id &lt;int&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   children &lt;list&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $row_groups</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A data frame: 1 × 7</span></span>

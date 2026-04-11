@@ -25,9 +25,9 @@ infer_parquet_schema(df, options = parquet_options())
 Data frame, the inferred schema. It has the same columns as the return
 value of
 [`read_parquet_schema()`](https://nanoparquet.r-lib.org/reference/read_parquet_schema.md):
-`file_name`, `name`, `r_type`, `type`, `type_length`, `repetition_type`,
-`converted_type`, `logical_type`, `num_children`, `scale`, `precision`,
-`field_id`.
+`file_name`, `r_col`, `name`, `r_type`, `type`, `type_length`,
+`repetition_type`, `converted_type`, `logical_type`, `num_children`,
+`scale`, `precision`, `field_id`.
 
 ## See also
 

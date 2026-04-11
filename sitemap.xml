@@ -1,8 +1,10 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://nanoparquet.r-lib.org/404.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/CLAUDE.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/LICENSE-text.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/articles/benchmarks.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/articles/index.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/articles/list-columns.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/authors.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/index.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/news/index.html</loc></url>

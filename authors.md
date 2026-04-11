@@ -26,15 +26,15 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/r-lib/nanoparquet/blob/cran-0-4-3/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/r-lib/nanoparquet/blob/main/DESCRIPTION)
 
-Csárdi G, Mühleisen H (2025). *nanoparquet: Read and Write 'Parquet'
-Files*. R package version 0.4.3, <https://github.com/r-lib/nanoparquet>.
+Csárdi G, Mühleisen H (2026). *nanoparquet: Read and Write 'Parquet'
+Files*. R package version 0.5.0, <https://github.com/r-lib/nanoparquet>.
 
     @Manual{,
       title = {nanoparquet: Read and Write 'Parquet' Files},
       author = {Gábor Csárdi and Hannes Mühleisen},
-      year = {2025},
-      note = {R package version 0.4.3},
+      year = {2026},
+      note = {R package version 0.5.0},
       url = {https://github.com/r-lib/nanoparquet},
     }

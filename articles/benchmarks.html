@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks</a></li>
+    <li><a class="dropdown-item" href="../articles/list-columns.html">List columns</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -71,7 +72,7 @@
 
 
 
-      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/cran-0-4-3/vignettes/articles/benchmarks.qmd" class="external-link"><code>vignettes/articles/benchmarks.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/main/vignettes/articles/benchmarks.qmd" class="external-link"><code>vignettes/articles/benchmarks.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -117,23 +118,23 @@
 <span>  <span class="fu"><a href="https://gt.rstudio.com/reference/fmt_integer.html" class="external-link">fmt_integer</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://gt.rstudio.com/reference/fmt_bytes.html" class="external-link">fmt_bytes</a></span><span class="op">(</span>columns <span class="op">=</span> <span class="st">"size in memory"</span><span class="op">)</span></span></code></pre></div>
 </details><div class="cell-output-display">
-<div id="agylhwetsa" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#agylhwetsa table {
+<div id="ibgqslzzuc" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ibgqslzzuc table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#agylhwetsa thead, #agylhwetsa tbody, #agylhwetsa tfoot, #agylhwetsa tr, #agylhwetsa td, #agylhwetsa th {
+#ibgqslzzuc thead, #ibgqslzzuc tbody, #ibgqslzzuc tfoot, #ibgqslzzuc tr, #ibgqslzzuc td, #ibgqslzzuc th {
   border-style: none;
 }
 
-#agylhwetsa p {
+#ibgqslzzuc p {
   margin: 0;
   padding: 0;
 }
 
-#agylhwetsa .gt_table {
+#ibgqslzzuc .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -159,12 +160,12 @@
   border-left-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_caption {
+#ibgqslzzuc .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#agylhwetsa .gt_title {
+#ibgqslzzuc .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -176,7 +177,7 @@
   border-bottom-width: 0;
 }
 
-#agylhwetsa .gt_subtitle {
+#ibgqslzzuc .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -188,7 +189,7 @@
   border-top-width: 0;
 }
 
-#agylhwetsa .gt_heading {
+#ibgqslzzuc .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -200,13 +201,13 @@
   border-right-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_bottom_border {
+#ibgqslzzuc .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_col_headings {
+#ibgqslzzuc .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -221,7 +222,7 @@
   border-right-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_col_heading {
+#ibgqslzzuc .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -241,7 +242,7 @@
   overflow-x: hidden;
 }
 
-#agylhwetsa .gt_column_spanner_outer {
+#ibgqslzzuc .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -253,15 +254,15 @@
   padding-right: 4px;
 }
 
-#agylhwetsa .gt_column_spanner_outer:first-child {
+#ibgqslzzuc .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#agylhwetsa .gt_column_spanner_outer:last-child {
+#ibgqslzzuc .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#agylhwetsa .gt_column_spanner {
+#ibgqslzzuc .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -273,11 +274,11 @@
   width: 100%;
 }
 
-#agylhwetsa .gt_spanner_row {
+#ibgqslzzuc .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#agylhwetsa .gt_group_heading {
+#ibgqslzzuc .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -303,7 +304,7 @@
   text-align: left;
 }
 
-#agylhwetsa .gt_empty_group_heading {
+#ibgqslzzuc .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -318,15 +319,15 @@
   vertical-align: middle;
 }
 
-#agylhwetsa .gt_from_md > :first-child {
+#ibgqslzzuc .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#agylhwetsa .gt_from_md > :last-child {
+#ibgqslzzuc .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#agylhwetsa .gt_row {
+#ibgqslzzuc .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -345,7 +346,7 @@
   overflow-x: hidden;
 }
 
-#agylhwetsa .gt_stub {
+#ibgqslzzuc .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -358,7 +359,7 @@
   padding-right: 5px;
 }
 
-#agylhwetsa .gt_stub_row_group {
+#ibgqslzzuc .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -372,15 +373,15 @@
   vertical-align: top;
 }
 
-#agylhwetsa .gt_row_group_first td {
+#ibgqslzzuc .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#agylhwetsa .gt_row_group_first th {
+#ibgqslzzuc .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#agylhwetsa .gt_summary_row {
+#ibgqslzzuc .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -390,16 +391,16 @@
   padding-right: 5px;
 }
 
-#agylhwetsa .gt_first_summary_row {
+#ibgqslzzuc .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_first_summary_row.thick {
+#ibgqslzzuc .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#agylhwetsa .gt_last_summary_row {
+#ibgqslzzuc .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -409,7 +410,7 @@
   border-bottom-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_grand_summary_row {
+#ibgqslzzuc .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -419,7 +420,7 @@
   padding-right: 5px;
 }
 
-#agylhwetsa .gt_first_grand_summary_row {
+#ibgqslzzuc .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -429,7 +430,7 @@
   border-top-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_last_grand_summary_row_top {
+#ibgqslzzuc .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -439,11 +440,11 @@
   border-bottom-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_striped {
+#ibgqslzzuc .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#agylhwetsa .gt_table_body {
+#ibgqslzzuc .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -452,7 +453,7 @@
   border-bottom-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_footnotes {
+#ibgqslzzuc .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -466,7 +467,7 @@
   border-right-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_footnote {
+#ibgqslzzuc .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -475,7 +476,7 @@
   padding-right: 5px;
 }
 
-#agylhwetsa .gt_sourcenotes {
+#ibgqslzzuc .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -489,7 +490,7 @@
   border-right-color: #D3D3D3;
 }
 
-#agylhwetsa .gt_sourcenote {
+#ibgqslzzuc .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -497,72 +498,72 @@
   padding-right: 5px;
 }
 
-#agylhwetsa .gt_left {
+#ibgqslzzuc .gt_left {
   text-align: left;
 }
 
-#agylhwetsa .gt_center {
+#ibgqslzzuc .gt_center {
   text-align: center;
 }
 
-#agylhwetsa .gt_right {
+#ibgqslzzuc .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#agylhwetsa .gt_font_normal {
+#ibgqslzzuc .gt_font_normal {
   font-weight: normal;
 }
 
-#agylhwetsa .gt_font_bold {
+#ibgqslzzuc .gt_font_bold {
   font-weight: bold;
 }
 
-#agylhwetsa .gt_font_italic {
+#ibgqslzzuc .gt_font_italic {
   font-style: italic;
 }
 
-#agylhwetsa .gt_super {
+#ibgqslzzuc .gt_super {
   font-size: 65%;
 }
 
-#agylhwetsa .gt_footnote_marks {
+#ibgqslzzuc .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#agylhwetsa .gt_asterisk {
+#ibgqslzzuc .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#agylhwetsa .gt_indent_1 {
+#ibgqslzzuc .gt_indent_1 {
   text-indent: 5px;
 }
 
-#agylhwetsa .gt_indent_2 {
+#ibgqslzzuc .gt_indent_2 {
   text-indent: 10px;
 }
 
-#agylhwetsa .gt_indent_3 {
+#ibgqslzzuc .gt_indent_3 {
   text-indent: 15px;
 }
 
-#agylhwetsa .gt_indent_4 {
+#ibgqslzzuc .gt_indent_4 {
   text-indent: 20px;
 }
 
-#agylhwetsa .gt_indent_5 {
+#ibgqslzzuc .gt_indent_5 {
   text-indent: 25px;
 }
 
-#agylhwetsa .katex-display {
+#ibgqslzzuc .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#agylhwetsa div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#ibgqslzzuc div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -696,7 +697,7 @@ concurrently. -->
 <code class="sourceCode R"><span><span class="va">csv_tab_read</span> <span class="op">&lt;-</span> <span class="va">results</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">software</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nanoparquet"</span>, <span class="st">"data.table"</span>, <span class="st">"data.table.gz"</span>, <span class="st">"readr"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">direction</span> <span class="op">==</span> <span class="st">"read"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>software <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>software <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
 <span>    <span class="va">software</span> <span class="op">==</span>  <span class="st">"data.table.gz"</span> <span class="op">~</span> <span class="st">"data.table (compressed)"</span>,</span>
 <span>    .default <span class="op">=</span> <span class="va">software</span></span>
 <span>  <span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -721,23 +722,23 @@ concurrently. -->
 <span>  <span class="fu"><a href="https://gt.rstudio.com/reference/fmt_bytes.html" class="external-link">fmt_bytes</a></span><span class="op">(</span>columns <span class="op">=</span> <span class="va">memory</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://jthomasmock.github.io/gtExtras/reference/gt_plt_bar.html" class="external-link">gt_plt_bar</a></span><span class="op">(</span>column <span class="op">=</span> <span class="va">`speedup from CSV`</span><span class="op">)</span></span></code></pre></div>
 </details><div class="cell-output-display">
-<div id="rzhbgsksny" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#rzhbgsksny table {
+<div id="wmhfibemzl" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#wmhfibemzl table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#rzhbgsksny thead, #rzhbgsksny tbody, #rzhbgsksny tfoot, #rzhbgsksny tr, #rzhbgsksny td, #rzhbgsksny th {
+#wmhfibemzl thead, #wmhfibemzl tbody, #wmhfibemzl tfoot, #wmhfibemzl tr, #wmhfibemzl td, #wmhfibemzl th {
   border-style: none;
 }
 
-#rzhbgsksny p {
+#wmhfibemzl p {
   margin: 0;
   padding: 0;
 }
 
-#rzhbgsksny .gt_table {
+#wmhfibemzl .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -763,12 +764,12 @@ concurrently. -->
   border-left-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_caption {
+#wmhfibemzl .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#rzhbgsksny .gt_title {
+#wmhfibemzl .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -780,7 +781,7 @@ concurrently. -->
   border-bottom-width: 0;
 }
 
-#rzhbgsksny .gt_subtitle {
+#wmhfibemzl .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -792,7 +793,7 @@ concurrently. -->
   border-top-width: 0;
 }
 
-#rzhbgsksny .gt_heading {
+#wmhfibemzl .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -804,13 +805,13 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_bottom_border {
+#wmhfibemzl .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_col_headings {
+#wmhfibemzl .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -825,7 +826,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_col_heading {
+#wmhfibemzl .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -845,7 +846,7 @@ concurrently. -->
   overflow-x: hidden;
 }
 
-#rzhbgsksny .gt_column_spanner_outer {
+#wmhfibemzl .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -857,15 +858,15 @@ concurrently. -->
   padding-right: 4px;
 }
 
-#rzhbgsksny .gt_column_spanner_outer:first-child {
+#wmhfibemzl .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#rzhbgsksny .gt_column_spanner_outer:last-child {
+#wmhfibemzl .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#rzhbgsksny .gt_column_spanner {
+#wmhfibemzl .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -877,11 +878,11 @@ concurrently. -->
   width: 100%;
 }
 
-#rzhbgsksny .gt_spanner_row {
+#wmhfibemzl .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#rzhbgsksny .gt_group_heading {
+#wmhfibemzl .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -907,7 +908,7 @@ concurrently. -->
   text-align: left;
 }
 
-#rzhbgsksny .gt_empty_group_heading {
+#wmhfibemzl .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -922,15 +923,15 @@ concurrently. -->
   vertical-align: middle;
 }
 
-#rzhbgsksny .gt_from_md > :first-child {
+#wmhfibemzl .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#rzhbgsksny .gt_from_md > :last-child {
+#wmhfibemzl .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#rzhbgsksny .gt_row {
+#wmhfibemzl .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -949,7 +950,7 @@ concurrently. -->
   overflow-x: hidden;
 }
 
-#rzhbgsksny .gt_stub {
+#wmhfibemzl .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -962,7 +963,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#rzhbgsksny .gt_stub_row_group {
+#wmhfibemzl .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -976,15 +977,15 @@ concurrently. -->
   vertical-align: top;
 }
 
-#rzhbgsksny .gt_row_group_first td {
+#wmhfibemzl .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#rzhbgsksny .gt_row_group_first th {
+#wmhfibemzl .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#rzhbgsksny .gt_summary_row {
+#wmhfibemzl .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -994,16 +995,16 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#rzhbgsksny .gt_first_summary_row {
+#wmhfibemzl .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_first_summary_row.thick {
+#wmhfibemzl .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#rzhbgsksny .gt_last_summary_row {
+#wmhfibemzl .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1013,7 +1014,7 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_grand_summary_row {
+#wmhfibemzl .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1023,7 +1024,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#rzhbgsksny .gt_first_grand_summary_row {
+#wmhfibemzl .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1033,7 +1034,7 @@ concurrently. -->
   border-top-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_last_grand_summary_row_top {
+#wmhfibemzl .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1043,11 +1044,11 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_striped {
+#wmhfibemzl .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#rzhbgsksny .gt_table_body {
+#wmhfibemzl .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1056,7 +1057,7 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_footnotes {
+#wmhfibemzl .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1070,7 +1071,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_footnote {
+#wmhfibemzl .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1079,7 +1080,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#rzhbgsksny .gt_sourcenotes {
+#wmhfibemzl .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1093,7 +1094,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#rzhbgsksny .gt_sourcenote {
+#wmhfibemzl .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1101,72 +1102,72 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#rzhbgsksny .gt_left {
+#wmhfibemzl .gt_left {
   text-align: left;
 }
 
-#rzhbgsksny .gt_center {
+#wmhfibemzl .gt_center {
   text-align: center;
 }
 
-#rzhbgsksny .gt_right {
+#wmhfibemzl .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#rzhbgsksny .gt_font_normal {
+#wmhfibemzl .gt_font_normal {
   font-weight: normal;
 }
 
-#rzhbgsksny .gt_font_bold {
+#wmhfibemzl .gt_font_bold {
   font-weight: bold;
 }
 
-#rzhbgsksny .gt_font_italic {
+#wmhfibemzl .gt_font_italic {
   font-style: italic;
 }
 
-#rzhbgsksny .gt_super {
+#wmhfibemzl .gt_super {
   font-size: 65%;
 }
 
-#rzhbgsksny .gt_footnote_marks {
+#wmhfibemzl .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#rzhbgsksny .gt_asterisk {
+#wmhfibemzl .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#rzhbgsksny .gt_indent_1 {
+#wmhfibemzl .gt_indent_1 {
   text-indent: 5px;
 }
 
-#rzhbgsksny .gt_indent_2 {
+#wmhfibemzl .gt_indent_2 {
   text-indent: 10px;
 }
 
-#rzhbgsksny .gt_indent_3 {
+#wmhfibemzl .gt_indent_3 {
   text-indent: 15px;
 }
 
-#rzhbgsksny .gt_indent_4 {
+#wmhfibemzl .gt_indent_4 {
   text-indent: 20px;
 }
 
-#rzhbgsksny .gt_indent_5 {
+#wmhfibemzl .gt_indent_5 {
   text-indent: 25px;
 }
 
-#rzhbgsksny .katex-display {
+#wmhfibemzl .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#rzhbgsksny div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#wmhfibemzl div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1198,28 +1199,28 @@ concurrently. -->
 <td class="gt_row gt_left" headers="s  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="s  time">32ms</td>
 <td class="gt_row gt_right" headers="s  x">13.1</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="59.18" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="59.18" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">69.8 MB</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="s  software">data.table</td>
 <td class="gt_row gt_right" headers="s  time">61ms</td>
 <td class="gt_row gt_right" headers="s  x">6.7</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="30.58" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="30.58" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">68.1 MB</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="s  software">data.table (compressed)</td>
 <td class="gt_row gt_right" headers="s  time">146ms</td>
 <td class="gt_row gt_right" headers="s  x">2.8</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="12.57" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="12.57" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">113.3 MB</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="s  software">readr</td>
 <td class="gt_row gt_right" headers="s  time">405ms</td>
 <td class="gt_row gt_right" headers="s  x">1.0</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="4.53" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="4.53" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">189.6 MB</td>
 </tr>
 <tr class="gt_group_heading_row even">
@@ -1229,28 +1230,28 @@ concurrently. -->
 <td class="gt_row gt_left" headers="m  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="m  time">1s</td>
 <td class="gt_row gt_right" headers="m  x">5.2</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="23.57" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="23.57" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">1.5 GB</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="m  software">data.table</td>
 <td class="gt_row gt_right" headers="m  time">874ms</td>
 <td class="gt_row gt_right" headers="m  x">6.0</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="27.02" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="27.02" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">1.3 GB</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="m  software">data.table (compressed)</td>
 <td class="gt_row gt_right" headers="m  time">2s</td>
 <td class="gt_row gt_right" headers="m  x">2.6</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="11.89" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="11.89" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">1.4 GB</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="m  software">readr</td>
 <td class="gt_row gt_right" headers="m  time">5.2s</td>
 <td class="gt_row gt_right" headers="m  x">1.0</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="4.53" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="4.53" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">2.6 GB</td>
 </tr>
 <tr class="gt_group_heading_row odd">
@@ -1260,28 +1261,28 @@ concurrently. -->
 <td class="gt_row gt_left" headers="l  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="l  time">10.8s</td>
 <td class="gt_row gt_right" headers="l  x">21.7</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="98.37" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="98.37" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">7.6 GB</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="l  software">data.table</td>
 <td class="gt_row gt_right" headers="l  time">12.5s</td>
 <td class="gt_row gt_right" headers="l  x">18.7</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="84.77" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="84.77" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">8.9 GB</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="l  software">data.table (compressed)</td>
 <td class="gt_row gt_right" headers="l  time">27.1s</td>
 <td class="gt_row gt_right" headers="l  x">8.6</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="39.16" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="39.16" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">7.4 GB</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="l  software">readr</td>
 <td class="gt_row gt_right" headers="l  time">3m 54.4s</td>
 <td class="gt_row gt_right" headers="l  x">1.0</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="4.53" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="4.53" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">8 GB</td>
 </tr>
 </tbody>
@@ -1299,7 +1300,7 @@ concurrently. -->
 <code class="sourceCode R"><span><span class="va">csv_tab_write</span> <span class="op">&lt;-</span> <span class="va">results</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">software</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nanoparquet"</span>, <span class="st">"data.table"</span>, <span class="st">"data.table.gz"</span>, <span class="st">"readr"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">direction</span> <span class="op">==</span> <span class="st">"write"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>software <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>software <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
 <span>    <span class="va">software</span> <span class="op">==</span>  <span class="st">"data.table.gz"</span> <span class="op">~</span> <span class="st">"data.table (compressed)"</span>,</span>
 <span>    .default <span class="op">=</span> <span class="va">software</span></span>
 <span>  <span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -1324,23 +1325,23 @@ concurrently. -->
 <span>  <span class="fu"><a href="https://gt.rstudio.com/reference/fmt_bytes.html" class="external-link">fmt_bytes</a></span><span class="op">(</span>columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">memory</span>, <span class="va">`file size`</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://jthomasmock.github.io/gtExtras/reference/gt_plt_bar.html" class="external-link">gt_plt_bar</a></span><span class="op">(</span>column <span class="op">=</span> <span class="va">`speedup from CSV`</span><span class="op">)</span></span></code></pre></div>
 </details><div class="cell-output-display">
-<div id="kazjgkzlgz" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#kazjgkzlgz table {
+<div id="laoikghfwf" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#laoikghfwf table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#kazjgkzlgz thead, #kazjgkzlgz tbody, #kazjgkzlgz tfoot, #kazjgkzlgz tr, #kazjgkzlgz td, #kazjgkzlgz th {
+#laoikghfwf thead, #laoikghfwf tbody, #laoikghfwf tfoot, #laoikghfwf tr, #laoikghfwf td, #laoikghfwf th {
   border-style: none;
 }
 
-#kazjgkzlgz p {
+#laoikghfwf p {
   margin: 0;
   padding: 0;
 }
 
-#kazjgkzlgz .gt_table {
+#laoikghfwf .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -1366,12 +1367,12 @@ concurrently. -->
   border-left-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_caption {
+#laoikghfwf .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#kazjgkzlgz .gt_title {
+#laoikghfwf .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1383,7 +1384,7 @@ concurrently. -->
   border-bottom-width: 0;
 }
 
-#kazjgkzlgz .gt_subtitle {
+#laoikghfwf .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1395,7 +1396,7 @@ concurrently. -->
   border-top-width: 0;
 }
 
-#kazjgkzlgz .gt_heading {
+#laoikghfwf .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1407,13 +1408,13 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_bottom_border {
+#laoikghfwf .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_col_headings {
+#laoikghfwf .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1428,7 +1429,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_col_heading {
+#laoikghfwf .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1448,7 +1449,7 @@ concurrently. -->
   overflow-x: hidden;
 }
 
-#kazjgkzlgz .gt_column_spanner_outer {
+#laoikghfwf .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1460,15 +1461,15 @@ concurrently. -->
   padding-right: 4px;
 }
 
-#kazjgkzlgz .gt_column_spanner_outer:first-child {
+#laoikghfwf .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#kazjgkzlgz .gt_column_spanner_outer:last-child {
+#laoikghfwf .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#kazjgkzlgz .gt_column_spanner {
+#laoikghfwf .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1480,11 +1481,11 @@ concurrently. -->
   width: 100%;
 }
 
-#kazjgkzlgz .gt_spanner_row {
+#laoikghfwf .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#kazjgkzlgz .gt_group_heading {
+#laoikghfwf .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1510,7 +1511,7 @@ concurrently. -->
   text-align: left;
 }
 
-#kazjgkzlgz .gt_empty_group_heading {
+#laoikghfwf .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1525,15 +1526,15 @@ concurrently. -->
   vertical-align: middle;
 }
 
-#kazjgkzlgz .gt_from_md > :first-child {
+#laoikghfwf .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#kazjgkzlgz .gt_from_md > :last-child {
+#laoikghfwf .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#kazjgkzlgz .gt_row {
+#laoikghfwf .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1552,7 +1553,7 @@ concurrently. -->
   overflow-x: hidden;
 }
 
-#kazjgkzlgz .gt_stub {
+#laoikghfwf .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1565,7 +1566,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#kazjgkzlgz .gt_stub_row_group {
+#laoikghfwf .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1579,15 +1580,15 @@ concurrently. -->
   vertical-align: top;
 }
 
-#kazjgkzlgz .gt_row_group_first td {
+#laoikghfwf .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#kazjgkzlgz .gt_row_group_first th {
+#laoikghfwf .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#kazjgkzlgz .gt_summary_row {
+#laoikghfwf .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1597,16 +1598,16 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#kazjgkzlgz .gt_first_summary_row {
+#laoikghfwf .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_first_summary_row.thick {
+#laoikghfwf .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#kazjgkzlgz .gt_last_summary_row {
+#laoikghfwf .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1616,7 +1617,7 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_grand_summary_row {
+#laoikghfwf .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1626,7 +1627,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#kazjgkzlgz .gt_first_grand_summary_row {
+#laoikghfwf .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1636,7 +1637,7 @@ concurrently. -->
   border-top-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_last_grand_summary_row_top {
+#laoikghfwf .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1646,11 +1647,11 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_striped {
+#laoikghfwf .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#kazjgkzlgz .gt_table_body {
+#laoikghfwf .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1659,7 +1660,7 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_footnotes {
+#laoikghfwf .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1673,7 +1674,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_footnote {
+#laoikghfwf .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1682,7 +1683,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#kazjgkzlgz .gt_sourcenotes {
+#laoikghfwf .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1696,7 +1697,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#kazjgkzlgz .gt_sourcenote {
+#laoikghfwf .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1704,72 +1705,72 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#kazjgkzlgz .gt_left {
+#laoikghfwf .gt_left {
   text-align: left;
 }
 
-#kazjgkzlgz .gt_center {
+#laoikghfwf .gt_center {
   text-align: center;
 }
 
-#kazjgkzlgz .gt_right {
+#laoikghfwf .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#kazjgkzlgz .gt_font_normal {
+#laoikghfwf .gt_font_normal {
   font-weight: normal;
 }
 
-#kazjgkzlgz .gt_font_bold {
+#laoikghfwf .gt_font_bold {
   font-weight: bold;
 }
 
-#kazjgkzlgz .gt_font_italic {
+#laoikghfwf .gt_font_italic {
   font-style: italic;
 }
 
-#kazjgkzlgz .gt_super {
+#laoikghfwf .gt_super {
   font-size: 65%;
 }
 
-#kazjgkzlgz .gt_footnote_marks {
+#laoikghfwf .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#kazjgkzlgz .gt_asterisk {
+#laoikghfwf .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#kazjgkzlgz .gt_indent_1 {
+#laoikghfwf .gt_indent_1 {
   text-indent: 5px;
 }
 
-#kazjgkzlgz .gt_indent_2 {
+#laoikghfwf .gt_indent_2 {
   text-indent: 10px;
 }
 
-#kazjgkzlgz .gt_indent_3 {
+#laoikghfwf .gt_indent_3 {
   text-indent: 15px;
 }
 
-#kazjgkzlgz .gt_indent_4 {
+#laoikghfwf .gt_indent_4 {
   text-indent: 20px;
 }
 
-#kazjgkzlgz .gt_indent_5 {
+#laoikghfwf .gt_indent_5 {
   text-indent: 25px;
 }
 
-#kazjgkzlgz .katex-display {
+#laoikghfwf .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#kazjgkzlgz div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#laoikghfwf div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1803,7 +1804,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="s  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="s  time">135ms</td>
 <td class="gt_row gt_right" headers="s  x">5.6</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="30.54" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="30.54" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">83 MB</td>
 <td class="gt_row gt_right" headers="s  file size">5.7 MB</td>
 </tr>
@@ -1811,7 +1812,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="s  software">data.table</td>
 <td class="gt_row gt_right" headers="s  time">61ms</td>
 <td class="gt_row gt_right" headers="s  x">12.3</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="67.10" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="67.10" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">868.4 kB</td>
 <td class="gt_row gt_right" headers="s  file size">31 MB</td>
 </tr>
@@ -1819,7 +1820,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="s  software">data.table (compressed)</td>
 <td class="gt_row gt_right" headers="s  time">397ms</td>
 <td class="gt_row gt_right" headers="s  x">1.9</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="10.31" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="10.31" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">1.7 MB</td>
 <td class="gt_row gt_right" headers="s  file size">8.3 MB</td>
 </tr>
@@ -1827,7 +1828,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="s  software">readr</td>
 <td class="gt_row gt_right" headers="s  time">748ms</td>
 <td class="gt_row gt_right" headers="s  x">1.0</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="5.47" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="5.47" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">52.6 MB</td>
 <td class="gt_row gt_right" headers="s  file size">31.1 MB</td>
 </tr>
@@ -1838,7 +1839,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="m  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="m  time">2.4s</td>
 <td class="gt_row gt_right" headers="m  x">5.5</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="30.33" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="30.33" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">678.4 MB</td>
 <td class="gt_row gt_right" headers="m  file size">111.4 MB</td>
 </tr>
@@ -1846,7 +1847,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="m  software">data.table</td>
 <td class="gt_row gt_right" headers="m  time">750ms</td>
 <td class="gt_row gt_right" headers="m  x">18.0</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="98.37" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="98.37" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">2.6 MB</td>
 <td class="gt_row gt_right" headers="m  file size">619.2 MB</td>
 </tr>
@@ -1854,7 +1855,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="m  software">data.table (compressed)</td>
 <td class="gt_row gt_right" headers="m  time">7.2s</td>
 <td class="gt_row gt_right" headers="m  x">1.9</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="10.25" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="10.25" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">5.6 MB</td>
 <td class="gt_row gt_right" headers="m  file size">165.2 MB</td>
 </tr>
@@ -1862,7 +1863,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="m  software">readr</td>
 <td class="gt_row gt_right" headers="m  time">13.5s</td>
 <td class="gt_row gt_right" headers="m  x">1.0</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="5.47" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="5.47" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">841.9 MB</td>
 <td class="gt_row gt_right" headers="m  file size">621.1 MB</td>
 </tr>
@@ -1873,7 +1874,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="l  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="l  time">26.7s</td>
 <td class="gt_row gt_right" headers="l  x">5.3</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="28.79" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="28.79" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">402.7 MB</td>
 <td class="gt_row gt_right" headers="l  file size">1.1 GB</td>
 </tr>
@@ -1881,7 +1882,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="l  software">data.table</td>
 <td class="gt_row gt_right" headers="l  time">7.9s</td>
 <td class="gt_row gt_right" headers="l  x">17.9</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="97.81" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="97.81" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">269.3 MB</td>
 <td class="gt_row gt_right" headers="l  file size">6.2 GB</td>
 </tr>
@@ -1889,7 +1890,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="l  software">data.table (compressed)</td>
 <td class="gt_row gt_right" headers="l  time">1m 11.7s</td>
 <td class="gt_row gt_right" headers="l  x">2.0</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="10.72" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="10.72" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">269.3 MB</td>
 <td class="gt_row gt_right" headers="l  file size">1.7 GB</td>
 </tr>
@@ -1897,7 +1898,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="l  software">readr</td>
 <td class="gt_row gt_right" headers="l  time">2m 20.6s</td>
 <td class="gt_row gt_right" headers="l  x">1.0</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="5.47" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="5.47" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">1 GB</td>
 <td class="gt_row gt_right" headers="l  file size">6.2 GB</td>
 </tr>
@@ -1926,7 +1927,7 @@ concurrently. -->
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">`data size`</span>, <span class="va">software</span>, <span class="va">time</span>, <span class="va">x</span>, <span class="va">speedup</span>, <span class="va">memory</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>rawtime <span class="op">=</span> <span class="va">time</span>, time <span class="op">=</span> <span class="fu">prettyunits</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/prettyunits/man/pretty_sec.html" class="external-link">pretty_sec</a></span><span class="op">(</span><span class="va">time</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">software</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nanoparquet"</span>, <span class="st">"arrow"</span>, <span class="st">"duckdb"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>software <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>software <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
 <span>    <span class="va">software</span> <span class="op">==</span>  <span class="st">"arrow"</span> <span class="op">~</span> <span class="st">"Arrow"</span>,</span>
 <span>    <span class="va">software</span> <span class="op">==</span> <span class="st">"duckdb"</span> <span class="op">~</span> <span class="st">"DuckDB"</span>,</span>
 <span>    .default <span class="op">=</span> <span class="va">software</span></span>
@@ -1946,23 +1947,23 @@ concurrently. -->
 <span>  <span class="fu"><a href="https://gt.rstudio.com/reference/fmt_bytes.html" class="external-link">fmt_bytes</a></span><span class="op">(</span>columns <span class="op">=</span> <span class="va">memory</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://jthomasmock.github.io/gtExtras/reference/gt_plt_bar.html" class="external-link">gt_plt_bar</a></span><span class="op">(</span>column <span class="op">=</span> <span class="va">`speedup from CSV`</span><span class="op">)</span></span></code></pre></div>
 </details><div class="cell-output-display">
-<div id="byuetmednt" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#byuetmednt table {
+<div id="vceepwmwct" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#vceepwmwct table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#byuetmednt thead, #byuetmednt tbody, #byuetmednt tfoot, #byuetmednt tr, #byuetmednt td, #byuetmednt th {
+#vceepwmwct thead, #vceepwmwct tbody, #vceepwmwct tfoot, #vceepwmwct tr, #vceepwmwct td, #vceepwmwct th {
   border-style: none;
 }
 
-#byuetmednt p {
+#vceepwmwct p {
   margin: 0;
   padding: 0;
 }
 
-#byuetmednt .gt_table {
+#vceepwmwct .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -1988,12 +1989,12 @@ concurrently. -->
   border-left-color: #D3D3D3;
 }
 
-#byuetmednt .gt_caption {
+#vceepwmwct .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#byuetmednt .gt_title {
+#vceepwmwct .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -2005,7 +2006,7 @@ concurrently. -->
   border-bottom-width: 0;
 }
 
-#byuetmednt .gt_subtitle {
+#vceepwmwct .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -2017,7 +2018,7 @@ concurrently. -->
   border-top-width: 0;
 }
 
-#byuetmednt .gt_heading {
+#vceepwmwct .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -2029,13 +2030,13 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#byuetmednt .gt_bottom_border {
+#vceepwmwct .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#byuetmednt .gt_col_headings {
+#vceepwmwct .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2050,7 +2051,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#byuetmednt .gt_col_heading {
+#vceepwmwct .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2070,7 +2071,7 @@ concurrently. -->
   overflow-x: hidden;
 }
 
-#byuetmednt .gt_column_spanner_outer {
+#vceepwmwct .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2082,15 +2083,15 @@ concurrently. -->
   padding-right: 4px;
 }
 
-#byuetmednt .gt_column_spanner_outer:first-child {
+#vceepwmwct .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#byuetmednt .gt_column_spanner_outer:last-child {
+#vceepwmwct .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#byuetmednt .gt_column_spanner {
+#vceepwmwct .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -2102,11 +2103,11 @@ concurrently. -->
   width: 100%;
 }
 
-#byuetmednt .gt_spanner_row {
+#vceepwmwct .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#byuetmednt .gt_group_heading {
+#vceepwmwct .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2132,7 +2133,7 @@ concurrently. -->
   text-align: left;
 }
 
-#byuetmednt .gt_empty_group_heading {
+#vceepwmwct .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2147,15 +2148,15 @@ concurrently. -->
   vertical-align: middle;
 }
 
-#byuetmednt .gt_from_md > :first-child {
+#vceepwmwct .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#byuetmednt .gt_from_md > :last-child {
+#vceepwmwct .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#byuetmednt .gt_row {
+#vceepwmwct .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2174,7 +2175,7 @@ concurrently. -->
   overflow-x: hidden;
 }
 
-#byuetmednt .gt_stub {
+#vceepwmwct .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2187,7 +2188,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#byuetmednt .gt_stub_row_group {
+#vceepwmwct .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2201,15 +2202,15 @@ concurrently. -->
   vertical-align: top;
 }
 
-#byuetmednt .gt_row_group_first td {
+#vceepwmwct .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#byuetmednt .gt_row_group_first th {
+#vceepwmwct .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#byuetmednt .gt_summary_row {
+#vceepwmwct .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2219,16 +2220,16 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#byuetmednt .gt_first_summary_row {
+#vceepwmwct .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#byuetmednt .gt_first_summary_row.thick {
+#vceepwmwct .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#byuetmednt .gt_last_summary_row {
+#vceepwmwct .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2238,7 +2239,7 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#byuetmednt .gt_grand_summary_row {
+#vceepwmwct .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2248,7 +2249,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#byuetmednt .gt_first_grand_summary_row {
+#vceepwmwct .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2258,7 +2259,7 @@ concurrently. -->
   border-top-color: #D3D3D3;
 }
 
-#byuetmednt .gt_last_grand_summary_row_top {
+#vceepwmwct .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2268,11 +2269,11 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#byuetmednt .gt_striped {
+#vceepwmwct .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#byuetmednt .gt_table_body {
+#vceepwmwct .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2281,7 +2282,7 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#byuetmednt .gt_footnotes {
+#vceepwmwct .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2295,7 +2296,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#byuetmednt .gt_footnote {
+#vceepwmwct .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -2304,7 +2305,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#byuetmednt .gt_sourcenotes {
+#vceepwmwct .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2318,7 +2319,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#byuetmednt .gt_sourcenote {
+#vceepwmwct .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -2326,72 +2327,72 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#byuetmednt .gt_left {
+#vceepwmwct .gt_left {
   text-align: left;
 }
 
-#byuetmednt .gt_center {
+#vceepwmwct .gt_center {
   text-align: center;
 }
 
-#byuetmednt .gt_right {
+#vceepwmwct .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#byuetmednt .gt_font_normal {
+#vceepwmwct .gt_font_normal {
   font-weight: normal;
 }
 
-#byuetmednt .gt_font_bold {
+#vceepwmwct .gt_font_bold {
   font-weight: bold;
 }
 
-#byuetmednt .gt_font_italic {
+#vceepwmwct .gt_font_italic {
   font-style: italic;
 }
 
-#byuetmednt .gt_super {
+#vceepwmwct .gt_super {
   font-size: 65%;
 }
 
-#byuetmednt .gt_footnote_marks {
+#vceepwmwct .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#byuetmednt .gt_asterisk {
+#vceepwmwct .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#byuetmednt .gt_indent_1 {
+#vceepwmwct .gt_indent_1 {
   text-indent: 5px;
 }
 
-#byuetmednt .gt_indent_2 {
+#vceepwmwct .gt_indent_2 {
   text-indent: 10px;
 }
 
-#byuetmednt .gt_indent_3 {
+#vceepwmwct .gt_indent_3 {
   text-indent: 15px;
 }
 
-#byuetmednt .gt_indent_4 {
+#vceepwmwct .gt_indent_4 {
   text-indent: 20px;
 }
 
-#byuetmednt .gt_indent_5 {
+#vceepwmwct .gt_indent_5 {
   text-indent: 25px;
 }
 
-#byuetmednt .katex-display {
+#vceepwmwct .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#byuetmednt div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#vceepwmwct div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -2423,21 +2424,21 @@ concurrently. -->
 <td class="gt_row gt_left" headers="s  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="s  time">32ms</td>
 <td class="gt_row gt_right" headers="s  x">13.1</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="59.18" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="59.18" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">69.8 MB</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="s  software">Arrow</td>
 <td class="gt_row gt_right" headers="s  time">42ms</td>
 <td class="gt_row gt_right" headers="s  x">9.9</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="44.75" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="44.75" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">110.6 MB</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="s  software">DuckDB</td>
 <td class="gt_row gt_right" headers="s  time">74ms</td>
 <td class="gt_row gt_right" headers="s  x">5.5</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="25.13" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="25.13" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">114.4 MB</td>
 </tr>
 <tr class="gt_group_heading_row odd">
@@ -2447,21 +2448,21 @@ concurrently. -->
 <td class="gt_row gt_left" headers="m  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="m  time">1s</td>
 <td class="gt_row gt_right" headers="m  x">5.2</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="23.57" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="23.57" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">1.5 GB</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="m  software">Arrow</td>
 <td class="gt_row gt_right" headers="m  time">918ms</td>
 <td class="gt_row gt_right" headers="m  x">5.7</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="25.76" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="25.76" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">2.1 GB</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="m  software">DuckDB</td>
 <td class="gt_row gt_right" headers="m  time">1.2s</td>
 <td class="gt_row gt_right" headers="m  x">4.5</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="20.34" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="20.34" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">2 GB</td>
 </tr>
 <tr class="gt_group_heading_row odd">
@@ -2471,21 +2472,21 @@ concurrently. -->
 <td class="gt_row gt_left" headers="l  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="l  time">10.8s</td>
 <td class="gt_row gt_right" headers="l  x">21.7</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="98.37" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="98.37" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">7.6 GB</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="l  software">Arrow</td>
 <td class="gt_row gt_right" headers="l  time">12.3s</td>
 <td class="gt_row gt_right" headers="l  x">19.1</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="86.42" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="86.42" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">8.8 GB</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="l  software">DuckDB</td>
 <td class="gt_row gt_right" headers="l  time">14.3s</td>
 <td class="gt_row gt_right" headers="l  x">16.4</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="74.40" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="74.40" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">8.6 GB</td>
 </tr>
 </tbody>
@@ -2511,7 +2512,7 @@ concurrently. -->
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">`data size`</span>, <span class="va">software</span>, <span class="va">time</span>, <span class="va">x</span>, <span class="va">speedup</span>, <span class="va">memory</span>, <span class="va">`file size`</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>rawtime <span class="op">=</span> <span class="va">time</span>, time <span class="op">=</span> <span class="fu">prettyunits</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/prettyunits/man/pretty_sec.html" class="external-link">pretty_sec</a></span><span class="op">(</span><span class="va">time</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">software</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nanoparquet"</span>, <span class="st">"arrow"</span>, <span class="st">"duckdb"</span>, <span class="st">"readr"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>software <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>software <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
 <span>    <span class="va">software</span> <span class="op">==</span>  <span class="st">"arrow"</span> <span class="op">~</span> <span class="st">"Arrow"</span>,</span>
 <span>    <span class="va">software</span> <span class="op">==</span> <span class="st">"duckdb"</span> <span class="op">~</span> <span class="st">"DuckDB"</span>,</span>
 <span>    .default <span class="op">=</span> <span class="va">software</span></span>
@@ -2531,23 +2532,23 @@ concurrently. -->
 <span>  <span class="fu"><a href="https://gt.rstudio.com/reference/fmt_bytes.html" class="external-link">fmt_bytes</a></span><span class="op">(</span>columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">memory</span>, <span class="va">`file size`</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://jthomasmock.github.io/gtExtras/reference/gt_plt_bar.html" class="external-link">gt_plt_bar</a></span><span class="op">(</span>column <span class="op">=</span> <span class="va">`speedup from CSV`</span><span class="op">)</span></span></code></pre></div>
 </details><div class="cell-output-display">
-<div id="whqnatoyyq" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#whqnatoyyq table {
+<div id="nxerhuefmq" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#nxerhuefmq table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#whqnatoyyq thead, #whqnatoyyq tbody, #whqnatoyyq tfoot, #whqnatoyyq tr, #whqnatoyyq td, #whqnatoyyq th {
+#nxerhuefmq thead, #nxerhuefmq tbody, #nxerhuefmq tfoot, #nxerhuefmq tr, #nxerhuefmq td, #nxerhuefmq th {
   border-style: none;
 }
 
-#whqnatoyyq p {
+#nxerhuefmq p {
   margin: 0;
   padding: 0;
 }
 
-#whqnatoyyq .gt_table {
+#nxerhuefmq .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -2573,12 +2574,12 @@ concurrently. -->
   border-left-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_caption {
+#nxerhuefmq .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#whqnatoyyq .gt_title {
+#nxerhuefmq .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -2590,7 +2591,7 @@ concurrently. -->
   border-bottom-width: 0;
 }
 
-#whqnatoyyq .gt_subtitle {
+#nxerhuefmq .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -2602,7 +2603,7 @@ concurrently. -->
   border-top-width: 0;
 }
 
-#whqnatoyyq .gt_heading {
+#nxerhuefmq .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -2614,13 +2615,13 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_bottom_border {
+#nxerhuefmq .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_col_headings {
+#nxerhuefmq .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2635,7 +2636,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_col_heading {
+#nxerhuefmq .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2655,7 +2656,7 @@ concurrently. -->
   overflow-x: hidden;
 }
 
-#whqnatoyyq .gt_column_spanner_outer {
+#nxerhuefmq .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2667,15 +2668,15 @@ concurrently. -->
   padding-right: 4px;
 }
 
-#whqnatoyyq .gt_column_spanner_outer:first-child {
+#nxerhuefmq .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#whqnatoyyq .gt_column_spanner_outer:last-child {
+#nxerhuefmq .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#whqnatoyyq .gt_column_spanner {
+#nxerhuefmq .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -2687,11 +2688,11 @@ concurrently. -->
   width: 100%;
 }
 
-#whqnatoyyq .gt_spanner_row {
+#nxerhuefmq .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#whqnatoyyq .gt_group_heading {
+#nxerhuefmq .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2717,7 +2718,7 @@ concurrently. -->
   text-align: left;
 }
 
-#whqnatoyyq .gt_empty_group_heading {
+#nxerhuefmq .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2732,15 +2733,15 @@ concurrently. -->
   vertical-align: middle;
 }
 
-#whqnatoyyq .gt_from_md > :first-child {
+#nxerhuefmq .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#whqnatoyyq .gt_from_md > :last-child {
+#nxerhuefmq .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#whqnatoyyq .gt_row {
+#nxerhuefmq .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2759,7 +2760,7 @@ concurrently. -->
   overflow-x: hidden;
 }
 
-#whqnatoyyq .gt_stub {
+#nxerhuefmq .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2772,7 +2773,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#whqnatoyyq .gt_stub_row_group {
+#nxerhuefmq .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2786,15 +2787,15 @@ concurrently. -->
   vertical-align: top;
 }
 
-#whqnatoyyq .gt_row_group_first td {
+#nxerhuefmq .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#whqnatoyyq .gt_row_group_first th {
+#nxerhuefmq .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#whqnatoyyq .gt_summary_row {
+#nxerhuefmq .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2804,16 +2805,16 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#whqnatoyyq .gt_first_summary_row {
+#nxerhuefmq .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_first_summary_row.thick {
+#nxerhuefmq .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#whqnatoyyq .gt_last_summary_row {
+#nxerhuefmq .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2823,7 +2824,7 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_grand_summary_row {
+#nxerhuefmq .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2833,7 +2834,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#whqnatoyyq .gt_first_grand_summary_row {
+#nxerhuefmq .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2843,7 +2844,7 @@ concurrently. -->
   border-top-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_last_grand_summary_row_top {
+#nxerhuefmq .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2853,11 +2854,11 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_striped {
+#nxerhuefmq .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#whqnatoyyq .gt_table_body {
+#nxerhuefmq .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2866,7 +2867,7 @@ concurrently. -->
   border-bottom-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_footnotes {
+#nxerhuefmq .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2880,7 +2881,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_footnote {
+#nxerhuefmq .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -2889,7 +2890,7 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#whqnatoyyq .gt_sourcenotes {
+#nxerhuefmq .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2903,7 +2904,7 @@ concurrently. -->
   border-right-color: #D3D3D3;
 }
 
-#whqnatoyyq .gt_sourcenote {
+#nxerhuefmq .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -2911,72 +2912,72 @@ concurrently. -->
   padding-right: 5px;
 }
 
-#whqnatoyyq .gt_left {
+#nxerhuefmq .gt_left {
   text-align: left;
 }
 
-#whqnatoyyq .gt_center {
+#nxerhuefmq .gt_center {
   text-align: center;
 }
 
-#whqnatoyyq .gt_right {
+#nxerhuefmq .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#whqnatoyyq .gt_font_normal {
+#nxerhuefmq .gt_font_normal {
   font-weight: normal;
 }
 
-#whqnatoyyq .gt_font_bold {
+#nxerhuefmq .gt_font_bold {
   font-weight: bold;
 }
 
-#whqnatoyyq .gt_font_italic {
+#nxerhuefmq .gt_font_italic {
   font-style: italic;
 }
 
-#whqnatoyyq .gt_super {
+#nxerhuefmq .gt_super {
   font-size: 65%;
 }
 
-#whqnatoyyq .gt_footnote_marks {
+#nxerhuefmq .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#whqnatoyyq .gt_asterisk {
+#nxerhuefmq .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#whqnatoyyq .gt_indent_1 {
+#nxerhuefmq .gt_indent_1 {
   text-indent: 5px;
 }
 
-#whqnatoyyq .gt_indent_2 {
+#nxerhuefmq .gt_indent_2 {
   text-indent: 10px;
 }
 
-#whqnatoyyq .gt_indent_3 {
+#nxerhuefmq .gt_indent_3 {
   text-indent: 15px;
 }
 
-#whqnatoyyq .gt_indent_4 {
+#nxerhuefmq .gt_indent_4 {
   text-indent: 20px;
 }
 
-#whqnatoyyq .gt_indent_5 {
+#nxerhuefmq .gt_indent_5 {
   text-indent: 25px;
 }
 
-#whqnatoyyq .katex-display {
+#nxerhuefmq .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#whqnatoyyq div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#nxerhuefmq div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -3010,7 +3011,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="s  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="s  time">135ms</td>
 <td class="gt_row gt_right" headers="s  x">5.6</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="98.37" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="98.37" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">83 MB</td>
 <td class="gt_row gt_right" headers="s  file size">5.7 MB</td>
 </tr>
@@ -3018,7 +3019,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="s  software">Arrow</td>
 <td class="gt_row gt_right" headers="s  time">144ms</td>
 <td class="gt_row gt_right" headers="s  x">5.2</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="92.18" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="92.18" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">35.8 MB</td>
 <td class="gt_row gt_right" headers="s  file size">5.7 MB</td>
 </tr>
@@ -3026,7 +3027,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="s  software">DuckDB</td>
 <td class="gt_row gt_right" headers="s  time">214ms</td>
 <td class="gt_row gt_right" headers="s  x">3.5</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="61.60" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="61.60" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">159.8 MB</td>
 <td class="gt_row gt_right" headers="s  file size">9.7 MB</td>
 </tr>
@@ -3034,7 +3035,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="s  software">readr</td>
 <td class="gt_row gt_right" headers="s  time">748ms</td>
 <td class="gt_row gt_right" headers="s  x">1.0</td>
-<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="17.62" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="s  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="17.62" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="s  memory">52.6 MB</td>
 <td class="gt_row gt_right" headers="s  file size">31.1 MB</td>
 </tr>
@@ -3045,7 +3046,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="m  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="m  time">2.4s</td>
 <td class="gt_row gt_right" headers="m  x">5.5</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="97.70" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="97.70" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">678.4 MB</td>
 <td class="gt_row gt_right" headers="m  file size">111.4 MB</td>
 </tr>
@@ -3053,7 +3054,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="m  software">Arrow</td>
 <td class="gt_row gt_right" headers="m  time">2.7s</td>
 <td class="gt_row gt_right" headers="m  x">5.1</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="89.05" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="89.05" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">291.7 MB</td>
 <td class="gt_row gt_right" headers="m  file size">112.1 MB</td>
 </tr>
@@ -3061,7 +3062,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="m  software">DuckDB</td>
 <td class="gt_row gt_right" headers="m  time">2.7s</td>
 <td class="gt_row gt_right" headers="m  x">5.0</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="88.95" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="88.95" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">1.9 GB</td>
 <td class="gt_row gt_right" headers="m  file size">193.6 MB</td>
 </tr>
@@ -3069,7 +3070,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="m  software">readr</td>
 <td class="gt_row gt_right" headers="m  time">13.5s</td>
 <td class="gt_row gt_right" headers="m  x">1.0</td>
-<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="17.62" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="m  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="17.62" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="m  memory">841.9 MB</td>
 <td class="gt_row gt_right" headers="m  file size">621.1 MB</td>
 </tr>
@@ -3080,7 +3081,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="l  software">nanoparquet</td>
 <td class="gt_row gt_right" headers="l  time">26.7s</td>
 <td class="gt_row gt_right" headers="l  x">5.3</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="92.73" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="92.73" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">402.7 MB</td>
 <td class="gt_row gt_right" headers="l  file size">1.1 GB</td>
 </tr>
@@ -3088,7 +3089,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="l  software">Arrow</td>
 <td class="gt_row gt_right" headers="l  time">29.3s</td>
 <td class="gt_row gt_right" headers="l  x">4.8</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="84.67" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="84.67" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">591 MB</td>
 <td class="gt_row gt_right" headers="l  file size">1.1 GB</td>
 </tr>
@@ -3096,7 +3097,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="l  software">DuckDB</td>
 <td class="gt_row gt_right" headers="l  time">34s</td>
 <td class="gt_row gt_right" headers="l  x">4.1</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="72.90" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="72.90" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">621.7 MB</td>
 <td class="gt_row gt_right" headers="l  file size">1.9 GB</td>
 </tr>
@@ -3104,7 +3105,7 @@ concurrently. -->
 <td class="gt_row gt_left" headers="l  software">readr</td>
 <td class="gt_row gt_right" headers="l  time">2m 20.6s</td>
 <td class="gt_row gt_right" headers="l  x">1.0</td>
-<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs><style type="text/css">    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {      fill: none;      stroke: #000000;      stroke-linecap: round;      stroke-linejoin: round;      stroke-miterlimit: 10.00;    }    .svglite text {      white-space: pre;    }    .svglite g.glyphgroup path {      fill: inherit;      stroke: none;    }  </style></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="17.62" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
+<td class="gt_row gt_left" headers="l  speedup from CSV"><svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="113.39pt" height="14.17pt" viewbox="0 0 113.39 14.17"><g class="svglite"><defs></defs><rect width="100%" height="100%" style="stroke: none; fill: none;"></rect><defs><clippath id="cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw=="><rect x="0.00" y="0.00" width="113.39" height="14.17"></rect></clippath></defs><g clip-path="url(#cpMC4wMHwxMTMuMzl8MC4wMHwxNC4xNw==)"><rect x="0.00" y="0.0000000000000018" width="113.39" height="14.17" style="stroke-width: 0.00; stroke: none;"></rect><rect x="5.02" y="0.89" width="17.62" height="12.40" style="stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #A020F0;"></rect><line x1="5.02" y1="14.17" x2="5.02" y2="0.0000000000000018" style="stroke-width: 1.07; stroke-linecap: butt;"></line></g></g></svg></td>
 <td class="gt_row gt_right" headers="l  memory">1 GB</td>
 <td class="gt_row gt_right" headers="l  file size">6.2 GB</td>
 </tr>

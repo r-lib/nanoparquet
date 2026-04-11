@@ -1,5 +1,82 @@
 # Changelog
 
+## nanoparquet 0.5.0
+
+CRAN release: 2026-04-11
+
+- [`append_parquet()`](https://nanoparquet.r-lib.org/reference/append_parquet.md)
+  now gives a clear error when appending data with missing values (`NA`)
+  to a column that was written as `REQUIRED` (i.e. non-nullable)
+  ([\#146](https://github.com/r-lib/nanoparquet/issues/146)).
+
+- [`append_parquet()`](https://nanoparquet.r-lib.org/reference/append_parquet.md)
+  now creates a new file if `file` does not exist
+  ([\#155](https://github.com/r-lib/nanoparquet/issues/155)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
+  now correctly reads `DECIMAL` values stored as `FIXED_LEN_BYTE_ARRAY`
+  with a byte length greater than 8 (e.g. 128-bit decimals)
+  ([\#148](https://github.com/r-lib/nanoparquet/issues/148)).
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
+  now sets the `definition_level_encoding` and
+  `repetition_level_encoding` fields in data page headers to `RLE` for
+  all columns, fixing an interoperability issue with the Apache Parquet
+  Java library ([\#98](https://github.com/r-lib/nanoparquet/issues/98)).
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
+  now writes the `ARROW:schema` metadata with correct flatbuffer
+  alignment, fixing an interoperability issue with the Rust arrow-rs
+  parquet reader
+  ([\#152](https://github.com/r-lib/nanoparquet/issues/152)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
+  now reads logical (BOOLEAN) columns correctly when the column spans
+  multiple data pages
+  ([\#142](https://github.com/r-lib/nanoparquet/issues/142)).
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
+  now writes files larger than 4 GB correctly. File offsets and column
+  sizes were stored as 32-bit integers and overflowed, producing corrupt
+  Parquet files that could not be read back
+  ([\#143](https://github.com/r-lib/nanoparquet/issues/143)).
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
+  now handles data frames with zero rows correctly, including
+  zero-column data frames
+  ([\#138](https://github.com/r-lib/nanoparquet/issues/138)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
+  no longer crashes when reading a Parquet file with zero columns
+  ([\#138](https://github.com/r-lib/nanoparquet/issues/138)).
+
+- nanoparquet now supports Parquet `LIST` columns:
+
+  - [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
+    can write R list columns whose elements are integer, double, or
+    character vectors. `NULL` entries encode a missing list, `NA` values
+    inside an element vector encode a missing element, and zero-length
+    vectors encode an empty list.
+
+  - [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
+    can read `LIST` columns with any supported scalar element type. All
+    four combinations of optional/required outer list and
+    optional/required element are supported, for both data page version
+    1 and version 2.
+
+  - [`parquet_schema()`](https://nanoparquet.r-lib.org/reference/parquet_schema.md)
+    accepts `list("LIST", element = <type>)` to specify a `LIST` column
+    type explicitly.
+
+  - [`infer_parquet_schema()`](https://nanoparquet.r-lib.org/reference/infer_parquet_schema.md)
+    and
+    [`read_parquet_schema()`](https://nanoparquet.r-lib.org/reference/read_parquet_schema.md)
+    report list columns with `r_type` `list(...)`, e.g. `list(double)`
+    or `list(list(characer))`, etc.
+
+  - Dictionary encoding (`RLE_DICTIONARY`) is supported for `LIST`
+    columns.
+
 ## nanoparquet 0.4.3
 
 CRAN release: 2025-12-17
