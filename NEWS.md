@@ -1,5 +1,8 @@
 # nanoparquet (development version)
 
+* `read_parquet()` can now read empty data frames (zero rows) written by the
+  arrow package (#160).
+
 # nanoparquet 0.5.0
 
 * `append_parquet()` now gives a clear error when appending data with
