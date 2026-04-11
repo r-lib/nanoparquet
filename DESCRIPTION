@@ -24,6 +24,7 @@ Encoding: UTF-8
 Suggests:
     arrow,
     bit64,
+    blob,
     DBI,
     duckdb (>= 1.4.0),
     hms,

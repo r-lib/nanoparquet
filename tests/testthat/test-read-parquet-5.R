@@ -227,8 +227,12 @@ test_that("mixing RLE_DICTIONARY and PLAIN, BYTE_ARRAY", {
   })
   t1 <- as.data.frame(read_parquet(pf))
   t2 <- as.data.frame(arrow::read_parquet(pf))
-  expect_equal(t1[, 1], unclass(t2[, 1]))
-  expect_equal(t1[, 2], unclass(t2[, 2]))
+  expect_equal(unclass(t1[, 1]), unclass(t2[, 1]), ignore_attr = TRUE)
+  expect_equal(unclass(t1[, 2]), unclass(t2[, 2]), ignore_attr = TRUE)
+  expect_s3_class(t1[, 1], "blob")
+  expect_s3_class(t1[, 2], "blob")
+  expect_identical(attr(t1[, 1], "ptype"), raw())
+  expect_identical(attr(t1[, 2], "ptype"), raw())
 })
 
 test_that("mixing RLE_DICTIONARY and PLAIN, FLOAT16", {

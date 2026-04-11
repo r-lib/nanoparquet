@@ -61,8 +61,8 @@ add_r_type_to_schema <- function(mtd, sch, options, col_select = NULL) {
     DOUBLE = "double",
     FLOAT = "double",
     INT96 = "POSIXct",
-    FIXED_LEN_BYTE_ARRAY = "raw",
-    BYTE_ARRAY = "raw"
+    FIXED_LEN_BYTE_ARRAY = "blob",
+    BYTE_ARRAY = "blob"
   )
 
   sch$r_type <- unname(type_map[sch$type])

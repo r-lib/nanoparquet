@@ -502,7 +502,7 @@
     Output
                                      file_name r_col   name r_type
       1 data/float16_nonzeros_and_nans.parquet    NA schema   <NA>
-      2 data/float16_nonzeros_and_nans.parquet     1      x    raw
+      2 data/float16_nonzeros_and_nans.parquet     1      x   blob
                         type type_length repetition_type converted_type logical_type
       1                 <NA>          NA        REQUIRED           <NA>             
       2 FIXED_LEN_BYTE_ARRAY           2        OPTIONAL           <NA>      FLOAT16
