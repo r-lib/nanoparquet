@@ -4,42 +4,43 @@ When writing out a data frame, nanoparquet maps R's data types to Parquet
 logical types. The following table is a summary of the mapping. For the
 details see below.
 
-R type      | Parquet type            | Default | Notes
-:-----------|:------------------------|:-------:|:----------------------------------------
-blob::blob  | BYTE_ARRAY              | x       | Missing values are `NULL`.
-"           | FIXED_LEN_BYTE_ARRAY    |         | All entries must have the same length. Missing values are `NULL`.
-character   | STRING(BYTE_ARRAY)      | x       | I.e. STRSXP. Converted to UTF-8.
-"           | BYTE_ARRAY              |         |
-"           | FIXED_LEN_BYTE_ARRAY    |         |
-"           | ENUM                    |         |
-"           | UUID                    |         |
-Date        | DATE                    | x       |
-difftime    | INT64                   | x       | If not hms::hms. Arrow metadata marks it as Duration(NS).
-factor      | STRING                  | x       | Arrow metadata marks it as a factor.
-"           | ENUM                    |         |
-hms::hms    | TIME(true, MILLIS)      | x       | Sub-milliseconds precision is lost.
-integer     | INT(32, true)           | x       | I.e. INTSXP.
-"           | INT64                   |         |
-"           | INT96                   |         |
-"           | DECIMAL(INT32)          |         |
-"           | DECIMAL(INT64)          |         |
-"           | INT(8, *)               |         |
-"           | INT(16, *)              |         |
-"           | INT(32, signed)         |         |
-list        | LIST(INT32 elements)    | x       | List of integer vectors. `NULL` entries and `NA` elements are supported.
-"           | LIST(DOUBLE elements)   | x       | List of double vectors. `NULL` entries and `NA` elements are supported.
-"           | LIST(STRING elements)   | x       | List of character vectors. `NULL` entries and `NA` elements are supported.
-"           | BYTE_ARRAY              |         | Must be a list of raw vectors. Missing values are `NULL`.
-"           | FIXED_LEN_BYTE_ARRAY    |         | Must be a list of raw vectors of the same length. Missing values are `NULL`.
-logical     | BOOLEAN                 | x       | I.e. LGLSXP.
-numeric     | DOUBLE                  | x       | I.e. REALSXP.
-"           | INT96                   |         |
-"           | FLOAT                   |         |
-"           | DECIMAL(INT32)          |         |
-"           | DECIMAL(INT64)          |         |
-"           | INT(*, *)               |         |
-"           | FLOAT16                 |         |
-POSIXct     | TIMESTAMP(true, MICROS) | x       | Sub-microsecond precision is lost.
+R type           | Parquet type            | Default | Notes
+:----------------|:------------------------|:-------:|:----------------------------------------
+bit64::integer64 | INT64                   | x       | `NA_integer64_` marks missing values.
+blob::blob       | BYTE_ARRAY              | x       | Missing values are `NULL`.
+"                | FIXED_LEN_BYTE_ARRAY    |         | All entries must have the same length. Missing values are `NULL`.
+character        | STRING(BYTE_ARRAY)      | x       | I.e. STRSXP. Converted to UTF-8.
+"                | BYTE_ARRAY              |         |
+"                | FIXED_LEN_BYTE_ARRAY    |         |
+"                | ENUM                    |         |
+"                | UUID                    |         |
+Date             | DATE                    | x       |
+difftime         | INT64                   | x       | If not hms::hms. Arrow metadata marks it as Duration(NS).
+factor           | STRING                  | x       | Arrow metadata marks it as a factor.
+"                | ENUM                    |         |
+hms::hms         | TIME(true, MILLIS)      | x       | Sub-milliseconds precision is lost.
+integer          | INT(32, true)           | x       | I.e. INTSXP.
+"                | INT64                   |         |
+"                | INT96                   |         |
+"                | DECIMAL(INT32)          |         |
+"                | DECIMAL(INT64)          |         |
+"                | INT(8, *)               |         |
+"                | INT(16, *)              |         |
+"                | INT(32, signed)         |         |
+list             | LIST(INT32 elements)    | x       | List of integer vectors. `NULL` entries and `NA` elements are supported.
+"                | LIST(DOUBLE elements)   | x       | List of double vectors. `NULL` entries and `NA` elements are supported.
+"                | LIST(STRING elements)   | x       | List of character vectors. `NULL` entries and `NA` elements are supported.
+"                | BYTE_ARRAY              |         | Must be a list of raw vectors. Missing values are `NULL`.
+"                | FIXED_LEN_BYTE_ARRAY    |         | Must be a list of raw vectors of the same length. Missing values are `NULL`.
+logical          | BOOLEAN                 | x       | I.e. LGLSXP.
+numeric          | DOUBLE                  | x       | I.e. REALSXP.
+"                | INT96                   |         |
+"                | FLOAT                   |         |
+"                | DECIMAL(INT32)          |         |
+"                | DECIMAL(INT64)          |         |
+"                | INT(*, *)               |         |
+"                | FLOAT16                 |         |
+POSIXct          | TIMESTAMP(true, MICROS) | x       | Sub-microsecond precision is lost.
 
 The non-default mappings can be selected via the `schema` argument. E.g.
 to write out a factor column called 'name' as `ENUM`, use
@@ -50,6 +51,9 @@ write_parquet(..., schema = parquet_schema(name = "ENUM"))
 The detailed mapping rules are listed below, in order of preference.
 These rules will likely change until nanoparquet reaches version 1.0.0.
 
+1. `bit64::integer64` objects (from the bit64 package) are written as
+   `INT64`. nanoparquet handles any object that inherits the `integer64`
+   class this way. `NA_integer64_` (i.e. `INT64_MIN`) marks missing values.
 1. `blob::blob` objects (from the blob package) are written as `BYTE_ARRAY`.
    `blob::blob` is a list of raw vectors, and nanoparquet handles any object
    that inherits the `blob` class this way, even if the blob package is not
@@ -128,7 +132,7 @@ FLOAT16              | numeric    | REALSXP
 INT(8, *)            | integer    |
 INT(16, *)           | integer    |
 INT(32, *)           | integer    | Large unsigned values may overflow!
-INT(64, *)           | numeric    | REALSXP
+INT(64, *)           | numeric    | REALSXP, or `integer64` if `read_int64_type` option is set.
 INTERVAL             | list(raw)  | Missing values are `NULL`.
 JSON                 | character  |
 LIST                 | list       | Elements are read as their corresponding R type.
@@ -147,7 +151,7 @@ DOUBLE               | numeric    | REALSXP
 FIXED_LEN_BYTE_ARRAY | blob::blob | Missing values are `NULL`.
 FLOAT                | numeric    | REALSXP
 INT32                | integer    |
-INT64                | numeric    | REALSXP
+INT64                | numeric    | REALSXP, or `integer64` if `read_int64_type` option is set.
 INT96                | POSIXct    |
 
 The exact rules are below. These rules will likely change until nanoparquet
@@ -165,7 +169,11 @@ reaches version 1.0.0.
    If the logical type has the `UTC` flag set, then the time zone of the
    `POSIXct` object is set to `UTC`.
 1. `INT32` is read as an integer vector (`INTSXP`).
-1. `INT64`, `DOUBLE` and `FLOAT` are read as real vectors (`REALSXP`).
+1. `INT64` is read as a real vector (`REALSXP`) by default. If the
+   `read_int64_type` option in `parquet_options()` is set to `"integer64"`
+   or `"bit64::integer64"`, it is read as a `bit64::integer64` vector
+   instead. `NA_integer64_` (i.e. `INT64_MIN`) marks missing values.
+1. `DOUBLE` and `FLOAT` are read as real vectors (`REALSXP`).
 1. `INT96` is read as a `POSIXct` read vector with the `tzone` attribute
    set to `"UTC"`. It was an old convention to store time stamps as
    `INT96` objects.
@@ -190,14 +198,15 @@ types:
 
 1. `INT(8, true)`, `INT(16, true)` and `INT(32, true)` are read as
    integer vectors because they are `INT32` internally in Parquet.
-1. `INT(64, true)` is read as a real vector (`REALSXP`).
+1. `INT(64, true)` is read as a real vector (`REALSXP`), unless the
+   `read_int64_type` option is set (see above).
 1. Unsigned integer types `INT(8, false)`, `INT(16, false)` and
    `INT(32, false)` are read as integer vectors (`INTSXP`). Large
    positive values may overflow into negative values, this is a known
    issue that we will fix.
-1. `INT(64, false)` is read as a real vector (`REALSXP`). Large
-   positive values may overflow into negative values, this is a known
-   issue that we will fix.
+1. `INT(64, false)` is read as a real vector (`REALSXP`), unless the
+   `read_int64_type` option is set (see above). Large positive values may
+   overflow into negative values, this is a known issue that we will fix.
 1. `INTERVAL` is a fixed length byte array, and nanoparquet reads it as
    a list of raw vectors. Missing values are denoted by `NULL`.
 1. `JSON` columns are read as character vectors (`STRSXP`).

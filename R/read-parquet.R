@@ -72,6 +72,15 @@ read_parquet <- function(file, col_select = NULL, options = parquet_options()) {
     stopifnot(all(col_select >= 1L))
   }
 
+  if (
+    options[["read_int64_type"]] != "double" &&
+      !requireNamespace("bit64", quietly = TRUE)
+  ) {
+    stop(
+      "The bit64 package is required when `read_int64_type` is not \"double\".\n"
+    )
+  }
+
   res <- .Call(nanoparquet_read2, file, options, col_select, sys.call())
   post_process_read_result(res, file, options, col_select)
 }

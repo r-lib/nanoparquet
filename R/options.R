@@ -46,7 +46,7 @@
 #'   * `"double"` (the default): read as a regular R `double` vector,
 #'     which may lose precision for large values.
 #'   * `"integer64"` or `"bit64::integer64"`: read as a `bit64::integer64`
-#'     vector. Requires the `bit64` package.
+#'     vector. Requires the bit64 package to be installed.
 #' @param write_minmax_values Whether to write minimum and maximum values
 #'   per row group, for data types that support this in [write_parquet()].
 #'   However, nanoparquet currently does not support minimum and maximum

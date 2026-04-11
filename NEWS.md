@@ -1,5 +1,17 @@
 # nanoparquet (development version)
 
+* nanoparquet now supports `bit64::integer64` columns (#153):
+
+  - `write_parquet()` now writes `bit64::integer64` columns to INT64
+    Parquet columns. Similarly, `infer_parquet_schema()` also supports
+    `bit64::integer64` columns.
+
+  - `read_parquet()` and `read_parquet_schema()` now have a
+    `read_int64_type` option in `parquet_options()` to control how INT64
+    columns are read. Set it to `"integer64"` or `"bit64::integer64"` to
+    read them as `bit64::integer64` vectors instead of the default
+    `"double"`.
+
 * `read_parquet()` now returns `BYTE_ARRAY` and `FIXED_LEN_BYTE_ARRAY`
   columns (without a string/UUID/decimal annotation) as `blob::blob` objects
   instead of plain lists of raw vectors. `write_parquet()` now also accepts

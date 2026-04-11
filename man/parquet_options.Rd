@@ -43,7 +43,7 @@ Possible values:
 \item \code{"double"} (the default): read as a regular R \code{double} vector,
 which may lose precision for large values.
 \item \code{"integer64"} or \code{"bit64::integer64"}: read as a \code{bit64::integer64}
-vector. Requires the \code{bit64} package.
+vector. Requires the bit64 package to be installed.
 }}
 
 \item{keep_row_groups}{This option is used when appending to a Parquet
