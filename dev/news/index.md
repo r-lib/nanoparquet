@@ -2,10 +2,17 @@
 
 ## nanoparquet (development version)
 
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  can now read empty data frames (zero rows) written by the arrow
+  package ([\#160](https://github.com/r-lib/nanoparquet/issues/160)).
+
+## nanoparquet 0.5.0
+
+CRAN release: 2026-04-11
+
 - [`append_parquet()`](https://nanoparquet.r-lib.org/dev/reference/append_parquet.md)
   now gives a clear error when appending data with missing values (`NA`)
-  to a column that was written as `REQUIRED` (i.e. non-nullable).
-  Previously this caused a cryptic internal error
+  to a column that was written as `REQUIRED` (i.e. non-nullable)
   ([\#146](https://github.com/r-lib/nanoparquet/issues/146)).
 
 - [`append_parquet()`](https://nanoparquet.r-lib.org/dev/reference/append_parquet.md)
@@ -14,8 +21,7 @@
 
 - [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
   now correctly reads `DECIMAL` values stored as `FIXED_LEN_BYTE_ARRAY`
-  with a byte length greater than 8 (e.g. 128-bit decimals). Previously
-  only the lower 64 bits were used, producing wrong results
+  with a byte length greater than 8 (e.g. 128-bit decimals)
   ([\#148](https://github.com/r-lib/nanoparquet/issues/148)).
 
 - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
@@ -47,7 +53,7 @@
   ([\#138](https://github.com/r-lib/nanoparquet/issues/138)).
 
 - [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
-  no longer segfaults when reading a Parquet file with zero columns
+  no longer crashes when reading a Parquet file with zero columns
   ([\#138](https://github.com/r-lib/nanoparquet/issues/138)).
 
 - nanoparquet now supports Parquet `LIST` columns:
