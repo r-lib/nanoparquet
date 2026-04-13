@@ -91,6 +91,8 @@ any_na <- function(x) {
   t <- typeof(x)
   if (t == "list") {
     .Call(rf_nanoparquet_any_null, x)
+  } else if (inherits(x, "integer64")) {
+    .Call(rf_nanoparquet_any_na_int64, x)
   } else if (t == "double") {
     .Call(rf_nanoparquet_any_na, x)
   } else {

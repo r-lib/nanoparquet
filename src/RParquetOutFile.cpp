@@ -1120,6 +1120,24 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
       file.write((const char *)&el, sizeof(int64_t));
     }
     has_minmax_value[idx] = has_minmax_value[idx] || has_min;
+  } else if (Rf_inherits(col, "integer64")) {
+    // integer64 (bit64 package) stores int64 values as raw bytes in REALSXP.
+    // NA_integer64_ is INT64_MIN (0x8000000000000000).
+    for (uint64_t i = from; i < until; i++) {
+      int64_t el;
+      memcpy(&el, &REAL(col)[i], sizeof(int64_t));
+      if (el == INT64_MIN) continue;  // NA_integer64_
+      if (minmax && (!has_min || el < min_value)) {
+        has_min = true;
+        SAVE_MIN2(min_value, idx, el);
+      }
+      if (minmax && (!has_max || el > max_value)) {
+        has_max = true;
+        SAVE_MAX2(max_value, idx, el);
+      }
+      file.write((const char *)&el, sizeof(int64_t));
+    }
+    has_minmax_value[idx] = has_minmax_value[idx] || has_min;
   } else {
     bool is_signed = TRUE;
     int bit_width = 64;
@@ -1958,11 +1976,20 @@ nanoparquet::DefLevelsResult RParquetOutFile::write_definition_levels(
     break;
   }
   case REALSXP: {
-    double *dblptr = REAL(col) + from;
-    double *end = dblptr + len;
-    for (; dblptr < end; dblptr++, presptr++) {
-      *presptr = ! R_IsNA(*dblptr);
-      num_pres += *presptr;
+    if (Rf_inherits(col, "integer64")) {
+      int64_t *iptr = (int64_t *) REAL(col) + from;
+      int64_t *end = iptr + len;
+      for (; iptr < end; iptr++, presptr++) {
+        *presptr = (*iptr != INT64_MIN);
+        num_pres += *presptr;
+      }
+    } else {
+      double *dblptr = REAL(col) + from;
+      double *end = dblptr + len;
+      for (; dblptr < end; dblptr++, presptr++) {
+        *presptr = ! R_IsNA(*dblptr);
+        num_pres += *presptr;
+      }
     }
     break;
   }
@@ -2385,6 +2412,22 @@ void RParquetOutFile::write_dictionary(
       }
       for (auto i = 0; i < len; i++) {
         int64_t el = icol[iidx[i]] * fact;
+        file.write((const char*) &el, sizeof(int64_t));
+      }
+    } else if (Rf_inherits(col, "integer64")) {
+      if (type != parquet::Type::INT64) {
+        r_call([&] {
+          Rf_errorcall(
+            nanoparquet_call,
+            "Cannot convert an integer64 vector to Parquet type %s.",
+            parquet::_Type_VALUES_TO_NAMES.at(type)
+          );
+        });
+      }
+      // integer64 stores int64 values as raw bytes in REALSXP
+      for (auto i = 0; i < len; i++) {
+        int64_t el;
+        memcpy(&el, &icol[iidx[i]], sizeof(int64_t));
         file.write((const char*) &el, sizeof(int64_t));
       }
     } else if (Rf_inherits(col, "hms")) {

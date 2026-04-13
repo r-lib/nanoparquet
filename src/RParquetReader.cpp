@@ -229,6 +229,19 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
       continue;
     }
     rtype rt(fmt.schema, i, parent_column);
+    if (filter.int64_as_integer64) {
+      parquet::SchemaElement &sel = fmt.schema[i];
+      bool is_int64 =
+        (sel.__isset.type && sel.type == parquet::Type::INT64) &&
+        ((sel.__isset.logicalType && sel.logicalType.__isset.INTEGER &&
+          sel.logicalType.INTEGER.bitWidth == 64) ||
+         (sel.__isset.converted_type &&
+          sel.converted_type == parquet::ConvertedType::INT_64));
+      if (is_int64 && rt.type_conversion == INT64_DOUBLE) {
+        rt.type_conversion = INT64_INTEGER64;
+        rt.classes.push_back("integer64");
+      }
+    }
     metadata.r_types[colmap[i] - 1] = rt;
   }
 }
@@ -1007,6 +1020,127 @@ void convert_column_to_r_int64(postprocess *pp, uint32_t cl) {
     convert_column_to_r_int64_nodict_miss(pp, cl);
   } else if (hasdict0 && hasmiss0) {
     convert_column_to_r_int64_dict_miss(pp, cl);
+  }
+}
+
+// ------------------------------------------------------------------------
+// integer64 raw-copy variants (no arithmetic conversion; NA = INT64_MIN)
+
+void convert_column_to_r_int64_raw_nodict_nomiss(postprocess *pp, uint32_t cl) {
+  // Raw int64 bytes are already in the REALSXP buffer — nothing to do.
+}
+
+void convert_column_to_r_int64_raw_dict_nomiss(postprocess *pp, uint32_t cl) {
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      if (!cps[cpi].dict) continue;  // no dict: raw bytes already in place
+      int64_t cp_offset = cps[cpi].offset;
+      uint32_t cp_num_values = cps[cpi].num_values;
+      int64_t *ibeg = (int64_t *) REAL(x) + rg_offset + cp_offset;
+      int64_t *iend = ibeg + cp_num_values;
+      int64_t *dict = (int64_t *) pp->dicts[cl][rg].buffer.data();
+      uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+      while (ibeg < iend) {
+        *ibeg++ = dict[*didx++];
+      }
+    }
+  }
+}
+
+void convert_column_to_r_int64_raw_nodict_miss(postprocess *pp, uint32_t cl) {
+  static const int64_t na_val = INT64_MIN;
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    uint32_t num_values = pp->metadata.row_group_num_rows[rg];
+    if (num_values == 0) continue;
+    int64_t *ibeg = (int64_t *) REAL(x) + pp->metadata.row_group_offsets[rg];
+    uint32_t num_present = pp->present[cl][rg].num_present;
+    bool hasmiss = pp->metadata.repetition_types[cl + 1] == 1;
+    if (!hasmiss) {
+      // no missing; raw bytes already in place
+    } else {
+      // back-fill: expand compacted present values, insert NA for missing
+      int64_t *iendm1 = ibeg + num_values - 1;
+      int64_t *ipendm1 = ibeg + num_present - 1;
+      uint8_t *presm1 = pp->present[cl][rg].map.data() + num_values - 1;
+      while (ibeg <= iendm1) {
+        if (*presm1--) {
+          *iendm1-- = *ipendm1--;
+        } else {
+          *iendm1-- = na_val;
+        }
+      }
+    }
+  }
+}
+
+void convert_column_to_r_int64_raw_dict_miss(postprocess *pp, uint32_t cl) {
+  static const int64_t na_val = INT64_MIN;
+  SEXP x = VECTOR_ELT(pp->columns, cl);
+  for (auto rg = 0; rg < pp->metadata.num_row_groups; rg++) {
+    std::vector<chunk_part> &cps = pp->chunk_parts[cl][rg];
+    int64_t rg_offset = pp->metadata.row_group_offsets[rg];
+    for (uint32_t cpi = 0; cpi < cps.size(); cpi++) {
+      int64_t cp_offset = cps[cpi].offset;
+      uint32_t cp_num_values = cps[cpi].num_values;
+      uint32_t cp_num_present = cps[cpi].num_present;
+      bool hasdict = cps[cpi].dict;
+      bool hasmiss = pp->metadata.repetition_types[cl + 1] == 1;
+      int64_t *ibeg = (int64_t *) REAL(x) + rg_offset + cp_offset;
+      if (!hasdict) {
+        if (!hasmiss) {
+          // raw bytes already in place
+        } else {
+          int64_t *iendm1 = ibeg + cp_num_values - 1;
+          int64_t *ipendm1 = ibeg + cp_num_present - 1;
+          uint8_t *presm1 = pp->present[cl][rg].map.data() + cp_offset + cp_num_values - 1;
+          while (ibeg <= iendm1) {
+            if (*presm1--) {
+              *iendm1-- = *ipendm1--;
+            } else {
+              *iendm1-- = na_val;
+            }
+          }
+        }
+      } else {
+        int64_t *dict = (int64_t *) pp->dicts[cl][rg].buffer.data();
+        if (!hasmiss) {
+          int64_t *iend = ibeg + cp_num_values;
+          uint32_t *didx = pp->dicts[cl][rg].indices.data() + cp_offset;
+          while (ibeg < iend) {
+            *ibeg++ = dict[*didx++];
+          }
+        } else {
+          int64_t *iendm1 = ibeg + cp_num_values - 1;
+          uint32_t *dendm1 = pp->dicts[cl][rg].indices.data() + cp_offset + cp_num_present - 1;
+          uint8_t *presm1 = pp->present[cl][rg].map.data() + cp_offset + cp_num_values - 1;
+          while (ibeg <= iendm1) {
+            if (*presm1--) {
+              *iendm1-- = dict[*dendm1--];
+            } else {
+              *iendm1-- = na_val;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void convert_column_to_r_int64_raw(postprocess *pp, uint32_t cl) {
+  bool hasdict0 = pp->dicts[cl].size() > 0;
+  bool hasmiss0 = pp->metadata.repetition_types[cl + 1] == 1;
+  if (!hasdict0 && !hasmiss0) {
+    convert_column_to_r_int64_raw_nodict_nomiss(pp, cl);
+  } else if (hasdict0 && !hasmiss0) {
+    convert_column_to_r_int64_raw_dict_nomiss(pp, cl);
+  } else if (!hasdict0 && hasmiss0) {
+    convert_column_to_r_int64_raw_nodict_miss(pp, cl);
+  } else if (hasdict0 && hasmiss0) {
+    convert_column_to_r_int64_raw_dict_miss(pp, cl);
   }
 }
 
@@ -2118,6 +2252,9 @@ void convert_columns_to_r_(postprocess *pp) {
       break;
     case INT64_DOUBLE:
       convert_column_to_r_int64(pp, cl);
+      break;
+    case INT64_INTEGER64:
+      convert_column_to_r_int64_raw(pp, cl);
       break;
     case INT96_DOUBLE:
       convert_column_to_r_int96(pp, cl);

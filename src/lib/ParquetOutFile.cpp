@@ -172,10 +172,13 @@ parquet::Type::type get_type_from_logical_type(
     if (!it.isSigned) {
       throw runtime_error("Unsigned integers are not implemented"); // # nocov
     }
-    if (it.bitWidth != 32) {
-      throw runtime_error("Only 32 bit integers are implemented");  // # nocov
+    if (it.bitWidth == 32) {
+      return Type::INT32;
+    } else if (it.bitWidth == 64) {
+      return Type::INT64;
+    } else {
+      throw runtime_error("Only 32 and 64 bit integers are implemented"); // # nocov
     }
-    return Type::INT32;
 
   } else if (logical_type.__isset.DATE) {
     return Type::INT32;

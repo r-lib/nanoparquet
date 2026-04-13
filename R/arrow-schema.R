@@ -185,6 +185,7 @@ encode_arrow_schema_r <- function(df, schema) {
   hmss <- vapply(df, function(c) inherits(c, "hms"), logical(1))
   psxcts <- vapply(df, function(c) inherits(c, "POSIXct"), logical(1))
   fctrs <- vapply(df, function(c) inherits(c, "factor"), logical(1))
+  int64s <- vapply(df, function(c) inherits(c, "integer64"), logical(1))
   dfts <- vapply(
     df,
     function(c) !inherits(c, "hms") && inherits(c, "difftime"),
@@ -203,6 +204,7 @@ encode_arrow_schema_r <- function(df, schema) {
   artypes[hmss] <- "Time"
   artypes[psxcts] <- "Timestamp"
   artypes[fctrs] <- "Utf8"
+  artypes[int64s] <- "Int"
   artypes[dfts] <- "Duration"
   if (anyNA(artypes)) {
     stop(
@@ -234,6 +236,9 @@ encode_arrow_schema_r <- function(df, schema) {
     endianness = endianness,
     features = character()
   )
+  for (idx in which(int64s)) {
+    schema$columns$type[[idx]] <- list(bit_width = 64L, is_signed = TRUE)
+  }
   for (idx in which(fctrs)) {
     schema$columns$dictionary[[idx]] <- list(
       id = 0,

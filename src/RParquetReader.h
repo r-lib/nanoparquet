@@ -17,7 +17,8 @@ enum r_type_conversion {
   BA_UUID = 7,
   BA_FLOAT16 = 8,
   INT32_DECIMAL = 9,
-  INT64_DECIMAL = 10
+  INT64_DECIMAL = 10,
+  INT64_INTEGER64 = 11
 };
 
 class rtype {
@@ -97,11 +98,13 @@ public:
 
 class RParquetFilter {
 public:
-  RParquetFilter() : filter_row_groups(false), filter_columns(false) { };
+  RParquetFilter() : filter_row_groups(false), filter_columns(false),
+    int64_as_integer64(false) { };
   bool filter_row_groups;
   std::vector<uint32_t> row_groups;
   bool filter_columns;
   std::vector<uint32_t> columns;
+  bool int64_as_integer64;
 };
 
 struct chunk_part {

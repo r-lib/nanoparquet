@@ -1631,6 +1631,17 @@
       Error in `write_parquet()`:
       ! Negative values are not allowed in unsigned INT column:-1.000000 at column 1, row 2.
 
+# integer64 round-trip and read_int64_type option
+
+    Code
+      as.data.frame(res_dbl)
+    Output
+                    x
+      1  1.000000e+15
+      2 -1.000000e+15
+      3            NA
+      4  2.147484e+09
+
 # JSON
 
     Code

@@ -11,6 +11,9 @@ When writing out a data frame, nanoparquet maps R's data types to Parquet
 logical types. The following table is a summary of the mapping. For the
 details see below.\tabular{llcl}{
    R type \tab Parquet type \tab Default \tab Notes \cr
+   bit64::integer64 \tab INT64 \tab x \tab \code{NA_integer64_} marks missing values. \cr
+   blob::blob \tab BYTE_ARRAY \tab x \tab Missing values are \code{NULL}. \cr
+   " \tab FIXED_LEN_BYTE_ARRAY \tab  \tab All entries must have the same length. Missing values are \code{NULL}. \cr
    character \tab STRING(BYTE_ARRAY) \tab x \tab I.e. STRSXP. Converted to UTF-8. \cr
    " \tab BYTE_ARRAY \tab  \tab  \cr
    " \tab FIXED_LEN_BYTE_ARRAY \tab  \tab  \cr
@@ -55,6 +58,13 @@ to write out a factor column called 'name' as \code{ENUM}, use
 The detailed mapping rules are listed below, in order of preference.
 These rules will likely change until nanoparquet reaches version 1.0.0.
 \enumerate{
+\item \code{bit64::integer64} objects (from the bit64 package) are written as
+\code{INT64}. nanoparquet handles any object that inherits the \code{integer64}
+class this way. \code{NA_integer64_} (i.e. \code{INT64_MIN}) marks missing values.
+\item \code{blob::blob} objects (from the blob package) are written as \code{BYTE_ARRAY}.
+\code{blob::blob} is a list of raw vectors, and nanoparquet handles any object
+that inherits the \code{blob} class this way, even if the blob package is not
+installed. Missing values (i.e. \code{NULL} list entries) are supported.
 \item Factors (i.e. vectors that inherit the \emph{factor} class) are converted
 to character vectors using \code{as.character()}, then written as a
 \code{STRSXP} (character vector) type. The fact that a column is a factor
@@ -109,7 +119,8 @@ non-default mappings are:
 \item \code{list} of \code{double} vectors to \code{LIST} with \code{DOUBLE} elements,
 \item \code{list} of \code{character} vectors to \code{LIST} with \code{STRING} elements,
 \item \code{list} of \code{raw} vectors to \code{BYTE_ARRAY},
-\item \code{list} of \code{raw} vectors to \code{FIXED_LEN_BYTE_ARRAY}.
+\item \code{list} of \code{raw} vectors to \code{FIXED_LEN_BYTE_ARRAY},
+\item \code{blob::blob} to \code{FIXED_LEN_BYTE_ARRAY}.
 }
 }
 
@@ -128,7 +139,7 @@ below.\tabular{lll}{
    INT(8, *) \tab integer \tab  \cr
    INT(16, *) \tab integer \tab  \cr
    INT(32, *) \tab integer \tab Large unsigned values may overflow! \cr
-   INT(64, *) \tab numeric \tab REALSXP \cr
+   INT(64, *) \tab numeric \tab REALSXP, or \code{integer64} if \code{read_int64_type} option is set. \cr
    INTERVAL \tab list(raw) \tab Missing values are \code{NULL}. \cr
    JSON \tab character \tab  \cr
    LIST \tab list \tab Elements are read as their corresponding R type. \cr
@@ -142,12 +153,12 @@ below.\tabular{lll}{
    \emph{Primitive types} \tab  \tab  \cr
    BOOLEAN \tab logical \tab  \cr
    BYTE_ARRAY \tab factor \tab If Arrow metadata says it is a factor. \cr
-   " \tab list(raw) \tab Otherwise. Missing values are \code{NULL}. \cr
+   " \tab blob::blob \tab Otherwise. Missing values are \code{NULL}. \cr
    DOUBLE \tab numeric \tab REALSXP \cr
-   FIXED_LEN_BYTE_ARRAY \tab list(raw) \tab Missing values are \code{NULL}. \cr
+   FIXED_LEN_BYTE_ARRAY \tab blob::blob \tab Missing values are \code{NULL}. \cr
    FLOAT \tab numeric \tab REALSXP \cr
    INT32 \tab integer \tab  \cr
-   INT64 \tab numeric \tab REALSXP \cr
+   INT64 \tab numeric \tab REALSXP, or \code{integer64} if \code{read_int64_type} option is set. \cr
    INT96 \tab POSIXct \tab  \cr
 }
 
@@ -167,7 +178,11 @@ converted types are read as an \code{hms} object, see the hms package.
 If the logical type has the \code{UTC} flag set, then the time zone of the
 \code{POSIXct} object is set to \code{UTC}.
 \item \code{INT32} is read as an integer vector (\code{INTSXP}).
-\item \code{INT64}, \code{DOUBLE} and \code{FLOAT} are read as real vectors (\code{REALSXP}).
+\item \code{INT64} is read as a real vector (\code{REALSXP}) by default. If the
+\code{read_int64_type} option in \code{parquet_options()} is set to \code{"integer64"}
+or \code{"bit64::integer64"}, it is read as a \code{bit64::integer64} vector
+instead. \code{NA_integer64_} (i.e. \code{INT64_MIN}) marks missing values.
+\item \code{DOUBLE} and \code{FLOAT} are read as real vectors (\code{REALSXP}).
 \item \code{INT96} is read as a \code{POSIXct} read vector with the \code{tzone} attribute
 set to \code{"UTC"}. It was an old convention to store time stamps as
 \code{INT96} objects.
@@ -181,8 +196,11 @@ precision.
 \item \code{BYTE_ARRAY} is read as a \emph{factor} object if the file was written
 by Arrow and the original data type of the column was a factor.
 (See 'The Arrow metadata below.)
-\item Otherwise \code{BYTE_ARRAY} is read a list of raw vectors, with missing
-values denoted by \code{NULL}.
+\item Otherwise \code{BYTE_ARRAY} and \code{FIXED_LEN_BYTE_ARRAY} are read as a
+\code{blob::blob} object. \code{blob::blob} is a list of raw vectors with class
+\code{blob} (and related vctrs classes). The blob package is not required to
+use this object; it is simply a list of raw vectors. Missing values are
+denoted by \code{NULL}.
 }
 
 Other logical and converted types are read as their annotated low level
@@ -190,14 +208,15 @@ types:
 \enumerate{
 \item \code{INT(8, true)}, \code{INT(16, true)} and \code{INT(32, true)} are read as
 integer vectors because they are \code{INT32} internally in Parquet.
-\item \code{INT(64, true)} is read as a real vector (\code{REALSXP}).
+\item \code{INT(64, true)} is read as a real vector (\code{REALSXP}), unless the
+\code{read_int64_type} option is set (see above).
 \item Unsigned integer types \code{INT(8, false)}, \code{INT(16, false)} and
 \code{INT(32, false)} are read as integer vectors (\code{INTSXP}). Large
 positive values may overflow into negative values, this is a known
 issue that we will fix.
-\item \code{INT(64, false)} is read as a real vector (\code{REALSXP}). Large
-positive values may overflow into negative values, this is a known
-issue that we will fix.
+\item \code{INT(64, false)} is read as a real vector (\code{REALSXP}), unless the
+\code{read_int64_type} option is set (see above). Large positive values may
+overflow into negative values, this is a known issue that we will fix.
 \item \code{INTERVAL} is a fixed length byte array, and nanoparquet reads it as
 a list of raw vectors. Missing values are denoted by \code{NULL}.
 \item \code{JSON} columns are read as character vectors (\code{STRSXP}).

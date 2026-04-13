@@ -7,6 +7,7 @@
 #include "protect.h"
 
 #include "RParquetReader.h"
+#include "r-nanoparquet.h"
 
 extern SEXP nanoparquet_call;
 
@@ -61,6 +62,11 @@ SEXP nanoparquet_read_(SEXP filesxp, SEXP rcols, SEXP options) {
       for (auto i = 0; i < nc; i++) {
         filter.columns[i] = INTEGER(rcols)[i] - 1;
       }
+    }
+    SEXP int64_opt = rf_get_list_element(options, "read_int64_type");
+    if (!Rf_isNull(int64_opt) && Rf_xlength(int64_opt) > 0) {
+      filter.int64_as_integer64 =
+        strcmp(CHAR(STRING_ELT(int64_opt, 0)), "double") != 0;
     }
     RParquetReader reader(fname, filter);
     reader.read_arrow_metadata();
@@ -143,6 +149,11 @@ SEXP nanoparquet_read_row_group_(
     row_filter.filter_row_groups = true;
     row_filter.row_groups.resize(1);
     row_filter.row_groups[0] = rg;
+    SEXP int64_opt = rf_get_list_element(options, "read_int64_type");
+    if (!Rf_isNull(int64_opt) && Rf_xlength(int64_opt) > 0) {
+      row_filter.int64_as_integer64 =
+        strcmp(CHAR(STRING_ELT(int64_opt, 0)), "double") != 0;
+    }
     RParquetReader reader(fname, row_filter);
     reader.read_arrow_metadata();
     reader.read_row_group(rg);

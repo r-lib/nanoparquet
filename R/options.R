@@ -40,6 +40,13 @@
 #'   metadata to the file [write_parquet()].
 #' @param write_data_page_version Data version to write by default.
 #'   Possible values are 1 and 2. Default is 1.
+#' @param read_int64_type How to represent INT64 columns with a 64-bit integer
+#'   logical type in [read_parquet()] and [read_parquet_schema()].
+#'   Possible values:
+#'   * `"double"` (the default): read as a regular R `double` vector,
+#'     which may lose precision for large values.
+#'   * `"integer64"` or `"bit64::integer64"`: read as a `bit64::integer64`
+#'     vector. Requires the bit64 package to be installed.
 #' @param write_minmax_values Whether to write minimum and maximum values
 #'   per row group, for data types that support this in [write_parquet()].
 #'   However, nanoparquet currently does not support minimum and maximum
@@ -65,6 +72,7 @@
 parquet_options <- function(
   class = getOption("nanoparquet.class", "tbl"),
   compression_level = getOption("nanoparquet.compression_level", NA_integer_),
+  read_int64_type = getOption("nanoparquet.read_int64_type", "double"),
   keep_row_groups = FALSE,
   num_rows_per_row_group = getOption(
     "nanoparquet.num_rows_per_row_group",
@@ -79,6 +87,10 @@ parquet_options <- function(
   write_minmax_values = getOption("nanoparquet.write_minmax_values", TRUE)
 ) {
   stopifnot(is.character(class))
+  stopifnot(
+    is_string(read_int64_type),
+    read_int64_type %in% c("double", "integer64", "bit64::integer64")
+  )
   stopifnot(is_flag(keep_row_groups))
   stopifnot(is_flag(use_arrow_metadata))
   stopifnot(is_flag(write_arrow_metadata))
@@ -111,6 +123,7 @@ parquet_options <- function(
   list(
     class = class,
     compression_level = compression_level,
+    read_int64_type = read_int64_type,
     keep_row_groups = keep_row_groups,
     num_rows_per_row_group = num_rows_per_row_group,
     use_arrow_metadata = use_arrow_metadata,

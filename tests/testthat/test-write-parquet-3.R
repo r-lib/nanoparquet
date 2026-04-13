@@ -593,6 +593,43 @@ test_that("double to INT(64, *)", {
   })
 })
 
+test_that("integer64 round-trip and read_int64_type option", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    x = bit64::as.integer64(c(1e15, -1e15, NA, 2^31))
+  )
+  write_parquet(d, tmp)
+
+  res_dbl <- read_parquet(tmp)
+  expect_equal(class(res_dbl$x), "numeric")
+  expect_snapshot(as.data.frame(res_dbl))
+
+  opts_i64 <- parquet_options(read_int64_type = "integer64")
+  res_i64 <- read_parquet(tmp, options = opts_i64)
+  expect_s3_class(res_i64$x, "integer64")
+  expect_true(is.na(res_i64$x[3]))
+  expect_equal(res_i64$x[c(1, 2, 4)], d$x[c(1, 2, 4)])
+
+  opts_i64b <- parquet_options(read_int64_type = "bit64::integer64")
+  res_i64b <- read_parquet(tmp, options = opts_i64b)
+  expect_identical(res_i64b$x, res_i64$x)
+
+  s_dbl <- read_parquet_schema(tmp)
+  expect_equal(s_dbl$r_type[s_dbl$name == "x"], "double")
+
+  s_i64 <- read_parquet_schema(tmp, options = opts_i64)
+  expect_equal(s_i64$r_type[s_i64$name == "x"], "integer64")
+
+  d2 <- data.frame(x = bit64::as.integer64(c(1L, 2L, NA)))
+  write_parquet(d2, tmp, schema = parquet_schema("INT_64"))
+  res2 <- read_parquet(tmp, options = opts_i64)
+  expect_s3_class(res2$x, "integer64")
+  expect_true(is.na(res2$x[3]))
+  expect_equal(res2$x[c(1, 2)], d2$x[c(1, 2)])
+})
+
 test_that("JSON", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

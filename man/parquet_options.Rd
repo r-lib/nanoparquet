@@ -7,6 +7,7 @@
 parquet_options(
   class = getOption("nanoparquet.class", "tbl"),
   compression_level = getOption("nanoparquet.compression_level", NA_integer_),
+  read_int64_type = getOption("nanoparquet.read_int64_type", "double"),
   keep_row_groups = FALSE,
   num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
@@ -33,6 +34,16 @@ The default is 6.
 more memory. Negative levels are also allowed, the lower the level,
 the faster the speed, at the cost of compression. Currently the
 smallest level is -131072. The default level is 3.
+}}
+
+\item{read_int64_type}{How to represent INT64 columns with a 64-bit integer
+logical type in \code{\link[=read_parquet]{read_parquet()}} and \code{\link[=read_parquet_schema]{read_parquet_schema()}}.
+Possible values:
+\itemize{
+\item \code{"double"} (the default): read as a regular R \code{double} vector,
+which may lose precision for large values.
+\item \code{"integer64"} or \code{"bit64::integer64"}: read as a \code{bit64::integer64}
+vector. Requires the bit64 package to be installed.
 }}
 
 \item{keep_row_groups}{This option is used when appending to a Parquet

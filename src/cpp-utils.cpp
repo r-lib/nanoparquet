@@ -252,6 +252,7 @@ nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_atomic(
   bool is_hms = false;
   bool is_posixct = false;
   bool is_difftime = false;
+  bool is_integer64 = false;
   r_call([&] {
     rtypeof = TYPEOF(x);
     switch (rtypeof) {
@@ -267,6 +268,8 @@ nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_atomic(
     case REALSXP:
       if (Rf_inherits(x, "POSIXct")) {
         is_posixct = true;
+      } else if (Rf_inherits(x, "integer64")) {
+        is_integer64 = true;
       } else if (Rf_inherits(x, "hms")) {
         is_hms = true;
       } else if (Rf_inherits(x, "difftime")) {
@@ -333,6 +336,16 @@ nanoparquet::SchemaElementEx nanoparquet_map_to_parquet_type_atomic(
       tt.__set_unit(tu);
       parquet::LogicalType lt;
       lt.__set_TIMESTAMP(tt);
+      sel.__set_logicalType(lt);
+      sel.__set_type(get_type_from_logical_type(lt));
+
+    } else if (is_integer64) {
+      rtype = "integer64";
+      parquet::IntType it;
+      it.__set_bitWidth(64);
+      it.__set_isSigned(true);
+      parquet::LogicalType lt;
+      lt.__set_INTEGER(it);
       sel.__set_logicalType(lt);
       sel.__set_type(get_type_from_logical_type(lt));
 
