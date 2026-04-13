@@ -147,17 +147,17 @@ read_parquet_schema(tmp)
     #> # A data frame: 11 × 14
     #>    file_name                  r_col name  r_type type  type_length repetition_type converted_type logical_type    num_children scale precision field_id children
     #>    <chr>                      <int> <chr> <chr>  <chr>       <int> <chr>           <chr>          <I<list>>              <int> <int>     <int>    <int> <list>
-    #>  1 /tmp/Rtmp38QL6q/file1f2d7…    NA sche… <NA>   <NA>           NA <NA>            <NA>           <NULL>                     4    NA        NA       NA <int>
-    #>  2 /tmp/Rtmp38QL6q/file1f2d7…     1 id    integ… INT32          NA REQUIRED        INT_32         <INT(32, TRUE)>           NA    NA        NA       NA <int>
-    #>  3 /tmp/Rtmp38QL6q/file1f2d7…     2 ints  list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
-    #>  4 /tmp/Rtmp38QL6q/file1f2d7…     2 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
-    #>  5 /tmp/Rtmp38QL6q/file1f2d7…     2 elem… <NA>   INT32          NA OPTIONAL        INT_32         <INT(32, TRUE)>           NA    NA        NA       NA <int>
-    #>  6 /tmp/Rtmp38QL6q/file1f2d7…     3 doub… list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
-    #>  7 /tmp/Rtmp38QL6q/file1f2d7…     3 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
-    #>  8 /tmp/Rtmp38QL6q/file1f2d7…     3 elem… <NA>   DOUB…          NA OPTIONAL        <NA>           <NULL>                    NA    NA        NA       NA <int>
-    #>  9 /tmp/Rtmp38QL6q/file1f2d7…     4 stri… list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
-    #> 10 /tmp/Rtmp38QL6q/file1f2d7…     4 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
-    #> 11 /tmp/Rtmp38QL6q/file1f2d7…     4 elem… <NA>   BYTE…          NA OPTIONAL        UTF8           <STRING>                  NA    NA        NA       NA <int>
+    #>  1 /tmp/RtmpBg8ld9/file1f403…    NA sche… <NA>   <NA>           NA <NA>            <NA>           <NULL>                     4    NA        NA       NA <int>
+    #>  2 /tmp/RtmpBg8ld9/file1f403…     1 id    integ… INT32          NA REQUIRED        INT_32         <INT(32, TRUE)>           NA    NA        NA       NA <int>
+    #>  3 /tmp/RtmpBg8ld9/file1f403…     2 ints  list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
+    #>  4 /tmp/RtmpBg8ld9/file1f403…     2 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
+    #>  5 /tmp/RtmpBg8ld9/file1f403…     2 elem… <NA>   INT32          NA OPTIONAL        INT_32         <INT(32, TRUE)>           NA    NA        NA       NA <int>
+    #>  6 /tmp/RtmpBg8ld9/file1f403…     3 doub… list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
+    #>  7 /tmp/RtmpBg8ld9/file1f403…     3 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
+    #>  8 /tmp/RtmpBg8ld9/file1f403…     3 elem… <NA>   DOUB…          NA OPTIONAL        <NA>           <NULL>                    NA    NA        NA       NA <int>
+    #>  9 /tmp/RtmpBg8ld9/file1f403…     4 stri… list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
+    #> 10 /tmp/RtmpBg8ld9/file1f403…     4 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
+    #> 11 /tmp/RtmpBg8ld9/file1f403…     4 elem… <NA>   BYTE…          NA OPTIONAL        UTF8           <STRING>                  NA    NA        NA       NA <int>
 
 The `r_type` column shows `list(integer)`, `list(double)`, and
 `list(character)` for the three list columns.
