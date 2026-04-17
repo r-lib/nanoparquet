@@ -39,6 +39,11 @@
   can now read empty data frames (zero rows) written by the arrow
   package ([\#160](https://github.com/r-lib/nanoparquet/issues/160)).
 
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  can now read Parquet files that have zero-row row groups without
+  dictionary pages
+  ([\#162](https://github.com/r-lib/nanoparquet/issues/162)).
+
 ## nanoparquet 0.5.0
 
 CRAN release: 2026-04-11
