@@ -321,8 +321,10 @@ void ParquetReader::read_column_chunk_int(ColumnChunk &cc) {
   BufferGuard tmp_buf_g = bufman_cc->claim();
   ByteBuffer &tmp_buf = tmp_buf_g.buf;
   tmp_buf.resize(cmd.total_compressed_size, false);
-  pfile.seekg(chunk_start, ios_base::beg);
-  pfile.read(tmp_buf.ptr, cmd.total_compressed_size);
+  if (cmd.total_compressed_size > 0) {
+    pfile.seekg(chunk_start, ios_base::beg);
+    pfile.read(tmp_buf.ptr, cmd.total_compressed_size);
+  }
   uint8_t *ptr = (uint8_t*) tmp_buf.ptr;
   uint8_t *end = ptr + cmd.total_compressed_size;
 

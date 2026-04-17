@@ -394,3 +394,13 @@ test_that("write and read zero rows", {
     0L
   )
 })
+
+test_that("read file with zero-row row group (issue #162)", {
+  # File has two row groups: one with 1 row and one with 0 rows.
+  # The zero-row row group has no dictionary page, so data_page_offset is 0.
+  # nanoparquet must not seek to offset 0 in this case.
+  f <- test_path("data/diann_minimal.parquet")
+  d <- read_parquet(f)
+  expect_equal(nrow(d), 1L)
+  expect_equal(ncol(d), 1L)
+})
