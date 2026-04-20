@@ -282,3 +282,21 @@ test_that("Conversion of sub-dates prior Posix origin is correct", {
     as.character(data$date)
   )
 })
+
+test_that("page_from > page_until does not crash (issue #147)", {
+  # When rows_per_page is rounded up and num_pages > actual rows,
+  # the last computed page_from can exceed until, causing unsigned underflow.
+  # Use a small optional column with large string values so that
+  # total_size / page_size creates more pages than rows.
+  withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  big <- strrep("x", 2048)
+  d <- data.frame(
+    stringsAsFactors = FALSE,
+    s = c(big, NA, big, NA, big)
+  )
+  write_parquet(d, tmp)
+  expect_equal(as.data.frame(read_parquet(tmp)), d)
+})

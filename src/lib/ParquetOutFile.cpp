@@ -742,6 +742,9 @@ void ParquetOutFile::write_data_pages(uint32_t idx, uint32_t group,
 
   for (auto i = 0; i < num_pages; i++) {
     uint64_t page_from = from + i * rows_per_page;
+    if (page_from >= (uint64_t) until) {
+      break;
+    }
     uint64_t page_until = from + (i + 1) * rows_per_page;
     if (page_until > until) {
       page_until = until;

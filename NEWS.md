@@ -1,5 +1,9 @@
 # nanoparquet (development version)
 
+* `write_parquet()` no longer crashes when writing optional columns whose
+  data size causes more Parquet pages to be allocated than there are rows
+  (#147).
+
 # nanoparquet 0.5.1
 
 * `write_parquet()` now supports writing to the standard output stream, via
