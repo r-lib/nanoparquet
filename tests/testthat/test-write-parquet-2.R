@@ -228,14 +228,15 @@ test_that("write_parquet() to stdout", {
   script <- tempfile(fileext = ".R")
   on.exit(unlink(c(tmp1, tmp2, script)), add = TRUE)
 
+  libpaths <- paste(sprintf('"%s"', .libPaths()), collapse = ", ")
   txt <- c(
-    if (!is_rcmd_check()) "pkgload::load_all()",
+    sprintf(".libPaths(c(%s))", libpaths),
     "nanoparquet::write_parquet(mtcars, \":stdout:\")"
   )
   writeLines(txt, script)
   processx::run(
     rscript(),
-    script,
+    c("--quiet", script),
     stdout = tmp1,
     stderr = NULL,
     encoding = "binary"

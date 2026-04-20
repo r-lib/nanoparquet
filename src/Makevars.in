@@ -1,5 +1,5 @@
 OBJECTS= lib/ParquetReader.o RParquetReader.o RParquetAppender.o \
-  RParquetOutFile.o r-utils.o rwrapper.o protect.o read2.o write2.o \
+  RParquetOutFile.o r-utils.o rwrapper.o protect.o read2.o write2.o write_stdout.o \
   cpp-utils.o read-metadata.o read-pages.o \
   arrow-schema.o base64.o r-base64.o snappy.o encodings.o \
   dictionary-encoding.o test.o \

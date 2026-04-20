@@ -5,8 +5,9 @@
 #include "RParquetAppender.h"
 #include "r-nanoparquet.h"
 #include "unwind.h"
-
 using namespace nanoparquet;
+
+extern "C" void nanoparquet_write_stdout(const unsigned char *buf, size_t n);
 
 extern SEXP nanoparquet_call;
 
@@ -81,8 +82,7 @@ SEXP rf_nanoparquet_write(
     });
     ms.copy(RAW(res), bufsize);
     if (fname == ":stdout:") {
-      std::cout.write((const char*) RAW(res), bufsize);
-      std::cout.flush();
+      nanoparquet_write_stdout(RAW(res), bufsize);
       res = R_NilValue;
     }
   } else {
