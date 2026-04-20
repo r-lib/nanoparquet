@@ -40,6 +40,30 @@ test_that("BOOLEAN", {
   })
 })
 
+test_that("BOOLEAN multi-page round-trip (issue #142)", {
+  # With NANOPARQUET_PAGE_SIZE=1024 (1KB), a BOOLEAN column needs ~8192 rows per
+  # page. Use 20000 rows to force 3 pages, exposing a bug where the second page
+  # was decoded to the same memory offset as the first (psize was 0 for BOOLEAN).
+  set.seed(42)
+  n <- 20000L
+  x <- sample(c(TRUE, FALSE, NA), n, replace = TRUE, prob = c(0.9, 0.05, 0.05))
+  d <- data.frame(l = x)
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  withr::with_envvar(c(NANOPARQUET_PAGE_SIZE = "1024"), {
+    write_parquet(d, tmp, encoding = "RLE")
+    d2 <- as.data.frame(read_parquet(tmp))
+  })
+  expect_equal(d, d2)
+
+  withr::with_envvar(c(NANOPARQUET_PAGE_SIZE = "1024"), {
+    write_parquet(d, tmp, encoding = "PLAIN")
+    d2 <- as.data.frame(read_parquet(tmp))
+  })
+  expect_equal(d, d2)
+})
+
 test_that("INT32", {
   do <- function(d) {
     test_write(d)
@@ -246,7 +270,7 @@ test_that("DOUBLE", {
     test_write(d, schema, "RLE_DICTIONARY")
   }
   do(data.frame(d = 1:5 / 2))
-  do(data.frame(d = c(1:2 / 2, NA, 3:5/2)))
+  do(data.frame(d = c(1:2 / 2, NA, 3:5 / 2)))
   do(data.frame(d = rep(1, 10) / 2))
   do(d <- data.frame(d = c(rep(1, 5) / 2, NA, rep(1, 5) / 2)))
 
@@ -272,7 +296,7 @@ test_that("BYTE_ARRAY, string", {
   do(data.frame(s = c("foo", "bar", "foobar")))
   do(data.frame(s = c("foo", "bar", NA, "foobar")))
   do(data.frame(d = rep("foo", 10)))
-  d<- data.frame(d = rep("foo", 10))
+  d <- data.frame(d = rep("foo", 10))
   d[["d"]][5] <- NA
   do(d)
 
@@ -297,12 +321,14 @@ test_that("BYTE_ARRAY, RAW", {
   }
 
   do(data.frame(s = I(lapply(c("foo", "bar", "foobar"), charToRaw))))
-  do(data.frame(s = I(list(
-    charToRaw("foo"),
-    charToRaw("bar"),
-    NULL,
-    charToRaw("foobar")
-  ))))
+  do(data.frame(
+    s = I(list(
+      charToRaw("foo"),
+      charToRaw("bar"),
+      NULL,
+      charToRaw("foobar")
+    ))
+  ))
   do(data.frame(d = I(lapply(rep("foo", 10), charToRaw))))
   d <- data.frame(d = I(lapply(rep("foo", 10), charToRaw)))
   d[["d"]][5] <- list(NULL)
@@ -315,7 +341,6 @@ test_that("BYTE_ARRAY, RAW", {
     # not implemented yet
     write_parquet(d, tmp, schema = schema, encoding = "DELTA_LENGTH_BYTE_ARRAY")
     write_parquet(d, tmp, schema = schema, encoding = "DELTA_BYTE_ARRAY")
-    write_parquet(d, tmp, schema = schema, encoding = "PLAIN_DICTIONARY")
     # unsupported for BYTE_ARRAY
     write_parquet(d, tmp, schema = schema, encoding = "RLE")
   })
@@ -358,12 +383,12 @@ test_that("FIXED_LEN_BYTE_ARRAY, FLOAT16", {
     test_write(d, schema, "PLAIN")
     test_write(d, schema, "RLE_DICTIONARY")
   }
-  do(data.frame(d = 1:5/2))
-  d <- data.frame(d = 1:6/2)
+  do(data.frame(d = 1:5 / 2))
+  d <- data.frame(d = 1:6 / 2)
   d[["d"]][3] <- NA
   do(d)
-  do(data.frame(d = rep(1/2, 10)))
-  d <- data.frame(d = rep(1/2, 10))
+  do(data.frame(d = rep(1 / 2, 10)))
+  d <- data.frame(d = rep(1 / 2, 10))
   d[["d"]][5] <- NA
   do(d)
 

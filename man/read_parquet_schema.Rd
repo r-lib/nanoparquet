@@ -19,6 +19,10 @@ root node (inner node), always the first one, and then one row for
 each "real" column. For nested schemas, the rows are in depth-first
 search order. Most important columns are:
 - `file_name`: file name.
+- `r_col`: integer, the column index in R, starting from one.
+  `NA` for the root node. For Parquet files without list columns
+  this is simply the column index in the file. A list column has
+  multiple schema rows, and they all have the same `r_col`.
 - `name`: column name.
 - `r_type`: the R type that corresponds to the Parquet type.
   Might be `NA` if [read_parquet()] cannot read this column. See

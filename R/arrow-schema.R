@@ -1,56 +1,66 @@
-# read Arrow metadata from a file
-parquet_arrow_metadata <- function(file) {
-  fmd <- read_parquet_metadata(file)$file_meta_data
-  kv <- fmd$key_value_metadata[[1]]
-  if (! "ARROW:schema" %in% kv$key) {
-    stop("No Arrow metadata in file")
+read_arrow_schema <- function(file) {
+  mtd <- read_parquet_metadata(file)
+  kvm <- mtd[["file_meta_data"]][["key_value_metadata"]][[1]]
+  if ("ARROW:schema" %in% kvm[["key"]]) {
+    as <- kvm[["value"]][match("ARROW:schema", kvm[["key"]])]
+    parse_arrow_schema(as)
   }
-  amd <- kv$value[match("ARROW:schema", kv$key)]
-  parse_arrow_schema(amd)
 }
 
-apply_arrow_schema <- function(tab, file, dicts, types) {
-  mtd <- read_parquet_metadata(file)
-  kv <- mtd$file_meta_data$key_value_metadata[[1]]
-  if ("ARROW:schema" %in% kv$key) {
-    spec <- arrow_find_special(
-      kv$value[match("ARROW:schema", kv$key)],
-      file
+apply_arrow_schema <- function(
+  tab,
+  file,
+  arrow_schema,
+  dicts,
+  types,
+  col_select
+) {
+  if (is.na(arrow_schema)) {
+    return(tab)
+  }
+  spec <- arrow_find_special(arrow_schema, file, col_select)
+  for (idx in spec$factor) {
+    clevels <- Reduce(union, dicts[[idx]])
+    tab[[idx]] <- factor(tab[[idx]], levels = clevels)
+  }
+  for (idx in spec$difftime) {
+    # only if INT64, otherwise hms, probably
+    if (types[[idx]] != 2) {
+      next
+    }
+    mult <- switch(
+      spec$columns$type[[idx]]$unit,
+      SECOND = 1,
+      MILLISECOND = 1000,
+      MICROSECOND = 1000 * 1000,
+      NANOSECOND = 1000 * 1000 * 1000,
+      stop("Unknown Arrow time unit")
     )
-    for (idx in spec$factor) {
-      clevels <- Reduce(union, dicts[[idx]])
-      tab[[idx]] <- factor(tab[[idx]], levels = clevels)
-    }
-    for (idx in spec$difftime) {
-      # only if INT64, otherwise hms, probably
-      if (types[[idx]] != 2) next
-      mult <- switch(
-        spec$columns$type[[idx]]$unit,
-        SECOND = 1,
-        MILLISECOND = 1000,
-        MICROSECOND = 1000 * 1000,
-        NANOSECOND = 1000 * 1000 * 1000,
-        stop("Unknown Arrow time unit")
-      )
-      tab[[idx]] <- as.difftime(tab[[idx]] / mult, units = "secs")
-    }
+    tab[[idx]] <- as.difftime(tab[[idx]] / mult, units = "secs")
   }
   tab
 }
 
-arrow_find_special <- function(asch, file) {
+arrow_find_special <- function(asch, file, col_select = NULL) {
   amd <- tryCatch(
     parse_arrow_schema(asch)$columns,
     error = function(e) {
-      warning(sprintf(
-        "Failed to parse Arrow schema from parquet file at '%s'",
-        file
-      ), call. = TRUE)
+      warning(
+        sprintf(
+          "Failed to parse Arrow schema from parquet file at '%s'",
+          file
+        ),
+        call. = TRUE
+      )
       NULL
     }
   )
   if (is.null(amd)) {
     return(list())
+  }
+  # Subset of columns?
+  if (!is.null(col_select)) {
+    amd <- amd[col_select, , drop = FALSE]
   }
   # If the type is Utf8 and it is a dictionary, then it is a factor
   fct <- which(
@@ -99,7 +109,6 @@ float_precision_names <- c(
 date_unit_names <- c(
   DAY = 0L,
   MILLISECOND = 1L
-
 )
 
 time_unit_names <- c(
@@ -170,10 +179,18 @@ parse_arrow_schema <- function(schema) {
 # STRSXP -> Utf8
 # LGLSXP -> Bool
 
-encode_arrow_schema_r <- function(df) {
+encode_arrow_schema_r <- function(df, schema) {
   endianness <- capitalize(.Platform$endian)
-	fctrs <- vapply(df, function(c) inherits(c, "factor"), logical(1))
-  dfts <- vapply(df, function(c) !inherits(c, "hms") && inherits(c, "difftime"), logical(1))
+  dates <- vapply(df, function(c) inherits(c, "Date"), logical(1))
+  hmss <- vapply(df, function(c) inherits(c, "hms"), logical(1))
+  psxcts <- vapply(df, function(c) inherits(c, "POSIXct"), logical(1))
+  fctrs <- vapply(df, function(c) inherits(c, "factor"), logical(1))
+  int64s <- vapply(df, function(c) inherits(c, "integer64"), logical(1))
+  dfts <- vapply(
+    df,
+    function(c) !inherits(c, "hms") && inherits(c, "difftime"),
+    logical(1)
+  )
   typemap <- c(
     "integer" = "Int",
     "double" = "FloatingPoint",
@@ -183,7 +200,11 @@ encode_arrow_schema_r <- function(df) {
   )
   dftypes <- vapply(df, typeof, character(1))
   artypes <- typemap[dftypes]
+  artypes[dates] <- "Date"
+  artypes[hmss] <- "Time"
+  artypes[psxcts] <- "Timestamp"
   artypes[fctrs] <- "Utf8"
+  artypes[int64s] <- "Int"
   artypes[dfts] <- "Duration"
   if (anyNA(artypes)) {
     stop(
@@ -196,7 +217,10 @@ encode_arrow_schema_r <- function(df) {
     "FloatingPoint" = list(precision = "DOUBLE"),
     "Utf8" = NULL,
     "Bool" = NULL,
-    "Duration" = list(unit = "NANOSECOND")
+    "Duration" = list(unit = "NANOSECOND"),
+    "Time" = list(unit = "SECOND", bit_width = 32L),
+    "Date" = list(unit = "DAY"),
+    "Timestamp" = list(unit = "MICROSECOND", timezone = "UTC")
   )
   schema <- list(
     columns = data.frame(
@@ -212,6 +236,9 @@ encode_arrow_schema_r <- function(df) {
     endianness = endianness,
     features = character()
   )
+  for (idx in which(int64s)) {
+    schema$columns$type[[idx]] <- list(bit_width = 64L, is_signed = TRUE)
+  }
   for (idx in which(fctrs)) {
     schema$columns$dictionary[[idx]] <- list(
       id = 0,
@@ -225,7 +252,8 @@ encode_arrow_schema_r <- function(df) {
 
 # Replace strings with numeric IDs, so we can use them in C++
 fill_arrow_schema_enums_type <- function(type_type, type) {
-  switch(type_type,
+  switch(
+    type_type,
     "FloatingPoint" = {
       type$precision <- float_precision_names[type$precision]
     },
@@ -252,7 +280,7 @@ fill_arrow_schema_enums_type <- function(type_type, type) {
 
 fill_arrow_schema_enums_dict <- function(dict) {
   if (!is.null(dict)) {
-    dict$dictionary_kind <-dict_kind_names[dict$dictionary_kind]
+    dict$dictionary_kind <- dict_kind_names[dict$dictionary_kind]
   }
   dict
 }
@@ -275,7 +303,7 @@ fill_arrow_schema_enums <- function(schema) {
   schema
 }
 
-encode_arrow_schema<- function(df) {
+encode_arrow_schema <- function(df) {
   schema <- encode_arrow_schema_r(df)
   schema <- fill_arrow_schema_enums(schema)
   rawenc <- .Call(nanoparquet_encode_arrow_schema, schema)
@@ -287,11 +315,11 @@ encode_arrow_schema<- function(df) {
 # Arrow only supports 8, 16, 32 and 64.
 factor_bits <- function(x) {
   l <- length(levels(x))
-  if (l < 2^(8-1)) {
+  if (l < 2^(8 - 1)) {
     8L
-  } else if (l < 2^(16-1)) {
+  } else if (l < 2^(16 - 1)) {
     16L
-  } else if (l < 2^(32-1)) {
+  } else if (l < 2^(32 - 1)) {
     32L
   } else {
     64L

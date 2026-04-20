@@ -40,18 +40,21 @@ static void thrift_unpack(const uint8_t *buf, uint32_t *len,
   *len = *len - bytes_left;
 }
 
-ParquetReader::ParquetReader(std::string filename)
+ParquetReader::ParquetReader(std::string filename, bool readwrite)
   : file_type_(FILE_ON_DISK), filename_(filename) {
   // set nuber of threads here, assuming each thread needs k buffers
   bufman_cc = std::unique_ptr<BufferManager>(new BufferManager(1));
+  bufman_rep = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_na = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_pg = std::unique_ptr<BufferManager>(new BufferManager(1));
-  init_file_on_disk();
+  init_file_on_disk(readwrite);
 }
 
-void ParquetReader::init_file_on_disk() {
+void ParquetReader::init_file_on_disk(bool readwrite) {
   ByteBuffer buf;
-  pfile.open(filename_, std::ios::binary);
+  auto mode =
+    readwrite ? std::ios_base::out | std::ios_base::in : std::ios_base::in;
+  pfile.open(filename_, std::ios::binary | mode);
   if (pfile.fail()) {
     std::stringstream ss;
     ss << "Can't open Parquet file at '" << filename_ << "' @ "
@@ -85,7 +88,7 @@ void ParquetReader::init_file_on_disk() {
   // read four-byte footer length from just before the end magic bytes
   pfile.seekg(-8, ios_base::end);
   pfile.read(buf.ptr, 4);
-  int32_t footer_len = *(uint32_t *)buf.ptr;
+  footer_len = *(uint32_t *)buf.ptr;
   if (footer_len == 0) {
     std::stringstream ss;
     ss << "Footer length is zero, invalid Parquet file at '" << filename_
@@ -108,12 +111,41 @@ void ParquetReader::init_file_on_disk() {
                 &file_meta_data_, filename_);
   has_file_meta_data_ = true;
 
+  is_leaf.resize(file_meta_data_.schema.size());
+  parent_column.resize(file_meta_data_.schema.size());
+  repetition_types.resize(file_meta_data_.schema.size());
+  max_repetition_level.resize(file_meta_data_.schema.size());
+  max_definition_level.resize(file_meta_data_.schema.size());
+
+  std::stack<uint32_t> parent_stack;
+
   num_leaf_cols = 0;
   leaf_cols.resize(file_meta_data_.schema.size());
   for (int i = 0; i < file_meta_data_.schema.size(); i++) {
+
+    if (!parent_stack.empty()) {
+      parent_column[i] = parent_stack.top();
+      parent_stack.pop();
+    }
+
     parquet::SchemaElement sel = file_meta_data_.schema[i];
-    if (sel.__isset.num_children && sel.num_children > 0) {
+
+    max_repetition_level[i] = max_repetition_level[parent_column[i]];
+    max_definition_level[i] = max_definition_level[parent_column[i]];
+    repetition_types[i] = static_cast<int32_t>(sel.repetition_type);
+    if (sel.repetition_type == parquet::FieldRepetitionType::REPEATED) {
+      max_repetition_level[i]++;
+    }
+    if (sel.repetition_type != parquet::FieldRepetitionType::REQUIRED) {
+      max_definition_level[i]++;
+    }
+
+    is_leaf[i] = i > 0 && (!sel.__isset.num_children || sel.num_children == 0);
+    if (!is_leaf[i]) {
       leaf_cols[i] = -1;
+      for (int j = 0; j < sel.num_children; j++) {
+        parent_stack.push(i);
+      }
     } else {
       leaf_cols[i] = num_leaf_cols++;
     }
@@ -135,45 +167,116 @@ void ParquetReader::check_meta_data() {
   }
 
   // check if we like this schema
-  if (file_meta_data_.schema.size() < 2) {
+  if (file_meta_data_.schema.size() < 1) {
     std::stringstream ss;
-    ss << "Need at least one column, could not read Parquet file at '"
-       << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
-    throw runtime_error(ss.str());
-  }
-  if (file_meta_data_.schema[0].num_children !=
-      file_meta_data_.schema.size() - 1) {
-    std::stringstream ss;
-    ss << "Only flat tables (no nesting) are supported, could not read Parquet file at '"
+    ss << "Invalid schema (no root element), could not read Parquet file at '"
        << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
     throw runtime_error(ss.str());
   }
 
-  // TODO assert that the first col is root
+  // Nesting is not supported, except for nested 3-layer LIST columns
+  // LIST columns must have three layers
+  for (int i = 1; i < file_meta_data_.schema.size(); i++) {
+    parquet::SchemaElement sel = file_meta_data_.schema[i];
+    if (sel.__isset.num_children && sel.num_children > 0) {
+      parquet::SchemaElement sel0 = file_meta_data_.schema[i - 1];
+      bool isList =
+        (sel.__isset.converted_type && sel.converted_type == parquet::ConvertedType::LIST) ||
+        (sel.__isset.logicalType && sel.logicalType.__isset.LIST);
+      bool isList0 =
+        (sel0.__isset.converted_type && sel0.converted_type == parquet::ConvertedType::LIST) ||
+        (sel0.__isset.logicalType && sel0.logicalType.__isset.LIST);
+      if (sel.num_children != 1 || !(isList || isList0)) {
+        std::stringstream ss;
+        ss << "Nested columns are not supported, could not read Parquet file at '"
+           << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+        throw runtime_error(ss.str());
+      }
 
-  for (uint64_t col_idx = 1; col_idx < file_meta_data_.schema.size();
-       col_idx++) {
-    auto &s_ele = file_meta_data_.schema[col_idx];
-
-    if (!s_ele.__isset.type || s_ele.num_children > 0) {
-      std::stringstream ss;
-      ss << "Only flat tables (no nesting) are supported, could not read Parquet file at '"
-         << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
-      throw runtime_error(ss.str());
+      if (isList) {
+        // must have two more columns as least, first one REPEATED
+        if (i + 2 >= file_meta_data_.schema.size()) {
+          std::stringstream ss;
+          ss << "Only three-layer LIST columns are supported, could not read Parquet file at '"
+             << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+          throw runtime_error(ss.str());
+        }
+        parquet::SchemaElement sel1 = file_meta_data_.schema[i + 1];
+        if (sel1.repetition_type != parquet::FieldRepetitionType::REPEATED) {
+          std::stringstream ss;
+          ss << "First layer of LIST column must be REPEATED, could not read Parquet file at '"
+             << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+          throw runtime_error(ss.str());
+        }
+        parquet::SchemaElement sel2 = file_meta_data_.schema[i + 2];
+        bool isList2 =
+          (sel2.__isset.converted_type && sel2.converted_type == parquet::ConvertedType::LIST) ||
+          (sel2.__isset.logicalType && sel2.logicalType.__isset.LIST);
+        if (isList2) {
+          std::stringstream ss;
+          ss << "Only one layer of nesting is supported for LIST columns, could not read Parquet file at '"
+             << filename_ << "' @ " << __FILE__ << ":" << __LINE__ + 1;
+          throw runtime_error(ss.str());
+        }
+      }
     }
   }
 }
 
-void ParquetReader::read_all_columns() {
-  for (uint32_t i = 1; i < file_meta_data_.schema.size(); i++) {
-    read_column(i);
+void ParquetReader::read_row_group(uint32_t row_group) {
+  if (!has_file_meta_data_) {
+    throw runtime_error("Cannot read column, metadata is not known");
+  }
+  for (uint32_t col = 1; col < file_meta_data_.schema.size(); col++) {
+    SchemaElement &sel = file_meta_data_.schema[col];
+    if (sel.num_children > 0) {
+      // internal node, no need to read anything
+      continue;
+    }
+    if (!sel.__isset.type) {
+      throw runtime_error("Invalid Parquet file, column type is not set (read_row_group)");
+    }
+    vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
+    // RowGroup.columns only contain the leaf columns
+    parquet::ColumnChunk pcc = rgs[row_group].columns[leaf_cols[col]];
+    ColumnChunk cc(
+      pcc,
+      sel,
+      col,
+      row_group,
+      rgs[row_group].num_rows,
+      max_repetition_level[col],
+      max_definition_level[col]
+    );
+    read_column_chunk_int(cc);
   }
 }
 
-void ParquetReader::read_selected_columns(std::vector<uint32_t> sel) {
-  for (uint32_t i = 0; i < sel.size(); i++) {
-    read_column(sel[i]);
+void ParquetReader::read_column_chunk(uint32_t row_group, uint32_t column) {
+  if (!has_file_meta_data_) {
+    throw runtime_error("Cannot read column, metadata is not known");
   }
+  SchemaElement &sel = file_meta_data_.schema[column];
+  if (sel.num_children > 0) {
+    // internal node, no need to read anything
+    return;
+  }
+  if (!sel.__isset.type) {
+    throw runtime_error("Invalid Parquet file, column type is not set (read_column_chunk)");
+  }
+  vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
+    // RowGroup.columns only contain the leaf columns
+  parquet::ColumnChunk pcc = rgs[row_group].columns[leaf_cols[column]];
+  ColumnChunk cc(
+    pcc,
+    sel,
+    column,
+    row_group,
+    rgs[row_group].num_rows,
+    max_repetition_level[column],
+    max_definition_level[column]
+  );
+  read_column_chunk_int(cc);
 }
 
 void ParquetReader::read_column(uint32_t column) {
@@ -181,38 +284,68 @@ void ParquetReader::read_column(uint32_t column) {
     throw runtime_error("Cannot read column, metadata is not known");
   }
   SchemaElement &sel = file_meta_data_.schema[column];
+  if (sel.num_children > 0) {
+    // internal node, no need to read anything
+    return;
+  }
   if (!sel.__isset.type) {
-    throw runtime_error("Invalid Parquet file, column type is not set");
+    throw runtime_error("Invalid Parquet file, column type is not set (read_column)");
   }
   vector<parquet::RowGroup> &rgs = file_meta_data_.row_groups;
 
   for (uint32_t rgi = 0; rgi < rgs.size(); rgi++) {
+    // RowGroup.columns only contain the leaf columns
     parquet::ColumnChunk pcc = rgs[rgi].columns[leaf_cols[column]];
-    ColumnChunk cc(pcc, sel, column, rgi, rgs[rgi].num_rows);
-    read_column_chunk(cc);
+    ColumnChunk cc(
+      pcc,
+      sel,
+      column,
+      rgi,
+      rgs[rgi].num_rows,
+      max_repetition_level[column],
+      max_definition_level[column]
+    );
+    read_column_chunk_int(cc);
   }
 }
 
-void ParquetReader::read_column_chunk(ColumnChunk &cc) {
+void ParquetReader::read_column_chunk_int(ColumnChunk &cc) {
   parquet::ColumnMetaData cmd = cc.cc.meta_data;
   int64_t dictionary_page_offset =
     cc.has_dictionary ? cmd.dictionary_page_offset : -1;
   int64_t data_page_offset = cmd.data_page_offset;
   int64_t chunk_start =
     cc.has_dictionary ? dictionary_page_offset : data_page_offset;
-  int64_t chunk_end = chunk_start + cmd.total_compressed_size;
-
-  // Give a chance to R to allocate memory for the column chunk
-  alloc_column_chunk(cc);
 
   // read in the whole chunk
   BufferGuard tmp_buf_g = bufman_cc->claim();
   ByteBuffer &tmp_buf = tmp_buf_g.buf;
   tmp_buf.resize(cmd.total_compressed_size, false);
-  pfile.seekg(chunk_start, ios_base::beg);
-  pfile.read(tmp_buf.ptr, cmd.total_compressed_size);
+  if (cmd.total_compressed_size > 0) {
+    pfile.seekg(chunk_start, ios_base::beg);
+    pfile.read(tmp_buf.ptr, cmd.total_compressed_size);
+  }
   uint8_t *ptr = (uint8_t*) tmp_buf.ptr;
   uint8_t *end = ptr + cmd.total_compressed_size;
+
+  // Polars does not set dictionary_page_offset :(
+  // https://github.com/r-lib/nanoparquet/issues/132
+  // We need to do this fix before calling alloc_column_chunk(), so the
+  // callback correctly knows if this chunk has a dictionary page.
+  // Sadly, this means that we are parsing the header of the first data
+  // page twice, for files that adhere to the spec and don't have dict
+  // pages. :((
+  if (!cc.has_dictionary && ptr < end) {
+    PageHeader dph;
+    uint32_t ph_size = cmd.total_compressed_size;
+    thrift_unpack(ptr, &ph_size, &dph, filename_);
+    if (dph.type == parquet::PageType::DICTIONARY_PAGE) {
+      cc.has_dictionary = true;
+    }
+  }
+
+  // Give a chance to R to allocate memory for the column chunk
+  alloc_column_chunk(cc);
 
   // dictionary page, if any
   if (cc.has_dictionary) {
@@ -391,31 +524,31 @@ void ParquetReader::read_dict_page(
   case Type::INT32: {
     DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
-    memcpy(dict.dict, buf, num_values * sizeof(int32_t));
+    if (num_values > 0) memcpy(dict.dict, buf, num_values * sizeof(int32_t));
     break;
   }
   case Type::INT64: {
     DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
-    memcpy(dict.dict, buf, num_values * sizeof(int64_t));
+    if (num_values > 0) memcpy(dict.dict, buf, num_values * sizeof(int64_t));
     break;
   }
   case Type::INT96: {
     DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
-    memcpy(dict.dict, buf, num_values * sizeof(int96_t));
+    if (num_values > 0) memcpy(dict.dict, buf, num_values * sizeof(int96_t));
     break;
   }
   case Type::FLOAT: {
     DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
-    memcpy(dict.dict, buf, num_values * sizeof(float));
+    if (num_values > 0) memcpy(dict.dict, buf, num_values * sizeof(float));
     break;
   }
   case Type::DOUBLE: {
     DictPage dict(cc, ph, num_values);
     alloc_dict_page(dict);
-    memcpy(dict.dict, buf, num_values * sizeof(double));
+    if (num_values > 0) memcpy(dict.dict, buf, num_values * sizeof(double));
     break;
   }
   case Type::BYTE_ARRAY: {
@@ -456,6 +589,7 @@ uint32_t ParquetReader::read_data_page(DataPage &dp, uint8_t *buf, int32_t len) 
 
 void ParquetReader::update_data_page_size(DataPage &dp, uint8_t *buf, int32_t len) {
   if (dp.encoding != Encoding::DELTA_BYTE_ARRAY) {
+    dp.strs.total_len = len;
     return;
   }
   dp.prelen.resize(dp.num_present);
@@ -474,6 +608,13 @@ void ParquetReader::update_data_page_size(DataPage &dp, uint8_t *buf, int32_t le
   dp.strs.total_len = totlen;
 }
 
+uint8_t get_bit_width(uint32_t v) {
+  if (v == 0) return 0;
+  uint8_t n = 0;
+  while (v >>= 1) n++;
+  return n + 1;
+}
+
 uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t len) {
   if (!dp.ph.__isset.data_page_header) {
     throw runtime_error("Invalid page, data page header not set");
@@ -481,34 +622,78 @@ uint32_t ParquetReader::read_data_page_v1(DataPage &dp, uint8_t *buf, int32_t le
   dp.set_num_values(dp.ph.data_page_header.num_values);
   dp.encoding = dp.ph.data_page_header.encoding;
 
-  uint8_t *def_buf = nullptr;
-  uint32_t def_len = 0;
+  uint8_t *tmp_buf = nullptr;
+  uint32_t tmp_len = 0;
+
+  BufferGuard rep_levels_g = bufman_rep->claim();
+  ByteBuffer &rep_levels = rep_levels_g.buf;
 
   BufferGuard def_levels_g = bufman_na->claim();
   ByteBuffer &def_levels = def_levels_g.buf;
 
-  if (dp.cc.optional) {
+  if (dp.cc.max_rep_level > 0) {
+    if (dp.ph.data_page_header.repetition_level_encoding != Encoding::RLE) {
+      throw runtime_error("Unknown repetition level encoding");
+    }
+    tmp_buf = buf;
+    memcpy(&tmp_len, tmp_buf, sizeof(uint32_t));
+    tmp_buf += sizeof(uint32_t);
+    buf += sizeof(uint32_t);
+    len -= sizeof(uint32_t);
+    buf += tmp_len;
+    len -= tmp_len;
+    rep_levels.resize(dp.num_values);
+    uint8_t bw = get_bit_width(dp.cc.max_rep_level);
+    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
+    dec.GetBatchCount<uint8_t>(
+      (uint8_t*) rep_levels.ptr,
+      dp.num_values
+    );
+  }
+
+  if (dp.cc.max_def_level > 0) {
     if (dp.ph.data_page_header.definition_level_encoding != Encoding::RLE) {
       throw runtime_error("Unknown definition level encoding");
     }
-    def_buf = buf;
-    memcpy(&def_len, def_buf, sizeof(uint32_t));
-    def_buf += sizeof(uint32_t);
+    tmp_buf = buf;
+    memcpy(&tmp_len, tmp_buf, sizeof(uint32_t));
+    tmp_buf += sizeof(uint32_t);
     buf += sizeof(uint32_t);
     len -= sizeof(uint32_t);
-    buf += def_len;
-    len -= def_len;
+    buf += tmp_len;
+    len -= tmp_len;
     def_levels.resize(dp.num_values);
-    RleBpDecoder dec((const uint8_t *)def_buf, def_len, 1);
+    uint8_t bw = get_bit_width(dp.cc.max_def_level);
+    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
     uint32_t num_present = dec.GetBatchCount<uint8_t>(
       (uint8_t*) def_levels.ptr,
       dp.num_values
     );
+    // For multi-level definition (list columns), GetBatchCount counts non-zero
+    // entries but we need entries == max_def_level only. For simple optional
+    // columns (max_def=1), non-zero == max_def_level so no correction needed.
+    if (dp.cc.max_def_level > 1) {
+      num_present = 0;
+      uint8_t *dl = (uint8_t*) def_levels.ptr;
+      for (uint32_t i = 0; i < dp.num_values; i++) {
+        if (dl[i] == (uint8_t) dp.cc.max_def_level) num_present++;
+      }
+    }
     dp.set_num_present(num_present);
   }
   update_data_page_size(dp, buf, len);
   alloc_data_page(dp);
-  if (dp.cc.optional && dp.present != nullptr) {
+  if (dp.cc.max_rep_level > 0) {
+    assert(dp.repeat);
+    if (!dp.repeat) {
+      throw runtime_error("Memory for repetition levels not allocated");
+    }
+    memcpy(dp.repeat, rep_levels.ptr, dp.num_values);
+  }
+  if (dp.cc.max_def_level > 0) {
+    if (!dp.present) {
+      throw runtime_error("Memory for definition levels not allocated");
+    }
     memcpy(dp.present, def_levels.ptr, dp.num_values);
   }
 
@@ -522,27 +707,45 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
   dp.set_num_values(dp.ph.data_page_header_v2.num_values);
   dp.encoding = dp.ph.data_page_header_v2.encoding;
 
-  // skip junk repetition and definition levels, if any
-  int32_t skip = dp.ph.data_page_header_v2.repetition_levels_byte_length;
-  buf += skip;
-  len -= skip;
+  uint8_t *tmp_buf = nullptr;
+  uint32_t tmp_len = 0;
 
-  uint8_t *def_buf = nullptr;
-  uint32_t def_len = 0;
+  BufferGuard rep_levels_g = bufman_rep->claim();
+  ByteBuffer &rep_levels = rep_levels_g.buf;
 
   BufferGuard def_levels_g = bufman_na->claim();
   ByteBuffer &def_levels = def_levels_g.buf;
 
-  if (dp.cc.optional) {
-    def_buf = buf;
-    def_len = dp.ph.data_page_header_v2.definition_levels_byte_length;
-    buf += def_len;
-    len -= def_len;
+  if (dp.cc.max_rep_level > 0) {
+    tmp_buf = buf;
+    tmp_len = dp.ph.data_page_header_v2.repetition_levels_byte_length;
+    buf += tmp_len;
+    len -= tmp_len;
+    rep_levels.resize(dp.num_values);
+    uint8_t bw = get_bit_width(dp.cc.max_rep_level);
+    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
+    dec.GetBatchCount<uint8_t>(
+      (uint8_t*) rep_levels.ptr,
+      dp.num_values
+    );
+  } else {
+    // skip junk repetition and definition levels, if any
+    int32_t skip = dp.ph.data_page_header_v2.repetition_levels_byte_length;
+    buf += skip;
+    len -= skip;
+  }
+
+  if (dp.cc.max_def_level > 0) {
+    tmp_buf = buf;
+    tmp_len = dp.ph.data_page_header_v2.definition_levels_byte_length;
+    buf += tmp_len;
+    len -= tmp_len;
     uint32_t num_present = dp.num_values - dp.ph.data_page_header_v2.num_nulls;
     dp.set_num_present(num_present);
     update_data_page_size(dp, buf, len);
     alloc_data_page(dp);
-    RleBpDecoder dec((const uint8_t *)def_buf, def_len, 1);
+    uint8_t bw = get_bit_width(dp.cc.max_def_level);
+    RleBpDecoder dec((const uint8_t *)tmp_buf, tmp_len, bw);
     if (dp.present) {
       dec.GetBatch<uint8_t>(dp.present, dp.num_values);
     } else {
@@ -552,6 +755,14 @@ uint32_t ParquetReader::read_data_page_v2(DataPage &dp, uint8_t *buf, int32_t le
   } else {
     update_data_page_size(dp, buf, len);
     alloc_data_page(dp);
+  }
+
+  if (dp.cc.max_rep_level > 0) {
+    assert(dp.repeat);
+    if (!dp.repeat) {
+      throw runtime_error("Memory for repetition levels not allocated");
+    }
+    memcpy(dp.repeat, rep_levels.ptr, dp.num_values);
   }
 
   return read_data_page_internal(dp, buf, len);
@@ -846,11 +1057,15 @@ void ParquetReader::unpack_plain_boolean(uint32_t *res, uint8_t *buf, uint32_t n
 }
 
 void ParquetReader::scan_byte_array_plain(StringSet &strs, uint8_t *buf) {
+  // need this to avoid memcpy with a null pointer
+  if (strs.len == 0) return;
   uint8_t *start = buf;
   memcpy((void*) strs.buf, buf, strs.total_len);
   // TODO: check for overflow
   for (uint32_t i = 0; i < strs.len; i++) {
-    strs.lengths[i] = *((uint32_t*) buf);
+    // we need to do this byte-wise to avoid a misaligned uint32_t address
+    // strs.lengths[i] = *((uint32_t*) buf);
+    memcpy(strs.lengths + i, buf, 4);
     buf += 4;
     strs.offsets[i] = buf - start;
     buf += strs.lengths[i];

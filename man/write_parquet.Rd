@@ -57,8 +57,12 @@ If a specified encoding is invalid for a certain column type,
 or nanoparquet does not implement it, \code{write_parquet()} throws an
 error.
 
-This version of nanoparquet supports the following encodings:
-\code{PLAIN}, \code{GROUP_VAR_INT}, \code{PLAIN_DICTIONARY}, \code{RLE}, \code{BIT_PACKED}, \code{DELTA_BINARY_PACKED}, \code{DELTA_LENGTH_BYTE_ARRAY}, \code{DELTA_BYTE_ARRAY}, \code{RLE_DICTIONARY}, \code{BYTE_STREAM_SPLIT}.
+Currently \code{write_parquet()} supports the following encodings:
+\itemize{
+\item \code{PLAIN} for all column types,
+\item \code{PLAIN_DICTIONARY} and \code{RLE_DICTIONARY} for all column types,
+\item \code{RLE} for BOOLEAN columns.
+}
 
 See \link{parquet-encodings} for more about encodings.}
 
@@ -66,12 +70,10 @@ See \link{parquet-encodings} for more about encodings.}
 This must be a named character vector, or a data frame with columns
 character columns called \code{key} and \code{value}.}
 
-\item{row_groups}{Row groups of the Parquet file. If \code{NULL}, and \code{x}
-is a grouped data frame, then the groups are used as row groups.
-The rows will be reordered to match groups. If \code{NULL}, and \code{x} is
-not a grouped data frame, then the \code{num_rows_per_row_group} option is
-used from the \code{options} argument, see \code{\link[=parquet_options]{parquet_options()}}. Otherwise
-it must be an integer vector, specifying the starts of the row groups.}
+\item{row_groups}{Row groups of the Parquet file. If \code{NULL}, then the
+\code{num_rows_per_row_group} option is used from the \code{options} argument,
+see \code{\link[=parquet_options]{parquet_options()}}. Otherwise it must be an integer vector,
+specifying the starts of the row groups.}
 
 \item{options}{Nanoparquet options, see \code{\link[=parquet_options]{parquet_options()}}.}
 }
@@ -84,10 +86,10 @@ Writes the contents of an R data frame into a Parquet file.
 }
 \details{
 \code{write_parquet()} converts string columns to UTF-8 encoding by calling
-\code{\link[base:Encoding]{base::enc2utf8()}}. It does the same for factor levels.
+\code{\link[base:enc2utf8]{base::enc2utf8()}}. It does the same for factor levels.
 }
 \examples{
-\dontshow{if (FALSE) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
 # add row names as a column, because `write_parquet()` ignores them.
 mtcars2 <- cbind(name = rownames(mtcars), mtcars)
 write_parquet(mtcars2, "mtcars.parquet")

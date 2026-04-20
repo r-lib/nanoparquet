@@ -27,12 +27,6 @@ test_that("write_parquet -> INT32", {
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("INT32"))
   })
-
-  # list -> INT32
-  d <- data.frame(d = I(as.list(1:10)))
-  expect_snapshot(error = TRUE, {
-    write_parquet(d, tmp, schema = parquet_schema("INT32"))
-  })
 })
 
 test_that("write_parquet -> INT64", {
@@ -145,14 +139,14 @@ test_that("write_parquet -> BYTE_ARRAY", {
   # character -> BYTE_ARRAY
   d <- data.frame(d = c("foo", "bar", "foobar", NA))
   write_parquet(
-    d, tmp,
+    d,
+    tmp,
     schema = parquet_schema("BYTE_ARRAY")
   )
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
-
 })
 
 test_that("write_parquet -> FIXED_LEN_BYTE_ARRAY", {
@@ -162,7 +156,8 @@ test_that("write_parquet -> FIXED_LEN_BYTE_ARRAY", {
   # character -> FIXED_LEN_BYTE_ARRAY
   d <- data.frame(d = c("foo", "bar", "aaa", NA))
   write_parquet(
-    d, tmp,
+    d,
+    tmp,
     schema = parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
   )
   expect_snapshot({
@@ -495,7 +490,7 @@ test_that("double to smaller integers", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = c(2^31-1, 2^31))
+  d <- data.frame(d = c(2^31 - 1, 2^31))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("INT_32"))
   })
@@ -543,7 +538,7 @@ test_that("double to smaller integers", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = c(2^32-1, 2^32))
+  d <- data.frame(d = c(2^32 - 1, 2^32))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("UINT_32"))
   })
@@ -564,14 +559,22 @@ test_that("double to INT(64, *)", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = c(2^63-1, 2^64))
-  expect_snapshot(error = TRUE, {
-    write_parquet(d, tmp, schema = parquet_schema("INT_64"))
-  })
-  d <- data.frame(d = c(-2^63, -2^64 - 1))
-  expect_snapshot(error = TRUE, {
-    write_parquet(d, tmp, schema = parquet_schema("INT_64"))
-  })
+  d <- data.frame(d = c(9223372036854770000, 9223372036854774273))
+  expect_snapshot(
+    error = TRUE,
+    {
+      write_parquet(d, tmp, schema = parquet_schema("INT_64"))
+    },
+    transform = redact_maxint64
+  )
+  d <- data.frame(d = -c(9223372036854770000, 9223372036854774273))
+  expect_snapshot(
+    error = TRUE,
+    {
+      write_parquet(d, tmp, schema = parquet_schema("INT_64"))
+    },
+    transform = redact_maxint64
+  )
 
   d <- data.frame(d = as.double(c(0:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
@@ -580,7 +583,7 @@ test_that("double to INT(64, *)", {
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = c(2^64-1, 2^65))
+  d <- data.frame(d = c(18446744073709450591.0, 18446744073709550592.0))
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
   })
@@ -588,6 +591,43 @@ test_that("double to INT(64, *)", {
   expect_snapshot(error = TRUE, {
     write_parquet(d, tmp, schema = parquet_schema("UINT_64"))
   })
+})
+
+test_that("integer64 round-trip and read_int64_type option", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    x = bit64::as.integer64(c(1e15, -1e15, NA, 2^31))
+  )
+  write_parquet(d, tmp)
+
+  res_dbl <- read_parquet(tmp)
+  expect_equal(class(res_dbl$x), "numeric")
+  expect_snapshot(as.data.frame(res_dbl))
+
+  opts_i64 <- parquet_options(read_int64_type = "integer64")
+  res_i64 <- read_parquet(tmp, options = opts_i64)
+  expect_s3_class(res_i64$x, "integer64")
+  expect_true(is.na(res_i64$x[3]))
+  expect_equal(res_i64$x[c(1, 2, 4)], d$x[c(1, 2, 4)])
+
+  opts_i64b <- parquet_options(read_int64_type = "bit64::integer64")
+  res_i64b <- read_parquet(tmp, options = opts_i64b)
+  expect_identical(res_i64b$x, res_i64$x)
+
+  s_dbl <- read_parquet_schema(tmp)
+  expect_equal(s_dbl$r_type[s_dbl$name == "x"], "double")
+
+  s_i64 <- read_parquet_schema(tmp, options = opts_i64)
+  expect_equal(s_i64$r_type[s_i64$name == "x"], "integer64")
+
+  d2 <- data.frame(x = bit64::as.integer64(c(1L, 2L, NA)))
+  write_parquet(d2, tmp, schema = parquet_schema("INT_64"))
+  res2 <- read_parquet(tmp, options = opts_i64)
+  expect_s3_class(res2$x, "integer64")
+  expect_true(is.na(res2$x[3]))
+  expect_equal(res2$x[c(1, 2)], d2$x[c(1, 2)])
 })
 
 test_that("JSON", {
@@ -623,7 +663,7 @@ test_that("FLOAT16", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(c = c(0, 1, 2, NA, -1, NaN, -2, -Inf, Inf, 1/2))
+  d <- data.frame(c = c(0, 1, 2, NA, -1, NaN, -2, -Inf, Inf, 1 / 2))
   write_parquet(d, tmp, schema = parquet_schema("FLOAT16"))
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -647,24 +687,28 @@ test_that("list of RAW to BYTE_ARRAY", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  d <- data.frame(d = I(list(
-    charToRaw("foo"),
-    charToRaw("bar"),
-    charToRaw("foobar")
-  )))
+  d <- data.frame(
+    d = I(list(
+      charToRaw("foo"),
+      charToRaw("bar"),
+      charToRaw("foobar")
+    ))
+  )
   write_parquet(d, tmp)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = I(list(
-    charToRaw("foo"),
-    NULL,
-    charToRaw("bar"),
-    charToRaw("foobar"),
-    NULL
-  )))
+  d <- data.frame(
+    d = I(list(
+      charToRaw("foo"),
+      NULL,
+      charToRaw("bar"),
+      charToRaw("foobar"),
+      NULL
+    ))
+  )
   write_parquet(d, tmp)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
@@ -677,28 +721,114 @@ test_that("list of RAW to FIXED_LEN_BYTE_ARRAY", {
   on.exit(unlink(tmp), add = TRUE)
   schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
 
-  d <- data.frame(d = I(list(
-    charToRaw("foo"),
-    charToRaw("bar"),
-    charToRaw("aaa")
-  )))
+  d <- data.frame(
+    d = I(list(
+      charToRaw("foo"),
+      charToRaw("bar"),
+      charToRaw("aaa")
+    ))
+  )
   write_parquet(d, tmp, schema = schema)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
 
-  d <- data.frame(d = I(list(
-    charToRaw("foo"),
-    NULL,
-    charToRaw("bar"),
-    charToRaw("aaa"),
-    NULL
-  )))
+  d <- data.frame(
+    d = I(list(
+      charToRaw("foo"),
+      NULL,
+      charToRaw("bar"),
+      charToRaw("aaa"),
+      NULL
+    ))
+  )
   write_parquet(d, tmp, schema = schema)
   expect_snapshot({
     as.data.frame(read_parquet_schema(tmp)[, -1])
     as.data.frame(read_parquet(tmp))
   })
+})
 
+test_that("blob::blob to BYTE_ARRAY", {
+  skip_without("blob")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(
+    d = blob::blob(
+      charToRaw("foo"),
+      charToRaw("bar"),
+      charToRaw("foobar")
+    )
+  )
+  write_parquet(d, tmp)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$d, "blob")
+  expect_equal(d2$d, d$d)
+
+  # with NAs (NULL entries in blob)
+  d_na <- data.frame(
+    d = blob::blob(
+      charToRaw("foo"),
+      NULL,
+      charToRaw("bar"),
+      charToRaw("foobar"),
+      NULL
+    )
+  )
+  write_parquet(d_na, tmp)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d3 <- read_parquet(tmp)
+  expect_s3_class(d3$d, "blob")
+  expect_equal(d3$d, d_na$d)
+})
+
+test_that("blob::blob to FIXED_LEN_BYTE_ARRAY", {
+  skip_without("blob")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
+
+  d <- data.frame(
+    d = blob::blob(
+      charToRaw("foo"),
+      charToRaw("bar"),
+      charToRaw("aaa")
+    )
+  )
+  write_parquet(d, tmp, schema = schema)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d2 <- read_parquet(tmp)
+  expect_s3_class(d2$d, "blob")
+  expect_equal(d2$d, d$d)
+
+  # with NAs
+  d_na <- data.frame(
+    d = blob::blob(
+      charToRaw("foo"),
+      NULL,
+      charToRaw("bar"),
+      charToRaw("aaa"),
+      NULL
+    )
+  )
+  write_parquet(d_na, tmp, schema = schema)
+  expect_snapshot({
+    as.data.frame(read_parquet_schema(tmp)[, -1])
+    as.data.frame(read_parquet(tmp))
+  })
+  d3 <- read_parquet(tmp)
+  expect_s3_class(d3$d, "blob")
+  expect_equal(d3$d, d_na$d)
 })

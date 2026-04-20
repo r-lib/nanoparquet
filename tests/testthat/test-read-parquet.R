@@ -7,19 +7,41 @@ alltypes_plain <- structure(
     int_col = c(0L, 1L, 0L, 1L, 0L, 1L, 0L, 1L),
     bigint_col = c(0, 10, 0, 10, 0, 10, 0, 10),
     float_col = c(
-      0, 1.10000002384186, 0, 1.10000002384186,
-      0, 1.10000002384186, 0, 1.10000002384186
+      0,
+      1.10000002384186,
+      0,
+      1.10000002384186,
+      0,
+      1.10000002384186,
+      0,
+      1.10000002384186
     ),
     double_col = c(0, 10.1, 0, 10.1, 0, 10.1, 0, 10.1),
     date_string_col = c(
-      "03/01/09", "03/01/09", "04/01/09", "04/01/09",
-      "02/01/09", "02/01/09", "01/01/09", "01/01/09"
+      "03/01/09",
+      "03/01/09",
+      "04/01/09",
+      "04/01/09",
+      "02/01/09",
+      "02/01/09",
+      "01/01/09",
+      "01/01/09"
     ),
     string_col = c("0", "1", "0", "1", "0", "1", "0", "1"),
-    timestamp_col = structure(c(
-      1235865600, 1235865660, 1238544000, 1238544060,
-      1233446400, 1233446460, 1230768000, 1230768060
-    ), class = c("POSIXct", "POSIXt"), tzone = "UTC")
+    timestamp_col = structure(
+      c(
+        1235865600,
+        1235865660,
+        1238544000,
+        1238544060,
+        1233446400,
+        1233446460,
+        1230768000,
+        1230768060
+      ),
+      class = c("POSIXct", "POSIXt"),
+      tzone = "UTC"
+    )
   ),
   row.names = c(NA, -8L),
   class = "data.frame"
@@ -76,7 +98,9 @@ data_comparable <- function(df1, df2, dlt = .0001) {
 
 test_that("various error cases", {
   # https://github.com/llvm/llvm-project/issues/59432
-  if (is_asan()) skip("ASAN bug")
+  if (is_asan()) {
+    skip("ASAN bug")
+  }
   expect_error(res <- read_parquet(""))
   expect_error(res <- read_parquet("DONTEXIST"))
   tf <- tempfile()
@@ -97,7 +121,7 @@ test_that("basic reading works with snappy", {
 test_that("read factors, marked by Arrow", {
   res <- read_parquet(test_path("data/factor.parquet"))
   expect_snapshot({
-    as.data.frame(res[1:5,])
+    as.data.frame(res[1:5, ])
     sapply(res, class)
   })
 })
@@ -112,6 +136,7 @@ test_that("round trip with arrow", {
   # Don't want to skip on the parquet capability missing, because then
   # this might not be tested on the CI. So rather we skip on CRAN.
   skip_on_cran()
+  skip_without("arrow")
   mt <- test_df(factor = TRUE)
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -124,10 +149,32 @@ test_that("round trip with arrow", {
   expect_equal(read_parquet(tmp), mt)
 })
 
+test_that("round trip with arrow, empty data frame", {
+  # https://github.com/r-lib/nanoparquet/issues/160
+  skip_on_cran()
+  skip_without("arrow")
+  df <- data.frame(
+    a = character(0),
+    b = numeric(0),
+    c = logical(0)
+  )
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  arrow::write_parquet(df, tmp)
+  result <- read_parquet(tmp)
+  expect_equal(nrow(result), 0L)
+  expect_equal(ncol(result), 3L)
+  expect_equal(names(result), c("a", "b", "c"))
+})
+
 test_that("round trip with duckdb", {
   skip_on_cran()
+  skip_without("duckdb")
+  skip_without("arrow")
   # https://github.com/llvm/llvm-project/issues/59432
-  if (is_asan()) skip("ASAN bug")
+  if (is_asan()) {
+    skip("ASAN bug")
+  }
   mt <- test_df()
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -137,17 +184,25 @@ test_that("round trip with duckdb", {
   on.exit(DBI::dbDisconnect(con), add = TRUE)
   DBI::dbWriteTable(con, "mtcars", as.data.frame(mt))
 
-  DBI::dbExecute(con, DBI::sqlInterpolate(con,
-    "COPY mtcars TO ?filename (FORMAT 'parquet', COMPRESSION 'uncompressed')",
-    filename = tmp
-  ))
+  DBI::dbExecute(
+    con,
+    DBI::sqlInterpolate(
+      con,
+      "COPY mtcars TO ?filename (FORMAT 'parquet', COMPRESSION 'uncompressed')",
+      filename = tmp
+    )
+  )
   expect_equal(read_parquet(tmp), mt)
   unlink(tmp)
 
-  DBI::dbExecute(con, DBI::sqlInterpolate(con,
-    "COPY mtcars TO ?filename (FORMAT PARQUET, COMPRESSION 'snappy')",
-    filename = tmp
-  ))
+  DBI::dbExecute(
+    con,
+    DBI::sqlInterpolate(
+      con,
+      "COPY mtcars TO ?filename (FORMAT PARQUET, COMPRESSION 'snappy')",
+      filename = tmp
+    )
+  )
   arrow::write_parquet(mt, tmp, compression = "snappy")
   expect_equal(read_parquet(tmp), mt)
 })
@@ -202,7 +257,8 @@ test_that("read POSIXct", {
 })
 
 test_that("read POSIXct in MILLIS", {
-  skip_on_cran() # arrow
+  skip_on_cran()
+  skip_without("arrow")
   # This file has UTC = FALSE, so the exact result depends on the current
   # time zone. But it should match Arrow.
   pf <- test_path("data/timestamp-ms.parquet")
@@ -220,7 +276,7 @@ test_that("read difftime", {
 
   # Fractional seconds are kept
   d <- data.frame(
-    h = as.difftime(10 + 1/9, units = "secs")
+    h = as.difftime(10 + 1 / 9, units = "secs")
   )
   write_parquet(d, tmp)
 
@@ -296,6 +352,7 @@ test_that("V2 data pages", {
 
 test_that("V2 data page with missing values", {
   skip_on_cran()
+  skip_without("arrow")
   pf <- test_path("data/duckdb-bug1589.parquet")
   expect_equal(
     as.data.frame(read_parquet(pf)),
@@ -323,7 +380,9 @@ test_that("zstd with data page v2", {
   pf <- test_path("data/zstd-v2.parquet")
   expect_true(all(read_parquet_metadata(pf)$column_chunks$codec == "ZSTD"))
   expect_true(
-    all(read_parquet_pages(pf)$page_type %in% c("DICTIONARY_PAGE", "DATA_PAGE_V2"))
+    all(
+      read_parquet_pages(pf)$page_type %in% c("DICTIONARY_PAGE", "DATA_PAGE_V2")
+    )
   )
   pf2 <- test_path("data/gzip.parquet")
   expect_equal(read_parquet(pf), read_parquet(pf2))
@@ -361,17 +420,18 @@ test_that("DELTA_LENGTH_BYTE_ARRAY encoding", {
   pf <- test_path("data/delta_length_byte_array.parquet")
   dlba <- read_parquet(pf)
   expect_snapshot({
-    as.data.frame(dlba)[1:10,]
+    as.data.frame(dlba)[1:10, ]
     rle(nchar(dlba$FRUIT))
   })
 })
 
 test_that("DELTA_BYTE_ARRAY encoding", {
   skip_on_cran()
+  skip_without("arrow")
   pf <- test_path("data/delta_byte_array.parquet")
   dba <- read_parquet(pf)
   expect_snapshot({
-    as.data.frame(dba)[1:5,]
+    as.data.frame(dba)[1:5, ]
   })
   expect_equal(
     as.data.frame(arrow::read_parquet(pf)),
@@ -381,10 +441,14 @@ test_that("DELTA_BYTE_ARRAY encoding", {
 
 test_that("BYTE_STREAM_SPLIT encoding", {
   skip_on_cran()
+  skip_without("arrow")
+  if (getRversion() < "4.2.0" && .Platform$OS.type == "windows") {
+    skip("arrow fails here")
+  }
   pf <- test_path("data/byte_stream_split.parquet")
   bss <- read_parquet(pf)
   expect_snapshot({
-    as.data.frame(bss)[1:5,]
+    as.data.frame(bss)[1:5, ]
   })
   expect_equal(
     as.data.frame(arrow::read_parquet(pf)),
@@ -397,11 +461,24 @@ test_that("More BYTE_STREAM_SPLIT", {
   pf <- test_path("data/byte_stream_split_extended.gzip.parquet")
   bss <- read_parquet(pf)
   expect_snapshot({
-    as.data.frame(bss)[1:5,]
+    as.data.frame(bss)[1:5, ]
   })
   for (i in 1:7) {
-    expect_equal(bss[[2*i-1]], bss[[2*i]])
+    expect_equal(bss[[2 * i - 1]], bss[[2 * i]])
   }
+})
+
+test_that("DECIMAL in FIXED_LEN_BYTE_ARRAY (128-bit)", {
+  # 16-byte / 128-bit decimals; previously only low 64 bits were read (#148)
+  pf <- test_path("data/decimal128.parquet")
+  df <- read_parquet(pf)
+  expect_equal(typeof(df$Value), "double")
+  expect_equal(typeof(df$DataCapture), "double")
+  expect_equal(
+    df$Value,
+    c(51.70559, 49.52529, 51.69562, 49.90946, 50.06762, 54.69116)
+  )
+  expect_equal(df$DataCapture, rep(-99, 6))
 })
 
 test_that("DECIMAL in INT32, INT64", {

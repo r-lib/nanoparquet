@@ -1,9 +1,19 @@
 {
     "[c]": {
-        "editor.formatOnSave": true,
+        "editor.formatOnSave": false,
         "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
     },
     "clangd.arguments": [
         "-header-insertion=never"
-    ]
+    ],
+    "[r]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "Posit.air-vscode"
+    },
+    "files.exclude": {
+        ".dev": true
+    },
+    "search.exclude": {
+        ".dev": true
+    }
 }

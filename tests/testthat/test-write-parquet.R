@@ -29,6 +29,7 @@ test_that("round trip with arrow", {
   # Don't want to skip on the parquet capability missing, because then
   # this might not be tested on the CI. So rather we skip on CRAN.
   skip_on_cran()
+  skip_without("arrow")
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df(tibble = TRUE, factor = TRUE)
   tmp <- tempfile(fileext = ".parquet")
@@ -45,23 +46,25 @@ test_that("round trip with arrow", {
 })
 
 test_that("round trip with duckdb", {
+  skip_without("duckdb")
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- as.data.frame(test_df())
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
   write_parquet(mt, tmp, compression = "uncompressed")
-  df <- duckdb:::sql(sprintf("FROM '%s'", tmp))
+  df <- duckdb::sql_query(sprintf("FROM '%s'", tmp))
   expect_equal(df, mt)
   unlink(tmp)
 
   write_parquet(mt, tmp, compression = "snappy")
-  df <- duckdb:::sql(sprintf("FROM '%s'", tmp))
+  df <- duckdb::sql_query(sprintf("FROM '%s'", tmp))
   expect_equal(df, mt)
 })
 
 test_that("round trip with pandas/pyarrow", {
   skip_on_cran()
+  skip_without_pyarrow()
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df()
   tmp1 <- tempfile(fileext = ".parquet")
@@ -72,7 +75,8 @@ test_that("round trip with pandas/pyarrow", {
   file.create(tmp2)
 
   py_read <- function(input, output) {
-    pyscript <- sprintf(r"[
+    pyscript <- sprintf(
+      r"[
 import pyarrow
 import pandas
 pandas.set_option("display.width", 150)
@@ -82,7 +86,10 @@ df = pandas.read_parquet("%s", engine = "pyarrow")
 print(df)
 print(df.dtypes)
 df.to_parquet("%s", engine = "pyarrow")
-]", normalizePath(input, winslash = "/"), normalizePath(output, winslash = "/"))
+]",
+      normalizePath(input, winslash = "/"),
+      normalizePath(output, winslash = "/")
+    )
     pytmp <- tempfile(fileext = ".py")
     on.exit(unlink(pytmp), add = TRUE)
     writeLines(pyscript, pytmp)
@@ -103,13 +110,15 @@ df.to_parquet("%s", engine = "pyarrow")
 
 test_that("errors", {
   # https://github.com/llvm/llvm-project/issues/59432
-  if (is_asan()) skip("ASAN bug")
+  if (is_asan()) {
+    skip("ASAN bug")
+  }
 
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
   mt <- mt2 <- test_df(factor = TRUE)
-  mt$list <- I(replicate(nrow(mt), 1:4, simplify = FALSE))
+  mt$list <- I(replicate(nrow(mt), list(1:4), simplify = FALSE))
 
   expect_error(write_parquet(mt, tmp))
   expect_snapshot(error = TRUE, write_parquet(mt, tmp))
@@ -130,7 +139,7 @@ test_that("writing metadata", {
 
   write_parquet(mt, tmp, metadata = c("foo" = "bar"))
   kvm <- read_parquet_metadata(tmp)$file_meta_data$key_value_metadata[[1]]
-  expect_snapshot(as.data.frame(kvm)[1,])
+  expect_snapshot(as.data.frame(kvm)[1, ])
 })
 
 test_that("strings are converted to UTF-8", {
@@ -190,7 +199,6 @@ test_that("REQ PLAIN", {
     read_parquet_page(tmp, pgs$page_header_offset[3])$data
     read_parquet_page(tmp, pgs$page_header_offset[4])$data
   })
-
 })
 
 test_that("OPT PLAIN", {
@@ -332,7 +340,7 @@ test_that("OPT RLE", {
   def_len <- readBin(con <- rawConnection(data), "integer", 1)
   expect_equal(
     rle_decode_int(
-      data[-(1:(8+def_len))],
+      data[-(1:(8 + def_len))],
       bit_width = 1L,
       length(na.omit(d$l))
     ),
@@ -366,12 +374,13 @@ test_that("Factor levels not in the data", {
   data <- read_parquet_page(tmp, pgs$page_header_offset[2])$data
   expect_equal(
     rle_decode_int(data[-1], as.integer(data[1]), nrow(d)),
-    as.integer(d$f) -1L
+    as.integer(d$f) - 1L
   )
 })
 
 test_that("write Date", {
   skip_on_cran()
+  skip_without("arrow")
 
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -387,6 +396,7 @@ test_that("write Date", {
 
 test_that("write hms", {
   skip_on_cran()
+  skip_without("arrow")
 
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -402,6 +412,7 @@ test_that("write hms", {
 
 test_that("write POSIXct", {
   skip_on_cran()
+  skip_without("arrow")
 
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
@@ -417,13 +428,14 @@ test_that("write POSIXct", {
 
 test_that("write difftime", {
   skip_on_cran()
+  skip_without("arrow")
 
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
   # Fractional seconds are kept
   d <- data.frame(
-    h = as.difftime(10 + 1/9, units = "secs")
+    h = as.difftime(10 + 1 / 9, units = "secs")
   )
   write_parquet(d, tmp)
 

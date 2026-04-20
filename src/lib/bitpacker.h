@@ -15,9 +15,11 @@ public:
     while (v >= 128) {
       uint8_t c = v | 0x80;
       *buffer_++ = c;
+      // std::cerr << "pack varint +1" << std::endl;
       v >>= 7;
     }
     *buffer_++ = v;
+    // std::cerr << "pack varint +1" << std::endl;
   }
 
   // value for repetition, using bit_width bits rounded up to bytes
@@ -25,6 +27,7 @@ public:
     check_zero_offset();
     for (auto i = 0; i < value_bytes; i++) {
       *buffer_++ = v & 0xff;
+      // std::cerr << "pack value +1" << std::endl;
       v >>= 8;
     }
   }
@@ -34,6 +37,7 @@ public:
     bit_offset += bit_width_;
     if (bit_offset >= 64) {
       std::memcpy(buffer_, &tmp, 8);
+      // std::cerr << "pack: " << (void*) buffer_ << " + " << 8 << std::endl;
       buffer_ += 8;
       bit_offset -= 64;
       tmp = bit_offset == 0 ? 0 : v >> (bit_width_ - bit_offset);
@@ -46,6 +50,7 @@ public:
         "Internal bit packer error, flushing partial bytes"
       );
     }
+    // std::cerr << "flush: " << (void*) buffer_ << " + " << bit_offset / 8 << std::endl;
     std::memcpy(buffer_, &tmp, bit_offset / 8);
     buffer_ += bit_offset / 8;
     bit_offset = 0;
@@ -53,6 +58,7 @@ public:
   }
 
   inline uint32_t size() const {
+    // std::cerr << "bitbuffer size: " << buffer_ - start_ << std::endl;
     return buffer_ - start_;
   }
 

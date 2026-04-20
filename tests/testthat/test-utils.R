@@ -43,7 +43,7 @@ test_that("is_uint32", {
   expect_true(is_uint32(2147483647))
   expect_true(is_uint32(2147483647L))
 
-  expect_false(is_uint32(1/2))
+  expect_false(is_uint32(1 / 2))
   expect_false(is_uint32(-1))
   expect_false(is_uint32(4294967296))
   expect_false(is_uint32("a"))

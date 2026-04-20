@@ -16,6 +16,12 @@
 #'     more memory. Negative levels are also allowed, the lower the level,
 #'     the faster the speed, at the cost of compression. Currently the
 #'     smallest level is -131072. The default level is 3.
+#' @param keep_row_groups This option is used when appending to a Parquet
+#'   file with [append_parquet()]. If `TRUE` then the existing row groups
+#'   of the file are always kept as is and nanoparquet creates new row
+#'   groups for the new data. If `FALSE` (the default), then the last row
+#'   group of the file will be overwritten if it is smaller than the
+#'   default row group size, i.e. `num_rows_per_row_group`.
 #' @param num_rows_per_row_group The number of rows to put into a row
 #'   group, if row groups are not specified explicitly. It should be
 #'   an integer scalar. Defaults to 10 million.
@@ -34,6 +40,13 @@
 #'   metadata to the file [write_parquet()].
 #' @param write_data_page_version Data version to write by default.
 #'   Possible values are 1 and 2. Default is 1.
+#' @param read_int64_type How to represent INT64 columns with a 64-bit integer
+#'   logical type in [read_parquet()] and [read_parquet_schema()].
+#'   Possible values:
+#'   * `"double"` (the default): read as a regular R `double` vector,
+#'     which may lose precision for large values.
+#'   * `"integer64"` or `"bit64::integer64"`: read as a `bit64::integer64`
+#'     vector. Requires the bit64 package to be installed.
 #' @param write_minmax_values Whether to write minimum and maximum values
 #'   per row group, for data types that support this in [write_parquet()].
 #'   However, nanoparquet currently does not support minimum and maximum
@@ -59,20 +72,33 @@
 parquet_options <- function(
   class = getOption("nanoparquet.class", "tbl"),
   compression_level = getOption("nanoparquet.compression_level", NA_integer_),
-  num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
+  read_int64_type = getOption("nanoparquet.read_int64_type", "double"),
+  keep_row_groups = FALSE,
+  num_rows_per_row_group = getOption(
+    "nanoparquet.num_rows_per_row_group",
+    10000000L
+  ),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
-  write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L),
+  write_data_page_version = getOption(
+    "nanoparquet.write_data_page_version",
+    1L
+  ),
   write_minmax_values = getOption("nanoparquet.write_minmax_values", TRUE)
 ) {
   stopifnot(is.character(class))
+  stopifnot(
+    is_string(read_int64_type),
+    read_int64_type %in% c("double", "integer64", "bit64::integer64")
+  )
+  stopifnot(is_flag(keep_row_groups))
   stopifnot(is_flag(use_arrow_metadata))
   stopifnot(is_flag(write_arrow_metadata))
   stopifnot(
     identical(write_data_page_version, 1) ||
-    identical(write_data_page_version, 2) ||
-    identical(write_data_page_version, 1L) ||
-    identical(write_data_page_version, 2L)
+      identical(write_data_page_version, 2) ||
+      identical(write_data_page_version, 1L) ||
+      identical(write_data_page_version, 2L)
   )
   stopifnot(is_flag(write_minmax_values))
   num_rows_per_row_group <- as_count(
@@ -81,17 +107,24 @@ parquet_options <- function(
   )
   if (identical(compression_level, Inf)) {
     compression_level <- 100000L
-  } else if (identical(compression_level, NA) ||
-             identical(compression_level, NA_integer_) ||
-             identical(compression_level, NA_real_)) {
+  } else if (
+    identical(compression_level, NA) ||
+      identical(compression_level, NA_integer_) ||
+      identical(compression_level, NA_real_)
+  ) {
     compression_level <- NA_integer_
   } else {
-    compression_level <- as_integer_scalar(compression_level, "compression_level")
+    compression_level <- as_integer_scalar(
+      compression_level,
+      "compression_level"
+    )
   }
 
   list(
     class = class,
     compression_level = compression_level,
+    read_int64_type = read_int64_type,
+    keep_row_groups = keep_row_groups,
     num_rows_per_row_group = num_rows_per_row_group,
     use_arrow_metadata = use_arrow_metadata,
     write_arrow_metadata = write_arrow_metadata,

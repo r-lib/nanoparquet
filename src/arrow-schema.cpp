@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 #include "flatbuffers/Message_generated.h"
 
@@ -381,6 +381,51 @@ SEXP nanoparquet_encode_arrow_schema(SEXP rschema) {
     Type ft = (Type) INTEGER(f_ttp)[i];
     SEXP rtype = VECTOR_ELT(f_typ, i);
     switch (ft) {
+      case Type_Date:
+      {
+        DateBuilder date_builder(builder);
+        date_builder.add_unit((DateUnit) INTEGER(VECTOR_ELT(rtype, 0))[0]);
+        auto date_ = date_builder.Finish();
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(date_.Union());
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
+      case Type_Time:
+      {
+        TimeBuilder time_builder(builder);
+        time_builder.add_unit((TimeUnit) INTEGER(VECTOR_ELT(rtype, 0))[0]);
+        time_builder.add_bitWidth(INTEGER(VECTOR_ELT(rtype, 1))[0]);
+        auto time_ = time_builder.Finish();
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(time_.Union());
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
+      case Type_Timestamp:
+      {
+        auto timezone = builder.CreateString(CHAR(STRING_ELT(VECTOR_ELT(rtype, 1), 0)));
+        TimestampBuilder ts_builder(builder);
+        ts_builder.add_unit((TimeUnit) INTEGER(VECTOR_ELT(rtype, 0))[0]);
+        ts_builder.add_timezone(timezone);
+        auto ts_ = ts_builder.Finish();
+        FieldBuilder field_builder(builder);
+        field_builder.add_name(name);
+        field_builder.add_nullable(LOGICAL(f_nul)[i]);
+        field_builder.add_type_type(ft);
+        field_builder.add_type(ts_.Union());
+        auto field = field_builder.Finish();
+        field_vector.push_back(field);
+        break;
+      }
       case Type_Int:
       {
         IntBuilder int_builder(builder);
@@ -507,16 +552,25 @@ SEXP nanoparquet_encode_arrow_schema(SEXP rschema) {
   auto metadata = builder.CreateVector(metadata_vector);
 
   std::vector<int64_t> features_vector;
-  auto features = builder.CreateVector(features_vector);
   for (auto i = 0; i < Rf_xlength(rfeatures); i++) {
     features_vector.push_back(INTEGER(rfeatures)[i]);
+  }
+  // Only create the vector when non-empty. An empty int64_t vector would be
+  // placed without 8-byte alignment (flatbuffers skips PreAlign when len==0),
+  // causing arrow-rs's strict flatbuffer verifier to reject the schema.
+  flatbuffers::Offset<flatbuffers::Vector<int64_t>> features_offset;
+  bool has_features = !features_vector.empty();
+  if (has_features) {
+    features_offset = builder.CreateVector(features_vector);
   }
 
   SchemaBuilder schema_builder(builder);
   schema_builder.add_endianness((Endianness) INTEGER(rendianness)[0]);
   schema_builder.add_fields(fields);
   schema_builder.add_custom_metadata(metadata);
-  schema_builder.add_features(features);
+  if (has_features) {
+    schema_builder.add_features(features_offset);
+  }
   auto schema = schema_builder.Finish();
 
   MessageBuilder message_builder(builder);

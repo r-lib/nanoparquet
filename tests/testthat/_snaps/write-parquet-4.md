@@ -1,7 +1,7 @@
 # errors
 
     Code
-      .Call(nanoparquet_write, mtcars, tempfile(), dim(mtcars), 0L, list(character(),
+      .Call(rf_nanoparquet_write, mtcars, tempfile(), dim(mtcars), 0L, list(character(),
       character()), rep(FALSE, ncol(mtcars)), options, map_schema_to_df(NULL, mtcars),
       rep(10L, ncol(mtcars)), 1L, sys.call())
     Condition
@@ -41,12 +41,12 @@
     Code
       as.data.frame(read_parquet_schema(tmp))[, -1]
     Output
-          name  r_type  type type_length repetition_type converted_type logical_type
-      1 schema    <NA>  <NA>          NA            <NA>           <NA>             
-      2    dec integer INT32          NA        REQUIRED        DECIMAL             
-        num_children scale precision field_id
-      1            1    NA        NA       NA
-      2           NA     2         5       NA
+        r_col   name  r_type  type type_length repetition_type converted_type
+      1    NA schema    <NA>  <NA>          NA            <NA>           <NA>
+      2     1    dec integer INT32          NA        REQUIRED        DECIMAL
+        logical_type num_children scale precision field_id children
+      1                         1    NA        NA       NA         
+      2                        NA     2         5       NA         
 
 ---
 
@@ -457,7 +457,7 @@
     Code
       infer_parquet_schema(d)
     Condition
-      Error:
+      Error in `write_parquet()`:
       ! Cannot map a raw vector to any Parquet type
 
 # argument errors

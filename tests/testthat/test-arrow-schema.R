@@ -43,3 +43,90 @@ test_that("factor_bits", {
   mockery::stub(factor_bits, "length", 2147483648)
   expect_equal(factor_bits(fct), 64L)
 })
+
+test_that("temporal types", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  withr::local_options(nanoparquet.write_arrow_metadata = TRUE)
+
+  # Date
+  df_date <- data.frame(x = Sys.Date())
+  write_parquet(df_date, tmp)
+  np <- read_arrow_schema(tmp)
+  expect_snapshot({
+    as.data.frame(np[["columns"]])
+    np[["columns"]][["type"]]
+  })
+
+  # hms, integer
+  # it is unclear if this ever comes up in practice
+  df_hmsi <- data.frame(
+    x = structure(0L, units = "secs", class = c("hms", "difftime"))
+  )
+  write_parquet(df_hmsi, tmp)
+  np <- read_arrow_schema(tmp)
+  expect_snapshot({
+    as.data.frame(np[["columns"]])
+    np[["columns"]][["type"]]
+  })
+
+  # hms, double
+  df_hmsd <- data.frame(x = hms::hms(0))
+  write_parquet(df_hmsd, tmp)
+  np <- read_arrow_schema(tmp)
+  expect_snapshot({
+    as.data.frame(np[["columns"]])
+    np[["columns"]][["type"]]
+  })
+
+  # difftime
+  df_difftime <- data.frame(x = as.difftime(1, units = "secs"))
+  write_parquet(df_difftime, tmp)
+  np <- read_arrow_schema(tmp)
+  expect_snapshot({
+    as.data.frame(np[["columns"]])
+    np[["columns"]][["type"]]
+  })
+
+  # POSIXct
+  df_posixct <- data.frame(x = Sys.time())
+  write_parquet(df_posixct, tmp)
+  np <- read_arrow_schema(tmp)
+  expect_snapshot({
+    as.data.frame(np[["columns"]])
+    np[["columns"]][["type"]]
+  })
+
+  # factor
+  df_factor <- data.frame(x = as.factor(c("a", "a")))
+  write_parquet(df_factor, tmp)
+  np <- read_arrow_schema(tmp)
+  expect_snapshot({
+    as.data.frame(np[["columns"]])
+    np[["columns"]][["type"]]
+  })
+})
+
+test_that("arrow-rs can read ARROW:schema (issue #152)", {
+  skip_on_cran()
+  skip_without_cargo()
+
+  crate <- normalizePath(
+    testthat::test_path("fixtures/arrow-rs-reader"),
+    mustWork = TRUE
+  )
+  processx::run(
+    "cargo",
+    c("build", "--manifest-path", file.path(crate, "Cargo.toml")),
+    error_on_status = TRUE
+  )
+  bin <- file.path(crate, "target", "debug", "arrow-rs-reader")
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  withr::local_options(nanoparquet.write_arrow_metadata = TRUE)
+
+  write_parquet(data.frame(a = c(1, 2), b = c(3, 4)), tmp)
+  result <- processx::run(bin, tmp, error_on_status = TRUE)
+  expect_equal(trimws(result$stdout), "OK")
+})

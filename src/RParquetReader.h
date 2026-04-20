@@ -1,5 +1,5 @@
 #pragma once
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 #include "parquet/parquet_types.h"
 #include "lib/ParquetReader.h"
@@ -17,13 +17,18 @@ enum r_type_conversion {
   BA_UUID = 7,
   BA_FLOAT16 = 8,
   INT32_DECIMAL = 9,
-  INT64_DECIMAL = 10
+  INT64_DECIMAL = 10,
+  INT64_INTEGER64 = 11
 };
 
 class rtype {
 public:
   rtype() { }
-  rtype(parquet::SchemaElement &sel);
+  rtype(
+    std::vector<parquet::SchemaElement> &schema,
+    uint32_t schema_col,
+    std::vector<int32_t> &parent_column
+  );
   // final type
   int type;
   r_type_conversion type_conversion = NONE;
@@ -32,6 +37,8 @@ public:
   int tmptype = 0;
   // size of tmptype or type in bytes
   int elsize;
+  // size in parquet (with PLAIN encoding)
+  int psize;
   // number of R tmptype elements for 1 Parquet element
   int rsize = 1;
   std::vector<std::string> classes;
@@ -41,6 +48,10 @@ public:
   bool byte_array = false;
   // for DECIMAL
   int32_t scale;
+  // REPEATED columns are always converted to lists
+  bool repeated = false;
+  // bottom layer of 3-layer list column
+  bool is_list3 = false;
 };
 
 struct rmetadata {
@@ -48,11 +59,17 @@ public:
   int64_t num_rows;
   size_t num_cols;
   size_t num_leaf_cols;
+  size_t num_cols_to_read;
   size_t num_row_groups;
   std::vector<int64_t> row_group_num_rows;
   std::vector<int64_t> row_group_offsets;
+  // For repeated (list) columns: cumulative rep/def entry count before each
+  // row group, per column. Indexed [col][rg]. Empty for non-repeated columns.
+  std::vector<std::vector<int64_t>> rg_repeat_offsets;
   std::vector<rtype> r_types;
   std::vector<uint8_t*> dataptr;
+  std::vector<uint8_t*> repeatptr;
+  std::vector<int32_t> repetition_types;
 };
 
 struct tmpbytes {
@@ -79,12 +96,33 @@ public:
   std::vector<uint8_t> map;
 };
 
+class RParquetFilter {
+public:
+  RParquetFilter() : filter_row_groups(false), filter_columns(false),
+    int64_as_integer64(false) { };
+  bool filter_row_groups;
+  std::vector<uint32_t> row_groups;
+  bool filter_columns;
+  std::vector<uint32_t> columns;
+  bool int64_as_integer64;
+};
+
+struct chunk_part {
+  int64_t offset;         // within the row group
+  int64_t num_values;
+  int64_t num_present;
+  bool dict;
+};
+
 class RParquetReader : public ParquetReader {
 public:
-  RParquetReader(std::string filename);
+  RParquetReader(std::string filename, bool readwrite = false);
+  RParquetReader(std::string filename, RParquetFilter &filter);
   ~RParquetReader();
 
-  void create_metadata();
+  void create_metadata(RParquetFilter &filter);
+  void read_arrow_metadata();
+  void read_columns();
   void convert_columns_to_r();
   void create_df();
 
@@ -99,10 +137,21 @@ public:
   SEXP columns = R_NilValue;
   SEXP facdicts = R_NilValue;
   SEXP types = R_NilValue;
+  SEXP arrow_metadata = R_NilValue;
+  SEXP repeats = R_NilValue;
 
   std::vector<std::vector<uint8_t>> tmpdata;
   std::vector<std::vector<tmpdict>> dicts;
+  std::vector<std::vector<std::vector<chunk_part>>> chunk_parts;
   std::vector<std::vector<std::vector<tmpbytes>>> byte_arrays;
   std::vector<std::vector<presentmap>> present;
   rmetadata metadata;
+
+protected:
+  RParquetFilter filter;
+  void init(RParquetFilter &filter);
+  std::vector<uint32_t> colmap;
+  void calculate_dict_steps();
+  void calculate_dict_steps_simple();
+  void calculate_dict_steps_bad();
 };

@@ -13,11 +13,16 @@ Self-sufficient reader and writer for flat 'Parquet' files. Can read most 'Parqu
 \subsection{Features:}{
 \itemize{
 \item Read and write flat (i.e. non-nested) Parquet files.
-\item Can read most \href{https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html}{Parquet data types}.
+\item Can read most \href{https://nanoparquet.r-lib.org/reference/nanoparquet-types.html}{Parquet data types}.
+\item Can read a subset of columns from a Parquet file.
 \item Can write many R data types, including factors and temporal types
 to Parquet.
+\item Can append a data frame to a Parquet file without first reading and then
+rewriting the whole file.
 \item Completely dependency free.
 \item Supports Snappy, Gzip and Zstd compression.
+\item \href{https://nanoparquet.r-lib.org/dev/articles/benchmarks.html}{Competitive} with other
+tools in terms of speed, memory use and file size.
 }
 }
 
@@ -29,10 +34,9 @@ to Parquet.
 \item Only Snappy, Gzip and Zstd compression is supported.
 \item Encryption is not supported.
 \item Reading files from URLs is not supported.
-\item Being single-threaded and not fully optimized, nanoparquet is probably
-not suited well for large data sets. It should be fine for a couple of
-gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro.
-For larger files, use Apache Arrow or DuckDB.
+\item nanoparquet always reads the data (or the selected subset of it) into
+memory. It does not work with out-of-memory data in Parquet files like
+Apache Arrow and DuckDB does.
 }
 }
 
@@ -109,12 +113,18 @@ issue here with a link to the file.
 
 \subsection{Options}{
 
-See also \code{?parquet_options()}.
+See also \code{?parquet_options()} for further details.
 \itemize{
 \item \code{nanoparquet.class}: extra class to add to data frames returned by
 \code{read_parquet()}. If it is not defined, the default is \code{"tbl"},
 which changes how the data frame is printed if the pillar package is
 loaded.
+\item \code{nanoparquet.compression_level}: See \code{?parquet_options()} for the
+defaults and the possible values for each compression method. \code{Inf}
+selects maximum compression for each method.
+\item \code{nanoparquet.num_rows_per_row_group}: The number of rows to put into a
+row group by \code{write_parquet()}, if row groups are not specified
+explicitly. It should be an integer scalar. Defaults to 10 million.
 \item \code{nanoparquet.use_arrow_metadata}: unless this is set to \code{FALSE},
 \code{read_parquet()} will make use of Arrow metadata in the Parquet file.
 Currently this is used to detect factor columns.
@@ -122,6 +132,11 @@ Currently this is used to detect factor columns.
 \code{write_parquet()} will add Arrow metadata to the Parquet file.
 This helps preserving classes of columns, e.g. factors will be read
 back as factors, both by nanoparquet and Arrow.
+\item \code{nanoparquet.write_data_page_version}: Data version to write by default.
+Possible values are 1 and 2. Default is 1.
+\item \code{nanoparquet.write_minmax_values}: Whether to write minimum and maximum
+values per row group, for data types that support this in
+\code{write_parquet()}.
 }
 }
 
@@ -134,7 +149,7 @@ MIT
 Useful links:
 \itemize{
   \item \url{https://github.com/r-lib/nanoparquet}
-  \item \url{https://r-lib.github.io/nanoparquet/}
+  \item \url{https://nanoparquet.r-lib.org/}
   \item Report bugs at \url{https://github.com/r-lib/nanoparquet/issues}
 }
 
@@ -144,6 +159,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Gábor Csárdi \email{csardi.gabor@gmail.com}
   \item Hannes Mühleisen (\href{https://orcid.org/0000-0001-8552-0029}{ORCID}) [copyright holder]
 }
 

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cstring>
 
-#include <Rdefines.h>
+#include <Rinternals.h>
 #include "protect.h"
 
 extern SEXP nanoparquet_call;
@@ -195,6 +195,141 @@ uint64_t create_dict_idx(T* values, int *dict, int *idx, uint64_t len,
   return n;
 }
 
+// Create dict for VECSXP (list columns). Returns a list with:
+//   res[0] = actual unique leaf values (INTSXP/REALSXP/STRSXP)
+//   res[1] = flat dict indices for all non-NA leaf values
+//   res[2] = per-row offsets: offsets[i] = cumulative non-NA leaf count for rows 0..i
+static SEXP nanoparquet_create_dict_idx_vecsxp_(SEXP x, int64_t cfrom,
+                                                int64_t cuntil) {
+  int64_t len = cuntil - cfrom;
+
+  // Detect element type from the first non-empty list element
+  SEXPTYPE elt_type = NILSXP;
+  for (int64_t i = cfrom; i < cuntil; i++) {
+    SEXP elt = VECTOR_ELT(x, i);
+    if (!Rf_isNull(elt) && Rf_xlength(elt) > 0) {
+      elt_type = TYPEOF(elt);
+      break;
+    }
+  }
+
+  // Compute per-row offsets of non-NA leaf values
+  SEXP offsets = PROTECT(Rf_allocVector(INTSXP, len + 1));
+  int *ioffsets = INTEGER(offsets);
+  ioffsets[0] = 0;
+  for (int64_t i = 0; i < len; i++) {
+    SEXP row = VECTOR_ELT(x, cfrom + i);
+    int count = 0;
+    if (!Rf_isNull(row)) {
+      R_xlen_t rlen = Rf_xlength(row);
+      if (elt_type == INTSXP) {
+        int *irow = INTEGER(row);
+        for (R_xlen_t j = 0; j < rlen; j++) if (irow[j] != NA_INTEGER) count++;
+      } else if (elt_type == REALSXP) {
+        double *drow = REAL(row);
+        for (R_xlen_t j = 0; j < rlen; j++) if (!R_IsNA(drow[j])) count++;
+      } else if (elt_type == STRSXP) {
+        for (R_xlen_t j = 0; j < rlen; j++) if (STRING_ELT(row, j) != NA_STRING) count++;
+      }
+    }
+    ioffsets[i + 1] = ioffsets[i] + count;
+  }
+  int total_leaves = ioffsets[len];
+
+  // Build flat array of non-NA leaf values
+  SEXPTYPE flat_type = (elt_type == NILSXP) ? INTSXP : elt_type;
+  SEXP flat = PROTECT(Rf_allocVector(flat_type, total_leaves));
+  if (elt_type == INTSXP) {
+    int *iflat = INTEGER(flat);
+    int k = 0;
+    for (int64_t i = 0; i < len; i++) {
+      SEXP row = VECTOR_ELT(x, cfrom + i);
+      if (!Rf_isNull(row)) {
+        int *irow = INTEGER(row);
+        R_xlen_t rlen = Rf_xlength(row);
+        for (R_xlen_t j = 0; j < rlen; j++) if (irow[j] != NA_INTEGER) iflat[k++] = irow[j];
+      }
+    }
+  } else if (elt_type == REALSXP) {
+    double *dflat = REAL(flat);
+    int k = 0;
+    for (int64_t i = 0; i < len; i++) {
+      SEXP row = VECTOR_ELT(x, cfrom + i);
+      if (!Rf_isNull(row)) {
+        double *drow = REAL(row);
+        R_xlen_t rlen = Rf_xlength(row);
+        for (R_xlen_t j = 0; j < rlen; j++) if (!R_IsNA(drow[j])) dflat[k++] = drow[j];
+      }
+    }
+  } else if (elt_type == STRSXP) {
+    int k = 0;
+    for (int64_t i = 0; i < len; i++) {
+      SEXP row = VECTOR_ELT(x, cfrom + i);
+      if (!Rf_isNull(row)) {
+        R_xlen_t rlen = Rf_xlength(row);
+        for (R_xlen_t j = 0; j < rlen; j++) {
+          SEXP elt = STRING_ELT(row, j);
+          if (elt != NA_STRING) SET_STRING_ELT(flat, k++, elt);
+        }
+      }
+    }
+  }
+
+  // Create dict + flat indices from the flat array
+  SEXP flat_idx = PROTECT(Rf_allocVector(INTSXP, total_leaves));
+  SEXP flat_dict = PROTECT(Rf_allocVector(INTSXP, total_leaves));
+  int *iflat_idx = INTEGER(flat_idx);
+  int *iflat_dict = INTEGER(flat_dict);
+  uint64_t ndictlen = 0;
+  int imin = 0, imax = 0;
+  double dmin = 0, dmax = 0;
+  SEXP smin = R_NilValue, smax = R_NilValue;
+  bool hasminmax2 = false;
+  if (elt_type == INTSXP) {
+    ndictlen = create_dict_idx<int>(
+      INTEGER(flat), iflat_dict, iflat_idx, total_leaves,
+      NA_INTEGER, imin, imax, hasminmax2
+    );
+  } else if (elt_type == REALSXP) {
+    ndictlen = create_dict_real_idx(
+      REAL(flat), iflat_dict, iflat_idx, total_leaves,
+      dmin, dmax, hasminmax2
+    );
+  } else if (elt_type == STRSXP) {
+    ndictlen = create_dict_str_idx(
+      STRING_PTR_RO(flat), iflat_dict, iflat_idx, total_leaves,
+      NA_STRING, smin, smax, hasminmax2
+    );
+  }
+
+  // Build actual unique values vector (not positions into the original array)
+  SEXP unique_vals;
+  if (elt_type == INTSXP || elt_type == NILSXP) {
+    unique_vals = PROTECT(Rf_allocVector(INTSXP, ndictlen));
+    int *iunique = INTEGER(unique_vals);
+    int *iflat_ptr = INTEGER(flat);
+    for (uint64_t i = 0; i < ndictlen; i++) iunique[i] = iflat_ptr[iflat_dict[i]];
+  } else if (elt_type == REALSXP) {
+    unique_vals = PROTECT(Rf_allocVector(REALSXP, ndictlen));
+    double *dunique = REAL(unique_vals);
+    double *dflat_ptr = REAL(flat);
+    for (uint64_t i = 0; i < ndictlen; i++) dunique[i] = dflat_ptr[iflat_dict[i]];
+  } else {  // STRSXP
+    unique_vals = PROTECT(Rf_allocVector(STRSXP, ndictlen));
+    for (uint64_t i = 0; i < ndictlen; i++) {
+      SET_STRING_ELT(unique_vals, i, STRING_ELT(flat, iflat_dict[i]));
+    }
+  }
+
+  SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
+  SET_VECTOR_ELT(res, 0, unique_vals);
+  SET_VECTOR_ELT(res, 1, flat_idx);
+  SET_VECTOR_ELT(res, 2, offsets);
+
+  UNPROTECT(6); // offsets, flat, flat_idx, flat_dict, unique_vals, res
+  return res;
+}
+
 extern "C" {
 
 SEXP nanoparquet_create_dict(SEXP x, SEXP rlen) {
@@ -227,6 +362,10 @@ SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until) {
   int64_t cuntil = INTEGER(until)[0];
   int64_t len = cuntil - cfrom;
   R_xlen_t dictlen;
+
+  if (TYPEOF(x) == VECSXP) {
+    return nanoparquet_create_dict_idx_vecsxp_(x, cfrom, cuntil);
+  }
 
   SEXP idx = PROTECT(Rf_allocVector(INTSXP, len));
   SEXP dict = PROTECT(Rf_allocVector(INTSXP, len));

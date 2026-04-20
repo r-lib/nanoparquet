@@ -11,11 +11,17 @@
 ## Features:
 
 * Read and write flat (i.e. non-nested) Parquet files.
-* Can read most [Parquet data types](https://r-lib.github.io/nanoparquet/reference/nanoparquet-types.html).
+* Can read most [Parquet data types](https://nanoparquet.r-lib.org/reference/nanoparquet-types.html).
+* Can read a subset of columns from a Parquet file.
 * Can write many R data types, including factors and temporal types
   to Parquet.
+* Can append a data frame to a Parquet file without first reading and then
+  rewriting the whole file.
 * Completely dependency free.
 * Supports Snappy, Gzip and Zstd compression.
+* [Competitive](
+  https://nanoparquet.r-lib.org/dev/articles/benchmarks.html) with other
+  tools in terms of speed, memory use and file size.
 
 ## Limitations:
 
@@ -25,10 +31,9 @@
 * Only Snappy, Gzip and Zstd compression is supported.
 * Encryption is not supported.
 * Reading files from URLs is not supported.
-* Being single-threaded and not fully optimized, nanoparquet is probably
-  not suited well for large data sets. It should be fine for a couple of
-  gigabytes. Reading or writing a ~250MB file that has 32 million rows and 14 columns takes about 10-15 seconds on an M2 MacBook Pro.
-  For larger files, use Apache Arrow or DuckDB.
+* nanoparquet always reads the data (or the selected subset of it) into
+  memory. It does not work with out-of-memory data in Parquet files like
+  Apache Arrow and DuckDB does.
 
 ## Installation
 
@@ -100,12 +105,18 @@ issue here with a link to the file.
 
 ## Options
 
-See also `?parquet_options()`.
+See also `?parquet_options()` for further details.
 
 * `nanoparquet.class`: extra class to add to data frames returned by
   `read_parquet()`. If it is not defined, the default is `"tbl"`,
   which changes how the data frame is printed if the pillar package is
   loaded.
+* `nanoparquet.compression_level`: See `?parquet_options()` for the
+  defaults and the possible values for each compression method. `Inf`
+  selects maximum compression for each method.
+* `nanoparquet.num_rows_per_row_group`: The number of rows to put into a
+  row group by `write_parquet()`, if row groups are not specified
+  explicitly. It should be an integer scalar. Defaults to 10 million.
 * `nanoparquet.use_arrow_metadata`: unless this is set to `FALSE`,
   `read_parquet()` will make use of Arrow metadata in the Parquet file.
   Currently this is used to detect factor columns.
@@ -113,6 +124,11 @@ See also `?parquet_options()`.
   `write_parquet()` will add Arrow metadata to the Parquet file.
   This helps preserving classes of columns, e.g. factors will be read
   back as factors, both by nanoparquet and Arrow.
+* `nanoparquet.write_data_page_version`: Data version to write by default.
+  Possible values are 1 and 2. Default is 1.
+* `nanoparquet.write_minmax_values`: Whether to write minimum and maximum
+  values per row group, for data types that support this in
+  `write_parquet()`.
 
 ## License
 

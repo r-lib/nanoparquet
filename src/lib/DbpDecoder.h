@@ -82,7 +82,7 @@ public:
           mb_vals
         );
         for (auto i = 0; i < mb_vals; i++) {
-          *values = *(values-1) + *values + min_delta;
+          *values = (Tunsigned) (*(values-1)) + (Tunsigned) (*values) + (Tunsigned) min_delta;
           values++;
         }
         // we always need to add the full length here, because for

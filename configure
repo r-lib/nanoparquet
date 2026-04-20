@@ -1,0 +1,49 @@
+#! /usr/bin/env sh
+
+if [ -z "$R_HOME" ]; then
+    echo >&2 R_HOME is not set, are you running R CMD INSTALL?
+    exit 1
+fi
+
+if [ "$R_OSTYPE" = "unix" ]; then
+    UNAME=`uname`
+else
+    UNAME=Windows
+fi
+
+if ! echo ${R_LIBRARY_DIR} | grep -q nanoparquet.Rcheck &&
+   ! echo ${R_LIBS} | grep -q nanoparquet.Rcheck &&
+   [ -z "$MAKEFLAGS" ]; then
+  if [ -n "$NCPU" ]; then
+    # already set
+    true
+  elif [ "$R_OSTYPE" = "windows" ]; then
+    NCPU=$NUMBER_OF_PROCESSORS
+  elif [ "$UNAME" = "Linux" ]; then
+    NCPU=`cat /proc/cpuinfo  | grep '^processor\s*:' | wc -l || true`
+  elif [ "$UNAME" = "Darwin" ]; then
+    NCPU=`sysctl -n hw.ncpu || true`
+  else
+    NCPU=unknown
+  fi
+  if expr "$NCPU" : '[1-9][0-9]*$' >/dev/null; then
+    echo '**'" using $NCPU processors (unless configured differently in Makeconf)."
+    MAKEFLAGS=-j${NCPU}
+  fi
+fi
+
+PKG_LIBS=
+PKG_CPPFLAGS=
+if [ "$UNAME" = "Windows" ]; then
+    PKG_LIBS=-lws2_32
+    PKG_CPPFLAGS="-D__THRIFT_BYTE_ORDER=1 -D__THRIFT_LITTLE_ENDIAN=1 -D__THRIFT_BIG_ENDIAN=2"
+    # otherwise output is messed up in windows terminal or cmd
+    PKG_CXXFLAGS=-fno-diagnostics-color
+fi
+
+cat src/Makevars.in |
+    sed "s|@MAKEFLAGS@|${MAKEFLAGS}|" |
+    sed "s|@PKG_CPPFLAGS@|${PKG_CPPFLAGS}|" |
+    sed "s|@PKG_CXXFLAGS@|${PKG_CXXFLAGS}|" |
+    sed "s|@PKG_LIBS@|${PKG_LIBS}|" |
+    cat > src/Makevars

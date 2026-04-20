@@ -9,6 +9,7 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
 
 name: R-CMD-check
 
@@ -27,6 +28,7 @@ jobs:
           - {os: windows-latest, r: 'release'}
           # use 4.1 to check with rtools40's older compiler
           - {os: windows-latest, r: '4.1'}
+          - {os: windows-latest, r: '4.2'}
 
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
@@ -58,15 +60,22 @@ jobs:
             "~/.pip/pip.conf"
           )
           if (Sys.which("pip3") != "") {
-            system("pip3 install pyarrow pandas")
+            system("pip3 install pyarrow pandas polars")
           } else {
-            system("pip install pyarrow pandas")
+            system("pip install pyarrow pandas polars")
           }
         shell: Rscript {0}
 
       - uses: r-lib/actions/setup-r-dependencies@v2
+        if: runner.os != 'Windows'
         with:
           extra-packages: any::rcmdcheck
+          needs: check
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        if: runner.os == 'Windows'
+        with:
+          extra-packages: any::rcmdcheck, duckdb=?ignore-before-r=4.2.0
           needs: check
 
       - name: Update arrow on macOS, CRAN binary is broken
