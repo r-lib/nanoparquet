@@ -46,7 +46,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="nanoparquet-development-version">nanoparquet (development version)<a class="anchor" aria-label="anchor" href="#nanoparquet-development-version"></a></h2>
-</div>
+<ul><li>
+<code><a href="../reference/write_parquet.html">write_parquet()</a></code> no longer crashes when writing optional columns whose data size causes more Parquet pages to be allocated than there are rows (<a href="https://github.com/r-lib/nanoparquet/issues/147" class="external-link">#147</a>).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.1" id="nanoparquet-051">nanoparquet 0.5.1<a class="anchor" aria-label="anchor" href="#nanoparquet-051"></a></h2><p class="text-muted">CRAN release: 2026-04-20</p>
 <ul><li>

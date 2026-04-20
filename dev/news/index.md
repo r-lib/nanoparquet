@@ -2,6 +2,11 @@
 
 ## nanoparquet (development version)
 
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  no longer crashes when writing optional columns whose data size causes
+  more Parquet pages to be allocated than there are rows
+  ([\#147](https://github.com/r-lib/nanoparquet/issues/147)).
+
 ## nanoparquet 0.5.1
 
 CRAN release: 2026-04-20
