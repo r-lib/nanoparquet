@@ -1,5 +1,8 @@
 # nanoparquet (development version)
 
+* `write_parquet()` now supports writing to the standard output stream, via
+  `file = ":stdout:"`.
+
 * nanoparquet now supports `bit64::integer64` columns (#153):
 
   - `write_parquet()` now writes `bit64::integer64` columns to INT64

@@ -8,7 +8,10 @@
 #' @param x Data frame to write.
 #' @param file Path to the output file. If this is the string `":raw:"`,
 #'   then the data frame is written to a memory buffer, and the memory
-#'   buffer is returned as a raw vector.
+#'   buffer is returned as a raw vector. If `":stdout:"`, then it is
+#'   written to the standard output. (When writing to the standard output,
+#'   special care is needed to make sure no regular R output gets mixed
+#'   up with the Parquet bytes!)
 #' @param schema Parquet schema. Specify a schema to tweak the default
 #'   nanoparquet R -> Parquet type mappings. Use [parquet_schema()] to
 #'   create a schema that you can use here, or [read_parquet_schema()] to

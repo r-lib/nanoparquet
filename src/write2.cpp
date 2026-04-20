@@ -5,8 +5,9 @@
 #include "RParquetAppender.h"
 #include "r-nanoparquet.h"
 #include "unwind.h"
-
 using namespace nanoparquet;
+
+extern "C" void nanoparquet_write_stdout(const unsigned char *buf, size_t n);
 
 extern SEXP nanoparquet_call;
 
@@ -68,7 +69,7 @@ SEXP rf_nanoparquet_write(
   }
 
   std::string fname = cfname;
-  if (fname == ":raw:") {
+  if (fname == ":raw:" || fname == ":stdout:") {
     MemStream ms;
     std::ostream &os = ms.stream();
     RParquetOutFile of(os, codec, comp_level, row_groups);
@@ -80,6 +81,10 @@ SEXP rf_nanoparquet_write(
       res = Rf_allocVector(RAWSXP, bufsize);
     });
     ms.copy(RAW(res), bufsize);
+    if (fname == ":stdout:") {
+      nanoparquet_write_stdout(RAW(res), bufsize);
+      res = R_NilValue;
+    }
   } else {
     RParquetOutFile of(fname, codec, comp_level, row_groups);
     of.data_page_version = dp_ver;
