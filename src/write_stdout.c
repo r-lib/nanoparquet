@@ -7,8 +7,19 @@
 
 void nanoparquet_write_stdout(const unsigned char *buf, size_t n) {
 #ifdef _WIN32
-    _write(1, buf, (unsigned int) n);
+    while (n > 0) {
+        unsigned int chunk = n > 65536 ? 65536 : (unsigned int) n;
+        int written = _write(1, buf, chunk);
+        if (written <= 0) break;
+        buf += written;
+        n -= written;
+    }
 #else
-    write(1, buf, n);
+    while (n > 0) {
+        ssize_t written = write(1, buf, n);
+        if (written <= 0) break;
+        buf += (size_t) written;
+        n -= (size_t) written;
+    }
 #endif
 }
