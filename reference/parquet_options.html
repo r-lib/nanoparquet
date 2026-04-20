@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Nanoparquet options</h1>
-      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/v0.5.0/R/options.R" class="external-link"><code>R/options.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/main/R/options.R" class="external-link"><code>R/options.R</code></a></small>
       <div class="d-none name"><code>parquet_options.Rd</code></div>
     </div>
 
@@ -54,6 +54,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">parquet_options</span><span class="op">(</span></span>
 <span>  class <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.class"</span>, <span class="st">"tbl"</span><span class="op">)</span>,</span>
 <span>  compression_level <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.compression_level"</span>, <span class="cn">NA_integer_</span><span class="op">)</span>,</span>
+<span>  read_int64_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.read_int64_type"</span>, <span class="st">"double"</span><span class="op">)</span>,</span>
 <span>  keep_row_groups <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  num_rows_per_row_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.num_rows_per_row_group"</span>, <span class="fl">10000000L</span><span class="op">)</span>,</span>
 <span>  use_arrow_metadata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"nanoparquet.use_arrow_metadata"</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span>
@@ -85,6 +86,16 @@ The default is 6.</p></li>
 more memory. Negative levels are also allowed, the lower the level,
 the faster the speed, at the cost of compression. Currently the
 smallest level is -131072. The default level is 3.</p></li>
+</ul></dd>
+
+
+<dt id="arg-read-int-type">read_int64_type<a class="anchor" aria-label="anchor" href="#arg-read-int-type"></a></dt>
+<dd><p>How to represent INT64 columns with a 64-bit integer
+logical type in <code><a href="read_parquet.html">read_parquet()</a></code> and <code><a href="read_parquet_schema.html">read_parquet_schema()</a></code>.
+Possible values:</p><ul><li><p><code>"double"</code> (the default): read as a regular R <code>double</code> vector,
+which may lose precision for large values.</p></li>
+<li><p><code>"integer64"</code> or <code>"bit64::integer64"</code>: read as a <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code>
+vector. Requires the bit64 package to be installed.</p></li>
 </ul></dd>
 
 

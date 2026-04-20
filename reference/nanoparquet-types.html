@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>nanoparquet's type maps</h1>
-      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/v0.5.0/R/nanoparquet-package.R" class="external-link"><code>R/nanoparquet-package.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/main/R/nanoparquet-package.R" class="external-link"><code>R/nanoparquet-package.R</code></a></small>
       <div class="d-none name"><code>nanoparquet-types.Rd</code></div>
     </div>
 
@@ -54,11 +54,18 @@
     <h2 id="r-s-data-types">R's data types<a class="anchor" aria-label="anchor" href="#r-s-data-types"></a></h2>
     <p>When writing out a data frame, nanoparquet maps R's data types to Parquet
 logical types. The following table is a summary of the mapping. For the
-details see below.</p><table class="table table"><tr><td>R type</td><td>Parquet type</td><td>Default</td><td>Notes</td></tr><tr><td>character</td><td>STRING(BYTE_ARRAY)</td><td>x</td><td>I.e. STRSXP. Converted to UTF-8.</td></tr><tr><td>"</td><td>BYTE_ARRAY</td><td></td><td></td></tr><tr><td>"</td><td>FIXED_LEN_BYTE_ARRAY</td><td></td><td></td></tr><tr><td>"</td><td>ENUM</td><td></td><td></td></tr><tr><td>"</td><td>UUID</td><td></td><td></td></tr><tr><td>Date</td><td>DATE</td><td>x</td><td></td></tr><tr><td>difftime</td><td>INT64</td><td>x</td><td>If not hms::hms. Arrow metadata marks it as Duration(NS).</td></tr><tr><td>factor</td><td>STRING</td><td>x</td><td>Arrow metadata marks it as a factor.</td></tr><tr><td>"</td><td>ENUM</td><td></td><td></td></tr><tr><td>hms::hms</td><td>TIME(true, MILLIS)</td><td>x</td><td>Sub-milliseconds precision is lost.</td></tr><tr><td>integer</td><td>INT(32, true)</td><td>x</td><td>I.e. INTSXP.</td></tr><tr><td>"</td><td>INT64</td><td></td><td></td></tr><tr><td>"</td><td>INT96</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL(INT32)</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL(INT64)</td><td></td><td></td></tr><tr><td>"</td><td>INT(8, *)</td><td></td><td></td></tr><tr><td>"</td><td>INT(16, *)</td><td></td><td></td></tr><tr><td>"</td><td>INT(32, signed)</td><td></td><td></td></tr><tr><td>list</td><td>LIST(INT32 elements)</td><td>x</td><td>List of integer vectors. <code>NULL</code> entries and <code>NA</code> elements are supported.</td></tr><tr><td>"</td><td>LIST(DOUBLE elements)</td><td>x</td><td>List of double vectors. <code>NULL</code> entries and <code>NA</code> elements are supported.</td></tr><tr><td>"</td><td>LIST(STRING elements)</td><td>x</td><td>List of character vectors. <code>NULL</code> entries and <code>NA</code> elements are supported.</td></tr><tr><td>"</td><td>BYTE_ARRAY</td><td></td><td>Must be a list of raw vectors. Missing values are <code>NULL</code>.</td></tr><tr><td>"</td><td>FIXED_LEN_BYTE_ARRAY</td><td></td><td>Must be a list of raw vectors of the same length. Missing values are <code>NULL</code>.</td></tr><tr><td>logical</td><td>BOOLEAN</td><td>x</td><td>I.e. LGLSXP.</td></tr><tr><td>numeric</td><td>DOUBLE</td><td>x</td><td>I.e. REALSXP.</td></tr><tr><td>"</td><td>INT96</td><td></td><td></td></tr><tr><td>"</td><td>FLOAT</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL(INT32)</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL(INT64)</td><td></td><td></td></tr><tr><td>"</td><td>INT(*, *)</td><td></td><td></td></tr><tr><td>"</td><td>FLOAT16</td><td></td><td></td></tr><tr><td>POSIXct</td><td>TIMESTAMP(true, MICROS)</td><td>x</td><td>Sub-microsecond precision is lost.</td></tr></table><p>The non-default mappings can be selected via the <code>schema</code> argument. E.g.
+details see below.</p><table class="table table"><tr><td>R type</td><td>Parquet type</td><td>Default</td><td>Notes</td></tr><tr><td>bit64::integer64</td><td>INT64</td><td>x</td><td><code>NA_integer64_</code> marks missing values.</td></tr><tr><td>blob::blob</td><td>BYTE_ARRAY</td><td>x</td><td>Missing values are <code>NULL</code>.</td></tr><tr><td>"</td><td>FIXED_LEN_BYTE_ARRAY</td><td></td><td>All entries must have the same length. Missing values are <code>NULL</code>.</td></tr><tr><td>character</td><td>STRING(BYTE_ARRAY)</td><td>x</td><td>I.e. STRSXP. Converted to UTF-8.</td></tr><tr><td>"</td><td>BYTE_ARRAY</td><td></td><td></td></tr><tr><td>"</td><td>FIXED_LEN_BYTE_ARRAY</td><td></td><td></td></tr><tr><td>"</td><td>ENUM</td><td></td><td></td></tr><tr><td>"</td><td>UUID</td><td></td><td></td></tr><tr><td>Date</td><td>DATE</td><td>x</td><td></td></tr><tr><td>difftime</td><td>INT64</td><td>x</td><td>If not hms::hms. Arrow metadata marks it as Duration(NS).</td></tr><tr><td>factor</td><td>STRING</td><td>x</td><td>Arrow metadata marks it as a factor.</td></tr><tr><td>"</td><td>ENUM</td><td></td><td></td></tr><tr><td>hms::hms</td><td>TIME(true, MILLIS)</td><td>x</td><td>Sub-milliseconds precision is lost.</td></tr><tr><td>integer</td><td>INT(32, true)</td><td>x</td><td>I.e. INTSXP.</td></tr><tr><td>"</td><td>INT64</td><td></td><td></td></tr><tr><td>"</td><td>INT96</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL(INT32)</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL(INT64)</td><td></td><td></td></tr><tr><td>"</td><td>INT(8, *)</td><td></td><td></td></tr><tr><td>"</td><td>INT(16, *)</td><td></td><td></td></tr><tr><td>"</td><td>INT(32, signed)</td><td></td><td></td></tr><tr><td>list</td><td>LIST(INT32 elements)</td><td>x</td><td>List of integer vectors. <code>NULL</code> entries and <code>NA</code> elements are supported.</td></tr><tr><td>"</td><td>LIST(DOUBLE elements)</td><td>x</td><td>List of double vectors. <code>NULL</code> entries and <code>NA</code> elements are supported.</td></tr><tr><td>"</td><td>LIST(STRING elements)</td><td>x</td><td>List of character vectors. <code>NULL</code> entries and <code>NA</code> elements are supported.</td></tr><tr><td>"</td><td>BYTE_ARRAY</td><td></td><td>Must be a list of raw vectors. Missing values are <code>NULL</code>.</td></tr><tr><td>"</td><td>FIXED_LEN_BYTE_ARRAY</td><td></td><td>Must be a list of raw vectors of the same length. Missing values are <code>NULL</code>.</td></tr><tr><td>logical</td><td>BOOLEAN</td><td>x</td><td>I.e. LGLSXP.</td></tr><tr><td>numeric</td><td>DOUBLE</td><td>x</td><td>I.e. REALSXP.</td></tr><tr><td>"</td><td>INT96</td><td></td><td></td></tr><tr><td>"</td><td>FLOAT</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL(INT32)</td><td></td><td></td></tr><tr><td>"</td><td>DECIMAL(INT64)</td><td></td><td></td></tr><tr><td>"</td><td>INT(*, *)</td><td></td><td></td></tr><tr><td>"</td><td>FLOAT16</td><td></td><td></td></tr><tr><td>POSIXct</td><td>TIMESTAMP(true, MICROS)</td><td>x</td><td>Sub-microsecond precision is lost.</td></tr></table><p>The non-default mappings can be selected via the <code>schema</code> argument. E.g.
 to write out a factor column called 'name' as <code>ENUM</code>, use</p>
 <p></p><div class="sourceCode r"><pre><code><span><span class="fu"><a href="../reference/write_parquet.html">write_parquet</a></span><span class="op">(</span><span class="va">...</span>, schema <span class="op">=</span> <span class="fu"><a href="../reference/parquet_schema.html">parquet_schema</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"ENUM"</span><span class="op">)</span><span class="op">)</span></span></code></pre><p></p></div>
 <p>The detailed mapping rules are listed below, in order of preference.
-These rules will likely change until nanoparquet reaches version 1.0.0.</p><ol><li><p>Factors (i.e. vectors that inherit the <em>factor</em> class) are converted
+These rules will likely change until nanoparquet reaches version 1.0.0.</p><ol><li><p><code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> objects (from the bit64 package) are written as
+<code>INT64</code>. nanoparquet handles any object that inherits the <code>integer64</code>
+class this way. <code>NA_integer64_</code> (i.e. <code>INT64_MIN</code>) marks missing values.</p></li>
+<li><p><code><a href="https://blob.tidyverse.org/reference/blob.html" class="external-link">blob::blob</a></code> objects (from the blob package) are written as <code>BYTE_ARRAY</code>.
+<code><a href="https://blob.tidyverse.org/reference/blob.html" class="external-link">blob::blob</a></code> is a list of raw vectors, and nanoparquet handles any object
+that inherits the <code>blob</code> class this way, even if the blob package is not
+installed. Missing values (i.e. <code>NULL</code> list entries) are supported.</p></li>
+<li><p>Factors (i.e. vectors that inherit the <em>factor</em> class) are converted
 to character vectors using <code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code>, then written as a
 <code>STRSXP</code> (character vector) type. The fact that a column is a factor
 is stored in the Arrow metadata (see below), unless the
@@ -107,14 +114,15 @@ non-default mappings are:</p><ul><li><p><code>integer</code> to <code>INT64</cod
 <li><p><code>list</code> of <code>double</code> vectors to <code>LIST</code> with <code>DOUBLE</code> elements,</p></li>
 <li><p><code>list</code> of <code>character</code> vectors to <code>LIST</code> with <code>STRING</code> elements,</p></li>
 <li><p><code>list</code> of <code>raw</code> vectors to <code>BYTE_ARRAY</code>,</p></li>
-<li><p><code>list</code> of <code>raw</code> vectors to <code>FIXED_LEN_BYTE_ARRAY</code>.</p></li>
+<li><p><code>list</code> of <code>raw</code> vectors to <code>FIXED_LEN_BYTE_ARRAY</code>,</p></li>
+<li><p><code><a href="https://blob.tidyverse.org/reference/blob.html" class="external-link">blob::blob</a></code> to <code>FIXED_LEN_BYTE_ARRAY</code>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="parquet-s-data-types">Parquet's data types<a class="anchor" aria-label="anchor" href="#parquet-s-data-types"></a></h2>
     <p>When reading a Parquet file nanoparquet also relies on logical types and
 the Arrow metadata (if present, see below) in addition to the low level
 data types. The following table summarizes the mappings. See more details
-below.</p><table class="table table"><tr><td>Parquet type</td><td>R type</td><td>Notes</td></tr><tr><td><em>Logical types</em></td><td></td><td></td></tr><tr><td>BSON</td><td>character</td><td></td></tr><tr><td>DATE</td><td>Date</td><td></td></tr><tr><td>DECIMAL</td><td>numeric</td><td>REALSXP, potentially losing precision.</td></tr><tr><td>ENUM</td><td>character</td><td></td></tr><tr><td>FLOAT16</td><td>numeric</td><td>REALSXP</td></tr><tr><td>INT(8, *)</td><td>integer</td><td></td></tr><tr><td>INT(16, *)</td><td>integer</td><td></td></tr><tr><td>INT(32, *)</td><td>integer</td><td>Large unsigned values may overflow!</td></tr><tr><td>INT(64, *)</td><td>numeric</td><td>REALSXP</td></tr><tr><td>INTERVAL</td><td>list(raw)</td><td>Missing values are <code>NULL</code>.</td></tr><tr><td>JSON</td><td>character</td><td></td></tr><tr><td>LIST</td><td>list</td><td>Elements are read as their corresponding R type.</td></tr><tr><td>MAP</td><td></td><td>Not supported.</td></tr><tr><td>STRING</td><td>factor</td><td>If Arrow metadata says it is a factor. Also UTF8.</td></tr><tr><td>"</td><td>character</td><td>Otherwise. Also UTF8.</td></tr><tr><td>TIME</td><td>hms::hms</td><td>Also TIME_MILLIS and TIME_MICROS.</td></tr><tr><td>TIMESTAMP</td><td>POSIXct</td><td>Also TIMESTAMP_MILLIS and TIMESTAMP_MICROS.</td></tr><tr><td>UUID</td><td>character</td><td>In <code>00112233-4455-6677-8899-aabbccddeeff</code> form.</td></tr><tr><td>UNKNOWN</td><td></td><td>Not supported.</td></tr><tr><td><em>Primitive types</em></td><td></td><td></td></tr><tr><td>BOOLEAN</td><td>logical</td><td></td></tr><tr><td>BYTE_ARRAY</td><td>factor</td><td>If Arrow metadata says it is a factor.</td></tr><tr><td>"</td><td>list(raw)</td><td>Otherwise. Missing values are <code>NULL</code>.</td></tr><tr><td>DOUBLE</td><td>numeric</td><td>REALSXP</td></tr><tr><td>FIXED_LEN_BYTE_ARRAY</td><td>list(raw)</td><td>Missing values are <code>NULL</code>.</td></tr><tr><td>FLOAT</td><td>numeric</td><td>REALSXP</td></tr><tr><td>INT32</td><td>integer</td><td></td></tr><tr><td>INT64</td><td>numeric</td><td>REALSXP</td></tr><tr><td>INT96</td><td>POSIXct</td><td></td></tr></table><p>The exact rules are below. These rules will likely change until nanoparquet
+below.</p><table class="table table"><tr><td>Parquet type</td><td>R type</td><td>Notes</td></tr><tr><td><em>Logical types</em></td><td></td><td></td></tr><tr><td>BSON</td><td>character</td><td></td></tr><tr><td>DATE</td><td>Date</td><td></td></tr><tr><td>DECIMAL</td><td>numeric</td><td>REALSXP, potentially losing precision.</td></tr><tr><td>ENUM</td><td>character</td><td></td></tr><tr><td>FLOAT16</td><td>numeric</td><td>REALSXP</td></tr><tr><td>INT(8, *)</td><td>integer</td><td></td></tr><tr><td>INT(16, *)</td><td>integer</td><td></td></tr><tr><td>INT(32, *)</td><td>integer</td><td>Large unsigned values may overflow!</td></tr><tr><td>INT(64, *)</td><td>numeric</td><td>REALSXP, or <code>integer64</code> if <code>read_int64_type</code> option is set.</td></tr><tr><td>INTERVAL</td><td>list(raw)</td><td>Missing values are <code>NULL</code>.</td></tr><tr><td>JSON</td><td>character</td><td></td></tr><tr><td>LIST</td><td>list</td><td>Elements are read as their corresponding R type.</td></tr><tr><td>MAP</td><td></td><td>Not supported.</td></tr><tr><td>STRING</td><td>factor</td><td>If Arrow metadata says it is a factor. Also UTF8.</td></tr><tr><td>"</td><td>character</td><td>Otherwise. Also UTF8.</td></tr><tr><td>TIME</td><td>hms::hms</td><td>Also TIME_MILLIS and TIME_MICROS.</td></tr><tr><td>TIMESTAMP</td><td>POSIXct</td><td>Also TIMESTAMP_MILLIS and TIMESTAMP_MICROS.</td></tr><tr><td>UUID</td><td>character</td><td>In <code>00112233-4455-6677-8899-aabbccddeeff</code> form.</td></tr><tr><td>UNKNOWN</td><td></td><td>Not supported.</td></tr><tr><td><em>Primitive types</em></td><td></td><td></td></tr><tr><td>BOOLEAN</td><td>logical</td><td></td></tr><tr><td>BYTE_ARRAY</td><td>factor</td><td>If Arrow metadata says it is a factor.</td></tr><tr><td>"</td><td>blob::blob</td><td>Otherwise. Missing values are <code>NULL</code>.</td></tr><tr><td>DOUBLE</td><td>numeric</td><td>REALSXP</td></tr><tr><td>FIXED_LEN_BYTE_ARRAY</td><td>blob::blob</td><td>Missing values are <code>NULL</code>.</td></tr><tr><td>FLOAT</td><td>numeric</td><td>REALSXP</td></tr><tr><td>INT32</td><td>integer</td><td></td></tr><tr><td>INT64</td><td>numeric</td><td>REALSXP, or <code>integer64</code> if <code>read_int64_type</code> option is set.</td></tr><tr><td>INT96</td><td>POSIXct</td><td></td></tr></table><p>The exact rules are below. These rules will likely change until nanoparquet
 reaches version 1.0.0.</p><ol><li><p>The <code>BOOLEAN</code> type is read as a logical vector (<code>LGLSXP</code>).</p></li>
 <li><p>The <code>STRING</code> logical type and the <code>UTF8</code> converted type is read as
 a character vector with UTF-8 encoding.</p></li>
@@ -127,7 +135,11 @@ converted types are read as an <code>hms</code> object, see the hms package.</p>
 If the logical type has the <code>UTC</code> flag set, then the time zone of the
 <code>POSIXct</code> object is set to <code>UTC</code>.</p></li>
 <li><p><code>INT32</code> is read as an integer vector (<code>INTSXP</code>).</p></li>
-<li><p><code>INT64</code>, <code>DOUBLE</code> and <code>FLOAT</code> are read as real vectors (<code>REALSXP</code>).</p></li>
+<li><p><code>INT64</code> is read as a real vector (<code>REALSXP</code>) by default. If the
+<code>read_int64_type</code> option in <code><a href="parquet_options.html">parquet_options()</a></code> is set to <code>"integer64"</code>
+or <code>"bit64::integer64"</code>, it is read as a <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> vector
+instead. <code>NA_integer64_</code> (i.e. <code>INT64_MIN</code>) marks missing values.</p></li>
+<li><p><code>DOUBLE</code> and <code>FLOAT</code> are read as real vectors (<code>REALSXP</code>).</p></li>
 <li><p><code>INT96</code> is read as a <code>POSIXct</code> read vector with the <code>tzone</code> attribute
 set to <code>"UTC"</code>. It was an old convention to store time stamps as
 <code>INT96</code> objects.</p></li>
@@ -141,19 +153,23 @@ precision.</p></li>
 <li><p><code>BYTE_ARRAY</code> is read as a <em>factor</em> object if the file was written
 by Arrow and the original data type of the column was a factor.
 (See 'The Arrow metadata below.)</p></li>
-<li><p>Otherwise <code>BYTE_ARRAY</code> is read a list of raw vectors, with missing
-values denoted by <code>NULL</code>.</p></li>
+<li><p>Otherwise <code>BYTE_ARRAY</code> and <code>FIXED_LEN_BYTE_ARRAY</code> are read as a
+<code><a href="https://blob.tidyverse.org/reference/blob.html" class="external-link">blob::blob</a></code> object. <code><a href="https://blob.tidyverse.org/reference/blob.html" class="external-link">blob::blob</a></code> is a list of raw vectors with class
+<code>blob</code> (and related vctrs classes). The blob package is not required to
+use this object; it is simply a list of raw vectors. Missing values are
+denoted by <code>NULL</code>.</p></li>
 </ol><p>Other logical and converted types are read as their annotated low level
 types:</p><ol><li><p><code>INT(8, true)</code>, <code>INT(16, true)</code> and <code>INT(32, true)</code> are read as
 integer vectors because they are <code>INT32</code> internally in Parquet.</p></li>
-<li><p><code>INT(64, true)</code> is read as a real vector (<code>REALSXP</code>).</p></li>
+<li><p><code>INT(64, true)</code> is read as a real vector (<code>REALSXP</code>), unless the
+<code>read_int64_type</code> option is set (see above).</p></li>
 <li><p>Unsigned integer types <code>INT(8, false)</code>, <code>INT(16, false)</code> and
 <code>INT(32, false)</code> are read as integer vectors (<code>INTSXP</code>). Large
 positive values may overflow into negative values, this is a known
 issue that we will fix.</p></li>
-<li><p><code>INT(64, false)</code> is read as a real vector (<code>REALSXP</code>). Large
-positive values may overflow into negative values, this is a known
-issue that we will fix.</p></li>
+<li><p><code>INT(64, false)</code> is read as a real vector (<code>REALSXP</code>), unless the
+<code>read_int64_type</code> option is set (see above). Large positive values may
+overflow into negative values, this is a known issue that we will fix.</p></li>
 <li><p><code>INTERVAL</code> is a fixed length byte array, and nanoparquet reads it as
 a list of raw vectors. Missing values are denoted by <code>NULL</code>.</p></li>
 <li><p><code>JSON</code> columns are read as character vectors (<code>STRSXP</code>).</p></li>

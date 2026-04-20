@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,9 +41,25 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/r-lib/nanoparquet/blob/v0.5.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/r-lib/nanoparquet/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.1" id="nanoparquet-051">nanoparquet 0.5.1<a class="anchor" aria-label="anchor" href="#nanoparquet-051"></a></h2><p class="text-muted">CRAN release: 2026-04-20</p>
+<ul><li>
+<p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now supports writing to the standard output stream, via <code>file = ":stdout:"</code>. Example usage from the command line, with <code>R</code> or <code>Rscript</code>:</p>
+<pre><code>R -s -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' &gt; mtcars.parquet
+Rscript --quiet -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' &gt; mtcars.parquet</code></pre>
+</li>
+<li>
+<p>nanoparquet now supports <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> columns (<a href="https://github.com/r-lib/nanoparquet/issues/153" class="external-link">#153</a>):</p>
+<ul><li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now writes <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> columns to INT64 Parquet columns. Similarly, <code><a href="../reference/infer_parquet_schema.html">infer_parquet_schema()</a></code> also supports <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> columns.</p></li>
+<li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> and <code><a href="../reference/read_parquet_schema.html">read_parquet_schema()</a></code> now have a <code>read_int64_type</code> option in <code><a href="../reference/parquet_options.html">parquet_options()</a></code> to control how INT64 columns are read. Set it to <code>"integer64"</code> or <code>"bit64::integer64"</code> to read them as <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> vectors instead of the default <code>"double"</code>.</p></li>
+</ul></li>
+<li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> now returns <code>BYTE_ARRAY</code> and <code>FIXED_LEN_BYTE_ARRAY</code> columns (without a string/UUID/decimal annotation) as <code><a href="https://blob.tidyverse.org/reference/blob.html" class="external-link">blob::blob</a></code> objects instead of plain lists of raw vectors. <code><a href="../reference/write_parquet.html">write_parquet()</a></code> now also accepts <code><a href="https://blob.tidyverse.org/reference/blob.html" class="external-link">blob::blob</a></code> columns (<a href="https://github.com/r-lib/nanoparquet/issues/115" class="external-link">#115</a>).</p></li>
+<li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> can now read empty data frames (zero rows) written by the arrow package (<a href="https://github.com/r-lib/nanoparquet/issues/160" class="external-link">#160</a>).</p></li>
+<li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> can now read Parquet files that have zero-row row groups without dictionary pages (<a href="https://github.com/r-lib/nanoparquet/issues/162" class="external-link">#162</a>).</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.0" id="nanoparquet-050">nanoparquet 0.5.0<a class="anchor" aria-label="anchor" href="#nanoparquet-050"></a></h2><p class="text-muted">CRAN release: 2026-04-11</p>
 <ul><li><p><code><a href="../reference/append_parquet.html">append_parquet()</a></code> now gives a clear error when appending data with missing values (<code>NA</code>) to a column that was written as <code>REQUIRED</code> (i.e. non-nullable) (<a href="https://github.com/r-lib/nanoparquet/issues/146" class="external-link">#146</a>).</p></li>

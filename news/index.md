@@ -1,5 +1,59 @@
 # Changelog
 
+## nanoparquet 0.5.1
+
+CRAN release: 2026-04-20
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
+  now supports writing to the standard output stream, via
+  `file = ":stdout:"`. Example usage from the command line, with `R` or
+  `Rscript`:
+
+      R -s -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' > mtcars.parquet
+      Rscript --quiet -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' > mtcars.parquet
+
+- nanoparquet now supports
+  [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+  columns ([\#153](https://github.com/r-lib/nanoparquet/issues/153)):
+
+  - [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
+    now writes
+    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    columns to INT64 Parquet columns. Similarly,
+    [`infer_parquet_schema()`](https://nanoparquet.r-lib.org/reference/infer_parquet_schema.md)
+    also supports
+    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    columns.
+
+  - [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
+    and
+    [`read_parquet_schema()`](https://nanoparquet.r-lib.org/reference/read_parquet_schema.md)
+    now have a `read_int64_type` option in
+    [`parquet_options()`](https://nanoparquet.r-lib.org/reference/parquet_options.md)
+    to control how INT64 columns are read. Set it to `"integer64"` or
+    `"bit64::integer64"` to read them as
+    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    vectors instead of the default `"double"`.
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
+  now returns `BYTE_ARRAY` and `FIXED_LEN_BYTE_ARRAY` columns (without a
+  string/UUID/decimal annotation) as
+  [`blob::blob`](https://blob.tidyverse.org/reference/blob.html) objects
+  instead of plain lists of raw vectors.
+  [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
+  now also accepts
+  [`blob::blob`](https://blob.tidyverse.org/reference/blob.html) columns
+  ([\#115](https://github.com/r-lib/nanoparquet/issues/115)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
+  can now read empty data frames (zero rows) written by the arrow
+  package ([\#160](https://github.com/r-lib/nanoparquet/issues/160)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
+  can now read Parquet files that have zero-row row groups without
+  dictionary pages
+  ([\#162](https://github.com/r-lib/nanoparquet/issues/162)).
+
 ## nanoparquet 0.5.0
 
 CRAN release: 2026-04-11
