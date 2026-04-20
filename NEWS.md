@@ -1,3 +1,5 @@
+# nanoparquet (development version)
+
 # nanoparquet 0.5.1
 
 * `write_parquet()` now supports writing to the standard output stream, via
