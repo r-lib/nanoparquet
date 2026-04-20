@@ -46,7 +46,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="nanoparquet-development-version">nanoparquet (development version)<a class="anchor" aria-label="anchor" href="#nanoparquet-development-version"></a></h2>
-<ul><li>
+<ul><li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now supports writing to the standard output stream, via <code>file = ":stdout:"</code>.</p></li>
+<li>
 <p>nanoparquet now supports <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> columns (<a href="https://github.com/r-lib/nanoparquet/issues/153" class="external-link">#153</a>):</p>
 <ul><li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now writes <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> columns to INT64 Parquet columns. Similarly, <code><a href="../reference/infer_parquet_schema.html">infer_parquet_schema()</a></code> also supports <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> columns.</p></li>
 <li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> and <code><a href="../reference/read_parquet_schema.html">read_parquet_schema()</a></code> now have a <code>read_int64_type</code> option in <code><a href="../reference/parquet_options.html">parquet_options()</a></code> to control how INT64 columns are read. Set it to <code>"integer64"</code> or <code>"bit64::integer64"</code> to read them as <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> vectors instead of the default <code>"double"</code>.</p></li>

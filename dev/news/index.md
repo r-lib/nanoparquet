@@ -2,6 +2,10 @@
 
 ## nanoparquet (development version)
 
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now supports writing to the standard output stream, via
+  `file = ":stdout:"`.
+
 - nanoparquet now supports
   [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
   columns ([\#153](https://github.com/r-lib/nanoparquet/issues/153)):
