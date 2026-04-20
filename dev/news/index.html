@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.5.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.5.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,14 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="nanoparquet-development-version">nanoparquet (development version)<a class="anchor" aria-label="anchor" href="#nanoparquet-development-version"></a></h2>
-<ul><li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now supports writing to the standard output stream, via <code>file = ":stdout:"</code>.</p></li>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.1" id="nanoparquet-051">nanoparquet 0.5.1<a class="anchor" aria-label="anchor" href="#nanoparquet-051"></a></h2><p class="text-muted">CRAN release: 2026-04-20</p>
+<ul><li>
+<p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now supports writing to the standard output stream, via <code>file = ":stdout:"</code>. Example usage from the command line, with <code>R</code> or <code>Rscript</code>:</p>
+<pre><code>R -s -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' &gt; mtcars.parquet
+Rscript --quiet -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' &gt; mtcars.parquet</code></pre>
+</li>
 <li>
 <p>nanoparquet now supports <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> columns (<a href="https://github.com/r-lib/nanoparquet/issues/153" class="external-link">#153</a>):</p>
 <ul><li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now writes <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> columns to INT64 Parquet columns. Similarly, <code><a href="../reference/infer_parquet_schema.html">infer_parquet_schema()</a></code> also supports <code><a href="https://rdrr.io/pkg/bit64/man/bit64-package.html" class="external-link">bit64::integer64</a></code> columns.</p></li>

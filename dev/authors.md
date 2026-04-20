@@ -29,13 +29,13 @@ Source:
 [`DESCRIPTION`](https://github.com/r-lib/nanoparquet/blob/main/DESCRIPTION)
 
 Csárdi G, Mühleisen H (2026). *nanoparquet: Read and Write 'Parquet'
-Files*. R package version 0.5.0.9000,
+Files*. R package version 0.5.1.9000,
 <https://github.com/r-lib/nanoparquet>.
 
     @Manual{,
       title = {nanoparquet: Read and Write 'Parquet' Files},
       author = {Gábor Csárdi and Hannes Mühleisen},
       year = {2026},
-      note = {R package version 0.5.0.9000},
+      note = {R package version 0.5.1.9000},
       url = {https://github.com/r-lib/nanoparquet},
     }

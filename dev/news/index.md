@@ -2,9 +2,17 @@
 
 ## nanoparquet (development version)
 
+## nanoparquet 0.5.1
+
+CRAN release: 2026-04-20
+
 - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
   now supports writing to the standard output stream, via
-  `file = ":stdout:"`.
+  `file = ":stdout:"`. Example usage from the command line, with `R` or
+  `Rscript`:
+
+      R -s -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' > mtcars.parquet
+      Rscript --quiet -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' > mtcars.parquet
 
 - nanoparquet now supports
   [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
