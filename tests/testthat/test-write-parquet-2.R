@@ -219,6 +219,10 @@ test_that("write_parquet() to memory 2", {
 
 test_that("write_parquet() to stdout", {
   skip_on_cran()
+  if (packageVersion("processx") < "3.8.7.9000") {
+    skip("processx 3.8.7.9000 is required")
+  }
+
   tmp1 <- tempfile(fileext = ".parquet")
   tmp2 <- tempfile(fileext = ".parquet")
   script <- tempfile(fileext = ".R")
@@ -229,7 +233,13 @@ test_that("write_parquet() to stdout", {
     "nanoparquet::write_parquet(mtcars, \":stdout:\")"
   )
   writeLines(txt, script)
-  processx::run(rscript(), script, stdout = tmp1, stderr = NULL)
+  processx::run(
+    rscript(),
+    script,
+    stdout = tmp1,
+    stderr = NULL,
+    encoding = "binary"
+  )
   r1 <- readBin(tmp1, "raw", file.size(tmp1))
   write_parquet(mtcars, tmp2)
   r2 <- readBin(tmp2, "raw", file.size(tmp2))
