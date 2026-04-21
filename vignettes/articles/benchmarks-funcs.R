@@ -16,12 +16,17 @@ me <- normalizePath(
     "articles"
   } else {
     "vignettes/articles"
-  })
+  }
+)
 
 data_sizes <- c("small", "medium", "large")
 variants <- c(
-  "nanoparquet", "arrow", "duckdb", "data.table",
-  "data.table.gz", "readr"
+  "nanoparquet",
+  "arrow",
+  "duckdb",
+  "data.table",
+  "data.table.gz",
+  "readr"
 )
 
 gen_data <- function(size) {
@@ -44,7 +49,7 @@ read_arrow <- function(path) {
 }
 
 read_duckdb <- function(path) {
-  duckdb:::sql(sprintf("FROM '%s'", path))
+  duckdb::sql_query(sprintf("FROM '%s'", path))
 }
 
 read_data_table <- function(path) {
@@ -68,10 +73,14 @@ write_duckdb <- function(x, path) {
   con <- DBI::dbConnect(drv)
   on.exit(DBI::dbDisconnect(con), add = TRUE)
   DBI::dbWriteTable(con, "tab", as.data.frame(x))
-  DBI::dbExecute(con, DBI::sqlInterpolate(con,
-    "COPY tab TO ?filename (FORMAT 'parquet', COMPRESSION 'snappy')",
-    filename = path
-  ))
+  DBI::dbExecute(
+    con,
+    DBI::sqlInterpolate(
+      con,
+      "COPY tab TO ?filename (FORMAT 'parquet', COMPRESSION 'snappy')",
+      filename = path
+    )
+  )
 }
 
 write_data_table <- function(x, path) {
@@ -83,10 +92,16 @@ write_readr <- function(x, path) {
 }
 
 measure <- function(
-  variant = c("nanoparquet", "arrow", "duckdb", "data.table",
-    "data.table.gz", "readr", "data"),
-  size = c("small", "medium", "large")) {
-
+  variant = c(
+    "nanoparquet",
+    "arrow",
+    "duckdb",
+    "data.table",
+    "data.table.gz",
+    "readr"
+  ),
+  size = c("small", "medium", "large")
+) {
   message("Measuring ", variant, ", ", size)
 
   variant <- match.arg(variant)
@@ -105,54 +120,78 @@ measure <- function(
   write_result <- callr::r(
     args = list(variant, size, tmp, me),
     function(variant, size, tmp, me) {
+      source(file.path(me, "benchmarks-funcs.R"))
+      test_data <- gen_data(size)
 
-    source(file.path(me, "benchmarks-funcs.R"))
-    test_data <- gen_data(size)
+      write <- switch(
+        variant,
+        nanoparquet = write_nanoparquet,
+        arrow = write_arrow,
+        duckdb = write_duckdb,
+        data.table = ,
+        data.table.gz = write_data_table,
+        readr = write_readr
+      )
 
-    write <- switch(variant,
-      nanoparquet = write_nanoparquet,
-      arrow = write_arrow,
-      duckdb = write_duckdb,
-      data.table =, data.table.gz = write_data_table,
-      readr = write_readr
-    )
-
-    gc(); gc();
-    mem_before <- ps::ps_memory_full_info()
-    timing <- system.time(write(test_data, tmp))
-    mem_after <- ps::ps_memory_full_info()
-    list(mem_before = mem_before, mem_after = mem_after, timing = timing)
-    })
+      gc()
+      gc()
+      mem_before <- ps::ps_memory_full_info()
+      timing <- system.time(write(test_data, tmp))
+      mem_after <- ps::ps_memory_full_info()
+      list(mem_before = mem_before, mem_after = mem_after, timing = timing)
+    }
+  )
 
   read_result <- callr::r(
     args = list(variant, tmp, me),
     function(variant, tmp, me) {
-
-    source(file.path(me, "benchmarks-funcs.R"))
-    read <- switch(variant,
-      nanoparquet = read_nanoparquet,
-      arrow = read_arrow,
-      duckdb = read_duckdb,
-      data.table =, data.table.gz = read_data_table,
-      readr = read_readr
-    )
-    gc(); gc()
-    mem_before <- ps::ps_memory_full_info()
-    timing <- system.time(read(tmp))
-    mem_after <- ps::ps_memory_full_info()
-    list(mem_before = mem_before, mem_after = mem_after, timing = timing)
-  })
+      source(file.path(me, "benchmarks-funcs.R"))
+      read <- switch(
+        variant,
+        nanoparquet = read_nanoparquet,
+        arrow = read_arrow,
+        duckdb = read_duckdb,
+        data.table = ,
+        data.table.gz = read_data_table,
+        readr = read_readr
+      )
+      gc()
+      gc()
+      mem_before <- ps::ps_memory_full_info()
+      timing <- system.time(read(tmp))
+      mem_after <- ps::ps_memory_full_info()
+      list(mem_before = mem_before, mem_after = mem_after, timing = timing)
+    }
+  )
 
   data.frame(
     software = variant,
     direction = c("read", "write"),
     data_size = size,
-    time_user = c(read_result$timing["user.self"], write_result$timing["user.self"]),
-    time_system = c(read_result$timing["sys.self"], write_result$timing["sys.self"]),
-    time_elapsed = c(read_result$timing["elapsed"], write_result$timing["elapsed"]),
-    mem_before = c(read_result$mem_before[["rss"]], write_result$mem_before[["rss"]]),
-    mem_max_before = c(read_result$mem_before[["maxrss"]], write_result$mem_before[["maxrss"]]),
-    mem_max_after = c(read_result$mem_after[["maxrss"]], write_result$mem_after[["maxrss"]]),
+    time_user = c(
+      read_result$timing["user.self"],
+      write_result$timing["user.self"]
+    ),
+    time_system = c(
+      read_result$timing["sys.self"],
+      write_result$timing["sys.self"]
+    ),
+    time_elapsed = c(
+      read_result$timing["elapsed"],
+      write_result$timing["elapsed"]
+    ),
+    mem_before = c(
+      read_result$mem_before[["rss"]],
+      write_result$mem_before[["rss"]]
+    ),
+    mem_max_before = c(
+      read_result$mem_before[["maxrss"]],
+      write_result$mem_before[["maxrss"]]
+    ),
+    mem_max_after = c(
+      read_result$mem_after[["maxrss"]],
+      write_result$mem_after[["maxrss"]]
+    ),
     file_size = c(NA_integer_, file.size(tmp))
   )
 }

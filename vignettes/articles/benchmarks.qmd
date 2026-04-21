@@ -29,14 +29,13 @@ me <- normalizePath(
   } else {
     "vignettes/articles"
   })
-writeLines(me, "/tmp/me")
 source(file.path(me, "benchmarks-funcs.R"))
 ```
 
 ```{r, include = FALSE}
-library(dplyr)
-library(gt)
-library(gtExtras)
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(gt))
+suppressPackageStartupMessages(library(gtExtras))
 ```
 
 ```r
@@ -168,7 +167,8 @@ csv_tab_read |>
   cols_hide(columns = c(`data size`, rawtime)) |>
   cols_align(columns = time, align = "right") |>
   fmt_bytes(columns = memory) |>
-  gt_plt_bar(column = `speedup from CSV`)
+  gt_plt_bar(column = `speedup from CSV`, color = "steelblue") |>
+  opt_css("td svg rect:first-child { fill: transparent !important; }")
 ```
 
 Notes:
@@ -206,15 +206,16 @@ csv_tab_write |>
   cols_hide(columns = c(`data size`, rawtime)) |>
   cols_align(columns = time, align = "right") |>
   fmt_bytes(columns = c(memory, `file size`)) |>
-  gt_plt_bar(column = `speedup from CSV`)
+  gt_plt_bar(column = `speedup from CSV`, color = "steelblue") |>
+  opt_css("td svg rect:first-child { fill: transparent !important; }")
 ```
 
 Notes:
 
-* The data.table CSV writer is about 3 times as fast as the nanoparquet
+* The data.table CSV writer is about 6 times as fast as the nanoparquet
   Parquet writer, if the CSV file is uncompressed. The CSV writer uses at
-  least 4 threads, the Parquet write is single-threaded.
-* The nanoparquet Parquet writer is 2-5 times faster than the data.table
+  least 7 threads, the Parquet write is single-threaded.
+* The nanoparquet Parquet writer is about 2 times faster than the data.table
   CSV writer if the CSV file is compressed.
 * The Parquet files are about 5-6 times smaller than the uncompressed CSV
   files and about 30-35% smaller than the compressed CSV files.
@@ -252,7 +253,8 @@ pq_tab_read |>
   cols_hide(columns = c(`data size`, rawtime)) |>
   cols_align(columns = time, align = "right") |>
   fmt_bytes(columns = memory) |>
-  gt_plt_bar(column = `speedup from CSV`)
+  gt_plt_bar(column = `speedup from CSV`, color = "steelblue") |>
+  opt_css("td svg rect:first-child { fill: transparent !important; }")
 ```
 
 Notes:
@@ -293,17 +295,14 @@ pq_tab_write |>
   cols_hide(columns = c(`data size`, rawtime)) |>
   cols_align(columns = time, align = "right") |>
   fmt_bytes(columns = c(memory, `file size`)) |>
-  gt_plt_bar(column = `speedup from CSV`)
+  gt_plt_bar(column = `speedup from CSV`, color = "steelblue") |>
+  opt_css("td svg rect:first-child { fill: transparent !important; }")
 ```
 
 Notes:
 
-* nanoparquet is again very competitive in terms of speed, it is slightly
-  faster than the other two implementations, for these data sets.
-* DuckDB seems to waste space when writing out Parquet files. This
-  could be possibly fine tuned by forcing a different encoding. This
-  behavior has improved somewhat with the 1.2.0 release
-  (<https://github.com/duckdb/duckdb/issues/3316>).
+* nanoparquet is again very competitive in terms of speed, for these data
+  sets.
 
 <!-- ## ALTREP vs subsets -->
 
@@ -333,7 +332,8 @@ not wide enough for the whole table.
 
 ```{r results}
 #| R.options = list(width = 500)
-library(pillar)
+suppressPackageStartupMessages(library(pillar))
+results <- tibble::as_tibble(results)
 print(results, n = Inf)
 ```
 
@@ -375,10 +375,14 @@ because they need to load their dependencies and they are also bigger.
 if (file.exists(file.path(me, "sessioninfo.rds"))) {
   si <- readRDS(file.path(me, "sessioninfo.rds"))
 } else {
+  suppressPackageStartupMessages(library(arrow))
+  suppressPackageStartupMessages(library(duckdb))
+  suppressPackageStartupMessages(library(data.table))
+  suppressPackageStartupMessages(library(readr))
   si <- sessioninfo::session_info()
   saveRDS(si, file.path(me, "sessioninfo.rds"))
 }
 # load sessioninfo, for the print method
-library(sessioninfo)
-si  
+suppressPackageStartupMessages(library(sessioninfo))
+si
 ```
