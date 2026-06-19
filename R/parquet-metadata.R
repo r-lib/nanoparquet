@@ -425,6 +425,7 @@ edit_parquet_metadata <- function(file, metadata) {
     key <- new_kv$key[i]
     value <- new_kv$value[i]
     if (is.na(value)) {
+      value = NA_character_
       result <- result[result$key != key, , drop = FALSE]
     } else if (key %in% result$key) {
       result$value[result$key == key] <- value
