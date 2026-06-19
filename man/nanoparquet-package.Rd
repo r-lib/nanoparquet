@@ -159,7 +159,6 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Gábor Csárdi \email{csardi.gabor@gmail.com}
   \item Hannes Mühleisen (\href{https://orcid.org/0000-0001-8552-0029}{ORCID}) [copyright holder]
 }
 

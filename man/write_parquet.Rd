@@ -86,7 +86,7 @@ Writes the contents of an R data frame into a Parquet file.
 }
 \details{
 \code{write_parquet()} converts string columns to UTF-8 encoding by calling
-\code{\link[base:enc2utf8]{base::enc2utf8()}}. It does the same for factor levels.
+\code{\link[base:Encoding]{base::enc2utf8()}}. It does the same for factor levels.
 }
 \examples{
 \dontshow{if (FALSE) withAutoprint(\{ # examplesIf}
