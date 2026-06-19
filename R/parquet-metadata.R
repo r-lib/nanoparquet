@@ -385,14 +385,18 @@ edit_parquet_metadata <- function(file, metadata) {
   # Read existing key-value metadata
   existing_kv <- read_parquet_metadata(file)$file_meta_data$key_value_metadata[[1]]
 
-  # Parse the supplied metadata argument into a two-column data frame
+  # NULL means remove all metadata: skip the merge and write nothing.
   if (is.null(metadata)) {
-    new_kv <- data.frame(
-      key = character(0),
-      value = character(0),
-      stringsAsFactors = FALSE
-    )
-  } else if (is.data.frame(metadata)) {
+    return(.Call(
+      rf_nanoparquet_edit_metadata,
+      file,
+      character(0),
+      character(0)
+    ))
+  }
+
+  # Parse the supplied metadata argument into a two-column data frame
+  if (is.data.frame(metadata)) {
     if (ncol(metadata) != 2) {
       stop("`metadata` data frame must have exactly two columns.")
     }
@@ -416,31 +420,22 @@ edit_parquet_metadata <- function(file, metadata) {
   }
 
   # Apply the changes to the existing metadata (merge/update/remove).
-  # NULL is special: it means "remove everything".
-  if (is.null(metadata)) {
-    result <- data.frame(
-      key = character(0),
-      value = character(0),
-      stringsAsFactors = FALSE
-    )
-  } else {
-    result <- existing_kv
-    for (i in seq_len(nrow(new_kv))) {
-      key <- new_kv$key[i]
-      value <- new_kv$value[i]
-      if (is.na(value)) {
-        result <- result[result$key != key, , drop = FALSE]
-      } else if (key %in% result$key) {
-        result$value[result$key == key] <- value
-      } else {
-        result <- rbind(
-          result,
-          data.frame(key = key, value = value, stringsAsFactors = FALSE)
-        )
-      }
+  result <- existing_kv
+  for (i in seq_len(nrow(new_kv))) {
+    key <- new_kv$key[i]
+    value <- new_kv$value[i]
+    if (is.na(value)) {
+      result <- result[result$key != key, , drop = FALSE]
+    } else if (key %in% result$key) {
+      result$value[result$key == key] <- value
+    } else {
+      result <- rbind(
+        result,
+        data.frame(key = key, value = value, stringsAsFactors = FALSE)
+      )
     }
-    row.names(result) <- NULL
   }
+  row.names(result) <- NULL
 
   .Call(
     rf_nanoparquet_edit_metadata,
