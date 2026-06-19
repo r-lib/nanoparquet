@@ -336,3 +336,118 @@ parquet_info <- function(file) {
   )
   read_parquet_info(file)
 }
+
+#' Edit the key-value metadata of a Parquet file
+#'
+#' Modify the file-level key-value metadata of a Parquet file in place,
+#' without copying any row-group data. Individual entries can be added,
+#' updated or removed.
+#'
+#' @section Warning:
+#' This function is **not** atomic! If it is interrupted it may leave the
+#' file in a corrupt state. To work around this create a copy of the
+#' original file, edit the copy, and then rename the copy to the original.
+#'
+#' @param file Path to a Parquet file.
+#' @param metadata Key-value pairs to add, update or remove. Accepted forms:
+#'   * A **named character vector** – each name is a key and each element is
+#'     its new value. Set a value to `NA` to **remove** that key.
+#'   * A **data frame with two columns** – the first column contains keys and
+#'     the second contains values. An `NA` value removes that key.
+#'   * `NULL` – removes **all** key-value metadata from the file.
+#'
+#'   Keys that are not mentioned in `metadata` are left unchanged.
+#'
+#' @return `NULL`, invisibly.  Called for its side effect.
+#' @seealso [read_parquet_metadata()] to inspect metadata.
+#'   [write_parquet()] for the `metadata` argument when writing.
+#'   [append_parquet()] to append rows without copying.
+#' @export
+#' @examples
+#' tmp <- tempfile(fileext = ".parquet")
+#' write_parquet(data.frame(x = 1:5), tmp)
+#'
+#' # Add a new entry
+#' edit_parquet_metadata(tmp, c(created_by_user = "Alice"))
+#' read_parquet_metadata(tmp)$file_meta_data$key_value_metadata
+#'
+#' # Update an existing entry
+#' edit_parquet_metadata(tmp, c(created_by_user = "Bob"))
+#' read_parquet_metadata(tmp)$file_meta_data$key_value_metadata
+#'
+#' # Remove an entry
+#' edit_parquet_metadata(tmp, c(created_by_user = NA_character_))
+#' read_parquet_metadata(tmp)$file_meta_data$key_value_metadata
+
+edit_parquet_metadata <- function(file, metadata) {
+  file <- path.expand(file)
+
+  # Read existing key-value metadata
+  existing_kv <- read_parquet_metadata(file)$file_meta_data$key_value_metadata[[1]]
+
+  # Parse the supplied metadata argument into a two-column data frame
+  if (is.null(metadata)) {
+    new_kv <- data.frame(
+      key = character(0),
+      value = character(0),
+      stringsAsFactors = FALSE
+    )
+  } else if (is.data.frame(metadata)) {
+    if (ncol(metadata) != 2) {
+      stop("`metadata` data frame must have exactly two columns.")
+    }
+    new_kv <- data.frame(
+      key = as.character(metadata[[1]]),
+      value = as.character(metadata[[2]]),
+      stringsAsFactors = FALSE
+    )
+  } else {
+    if (!is.character(metadata) || is.null(names(metadata))) {
+      stop(
+        "`metadata` must be a named character vector, a two-column data ",
+        "frame, or NULL."
+      )
+    }
+    new_kv <- data.frame(
+      key = names(metadata),
+      value = unname(metadata),
+      stringsAsFactors = FALSE
+    )
+  }
+
+  # Apply the changes to the existing metadata (merge/update/remove).
+  # NULL is special: it means "remove everything".
+  if (is.null(metadata)) {
+    result <- data.frame(
+      key = character(0),
+      value = character(0),
+      stringsAsFactors = FALSE
+    )
+  } else {
+    result <- existing_kv
+    for (i in seq_len(nrow(new_kv))) {
+      key <- new_kv$key[i]
+      value <- new_kv$value[i]
+      if (is.na(value)) {
+        result <- result[result$key != key, , drop = FALSE]
+      } else if (key %in% result$key) {
+        result$value[result$key == key] <- value
+      } else {
+        result <- rbind(
+          result,
+          data.frame(key = key, value = value, stringsAsFactors = FALSE)
+        )
+      }
+    }
+    row.names(result) <- NULL
+  }
+
+  .Call(
+    rf_nanoparquet_edit_metadata,
+    file,
+    result$key,
+    result$value
+  )
+
+  invisible(NULL)
+}
