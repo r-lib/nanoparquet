@@ -7,6 +7,11 @@
   more Parquet pages to be allocated than there are rows
   ([\#147](https://github.com/r-lib/nanoparquet/issues/147)).
 
+- `write_parquet(file = ":stdout:")` now produces correct output on
+  Windows. Previously the standard output stream was in text mode, so
+  newline bytes were translated to CRLF, corrupting the binary Parquet
+  output.
+
 ## nanoparquet 0.5.1
 
 CRAN release: 2026-04-20
