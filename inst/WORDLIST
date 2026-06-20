@@ -3,6 +3,7 @@ BROTLI
 BSON
 CMD
 Checksumming
+Codecov
 DuckDB
 ENUM
 GZIP
