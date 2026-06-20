@@ -4,6 +4,10 @@
   data size causes more Parquet pages to be allocated than there are rows
   (#147).
 
+* `write_parquet(file = ":stdout:")` now produces correct output on Windows.
+  Previously the standard output stream was in text mode, so newline bytes
+  were translated to CRLF, corrupting the binary Parquet output.
+
 # nanoparquet 0.5.1
 
 * `write_parquet()` now supports writing to the standard output stream, via
