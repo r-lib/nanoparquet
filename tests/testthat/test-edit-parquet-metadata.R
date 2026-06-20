@@ -27,7 +27,8 @@ test_that("edit_parquet_metadata removes a key via NA value", {
   on.exit(unlink(tmp), add = TRUE)
 
   write_parquet(
-    data.frame(x = 1:3), tmp,
+    data.frame(x = 1:3),
+    tmp,
     metadata = c(author = "Alice", version = "1"),
     options = parquet_options(write_arrow_metadata = FALSE)
   )
@@ -43,7 +44,8 @@ test_that("edit_parquet_metadata clears all metadata with NULL", {
   on.exit(unlink(tmp), add = TRUE)
 
   write_parquet(
-    data.frame(x = 1:3), tmp,
+    data.frame(x = 1:3),
+    tmp,
     metadata = c(author = "Alice"),
     options = parquet_options(write_arrow_metadata = FALSE)
   )
@@ -57,8 +59,11 @@ test_that("edit_parquet_metadata accepts a data frame", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
-  write_parquet(data.frame(x = 1:3), tmp,
-    options = parquet_options(write_arrow_metadata = FALSE))
+  write_parquet(
+    data.frame(x = 1:3),
+    tmp,
+    options = parquet_options(write_arrow_metadata = FALSE)
+  )
   edit_parquet_metadata(
     tmp,
     data.frame(key = c("k1", "k2"), value = c("v1", "v2"))
@@ -74,7 +79,8 @@ test_that("edit_parquet_metadata preserves untouched keys", {
   on.exit(unlink(tmp), add = TRUE)
 
   write_parquet(
-    data.frame(x = 1:3), tmp,
+    data.frame(x = 1:3),
+    tmp,
     metadata = c(a = "1", b = "2"),
     options = parquet_options(write_arrow_metadata = FALSE)
   )
@@ -105,7 +111,8 @@ test_that("edit_parquet_metadata truncates file when footer shrinks", {
   on.exit(unlink(tmp), add = TRUE)
 
   write_parquet(
-    data.frame(x = 1:3), tmp,
+    data.frame(x = 1:3),
+    tmp,
     metadata = c(a = "x", b = "y", c = "z"),
     options = parquet_options(write_arrow_metadata = FALSE)
   )

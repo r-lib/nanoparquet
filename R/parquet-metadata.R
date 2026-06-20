@@ -383,7 +383,9 @@ edit_parquet_metadata <- function(file, metadata) {
   file <- path.expand(file)
 
   # Read existing key-value metadata
-  existing_kv <- read_parquet_metadata(file)$file_meta_data$key_value_metadata[[1]]
+  existing_kv <- read_parquet_metadata(file)$file_meta_data$key_value_metadata[[
+    1
+  ]]
 
   # NULL means remove all metadata: skip the merge and write nothing.
   if (is.null(metadata)) {
