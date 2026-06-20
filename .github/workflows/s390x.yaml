@@ -7,7 +7,7 @@ jobs:
   s390x:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: r-hub/actions/ctr-start@main
         with:
           image: ghcr.io/r-hub/containers/s390x
@@ -35,7 +35,7 @@ jobs:
         env:
           NOT_CRAN: true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: ${{ format('{0}-{1}-results', runner.os, runner.arch) }}

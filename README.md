@@ -4,6 +4,7 @@
 [![R-CMD-check](https://github.com/r-lib/nanoparquet/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-lib/nanoparquet/actions/workflows/R-CMD-check.yaml)
 [![CRAN status](https://www.r-pkg.org/badges/version/nanoparquet)](https://cran.r-project.org/package=nanoparquet)
 [![](http://cranlogs.r-pkg.org/badges/nanoparquet)](https://r-pkg.org/pkg/nanoparquet)
+[![Codecov test coverage](https://codecov.io/gh/r-lib/nanoparquet/graph/badge.svg)](https://app.codecov.io/gh/r-lib/nanoparquet)
 <!-- badges: end -->
 
 `nanoparquet` is a reader and writer for a common subset of Parquet files.
