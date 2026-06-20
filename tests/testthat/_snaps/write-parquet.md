@@ -59,7 +59,7 @@
       29         Ferrari Dino  19.7    6  145.0  175.0  3.62  2.770  15.50  0.0  1.0   5.0   6.0   True
       30        Maserati Bora  15.0    8  301.0  335.0  3.54  3.570  14.60  0.0  1.0   5.0   8.0   True
       31           Volvo 142E  21.4    4  121.0  109.0  4.11  2.780  18.60  1.0  1.0   4.0   2.0  False
-      nam       object
+      nam          str
       mpg      float64
       cyl        int32
       disp     float64
@@ -72,7 +72,7 @@
       gear     float64
       carb     float64
       large       bool
-      dtype: object
+      dtype: str
       
 
 # errors

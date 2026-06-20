@@ -13,6 +13,6 @@
 ^src/Makevars$
 ^[\.]?air\.toml$
 ^\.vscode$
-^\.dev$
+^\.cache$
 ^CLAUDE\.md$
 ^revdep$

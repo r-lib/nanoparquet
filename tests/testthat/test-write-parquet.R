@@ -102,7 +102,11 @@ df.to_parquet("%s", engine = "pyarrow")
   if (pyout$status != 0) {
     stop("Failed to run Python, are all packages installed?")
   }
-  expect_snapshot(writeLines(pyout$stdout))
+  expect_snapshot(writeLines(pyout$stdout), transform = function(x) {
+    x <- sub("dtype: object", "dtype: str", x, fixed = TRUE)
+    x <- sub(" object", "    str", x, fixed = TRUE)
+    x
+  })
 
   mt2 <- read_parquet(tmp2)
   expect_equal(mt2, mt)
