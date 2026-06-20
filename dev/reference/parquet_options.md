@@ -57,7 +57,7 @@ parquet_options(
     may lose precision for large values.
 
   - `"integer64"` or `"bit64::integer64"`: read as a
-    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
     vector. Requires the bit64 package to be installed.
 
 - keep_row_groups:

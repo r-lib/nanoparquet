@@ -34,6 +34,7 @@ files.
 Install the R package from CRAN:
 
 ``` r
+
 install.packages("nanoparquet")
 ```
 
@@ -46,6 +47,7 @@ Call
 to read a Parquet file:
 
 ``` r
+
 df <- nanoparquet::read_parquet("example.parquet")
 ```
 
@@ -57,6 +59,7 @@ call
 first:
 
 ``` r
+
 nanoparquet::read_parquet_schema("example.parquet")
 ```
 
@@ -64,6 +67,7 @@ Folders of similar-structured Parquet files (e.g. produced by Spark) can
 be read like this:
 
 ``` r
+
 df <- data.table::rbindlist(lapply(
   Sys.glob("some-folder/part-*.parquet"),
   nanoparquet::read_parquet
@@ -77,6 +81,7 @@ Call
 to write a data frame to a Parquet file:
 
 ``` r
+
 nanoparquet::write_parquet(mtcars, "mtcars.parquet")
 ```
 
@@ -88,6 +93,7 @@ call
 first:
 
 ``` r
+
 nanoparquet::infer_parquet_schema(mtcars)
 ```
 
@@ -111,6 +117,7 @@ to see various kinds of metadata from a Parquet file:
   schema, the row groups and column chunks of the file.
 
 ``` r
+
 nanoparquet::read_parquet_info("mtcars.parquet")
 nanoparquet::read_parquet_schema("mtcars.parquet")
 nanoparquet::read_parquet_metadata("mtcars.parquet")

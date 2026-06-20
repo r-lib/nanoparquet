@@ -8,44 +8,44 @@ When writing out a data frame, nanoparquet maps R's data types to
 Parquet logical types. The following table is a summary of the mapping.
 For the details see below.
 
-|                  |                         |         |                                                                              |
-|------------------|-------------------------|---------|------------------------------------------------------------------------------|
-| R type           | Parquet type            | Default | Notes                                                                        |
-| bit64::integer64 | INT64                   | x       | `NA_integer64_` marks missing values.                                        |
-| blob::blob       | BYTE_ARRAY              | x       | Missing values are `NULL`.                                                   |
-| "                | FIXED_LEN_BYTE_ARRAY    |         | All entries must have the same length. Missing values are `NULL`.            |
-| character        | STRING(BYTE_ARRAY)      | x       | I.e. STRSXP. Converted to UTF-8.                                             |
-| "                | BYTE_ARRAY              |         |                                                                              |
-| "                | FIXED_LEN_BYTE_ARRAY    |         |                                                                              |
-| "                | ENUM                    |         |                                                                              |
-| "                | UUID                    |         |                                                                              |
-| Date             | DATE                    | x       |                                                                              |
-| difftime         | INT64                   | x       | If not hms::hms. Arrow metadata marks it as Duration(NS).                    |
-| factor           | STRING                  | x       | Arrow metadata marks it as a factor.                                         |
-| "                | ENUM                    |         |                                                                              |
-| hms::hms         | TIME(true, MILLIS)      | x       | Sub-milliseconds precision is lost.                                          |
-| integer          | INT(32, true)           | x       | I.e. INTSXP.                                                                 |
-| "                | INT64                   |         |                                                                              |
-| "                | INT96                   |         |                                                                              |
-| "                | DECIMAL(INT32)          |         |                                                                              |
-| "                | DECIMAL(INT64)          |         |                                                                              |
-| "                | INT(8, \*)              |         |                                                                              |
-| "                | INT(16, \*)             |         |                                                                              |
-| "                | INT(32, signed)         |         |                                                                              |
-| list             | LIST(INT32 elements)    | x       | List of integer vectors. `NULL` entries and `NA` elements are supported.     |
-| "                | LIST(DOUBLE elements)   | x       | List of double vectors. `NULL` entries and `NA` elements are supported.      |
-| "                | LIST(STRING elements)   | x       | List of character vectors. `NULL` entries and `NA` elements are supported.   |
-| "                | BYTE_ARRAY              |         | Must be a list of raw vectors. Missing values are `NULL`.                    |
-| "                | FIXED_LEN_BYTE_ARRAY    |         | Must be a list of raw vectors of the same length. Missing values are `NULL`. |
-| logical          | BOOLEAN                 | x       | I.e. LGLSXP.                                                                 |
-| numeric          | DOUBLE                  | x       | I.e. REALSXP.                                                                |
-| "                | INT96                   |         |                                                                              |
-| "                | FLOAT                   |         |                                                                              |
-| "                | DECIMAL(INT32)          |         |                                                                              |
-| "                | DECIMAL(INT64)          |         |                                                                              |
-| "                | INT(\*, \*)             |         |                                                                              |
-| "                | FLOAT16                 |         |                                                                              |
-| POSIXct          | TIMESTAMP(true, MICROS) | x       | Sub-microsecond precision is lost.                                           |
+|  |  |  |  |
+|----|----|----|----|
+| R type | Parquet type | Default | Notes |
+| bit64::integer64 | INT64 | x | `NA_integer64_` marks missing values. |
+| blob::blob | BYTE_ARRAY | x | Missing values are `NULL`. |
+| " | FIXED_LEN_BYTE_ARRAY |  | All entries must have the same length. Missing values are `NULL`. |
+| character | STRING(BYTE_ARRAY) | x | I.e. STRSXP. Converted to UTF-8. |
+| " | BYTE_ARRAY |  |  |
+| " | FIXED_LEN_BYTE_ARRAY |  |  |
+| " | ENUM |  |  |
+| " | UUID |  |  |
+| Date | DATE | x |  |
+| difftime | INT64 | x | If not hms::hms. Arrow metadata marks it as Duration(NS). |
+| factor | STRING | x | Arrow metadata marks it as a factor. |
+| " | ENUM |  |  |
+| hms::hms | TIME(true, MILLIS) | x | Sub-milliseconds precision is lost. |
+| integer | INT(32, true) | x | I.e. INTSXP. |
+| " | INT64 |  |  |
+| " | INT96 |  |  |
+| " | DECIMAL(INT32) |  |  |
+| " | DECIMAL(INT64) |  |  |
+| " | INT(8, \*) |  |  |
+| " | INT(16, \*) |  |  |
+| " | INT(32, signed) |  |  |
+| list | LIST(INT32 elements) | x | List of integer vectors. `NULL` entries and `NA` elements are supported. |
+| " | LIST(DOUBLE elements) | x | List of double vectors. `NULL` entries and `NA` elements are supported. |
+| " | LIST(STRING elements) | x | List of character vectors. `NULL` entries and `NA` elements are supported. |
+| " | BYTE_ARRAY |  | Must be a list of raw vectors. Missing values are `NULL`. |
+| " | FIXED_LEN_BYTE_ARRAY |  | Must be a list of raw vectors of the same length. Missing values are `NULL`. |
+| logical | BOOLEAN | x | I.e. LGLSXP. |
+| numeric | DOUBLE | x | I.e. REALSXP. |
+| " | INT96 |  |  |
+| " | FLOAT |  |  |
+| " | DECIMAL(INT32) |  |  |
+| " | DECIMAL(INT64) |  |  |
+| " | INT(\*, \*) |  |  |
+| " | FLOAT16 |  |  |
+| POSIXct | TIMESTAMP(true, MICROS) | x | Sub-microsecond precision is lost. |
 
 The non-default mappings can be selected via the `schema` argument. E.g.
 to write out a factor column called 'name' as `ENUM`, use
@@ -55,7 +55,7 @@ to write out a factor column called 'name' as `ENUM`, use
 The detailed mapping rules are listed below, in order of preference.
 These rules will likely change until nanoparquet reaches version 1.0.0.
 
-1.  [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+1.  [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
     objects (from the bit64 package) are written as `INT64`. nanoparquet
     handles any object that inherits the `integer64` class this way.
     `NA_integer64_` (i.e. `INT64_MIN`) marks missing values.
@@ -166,39 +166,39 @@ the Arrow metadata (if present, see below) in addition to the low level
 data types. The following table summarizes the mappings. See more
 details below.
 
-|                      |            |                                                             |
-|----------------------|------------|-------------------------------------------------------------|
-| Parquet type         | R type     | Notes                                                       |
-| *Logical types*      |            |                                                             |
-| BSON                 | character  |                                                             |
-| DATE                 | Date       |                                                             |
-| DECIMAL              | numeric    | REALSXP, potentially losing precision.                      |
-| ENUM                 | character  |                                                             |
-| FLOAT16              | numeric    | REALSXP                                                     |
-| INT(8, \*)           | integer    |                                                             |
-| INT(16, \*)          | integer    |                                                             |
-| INT(32, \*)          | integer    | Large unsigned values may overflow!                         |
-| INT(64, \*)          | numeric    | REALSXP, or `integer64` if `read_int64_type` option is set. |
-| INTERVAL             | list(raw)  | Missing values are `NULL`.                                  |
-| JSON                 | character  |                                                             |
-| LIST                 | list       | Elements are read as their corresponding R type.            |
-| MAP                  |            | Not supported.                                              |
-| STRING               | factor     | If Arrow metadata says it is a factor. Also UTF8.           |
-| "                    | character  | Otherwise. Also UTF8.                                       |
-| TIME                 | hms::hms   | Also TIME_MILLIS and TIME_MICROS.                           |
-| TIMESTAMP            | POSIXct    | Also TIMESTAMP_MILLIS and TIMESTAMP_MICROS.                 |
-| UUID                 | character  | In `00112233-4455-6677-8899-aabbccddeeff` form.             |
-| UNKNOWN              |            | Not supported.                                              |
-| *Primitive types*    |            |                                                             |
-| BOOLEAN              | logical    |                                                             |
-| BYTE_ARRAY           | factor     | If Arrow metadata says it is a factor.                      |
-| "                    | blob::blob | Otherwise. Missing values are `NULL`.                       |
-| DOUBLE               | numeric    | REALSXP                                                     |
-| FIXED_LEN_BYTE_ARRAY | blob::blob | Missing values are `NULL`.                                  |
-| FLOAT                | numeric    | REALSXP                                                     |
-| INT32                | integer    |                                                             |
-| INT64                | numeric    | REALSXP, or `integer64` if `read_int64_type` option is set. |
-| INT96                | POSIXct    |                                                             |
+|  |  |  |
+|----|----|----|
+| Parquet type | R type | Notes |
+| *Logical types* |  |  |
+| BSON | character |  |
+| DATE | Date |  |
+| DECIMAL | numeric | REALSXP, potentially losing precision. |
+| ENUM | character |  |
+| FLOAT16 | numeric | REALSXP |
+| INT(8, \*) | integer |  |
+| INT(16, \*) | integer |  |
+| INT(32, \*) | integer | Large unsigned values may overflow! |
+| INT(64, \*) | numeric | REALSXP, or `integer64` if `read_int64_type` option is set. |
+| INTERVAL | list(raw) | Missing values are `NULL`. |
+| JSON | character |  |
+| LIST | list | Elements are read as their corresponding R type. |
+| MAP |  | Not supported. |
+| STRING | factor | If Arrow metadata says it is a factor. Also UTF8. |
+| " | character | Otherwise. Also UTF8. |
+| TIME | hms::hms | Also TIME_MILLIS and TIME_MICROS. |
+| TIMESTAMP | POSIXct | Also TIMESTAMP_MILLIS and TIMESTAMP_MICROS. |
+| UUID | character | In `00112233-4455-6677-8899-aabbccddeeff` form. |
+| UNKNOWN |  | Not supported. |
+| *Primitive types* |  |  |
+| BOOLEAN | logical |  |
+| BYTE_ARRAY | factor | If Arrow metadata says it is a factor. |
+| " | blob::blob | Otherwise. Missing values are `NULL`. |
+| DOUBLE | numeric | REALSXP |
+| FIXED_LEN_BYTE_ARRAY | blob::blob | Missing values are `NULL`. |
+| FLOAT | numeric | REALSXP |
+| INT32 | integer |  |
+| INT64 | numeric | REALSXP, or `integer64` if `read_int64_type` option is set. |
+| INT96 | POSIXct |  |
 
 The exact rules are below. These rules will likely change until
 nanoparquet reaches version 1.0.0.
@@ -225,7 +225,7 @@ nanoparquet reaches version 1.0.0.
     `read_int64_type` option in
     [`parquet_options()`](https://nanoparquet.r-lib.org/dev/reference/parquet_options.md)
     is set to `"integer64"` or `"bit64::integer64"`, it is read as a
-    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
     vector instead. `NA_integer64_` (i.e. `INT64_MIN`) marks missing
     values.
 

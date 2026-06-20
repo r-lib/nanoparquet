@@ -34,6 +34,7 @@ supported type, `NULL` (missing value), or an empty vector. The elements
 may contain missing values (`NA`).
 
 ``` r
+
 df <- data.frame(id = 1:4)
 df$ints <- list(1L, c(2L, 3L), NULL, c(4L, NA_integer_, 6L))
 df$doubles <- list(1.5, c(2.5, 3.5), NULL, c(4.5, NA_real_, 6.5))
@@ -48,6 +49,7 @@ df
     #> 4  4 4, NA, 6 4.5, NA, 6.5 d, NA, f
 
 ``` r
+
 tmp <- tempfile(fileext = ".parquet")
 write_parquet(df, tmp)
 ```
@@ -58,6 +60,7 @@ write_parquet(df, tmp)
 reads `LIST` Parquet columns back as R list columns:
 
 ``` r
+
 as.data.frame(read_parquet(tmp))
 ```
 
@@ -81,6 +84,7 @@ nanoparquet distinguishes two kinds of missingness in list columns:
 - An empty vector — the list is present but has zero elements.
 
 ``` r
+
 df2 <- data.frame(id = 1:4)
 df2$x <- list(
     c(1L, 2L, 3L), # normal, three elements
@@ -98,6 +102,7 @@ df2
     #> 4  4 4, NA, 6
 
 ``` r
+
 tmp2 <- tempfile(fileext = ".parquet")
 write_parquet(df2, tmp2)
 as.data.frame(read_parquet(tmp2))
@@ -115,6 +120,7 @@ as.data.frame(read_parquet(tmp2))
 shows how nanoparquet would encode each column:
 
 ``` r
+
 infer_parquet_schema(df)
 ```
 
@@ -141,23 +147,24 @@ To inspect the schema of an existing file use
 [`read_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_schema.md):
 
 ``` r
+
 read_parquet_schema(tmp)
 ```
 
     #> # A data frame: 11 × 14
     #>    file_name                  r_col name  r_type type  type_length repetition_type converted_type logical_type    num_children scale precision field_id children
     #>    <chr>                      <int> <chr> <chr>  <chr>       <int> <chr>           <chr>          <I<list>>              <int> <int>     <int>    <int> <list>
-    #>  1 /tmp/RtmpjUda4Q/file1efa6…    NA sche… <NA>   <NA>           NA <NA>            <NA>           <NULL>                     4    NA        NA       NA <int>
-    #>  2 /tmp/RtmpjUda4Q/file1efa6…     1 id    integ… INT32          NA REQUIRED        INT_32         <INT(32, TRUE)>           NA    NA        NA       NA <int>
-    #>  3 /tmp/RtmpjUda4Q/file1efa6…     2 ints  list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
-    #>  4 /tmp/RtmpjUda4Q/file1efa6…     2 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
-    #>  5 /tmp/RtmpjUda4Q/file1efa6…     2 elem… <NA>   INT32          NA OPTIONAL        INT_32         <INT(32, TRUE)>           NA    NA        NA       NA <int>
-    #>  6 /tmp/RtmpjUda4Q/file1efa6…     3 doub… list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
-    #>  7 /tmp/RtmpjUda4Q/file1efa6…     3 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
-    #>  8 /tmp/RtmpjUda4Q/file1efa6…     3 elem… <NA>   DOUB…          NA OPTIONAL        <NA>           <NULL>                    NA    NA        NA       NA <int>
-    #>  9 /tmp/RtmpjUda4Q/file1efa6…     4 stri… list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
-    #> 10 /tmp/RtmpjUda4Q/file1efa6…     4 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
-    #> 11 /tmp/RtmpjUda4Q/file1efa6…     4 elem… <NA>   BYTE…          NA OPTIONAL        UTF8           <STRING>                  NA    NA        NA       NA <int>
+    #>  1 /tmp/RtmpKpq3kM/file20e03…    NA sche… <NA>   <NA>           NA <NA>            <NA>           <NULL>                     4    NA        NA       NA <int>
+    #>  2 /tmp/RtmpKpq3kM/file20e03…     1 id    integ… INT32          NA REQUIRED        INT_32         <INT(32, TRUE)>           NA    NA        NA       NA <int>
+    #>  3 /tmp/RtmpKpq3kM/file20e03…     2 ints  list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
+    #>  4 /tmp/RtmpKpq3kM/file20e03…     2 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
+    #>  5 /tmp/RtmpKpq3kM/file20e03…     2 elem… <NA>   INT32          NA OPTIONAL        INT_32         <INT(32, TRUE)>           NA    NA        NA       NA <int>
+    #>  6 /tmp/RtmpKpq3kM/file20e03…     3 doub… list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
+    #>  7 /tmp/RtmpKpq3kM/file20e03…     3 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
+    #>  8 /tmp/RtmpKpq3kM/file20e03…     3 elem… <NA>   DOUB…          NA OPTIONAL        <NA>           <NULL>                    NA    NA        NA       NA <int>
+    #>  9 /tmp/RtmpKpq3kM/file20e03…     4 stri… list(… <NA>           NA OPTIONAL        LIST           <LIST>                     1    NA        NA       NA <int>
+    #> 10 /tmp/RtmpKpq3kM/file20e03…     4 list  <NA>   <NA>           NA REPEATED        <NA>           <NULL>                     1    NA        NA       NA <int>
+    #> 11 /tmp/RtmpKpq3kM/file20e03…     4 elem… <NA>   BYTE…          NA OPTIONAL        UTF8           <STRING>                  NA    NA        NA       NA <int>
 
 The `r_type` column shows `list(integer)`, `list(double)`, and
 `list(character)` for the three list columns.
@@ -170,6 +177,7 @@ automatically. You can also specify it explicitly with
 using `list("LIST", element = <type>)`:
 
 ``` r
+
 schema <- parquet_schema(
     id     = "INT32",
     values = list("LIST", element = "DOUBLE")
@@ -186,6 +194,7 @@ schema
     #> 4 <NA>          2 element <NA>   DOUBLE          NA OPTIONAL        <NA>           <NULL>                 NA    NA        NA       NA
 
 ``` r
+
 df3 <- data.frame(id = 1:3)
 df3$values <- list(c(1.1, 2.2), c(3.3), NULL)
 tmp3 <- tempfile(fileext = ".parquet")
@@ -204,6 +213,7 @@ List columns support dictionary encoding, which can reduce file size
 when list elements repeat frequently:
 
 ``` r
+
 df4 <- data.frame(id = 1:6)
 df4$x <- list(
     c(1L, 2L), c(2L, 3L), c(1L, 2L),

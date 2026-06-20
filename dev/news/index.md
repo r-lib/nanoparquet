@@ -20,16 +20,16 @@ CRAN release: 2026-04-20
       Rscript --quiet -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' > mtcars.parquet
 
 - nanoparquet now supports
-  [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+  [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
   columns ([\#153](https://github.com/r-lib/nanoparquet/issues/153)):
 
   - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
     now writes
-    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
     columns to INT64 Parquet columns. Similarly,
     [`infer_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/infer_parquet_schema.md)
     also supports
-    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
     columns.
 
   - [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
@@ -39,7 +39,7 @@ CRAN release: 2026-04-20
     [`parquet_options()`](https://nanoparquet.r-lib.org/dev/reference/parquet_options.md)
     to control how INT64 columns are read. Set it to `"integer64"` or
     `"bit64::integer64"` to read them as
-    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
     vectors instead of the default `"double"`.
 
 - [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
