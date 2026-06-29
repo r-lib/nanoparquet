@@ -58,6 +58,11 @@ SEXP rf_nanoparquet_append(
   SEXP overwrite_last_row_group,
   SEXP mycall
 );
+SEXP rf_nanoparquet_edit_metadata(
+  SEXP filesxp,
+  SEXP keyssxp,
+  SEXP valuessxp
+);
 SEXP rf_nanoparquet_map_to_parquet_types(SEXP df, SEXP options);
 SEXP rf_nanoparquet_logical_to_converted(SEXP logical_type);
 SEXP nanoparquet_read_metadata(SEXP filesxp);
@@ -153,6 +158,7 @@ static const R_CallMethodDef R_CallDef[] = {
   CALLDEF(nanoparquet_enlist_opt_opt, 4),
   CALLDEF(rf_nanoparquet_write, 11),
   CALLDEF(rf_nanoparquet_append, 11),
+  CALLDEF(rf_nanoparquet_edit_metadata, 3),
   CALLDEF(rf_nanoparquet_map_to_parquet_types, 2),
   CALLDEF(rf_nanoparquet_logical_to_converted, 1),
   CALLDEF(nanoparquet_read_metadata, 1),

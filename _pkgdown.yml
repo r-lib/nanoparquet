@@ -32,6 +32,10 @@ reference:
   - append_parquet
   - write_parquet
 
+- title: Edit Parquet files
+  contents:
+  - edit_parquet_metadata
+
 - title: Extract Parquet metadata
   contents:
   - read_parquet_info
