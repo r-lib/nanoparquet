@@ -25,6 +25,11 @@ How nanoparquet maps R data types to Parquet data types and vice versa.
 - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
   : Write a data frame to a Parquet file
 
+## Edit Parquet files
+
+- [`edit_parquet_metadata()`](https://nanoparquet.r-lib.org/dev/reference/edit_parquet_metadata.md)
+  : Edit the key-value metadata of a Parquet file
+
 ## Extract Parquet metadata
 
 - [`read_parquet_info()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_info.md)
