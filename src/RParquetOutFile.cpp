@@ -404,6 +404,42 @@ static bool is_time(parquet::SchemaElement &sel, double &factor) {
   return false;
 }
 
+// The factor a double R value must be multiplied with, before writing it
+// out as an integer Parquet value, e.g. seconds -> microseconds for a
+// POSIXct column that is written as TIMESTAMP(MICROS). This must match the
+// conversions in write_dictionary() and the write_double_*() methods.
+
+static double double_scale_factor(SEXP col, parquet::SchemaElement &sel) {
+  double factor = 1.0;
+  if (Rf_inherits(col, "POSIXct")) {
+    if (sel.__isset.logicalType && sel.logicalType.__isset.TIMESTAMP) {
+      auto &unit = sel.logicalType.TIMESTAMP.unit;
+      if (unit.__isset.MILLIS) {
+        factor = 1000;
+      } else if (unit.__isset.MICROS) {
+        factor = 1000 * 1000;
+      } else if (unit.__isset.NANOS) {
+        factor = 1000 * 1000 * 1000;
+      }
+    } else if (sel.__isset.converted_type) {
+      if (sel.converted_type == parquet::ConvertedType::TIMESTAMP_MILLIS) {
+        factor = 1000;
+      } else if (sel.converted_type ==
+                 parquet::ConvertedType::TIMESTAMP_MICROS) {
+        factor = 1000 * 1000;
+      }
+    }
+  } else if (Rf_inherits(col, "hms")) {
+    is_time(sel, factor);
+  } else if (Rf_inherits(col, "difftime")) {
+    // difftime is always converted to seconds before writing
+    factor = 1000.0 * 1000 * 1000;
+  } else {
+    is_time(sel, factor);
+  }
+  return factor;
+}
+
 void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
                                         int64_t until,
                                         parquet::SchemaElement &sel) {
@@ -442,25 +478,37 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
         });
       }
     } else if (TYPEOF(VECTOR_ELT(d, 2)) == REALSXP) {
-      double factor;
-      bool istime = is_time(sel, factor);
-      if (istime) {
-        if (sel.type == parquet::Type::INT32) {
-          int32_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
-          int32_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
-          min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
-          max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
-        } else {
-          int64_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
-          int64_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
+      if (Rf_inherits(col, "integer64")) {
+        // integer64 stores int64 values as raw bytes in a REALSXP, so the
+        // min/max of the dictionary, which compares them as doubles, is not
+        // usable, we need to calculate them here.
+        int64_t min = 0, max = 0;
+        bool has_minmax = false;
+        for (int64_t i = from; i < until; i++) {
+          int64_t el;
+          memcpy(&el, &REAL(col)[i], sizeof(int64_t));
+          if (el == INT64_MIN) continue;   // NA_integer64_
+          if (!has_minmax || el < min) min = el;
+          if (!has_minmax || el > max) max = el;
+          has_minmax = true;
+        }
+        has_minmax_value[idx] = has_minmax;
+        if (has_minmax) {
           min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
           max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
         }
       } else if (sel.type == parquet::Type::INT32) {
-        int32_t min = REAL(VECTOR_ELT(d, 2))[0];
-        int32_t max = REAL(VECTOR_ELT(d, 3))[0];
+        double factor = double_scale_factor(col, sel);
+        int32_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
+        int32_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
         min_values[idx] = std::string((const char*) &min, sizeof(int32_t));
         max_values[idx] = std::string((const char*) &max, sizeof(int32_t));
+      } else if (sel.type == parquet::Type::INT64) {
+        double factor = double_scale_factor(col, sel);
+        int64_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
+        int64_t max = REAL(VECTOR_ELT(d, 3))[0] * factor;
+        min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
+        max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
       } else if (sel.type == parquet::Type::DOUBLE) {
         min_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 2)), sizeof(double));
         max_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 3)), sizeof(double));
@@ -469,11 +517,6 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
         float max = REAL(VECTOR_ELT(d, 3))[0];
         min_values[idx] = std::string((const char*) &min, sizeof(float));
         max_values[idx] = std::string((const char*) &max, sizeof(float));
-      } else if (sel.type == parquet::Type::INT64) {
-        int64_t min = REAL(VECTOR_ELT(d, 2))[0];
-        int64_t max = REAL(VECTOR_ELT(d, 3))[0];
-        min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
-        max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
       } else {
         r_call([&] {
           Rf_errorcall(

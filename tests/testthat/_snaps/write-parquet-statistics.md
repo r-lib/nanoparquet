@@ -980,3 +980,39 @@
       [1] TRUE TRUE TRUE   NA
       
 
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "snappy")
+    Output
+      [[1]]
+      [1]  1e+06 -1e+08 -1e+09     NA
+      
+      [[2]]
+      [1] 5e+06 1e+08 1e+09    NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+
+---
+
+    Code
+      do(encoding = "RLE_DICTIONARY", compression = "uncompressed")
+    Output
+      [[1]]
+      [1]  1e+06 -1e+08 -1e+09     NA
+      
+      [[2]]
+      [1] 5e+06 1e+08 1e+09    NA
+      
+      [[3]]
+      [1] TRUE TRUE TRUE   NA
+      
+      [[4]]
+      [1] TRUE TRUE TRUE   NA
+      
+

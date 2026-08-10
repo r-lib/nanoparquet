@@ -528,8 +528,62 @@ test_that("min/max for REALSXP -> TIMESTAMP (INT64)", {
   }
   expect_snapshot(do(compression = "snappy"))
   expect_snapshot(do(compression = "uncompressed"))
-  return()
+
   # dictionary
   expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "snappy"))
   expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
+})
+
+test_that("min/max for dictionary encoded TIMESTAMP (#169)", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  ts <- .POSIXct(1209506400, tz = "UTC")
+  df <- data.frame(x = rep(ts, 16))
+
+  as_int64 <- function(x) {
+    sapply(x, function(xx) xx %&&% .Call(read_int64, xx) %||% NA_real_)
+  }
+
+  # a constant column is dictionary encoded, and the min/max values must be
+  # in microseconds, just like the values in the dictionary page
+  write_parquet(df, tmp)
+  mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+  expect_true("RLE_DICTIONARY" %in% mtd[["encodings"]][[1]])
+  expect_equal(as_int64(mtd[["min_value"]]), as.numeric(ts) * 1000 * 1000)
+  expect_equal(as_int64(mtd[["max_value"]]), as.numeric(ts) * 1000 * 1000)
+})
+
+test_that("min/max for dictionary encoded difftime", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- data.frame(x = as.difftime(rep(c(5, 10), 8), units = "secs"))
+
+  as_int64 <- function(x) {
+    sapply(x, function(xx) xx %&&% .Call(read_int64, xx) %||% NA_real_)
+  }
+
+  write_parquet(df, tmp, encoding = "RLE_DICTIONARY")
+  expect_equal(as.data.frame(read_parquet(tmp)), as.data.frame(df))
+  mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+  # difftime is written in nanoseconds
+  expect_equal(as_int64(mtd[["min_value"]]), 5 * 1000 * 1000 * 1000)
+  expect_equal(as_int64(mtd[["max_value"]]), 10 * 1000 * 1000 * 1000)
+})
+
+test_that("min/max for dictionary encoded integer64", {
+  skip_if_not_installed("bit64")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  vals <- bit64::as.integer64(c(-1234567890123, 9876543210, 1))
+  df <- data.frame(x = vals[c(1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3)])
+
+  as_int64 <- function(x) {
+    sapply(x, function(xx) xx %&&% .Call(read_int64, xx) %||% NA_real_)
+  }
+
+  write_parquet(df, tmp, encoding = "RLE_DICTIONARY")
+  expect_equal(as.data.frame(read_parquet(tmp)), as.data.frame(df))
+  mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+  expect_equal(as_int64(mtd[["min_value"]]), -1234567890123)
+  expect_equal(as_int64(mtd[["max_value"]]), 9876543210)
 })

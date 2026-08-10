@@ -1,5 +1,8 @@
 # nanoparquet (development version)
 
+* `write_parquet()` now writes correct min/max statistics for dictionary
+  encoded `POSIXct` and `difftime` columns (#169).
+
 * `write_parquet()` no longer crashes when writing optional columns whose
   data size causes more Parquet pages to be allocated than there are rows
   (#147).
