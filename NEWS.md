@@ -1,5 +1,11 @@
 # nanoparquet (development version)
 
+* `read_parquet()` now reads missing values correctly when `col_select`
+  selects a subset of the columns, or reorders them (#170).
+
+* `read_parquet()` now works correctly when selecting list columns in
+  `col_select`, by name or position.
+
 * `write_parquet()` now writes correct min/max statistics for dictionary
   encoded `POSIXct` and `difftime` columns (#169).
 

@@ -85,6 +85,71 @@ test_that("subset column order", {
   )
 })
 
+# https://github.com/r-lib/nanoparquet/issues/170
+test_that("subset of columns with missing values", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  # some columns have missing values, some don't, so the columns are a mix
+  # of REQUIRED and OPTIONAL ones
+  df <- data.frame(
+    stringsAsFactors = FALSE,
+    i = 1:3,
+    d = c(11, NA, 33),
+    c = c("x", NA, "z"),
+    l = c(TRUE, NA, FALSE),
+    f = factor(c("a", NA, "c")),
+    t = as.POSIXct(c(1, NA, 3), origin = "1970-01-01", tz = "UTC"),
+    dt = as.Date(c("2024-01-01", NA, "2024-01-03")),
+    i2 = 4:6
+  )
+  write_parquet(df, tmp)
+
+  for (idx in seq_along(df)) {
+    expect_equal(
+      as.data.frame(read_parquet(tmp, col_select = idx)),
+      df[, idx, drop = FALSE]
+    )
+  }
+  expect_equal(
+    as.data.frame(read_parquet(tmp, col_select = rev(names(df)))),
+    df[, rev(names(df))]
+  )
+  expect_equal(
+    as.data.frame(read_parquet(tmp, col_select = c("d", "i"))),
+    df[, c("d", "i")]
+  )
+  expect_equal(
+    as.data.frame(read_parquet(tmp, col_select = c("c", "f", "i2", "t"))),
+    df[, c("c", "f", "i2", "t")]
+  )
+})
+
+test_that("subset of columns, list columns", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- data.frame(x = 1:3, y = c(1.5, NA, 3.5))
+  df$lst <- list(1:2, NULL, integer())
+  df$lst2 <- list(c("a", NA), "b", character())
+  write_parquet(df, tmp)
+
+  for (idx in seq_along(df)) {
+    expect_equal(
+      as.data.frame(read_parquet(tmp, col_select = idx)),
+      df[, idx, drop = FALSE]
+    )
+  }
+  expect_equal(
+    as.data.frame(read_parquet(tmp, col_select = 4:1)),
+    df[, 4:1]
+  )
+  # a list column is selected by the name of the column, not the name of
+  # the leaf column in the Parquet schema
+  expect_equal(
+    as.data.frame(read_parquet(tmp, col_select = c("lst2", "x"))),
+    df[, c("lst2", "x")]
+  )
+})
+
 test_that("error if a column is requested multiple times", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

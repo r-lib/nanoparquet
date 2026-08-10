@@ -21,6 +21,13 @@ enum r_type_conversion {
   INT64_INTEGER64 = 11
 };
 
+// TRUE if this leaf column is the bottom layer of a three layer LIST column
+bool is_list(
+  std::vector<parquet::SchemaElement> &schema,
+  uint32_t schema_col,
+  std::vector<int32_t> &parent_column
+);
+
 class rtype {
 public:
   rtype() { }
@@ -70,6 +77,10 @@ public:
   std::vector<uint8_t*> dataptr;
   std::vector<uint8_t*> repeatptr;
   std::vector<int32_t> repetition_types;
+  // For each column we read (in the order of the result), its index in
+  // the Parquet schema. This is not the same as the index of the column
+  // in the result if not all columns are read, or they are reordered.
+  std::vector<int32_t> schema_cols;
 };
 
 struct tmpbytes {

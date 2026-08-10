@@ -73,7 +73,7 @@ SEXP nanoparquet_read_(SEXP filesxp, SEXP rcols, SEXP options) {
     reader.read_columns();
     reader.convert_columns_to_r();
     reader.create_df();
-    PROTECT(res = Rf_allocVector(VECSXP, 9));
+    PROTECT(res = Rf_allocVector(VECSXP, 10));
     SET_VECTOR_ELT(res, 0, reader.columns);
     SET_VECTOR_ELT(res, 1, reader.facdicts);
     SET_VECTOR_ELT(res, 2, reader.types);
@@ -83,6 +83,7 @@ SEXP nanoparquet_read_(SEXP filesxp, SEXP rcols, SEXP options) {
     SET_VECTOR_ELT(res, 6, int32_vec_to_sexp(reader.parent_column));
     SET_VECTOR_ELT(res, 7, int32_vec_to_sexp(reader.repetition_types));
     SET_VECTOR_ELT(res, 8, int32_vec_to_sexp(reader.leaf_cols));
+    SET_VECTOR_ELT(res, 9, int32_vec_to_sexp(reader.metadata.schema_cols));
     UNPROTECT(1);
     return res;
   } catch (std::exception &ex) {
@@ -159,7 +160,7 @@ SEXP nanoparquet_read_row_group_(
     reader.read_row_group(rg);
     reader.convert_columns_to_r();
     reader.create_df();
-    PROTECT(res = Rf_allocVector(VECSXP, 9));
+    PROTECT(res = Rf_allocVector(VECSXP, 10));
     SET_VECTOR_ELT(res, 0, reader.columns);
     SET_VECTOR_ELT(res, 1, reader.facdicts);
     SET_VECTOR_ELT(res, 2, reader.types);
@@ -169,6 +170,7 @@ SEXP nanoparquet_read_row_group_(
     SET_VECTOR_ELT(res, 6, int32_vec_to_sexp(reader.parent_column));
     SET_VECTOR_ELT(res, 7, int32_vec_to_sexp(reader.repetition_types));
     SET_VECTOR_ELT(res, 8, int32_vec_to_sexp(reader.leaf_cols));
+    SET_VECTOR_ELT(res, 9, int32_vec_to_sexp(reader.metadata.schema_cols));
     UNPROTECT(1);
     return res;
   } catch (std::exception &ex) {
@@ -301,10 +303,16 @@ SEXP nanoparquet_read_col_names(SEXP filesxp) {
     for (auto i = 0, idx = 0; i < ncols; i++) {
       if (! fmt.schema[i].__isset.num_children ||
           fmt.schema[i].num_children == 0) {
+        // for a three layer LIST column the name of the column is the
+        // name of the grandparent, this is what `read_parquet()` uses
+        uint32_t nm_col = i;
+        if (i > 0 && is_list(fmt.schema, i, reader.parent_column)) {
+          nm_col = reader.parent_column[reader.parent_column[i]];
+        }
         SET_STRING_ELT(
           res,
           idx++,
-          Rf_mkCharCE(fmt.schema[i].name.c_str(), CE_UTF8)
+          Rf_mkCharCE(fmt.schema[nm_col].name.c_str(), CE_UTF8)
         );
       }
     }

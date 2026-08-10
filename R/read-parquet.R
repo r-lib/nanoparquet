@@ -93,18 +93,17 @@ post_process_read_result <- function(res, file, options, col_select) {
   presents <- res[[6]]
   parents <- res[[7]]
   rep_types <- res[[8]]
-  leaf_cols <- res[[9]]
+  schema_cols <- res[[10]]
   res <- res[[1]]
   if (options[["use_arrow_metadata"]] && !is.na(arrow_schema)) {
     res <- apply_arrow_schema(res, file, arrow_schema, dicts, types, col_select)
   }
 
-  to_leaf_col <- which(leaf_cols >= 0)
-
   # fix up repeated columns, if any
   has_reps <- lengths(repeats) > 0
   for (idx in which(has_reps)) {
-    leaf_idx <- to_leaf_col[idx]
+    # schema index of the column, this is not `idx` if `col_select` was used
+    leaf_idx <- schema_cols[idx] + 1L
     rep_type <- rep_types[leaf_idx]
     if (rep_type == 2) {
       # single REPEATED column
