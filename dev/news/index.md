@@ -2,6 +2,15 @@
 
 ## nanoparquet (development version)
 
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now reads missing values correctly when `col_select` selects a subset
+  of the columns, or reorders them
+  ([\#170](https://github.com/r-lib/nanoparquet/issues/170)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
+  now works correctly when selecting list columns in `col_select`, by
+  name or position.
+
 - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
   now writes correct min/max statistics for dictionary encoded `POSIXct`
   and `difftime` columns
