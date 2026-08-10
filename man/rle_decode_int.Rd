@@ -27,8 +27,8 @@ RLE decode integers
 \seealso{
 \code{\link[=rle_encode_int]{rle_encode_int()}}
 
-Other encodings: 
-\code{\link{rle_encode_int}()}
+Other encodings:
+\code{\link[=rle_encode_int]{rle_encode_int()}}
 }
 \concept{encodings}
 \keyword{internal}
