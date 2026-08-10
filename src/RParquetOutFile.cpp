@@ -454,7 +454,6 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
   SEXP d = PROTECT(nanoparquet_create_dict_idx_(col, sfrom, suntil));
   SET_VECTOR_ELT(dicts, idx, d);
   INTEGER(dicts_from)[idx] = from;
-  UNPROTECT(3);
   if (write_minmax_values && Rf_length(d) == 4 &&
       is_minmax_supported[idx] && Rf_xlength(col) > 0 &&
       !Rf_isNull(VECTOR_ELT(d, 2)) && !Rf_isNull(VECTOR_ELT(d, 3))) {
@@ -537,6 +536,7 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
       });
     }
   }
+  UNPROTECT(3);
 }
 
 
