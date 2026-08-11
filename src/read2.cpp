@@ -13,7 +13,9 @@ extern SEXP nanoparquet_call;
 
 static SEXP int32_vec_to_sexp(const std::vector<int32_t> &v) {
   SEXP s = PROTECT(Rf_allocVector(INTSXP, v.size()));
-  memcpy(INTEGER(s), v.data(), v.size() * sizeof(int32_t));
+  if (v.size() > 0) {
+    memcpy(INTEGER(s), v.data(), v.size() * sizeof(int32_t));
+  }
   UNPROTECT(1);
   return s;
 }
