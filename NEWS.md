@@ -1,5 +1,7 @@
 # nanoparquet (development version)
 
+* nanoparquet now compiles with clang 23.
+
 * `read_parquet()` now reads missing values correctly when `col_select`
   selects a subset of the columns, or reorders them (#170).
 
