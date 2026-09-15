@@ -2,6 +2,12 @@
 
 ## nanoparquet (development version)
 
+- The default row group size (`num_rows_per_row_group` option) is now
+  122,880 rows, the same as DuckDB’s default
+  ([\#168](https://github.com/r-lib/nanoparquet/issues/168)).
+
+- nanoparquet now compiles with clang 23.
+
 - [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
   now reads missing values correctly when `col_select` selects a subset
   of the columns, or reorders them

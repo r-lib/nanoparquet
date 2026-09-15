@@ -10,7 +10,7 @@ parquet_options(
   compression_level = getOption("nanoparquet.compression_level", NA_integer_),
   read_int64_type = getOption("nanoparquet.read_int64_type", "double"),
   keep_row_groups = FALSE,
-  num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
+  num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 122880L),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
   write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L),
@@ -73,8 +73,10 @@ parquet_options(
 - num_rows_per_row_group:
 
   The number of rows to put into a row group, if row groups are not
-  specified explicitly. It should be an integer scalar. Defaults to 10
-  million.
+  specified explicitly. It should be an integer scalar. Defaults to
+  122,880, the same as DuckDB's default, so files written by nanoparquet
+  work well with DuckDB, Arrow and other tools that read row groups in
+  parallel.
 
 - use_arrow_metadata:
 
