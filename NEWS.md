@@ -1,4 +1,4 @@
-# nanoparquet (development version)
+# nanoparquet 0.5.2
 
 * The default row group size (`num_rows_per_row_group` option) is now
   122,880 rows, the same as DuckDB's default (#168).
