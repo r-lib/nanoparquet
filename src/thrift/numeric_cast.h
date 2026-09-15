@@ -22,6 +22,7 @@
 
 #include <limits>
 #include <stdexcept>
+#include <typeinfo>
 
 #if defined(_MSC_VER)
 // avoid compiler warnings and errors in MSVC if max is defined as a macro
