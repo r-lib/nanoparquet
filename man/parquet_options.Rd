@@ -9,7 +9,7 @@ parquet_options(
   compression_level = getOption("nanoparquet.compression_level", NA_integer_),
   read_int64_type = getOption("nanoparquet.read_int64_type", "double"),
   keep_row_groups = FALSE,
-  num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 10000000L),
+  num_rows_per_row_group = getOption("nanoparquet.num_rows_per_row_group", 122880L),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),
   write_data_page_version = getOption("nanoparquet.write_data_page_version", 1L),
@@ -55,7 +55,9 @@ default row group size, i.e. \code{num_rows_per_row_group}.}
 
 \item{num_rows_per_row_group}{The number of rows to put into a row
 group, if row groups are not specified explicitly. It should be
-an integer scalar. Defaults to 10 million.}
+an integer scalar. Defaults to 122,880, the same as DuckDB's default,
+so files written by nanoparquet work well with DuckDB, Arrow and
+other tools that read row groups in parallel.}
 
 \item{use_arrow_metadata}{\code{TRUE} or \code{FALSE}. If \code{TRUE}, then
 \code{\link[=read_parquet]{read_parquet()}} and \code{\link[=read_parquet_schema]{read_parquet_schema()}} will make use of the Apache

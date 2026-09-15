@@ -24,7 +24,9 @@
 #'   default row group size, i.e. `num_rows_per_row_group`.
 #' @param num_rows_per_row_group The number of rows to put into a row
 #'   group, if row groups are not specified explicitly. It should be
-#'   an integer scalar. Defaults to 10 million.
+#'   an integer scalar. Defaults to 122,880, the same as DuckDB's default,
+#'   so files written by nanoparquet work well with DuckDB, Arrow and
+#'   other tools that read row groups in parallel.
 #' @param use_arrow_metadata `TRUE` or `FALSE`. If `TRUE`, then
 #'   [read_parquet()] and [read_parquet_schema()] will make use of the Apache
 #'   Arrow metadata to assign R classes to Parquet columns.
@@ -76,7 +78,7 @@ parquet_options <- function(
   keep_row_groups = FALSE,
   num_rows_per_row_group = getOption(
     "nanoparquet.num_rows_per_row_group",
-    10000000L
+    122880L
   ),
   use_arrow_metadata = getOption("nanoparquet.use_arrow_metadata", TRUE),
   write_arrow_metadata = getOption("nanoparquet.write_arrow_metadata", TRUE),

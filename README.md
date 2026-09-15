@@ -117,7 +117,8 @@ See also `?parquet_options()` for further details.
   selects maximum compression for each method.
 * `nanoparquet.num_rows_per_row_group`: The number of rows to put into a
   row group by `write_parquet()`, if row groups are not specified
-  explicitly. It should be an integer scalar. Defaults to 10 million.
+  explicitly. It should be an integer scalar. Defaults to 122,880,
+  the same as DuckDB's default.
 * `nanoparquet.use_arrow_metadata`: unless this is set to `FALSE`,
   `read_parquet()` will make use of Arrow metadata in the Parquet file.
   Currently this is used to detect factor columns.
