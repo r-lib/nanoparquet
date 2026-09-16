@@ -9,6 +9,7 @@
 <url><loc>https://nanoparquet.r-lib.org/index.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/news/index.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/reference/append_parquet.html</loc></url>
+<url><loc>https://nanoparquet.r-lib.org/reference/edit_parquet_metadata.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/reference/index.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/reference/infer_parquet_schema.html</loc></url>
 <url><loc>https://nanoparquet.r-lib.org/reference/nanoparquet-package.html</loc></url>

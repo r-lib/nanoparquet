@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>List columns • nanoparquet</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/Source_Code_Pro-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">nanoparquet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,7 @@
 
 
 
-      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/cran-0-5-1/vignettes/articles/list-columns.qmd" class="external-link"><code>vignettes/articles/list-columns.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/r-lib/nanoparquet/blob/main/vignettes/articles/list-columns.qmd" class="external-link"><code>vignettes/articles/list-columns.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -221,17 +221,17 @@
 <pre><code><span><span class="co">#&gt; # A data frame: 11 × 14</span></span>
 <span><span class="co">#&gt;    file_name                  r_col name  r_type type  type_length repetition_type converted_type logical_type    num_children scale precision field_id children</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;                      &lt;int&gt; &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;       &lt;int&gt; &lt;chr&gt;           &lt;chr&gt;          &lt;I&lt;list&gt;&gt;              &lt;int&gt; &lt;int&gt;     &lt;int&gt;    &lt;int&gt; &lt;list&gt;</span></span>
-<span><span class="co">#&gt;  1 /tmp/RtmpraKsv5/file1e884…    NA sche… &lt;NA&gt;   &lt;NA&gt;           NA &lt;NA&gt;            &lt;NA&gt;           &lt;NULL&gt;                     4    NA        NA       NA &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  2 /tmp/RtmpraKsv5/file1e884…     1 id    integ… INT32          NA REQUIRED        INT_32         &lt;INT(32, TRUE)&gt;           NA    NA        NA       NA &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  3 /tmp/RtmpraKsv5/file1e884…     2 ints  list(… &lt;NA&gt;           NA OPTIONAL        LIST           &lt;LIST&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  4 /tmp/RtmpraKsv5/file1e884…     2 list  &lt;NA&gt;   &lt;NA&gt;           NA REPEATED        &lt;NA&gt;           &lt;NULL&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  5 /tmp/RtmpraKsv5/file1e884…     2 elem… &lt;NA&gt;   INT32          NA OPTIONAL        INT_32         &lt;INT(32, TRUE)&gt;           NA    NA        NA       NA &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  6 /tmp/RtmpraKsv5/file1e884…     3 doub… list(… &lt;NA&gt;           NA OPTIONAL        LIST           &lt;LIST&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  7 /tmp/RtmpraKsv5/file1e884…     3 list  &lt;NA&gt;   &lt;NA&gt;           NA REPEATED        &lt;NA&gt;           &lt;NULL&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  8 /tmp/RtmpraKsv5/file1e884…     3 elem… &lt;NA&gt;   DOUB…          NA OPTIONAL        &lt;NA&gt;           &lt;NULL&gt;                    NA    NA        NA       NA &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  9 /tmp/RtmpraKsv5/file1e884…     4 stri… list(… &lt;NA&gt;           NA OPTIONAL        LIST           &lt;LIST&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 10 /tmp/RtmpraKsv5/file1e884…     4 list  &lt;NA&gt;   &lt;NA&gt;           NA REPEATED        &lt;NA&gt;           &lt;NULL&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 11 /tmp/RtmpraKsv5/file1e884…     4 elem… &lt;NA&gt;   BYTE…          NA OPTIONAL        UTF8           &lt;STRING&gt;                  NA    NA        NA       NA &lt;int&gt;</span></span></code></pre>
+<span><span class="co">#&gt;  1 /tmp/RtmpJVW6mg/file1ea66…    NA sche… &lt;NA&gt;   &lt;NA&gt;           NA &lt;NA&gt;            &lt;NA&gt;           &lt;NULL&gt;                     4    NA        NA       NA &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  2 /tmp/RtmpJVW6mg/file1ea66…     1 id    integ… INT32          NA REQUIRED        INT_32         &lt;INT(32, TRUE)&gt;           NA    NA        NA       NA &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  3 /tmp/RtmpJVW6mg/file1ea66…     2 ints  list(… &lt;NA&gt;           NA OPTIONAL        LIST           &lt;LIST&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  4 /tmp/RtmpJVW6mg/file1ea66…     2 list  &lt;NA&gt;   &lt;NA&gt;           NA REPEATED        &lt;NA&gt;           &lt;NULL&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  5 /tmp/RtmpJVW6mg/file1ea66…     2 elem… &lt;NA&gt;   INT32          NA OPTIONAL        INT_32         &lt;INT(32, TRUE)&gt;           NA    NA        NA       NA &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  6 /tmp/RtmpJVW6mg/file1ea66…     3 doub… list(… &lt;NA&gt;           NA OPTIONAL        LIST           &lt;LIST&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  7 /tmp/RtmpJVW6mg/file1ea66…     3 list  &lt;NA&gt;   &lt;NA&gt;           NA REPEATED        &lt;NA&gt;           &lt;NULL&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  8 /tmp/RtmpJVW6mg/file1ea66…     3 elem… &lt;NA&gt;   DOUB…          NA OPTIONAL        &lt;NA&gt;           &lt;NULL&gt;                    NA    NA        NA       NA &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  9 /tmp/RtmpJVW6mg/file1ea66…     4 stri… list(… &lt;NA&gt;           NA OPTIONAL        LIST           &lt;LIST&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 10 /tmp/RtmpJVW6mg/file1ea66…     4 list  &lt;NA&gt;   &lt;NA&gt;           NA REPEATED        &lt;NA&gt;           &lt;NULL&gt;                     1    NA        NA       NA &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 11 /tmp/RtmpJVW6mg/file1ea66…     4 elem… &lt;NA&gt;   BYTE…          NA OPTIONAL        UTF8           &lt;STRING&gt;                  NA    NA        NA       NA &lt;int&gt;</span></span></code></pre>
 </div>
 </div>
 <p>The <code>r_type</code> column shows <code>list(integer)</code>, <code>list(double)</code>, and <code>list(character)</code> for the three list columns.</p>
@@ -430,7 +430,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.9000.</p>
 </div>
 
   </div></footer>

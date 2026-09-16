@@ -1,5 +1,37 @@
 # Changelog
 
+## nanoparquet 0.5.2
+
+- The default row group size (`num_rows_per_row_group` option) is now
+  122,880 rows, the same as DuckDB’s default
+  ([\#168](https://github.com/r-lib/nanoparquet/issues/168)).
+
+- nanoparquet now compiles with clang 23.
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
+  now reads missing values correctly when `col_select` selects a subset
+  of the columns, or reorders them
+  ([\#170](https://github.com/r-lib/nanoparquet/issues/170)).
+
+- [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
+  now works correctly when selecting list columns in `col_select`, by
+  name or position.
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
+  now writes correct min/max statistics for dictionary encoded `POSIXct`
+  and `difftime` columns
+  ([\#169](https://github.com/r-lib/nanoparquet/issues/169)).
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
+  no longer crashes when writing optional columns whose data size causes
+  more Parquet pages to be allocated than there are rows
+  ([\#147](https://github.com/r-lib/nanoparquet/issues/147)).
+
+- `write_parquet(file = ":stdout:")` now produces correct output on
+  Windows. Previously the standard output stream was in text mode, so
+  newline bytes were translated to CRLF, corrupting the binary Parquet
+  output.
+
 ## nanoparquet 0.5.1
 
 CRAN release: 2026-04-20
@@ -13,16 +45,16 @@ CRAN release: 2026-04-20
       Rscript --quiet -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' > mtcars.parquet
 
 - nanoparquet now supports
-  [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+  [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
   columns ([\#153](https://github.com/r-lib/nanoparquet/issues/153)):
 
   - [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md)
     now writes
-    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
     columns to INT64 Parquet columns. Similarly,
     [`infer_parquet_schema()`](https://nanoparquet.r-lib.org/reference/infer_parquet_schema.md)
     also supports
-    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
     columns.
 
   - [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
@@ -32,7 +64,7 @@ CRAN release: 2026-04-20
     [`parquet_options()`](https://nanoparquet.r-lib.org/reference/parquet_options.md)
     to control how INT64 columns are read. Set it to `"integer64"` or
     `"bit64::integer64"` to read them as
-    [`bit64::integer64`](https://rdrr.io/pkg/bit64/man/bit64-package.html)
+    [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
     vectors instead of the default `"double"`.
 
 - [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)

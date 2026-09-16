@@ -142,7 +142,7 @@ See also `?parquet_options()` for further details.
   row group by
   [`write_parquet()`](https://nanoparquet.r-lib.org/reference/write_parquet.md),
   if row groups are not specified explicitly. It should be an integer
-  scalar. Defaults to 10 million.
+  scalar. Defaults to 122,880, the same as DuckDB's default.
 
 - `nanoparquet.use_arrow_metadata`: unless this is set to `FALSE`,
   [`read_parquet()`](https://nanoparquet.r-lib.org/reference/read_parquet.md)
