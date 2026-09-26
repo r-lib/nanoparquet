@@ -31,6 +31,10 @@ Converts the contents of the named Parquet file to a R data frame.
 file_name <- system.file("extdata/userdata1.parquet", package = "nanoparquet")
 parquet_df <- nanoparquet::read_parquet(file_name)
 print(str(parquet_df))
+
+\donttest{
+stop("This is a failing donttest example!")
+}
 }
 \seealso{
 See \code{\link[=write_parquet]{write_parquet()}} to write Parquet files,
