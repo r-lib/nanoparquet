@@ -4,6 +4,8 @@
 
 * `write_parquet()` now writes correct min/max statistics for numeric columns that span multiple pages.
 
+* `write_parquet()` now uses zstd compression level 3 by default, as documented.
+
 # nanoparquet 0.5.2
 
 * The default row group size (`num_rows_per_row_group` option) is now
