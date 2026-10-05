@@ -1,5 +1,7 @@
 # nanoparquet (development version)
 
+* `write_parquet()` now writes correct min/max statistics for numeric columns that span multiple pages.
+
 # nanoparquet 0.5.2
 
 * The default row group size (`num_rows_per_row_group` option) is now
