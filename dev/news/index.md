@@ -9,6 +9,9 @@
   now writes correct min/max statistics for numeric columns that span
   multiple pages.
 
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now uses ZSTD compression level 3 by default, as documented.
+
 ## nanoparquet 0.5.2
 
 CRAN release: 2026-09-16
