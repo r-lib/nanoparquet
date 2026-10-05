@@ -2,6 +2,10 @@
 
 ## nanoparquet (development version)
 
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now writes correct min/max statistics for numeric columns that span
+  multiple pages.
+
 ## nanoparquet 0.5.2
 
 CRAN release: 2026-09-16

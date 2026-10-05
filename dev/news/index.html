@@ -46,7 +46,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="nanoparquet-development-version">nanoparquet (development version)<a class="anchor" aria-label="anchor" href="#nanoparquet-development-version"></a></h2>
-</div>
+<ul><li>
+<code><a href="../reference/write_parquet.html">write_parquet()</a></code> now writes correct min/max statistics for numeric columns that span multiple pages.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.2" id="nanoparquet-052">nanoparquet 0.5.2<a class="anchor" aria-label="anchor" href="#nanoparquet-052"></a></h2><p class="text-muted">CRAN release: 2026-09-16</p>
 <ul><li><p>The default row group size (<code>num_rows_per_row_group</code> option) is now 122,880 rows, the same as DuckDB’s default (<a href="https://github.com/r-lib/nanoparquet/issues/168" class="external-link">#168</a>).</p></li>
