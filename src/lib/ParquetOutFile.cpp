@@ -476,7 +476,7 @@ size_t ParquetOutFile::compress(
 
   } else if (codec == CompressionCodec::ZSTD) {
     size_t tgt_size_est = zstd::ZSTD_compressBound(src_size - skip);
-    tgt.reset(tgt_size_est);
+    tgt.reset(tgt_size_est + skip);
     if (skip > 0) memcpy(tgt.ptr, src.ptr, skip);
     int level;
     int minlevel = zstd::ZSTD_minCLevel();
