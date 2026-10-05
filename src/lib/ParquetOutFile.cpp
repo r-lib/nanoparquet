@@ -1458,7 +1458,7 @@ void ParquetOutFile::write_footer() {
   fmd.__set_num_rows(num_total_rows_set ? num_total_rows : num_rows);
   fmd.__set_row_groups(row_groups);
   fmd.__set_key_value_metadata(kv);
-  fmd.__set_created_by("https://github.com/gaborcsardi/nanoparquet");
+  fmd.__set_created_by("https://github.com/r-lib/nanoparquet");
   fmd.write(tproto.get());
   uint8_t *out_buffer;
   uint32_t out_length;

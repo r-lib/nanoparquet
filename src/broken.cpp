@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
   fmd.__set_num_rows(num_rows);
   fmd.__set_row_groups(rgs);
   fmd.__set_key_value_metadata(kv);
-  fmd.__set_created_by("https://github.com/gaborcsardi/nanoparquet");
+  fmd.__set_created_by("https://github.com/r-lib/nanoparquet");
   fmd.write(tproto.get());
   uint8_t *out_buffer;
   uint32_t out_length;
