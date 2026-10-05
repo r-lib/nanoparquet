@@ -587,3 +587,28 @@ test_that("min/max for dictionary encoded integer64", {
   expect_equal(as_int64(mtd[["min_value"]]), -1234567890123)
   expect_equal(as_int64(mtd[["max_value"]]), 9876543210)
 })
+
+test_that("min/max for multi-page column chunks", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  n <- 2000
+  df <- data.frame(
+    int = c(-1000L, 1000L, seq_len(n - 2)),
+    dbl = c(-1000, 1000, seq_len(n - 2) / 10)
+  )
+  df$date <- as.Date(df$int, origin = "2000-01-01")
+  df$time <- as.POSIXct(df$dbl, origin = "2000-01-01", tz = "UTC")
+
+  minmax <- function() {
+    write_parquet(df, tmp, encoding = "PLAIN")
+    mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+    mtd[, c("column", "min_value", "max_value")]
+  }
+  single <- minmax()
+  withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
+  multi <- minmax()
+
+  pages <- read_parquet_pages(tmp)
+  expect_gt(min(table(pages$column[pages$page_type == "DATA_PAGE"])), 1)
+  expect_equal(multi, single)
+})
