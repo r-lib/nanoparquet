@@ -77,7 +77,8 @@ write_parquet <- function(
 ) {
   file <- path.expand(file)
 
-  compression <- parse_compression(compression, options)
+  compression <- parse_compression(compression)
+  options <- fill_compression_level(options, compression)
 
   dim <- as.integer(dim(x))
 
@@ -140,20 +141,22 @@ write_parquet <- function(
 }
 
 parse_compression <- function(
-  compression = c("snappy", "gzip", "zstd", "uncompressed"),
-  options
+  compression = c("snappy", "gzip", "zstd", "uncompressed")
 ) {
   codecs <- c("uncompressed" = 0L, "snappy" = 1L, "gzip" = 2L, "zstd" = 6L)
-  compression <- codecs[match.arg(compression)]
+  codecs[match.arg(compression)]
+}
+
+fill_compression_level <- function(options, compression) {
   if (is.na(options[["compression_level"]])) {
     # -1 is an allowed value for zstd, so we set the default here
-    if (compression == "zstd") {
+    if (names(compression) == "zstd") {
       options[["compression_level"]] <- 3L
     } else {
       options[["compression_level"]] <- -1L
     }
   }
-  compression
+  options
 }
 
 prepare_write_df <- function(x) {
@@ -387,7 +390,8 @@ append_parquet <- function(
     ))
   }
 
-  compression <- parse_compression(compression, options)
+  compression <- parse_compression(compression)
+  options <- fill_compression_level(options, compression)
 
   x <- prepare_write_df(x)
 
