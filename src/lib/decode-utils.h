@@ -19,7 +19,7 @@ T uleb_decode(buffer *buf) {
       throw runtime_error("Buffer ended while varint decoding");
     }
     auto byte = *buf->start++; buf->len--;
-    result |= (byte & 127) << shift;
+    result |= (T)(byte & 127) << shift;
     if ((byte & 128) == 0) break;
     shift += 7;
     if (shift > sizeof(T) * 8) {
