@@ -5,8 +5,8 @@
     Output
            file_name version num_rows mtd$file_meta_data$key_value_metadata
       1 test.parquet       1       32                          ARROW:sc....
-                                        created_by
-      1 https://github.com/gaborcsardi/nanoparquet
+                                  created_by
+      1 https://github.com/r-lib/nanoparquet
     Code
       as.data.frame(mtd$schema)
     Output
