@@ -29,3 +29,16 @@ test_that("zstd compression levels", {
     expect_equal(as.data.frame(read_parquet(tmp)), as.data.frame(df))
   }
 })
+
+test_that("zstd default compression level is 3", {
+  df <- test_df()
+  expect_identical(
+    write_parquet(df, ":raw:", compression = "zstd"),
+    write_parquet(
+      df,
+      ":raw:",
+      compression = "zstd",
+      options = parquet_options(compression_level = 3)
+    )
+  )
+})
