@@ -605,6 +605,7 @@ void RParquetOutFile::write_integer_int32(std::ostream &file, SEXP col,
   if (minmax && has_minmax_value[idx]) {
     GRAB_MIN2(min_value, idx);
     GRAB_MAX2(max_value, idx);
+    has_min = has_max = true;
   }
 
   if (bit_width == 32) {
@@ -720,6 +721,7 @@ void RParquetOutFile::write_double_int32_time(std::ostream &file, SEXP col,
   if (minmax && has_minmax_value[idx]) {
     GRAB_MIN2(min_value, idx);
     GRAB_MAX2(max_value, idx);
+    has_min = has_max = true;
   }
 
   for (uint64_t i = from; i < until; i++) {
@@ -756,6 +758,7 @@ void RParquetOutFile::write_double_int32(std::ostream &file, SEXP col,
     if (minmax && has_minmax_value[idx]) {
       GRAB_MIN2(min_value, idx);
       GRAB_MAX2(max_value, idx);
+      has_min = has_max = true;
     }
 
     int32_t min, max = 0;
@@ -808,6 +811,7 @@ void RParquetOutFile::write_double_int32(std::ostream &file, SEXP col,
     if (minmax && has_minmax_value[idx]) {
       GRAB_MIN2(min_value, idx);
       GRAB_MAX2(max_value, idx);
+      has_min = has_max = true;
     }
 
     uint32_t max;
@@ -1015,6 +1019,7 @@ void RParquetOutFile::write_integer_int64(std::ostream &file, SEXP col,
   if (minmax && has_minmax_value[idx]) {
     GRAB_MIN2(min_value, idx);
     GRAB_MAX2(max_value, idx);
+    has_min = has_max = true;
   }
 
   for (uint64_t i = from; i < until; i++) {
@@ -1083,6 +1088,7 @@ void RParquetOutFile::write_double_int64_time(std::ostream &file, SEXP col,
   if (minmax && has_minmax_value[idx]) {
     GRAB_MIN2(min_value, idx);
     GRAB_MAX2(max_value, idx);
+    has_min = has_max = true;
   }
 
   for (uint64_t i = from; i < until; i++) {
@@ -1112,6 +1118,7 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
   if (minmax && has_minmax_value[idx]) {
     GRAB_MIN2(min_value, idx);
     GRAB_MAX2(max_value, idx);
+    has_min = has_max = true;
   }
 
   if (Rf_inherits(col, "POSIXct")) {
@@ -1234,6 +1241,7 @@ void RParquetOutFile::write_double_int64(std::ostream &file, SEXP col,
       if (minmax && has_minmax_value[idx]) {
 	GRAB_MIN2(min_value, idx);
 	GRAB_MAX2(max_value, idx);
+	has_min = has_max = true;
       }
       for (uint64_t i = from; i < until; i++) {
         double val = REAL(col)[i];
@@ -1393,6 +1401,7 @@ void RParquetOutFile::write_float(std::ostream &file, uint32_t idx,
   if (minmax && has_minmax_value[idx]) {
     GRAB_MIN2(min_value, idx);
     GRAB_MAX2(max_value, idx);
+    has_min = has_max = true;
   }
 
   for (uint64_t i = from; i < until; i++) {
@@ -1466,6 +1475,7 @@ void RParquetOutFile::write_double(std::ostream &file, uint32_t idx,
   if (minmax && has_minmax_value[idx]) {
     GRAB_MIN2(min_value, idx);
     GRAB_MAX2(max_value, idx);
+    has_min = has_max = true;
   }
 
   if (!minmax &&
