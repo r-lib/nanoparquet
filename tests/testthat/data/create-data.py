@@ -289,6 +289,26 @@ def do_float16():
     dictionary_pagesize_limit = 400
   )
 
+def do_dbp_int64():
+  import pyarrow as pa
+  import pyarrow.parquet as pq
+  fields = [
+      pa.field(name = 'up', type = pa.int64(), nullable = False),
+      pa.field(name = 'down', type = pa.int64(), nullable = False),
+  ]
+  schema = pa.schema(fields = fields)
+  data = [
+    [ 5000000000 * x for x in range(1, 21) ],
+    [ -5000000000 * x for x in range(1, 21) ],
+  ]
+  table = pa.table(data = data, schema = schema)
+  pq.write_table(
+    table,
+    'tests/testthat/data/dbp-int64-large.parquet',
+    use_dictionary = False,
+    column_encoding = 'DELTA_BINARY_PACKED'
+  )
+
 if __name__ == "__main__":
   import sys
   if len(sys.argv) == 1:
@@ -298,6 +318,7 @@ if __name__ == "__main__":
     do_binary()
     do_uuid()
     do_float16()
+    do_dbp_int64()
   elif sys.argv[1] == 'float':
     do_float()
   elif sys.argv[1] == 'mixed':
@@ -310,3 +331,5 @@ if __name__ == "__main__":
     do_uuid()
   elif sys.argv[1] == 'float16':
     do_float16()
+  elif sys.argv[1] == 'dbp_int64':
+    do_dbp_int64()

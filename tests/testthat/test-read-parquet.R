@@ -409,6 +409,13 @@ test_that("DELTA_BIANRY_PACKED encoding", {
   })
 })
 
+test_that("DELTA_BINARY_PACKED encoding, INT64 values above 2^31", {
+  pf <- test_path("data/dbp-int64-large.parquet")
+  df <- read_parquet(pf)
+  expect_equal(df$up, 5e9 * (1:20))
+  expect_equal(df$down, -5e9 * (1:20))
+})
+
 test_that("UUID columns", {
   pf <- test_path("data/uuid-arrow.parquet")
   expect_snapshot({
