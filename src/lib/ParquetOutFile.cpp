@@ -1458,6 +1458,9 @@ void ParquetOutFile::write_footer() {
   fmd.__set_num_rows(num_total_rows_set ? num_total_rows : num_rows);
   fmd.__set_row_groups(row_groups);
   fmd.__set_key_value_metadata(kv);
+  ColumnOrder type_order;
+  type_order.__set_TYPE_ORDER(TypeDefinedOrder());
+  fmd.__set_column_orders(std::vector<ColumnOrder>(num_cols, type_order));
   fmd.__set_created_by("https://github.com/r-lib/nanoparquet");
   fmd.write(tproto.get());
   uint8_t *out_buffer;

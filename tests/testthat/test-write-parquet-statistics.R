@@ -629,3 +629,20 @@ test_that("min/max for multi-page column chunks", {
   expect_gt(min(table(pages$column[pages$page_type == "DATA_PAGE"])), 1)
   expect_equal(multi, single)
 })
+
+test_that("column orders are written for every leaf column", {
+  skip_without("duckdb")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  df <- data.frame(a = 1:2, s = c("a", "b"))
+  df$l <- list(1:3, 4:5)
+  write_parquet(df, tmp)
+  res <- duckdb::sql_query(
+    sprintf("SELECT column_orders FROM parquet_file_metadata('%s')", tmp)
+  )
+  expect_equal(
+    res$column_orders[[1]],
+    rep("ColumnOrder(TYPE_ORDER=TypeDefinedOrder())", 3)
+  )
+})
