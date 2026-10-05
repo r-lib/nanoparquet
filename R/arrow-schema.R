@@ -21,7 +21,8 @@ apply_arrow_schema <- function(
   spec <- arrow_find_special(arrow_schema, file, col_select)
   for (idx in spec$factor) {
     clevels <- Reduce(union, dicts[[idx]])
-    tab[[idx]] <- factor(tab[[idx]], levels = clevels)
+    ordered <- isTRUE(spec$columns$dictionary[[idx]]$is_ordered)
+    tab[[idx]] <- factor(tab[[idx]], levels = clevels, ordered = ordered)
   }
   for (idx in spec$difftime) {
     # only if INT64, otherwise hms, probably
