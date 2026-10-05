@@ -126,6 +126,21 @@ test_that("read factors, marked by Arrow", {
   })
 })
 
+test_that("read ordered factors, marked by Arrow", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- data.frame(
+    o = factor(
+      c("hi", "lo", NA),
+      levels = c("lo", "mid", "hi"),
+      ordered = TRUE
+    ),
+    f = factor(c("b", "a", NA))
+  )
+  write_parquet(df, tmp)
+  expect_identical(as.data.frame(read_parquet(tmp)), df)
+})
+
 test_that("Can't parse Arrow schema", {
   expect_snapshot(
     arrow_find_special(base64_encode("foobar"), "myfile")

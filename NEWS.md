@@ -1,5 +1,7 @@
 # nanoparquet (development version)
 
+* `read_parquet()` now reads ordered factors as ordered factors.
+
 * `write_parquet()` now writes correct min/max statistics for numeric columns that span multiple pages.
 
 # nanoparquet 0.5.2
