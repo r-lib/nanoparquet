@@ -383,7 +383,7 @@ SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until) {
   switch (TYPEOF(x)) {
     case LGLSXP:
       dictlen = create_dict_idx<int>(
-        LOGICAL(x) + cfrom, iidx, idict, len, NA_LOGICAL,
+        LOGICAL(x) + cfrom, idict, iidx, len, NA_LOGICAL,
         imin, imax, hasminmax
       );
       break;
