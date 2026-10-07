@@ -8,6 +8,8 @@
 
 * `write_parquet()` now writes column orders to the file metadata, so Arrow and other readers that require them use the min/max statistics.
 
+* `write_parquet()` now writes min/max statistics for logical columns.
+
 * `write_parquet()` now uses ZSTD compression level 3 by default, as documented.
 
 # nanoparquet 0.5.2

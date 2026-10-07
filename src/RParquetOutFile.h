@@ -145,6 +145,8 @@ private:
 
   void create_dictionary(uint32_t idx, int64_t from, int64_t until,
                          parquet::SchemaElement &sel);
+  void update_boolean_minmax(uint32_t idx, SEXP col, uint64_t from,
+                             uint64_t until);
   // for LGLSXP this mean RLE encoding
   bool should_use_dict_encoding(uint32_t idx);
   parquet::Encoding::type
