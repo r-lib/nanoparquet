@@ -134,6 +134,10 @@ utcts <- function(x) {
   as.POSIXct(as.POSIXlt(as.Date(x), tz = "UTC"))
 }
 
+as_int64 <- function(x) {
+  sapply(x, function(xx) xx %&&% .Call(read_int64, xx) %||% NA_real_)
+}
+
 make_nested_list_parquet <- function(filename, depth, rows = NULL, ...) {
   # Write a Parquet file with a single column 'a' that is a list nested to
   # `depth` levels (depth=1 -> list<int32>, depth=2 -> list<list<int32>>).
