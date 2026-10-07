@@ -631,6 +631,7 @@ test_that("integer64 round-trip and read_int64_type option", {
 })
 
 test_that("integer64 with missing values uses dictionary encoding", {
+  skip_if_not_installed("bit64")
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
 
