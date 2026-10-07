@@ -58,6 +58,70 @@ test_that("min/max for integers", {
   expect_snapshot(do(encoding = "RLE_DICTIONARY", compression = "uncompressed"))
 })
 
+test_that("min/max for logicals", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  raw_false <- as.raw(0)
+  raw_true <- as.raw(1)
+
+  stats <- function() {
+    mtd <- read_parquet_metadata(tmp)[["column_chunks"]]
+    list(min = unclass(mtd$min_value), max = unclass(mtd$max_value))
+  }
+  minmax <- function(x, ...) {
+    write_parquet(data.frame(x = x), tmp, ...)
+    expect_equal(read_parquet(tmp)$x, x)
+    stats()
+  }
+
+  opts <- parquet_options(num_rows_per_row_group = 4)
+  required <- c(TRUE, FALSE, TRUE, FALSE, rep(TRUE, 4), rep(FALSE, 4))
+  optional <- c(NA, TRUE, FALSE, NA, rep(TRUE, 4), rep(NA, 4))
+  for (encoding in c("PLAIN", "RLE")) {
+    expect_equal(
+      minmax(required, encoding = encoding, options = opts),
+      list(
+        min = list(raw_false, raw_true, raw_false),
+        max = list(raw_true, raw_true, raw_false)
+      )
+    )
+    expect_equal(
+      minmax(optional, encoding = encoding, options = opts),
+      list(
+        min = list(raw_false, raw_true, NULL),
+        max = list(raw_true, raw_true, NULL)
+      )
+    )
+  }
+
+  expect_equal(
+    minmax(required, options = parquet_options(write_minmax_values = FALSE)),
+    list(min = list(NULL), max = list(NULL))
+  )
+
+  write_parquet(data.frame(x = rep(TRUE, 4)), tmp)
+  append_parquet(
+    data.frame(x = rep(FALSE, 4)),
+    tmp,
+    options = parquet_options(keep_row_groups = TRUE)
+  )
+  expect_equal(
+    stats(),
+    list(min = list(raw_true, raw_false), max = list(raw_true, raw_false))
+  )
+
+  withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
+  x <- rep(c(TRUE, FALSE), each = 10000)
+  for (encoding in c("PLAIN", "RLE")) {
+    expect_equal(
+      minmax(x, encoding = encoding),
+      list(min = list(raw_false), max = list(raw_true))
+    )
+    pages <- read_parquet_pages(tmp)
+    expect_gt(sum(pages$page_type == "DATA_PAGE"), 1)
+  }
+})
+
 test_that("min/max for DATEs", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)
