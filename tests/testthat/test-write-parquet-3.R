@@ -630,6 +630,19 @@ test_that("integer64 round-trip and read_int64_type option", {
   expect_equal(res2$x[c(1, 2)], d2$x[c(1, 2)])
 })
 
+test_that("integer64 with missing values uses dictionary encoding", {
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+
+  d <- data.frame(x = bit64::as.integer64(c(rep(c(-1, 0, 1), 10), NA)))
+  write_parquet(d, tmp)
+
+  mtd <- read_parquet_metadata(tmp)[["column_chunks"]]
+  expect_contains(mtd[["encodings"]][[1]], "RLE_DICTIONARY")
+  opts <- parquet_options(read_int64_type = "integer64")
+  expect_identical(read_parquet(tmp, options = opts)$x, d$x)
+})
+
 test_that("JSON", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

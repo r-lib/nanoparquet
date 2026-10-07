@@ -478,24 +478,9 @@ void RParquetOutFile::create_dictionary(uint32_t idx, int64_t from,
       }
     } else if (TYPEOF(VECTOR_ELT(d, 2)) == REALSXP) {
       if (Rf_inherits(col, "integer64")) {
-        // integer64 stores int64 values as raw bytes in a REALSXP, so the
-        // min/max of the dictionary, which compares them as doubles, is not
-        // usable, we need to calculate them here.
-        int64_t min = 0, max = 0;
-        bool has_minmax = false;
-        for (int64_t i = from; i < until; i++) {
-          int64_t el;
-          memcpy(&el, &REAL(col)[i], sizeof(int64_t));
-          if (el == INT64_MIN) continue;   // NA_integer64_
-          if (!has_minmax || el < min) min = el;
-          if (!has_minmax || el > max) max = el;
-          has_minmax = true;
-        }
-        has_minmax_value[idx] = has_minmax;
-        if (has_minmax) {
-          min_values[idx] = std::string((const char*) &min, sizeof(int64_t));
-          max_values[idx] = std::string((const char*) &max, sizeof(int64_t));
-        }
+        // the dictionary min/max hold the raw int64 bytes
+        min_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 2)), sizeof(int64_t));
+        max_values[idx] = std::string((const char*) REAL(VECTOR_ELT(d, 3)), sizeof(int64_t));
       } else if (sel.type == parquet::Type::INT32) {
         double factor = double_scale_factor(col, sel);
         int32_t min = REAL(VECTOR_ELT(d, 2))[0] * factor;
