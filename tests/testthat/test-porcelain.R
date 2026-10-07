@@ -165,3 +165,9 @@ test_that("DELTA_BIANRY_PACKED INT64", {
     dbp_decode_int(dt)
   })
 })
+
+test_that("dict_encode_idx logical", {
+  d <- dict_encode_idx(c(TRUE, FALSE, NA, TRUE))
+  expect_equal(d[[1]], c(0L, 1L))
+  expect_equal(d[[2]], c(0L, 1L, NA, 0L))
+})

@@ -588,6 +588,23 @@ test_that("min/max for dictionary encoded integer64", {
   expect_equal(as_int64(mtd[["max_value"]]), 9876543210)
 })
 
+test_that("min/max for dictionary encoded negative integer64 with NA", {
+  skip_if_not_installed("bit64")
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  df <- data.frame(x = bit64::as.integer64(rep(c(-1, -2, NA), 4)))
+
+  as_int64 <- function(x) {
+    sapply(x, function(xx) xx %&&% .Call(read_int64, xx) %||% NA_real_)
+  }
+
+  write_parquet(df, tmp, encoding = "RLE_DICTIONARY")
+  expect_equal(as.data.frame(read_parquet(tmp)), as.data.frame(df))
+  mtd <- as.data.frame(read_parquet_metadata(tmp)[["column_chunks"]])
+  expect_equal(as_int64(mtd[["min_value"]]), -2)
+  expect_equal(as_int64(mtd[["max_value"]]), -1)
+})
+
 test_that("min/max for multi-page column chunks", {
   tmp <- tempfile(fileext = ".parquet")
   on.exit(unlink(tmp), add = TRUE)

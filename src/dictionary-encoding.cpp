@@ -343,7 +343,11 @@ SEXP nanoparquet_create_dict(SEXP x, SEXP rlen) {
       dictlen = create_dict<int>(INTEGER(x), len, NA_INTEGER);
       break;
     case REALSXP:
-      dictlen = create_dict_real(REAL(x), len);
+      if (Rf_inherits(x, "integer64")) {
+        dictlen = create_dict<int64_t>((int64_t*) REAL(x), len, INT64_MIN);
+      } else {
+        dictlen = create_dict_real(REAL(x), len);
+      }
       break;
     case STRSXP: {
       dictlen = create_dict_ptr((void**)STRING_PTR_RO(x), len, (void*) NA_STRING);
@@ -373,12 +377,13 @@ SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until) {
   int *iidx = INTEGER(idx);
   int imin, imax;
   double dmin, dmax;
+  int64_t i64min, i64max;
   SEXP smin = R_NilValue, smax = R_NilValue;
   bool hasminmax = false;
   switch (TYPEOF(x)) {
     case LGLSXP:
       dictlen = create_dict_idx<int>(
-        LOGICAL(x) + cfrom, iidx, idict, len, NA_LOGICAL,
+        LOGICAL(x) + cfrom, idict, iidx, len, NA_LOGICAL,
         imin, imax, hasminmax
       );
       break;
@@ -389,10 +394,17 @@ SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until) {
       );
       break;
     case REALSXP:
-      dictlen = create_dict_real_idx(
-        REAL(x) + cfrom, idict, iidx, len,
-        dmin, dmax, hasminmax
-      );
+      if (Rf_inherits(x, "integer64")) {
+        dictlen = create_dict_idx<int64_t>(
+          (int64_t*) REAL(x) + cfrom, idict, iidx, len, INT64_MIN,
+          i64min, i64max, hasminmax
+        );
+      } else {
+        dictlen = create_dict_real_idx(
+          REAL(x) + cfrom, idict, iidx, len,
+          dmin, dmax, hasminmax
+        );
+      }
       break;
     case STRSXP: {
       dictlen = create_dict_str_idx(
@@ -414,6 +426,10 @@ SEXP nanoparquet_create_dict_idx_(SEXP x, SEXP from, SEXP until) {
       SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(imin));
       SET_VECTOR_ELT(res, 3, Rf_ScalarInteger(imax));
     } else if (TYPEOF(x) == REALSXP) {
+      if (Rf_inherits(x, "integer64")) {
+        memcpy(&dmin, &i64min, sizeof(double));
+        memcpy(&dmax, &i64max, sizeof(double));
+      }
       SET_VECTOR_ELT(res, 2, Rf_ScalarReal(dmin));
       SET_VECTOR_ELT(res, 3, Rf_ScalarReal(dmax));
     } else if (TYPEOF(x) == STRSXP) {
