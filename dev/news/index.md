@@ -6,6 +6,11 @@
   now reads ordered factors as ordered factors.
 
 - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  no longer fails on
+  [`bit64::integer64`](https://bit64.r-lib.org/reference/bit64-package.html)
+  columns with missing values.
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
   now writes correct min/max statistics for numeric columns that span
   multiple pages.
 
