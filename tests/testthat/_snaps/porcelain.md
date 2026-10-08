@@ -531,7 +531,7 @@
     Output
       [1]         NA 2147483647
 
-# DELTA_BIANRY_PACKED INT64
+# DELTA_BINARY_PACKED INT64
 
     Code
       dbp_decode_int(dt)

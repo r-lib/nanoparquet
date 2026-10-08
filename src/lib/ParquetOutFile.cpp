@@ -658,9 +658,9 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx, int64_t from,
                                            int64_t until) {
   ColumnMetaData *cmd = &(column_meta_data[idx]);
   SchemaElement se = schemas[idx + 1].element();
-  // Uncompresed size of the dictionary in bytes
+  // Uncompressed size of the dictionary in bytes
   uint32_t dict_size = get_size_dictionary(idx, se, from, until);
-  // Number of entries in the dicitonary
+  // Number of entries in the dictionary
   uint32_t num_dict_values = get_num_values_dictionary(idx, se, from, until);
 
   // Init page header
@@ -674,7 +674,7 @@ void ParquetOutFile::write_dictionary_page(uint32_t idx, int64_t from,
 
   // If uncompressed, then write it out directly, otherwise to a buffer
   if (cmd->codec == CompressionCodec::UNCOMPRESSED) {
-    // we knpw the compressed size, so we can write out the header first,
+    // we know the compressed size, so we can write out the header first,
     // then the data directly to the file
     ph.__set_compressed_page_size(dict_size);
     write_page_header(idx, ph);

@@ -36,7 +36,7 @@ class MemStream : public std::streambuf {
       }
       uint64_t space = sizes[bufptr] - sptr;
       if (n > space) {
-        // ovreflow, allocate new buffer
+        // overflow, allocate new buffer
         uint64_t of = n - space;
         memcpy(sbuf + sptr, s, space);
         bufptr++;

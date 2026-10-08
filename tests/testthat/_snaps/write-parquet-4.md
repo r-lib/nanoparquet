@@ -6,7 +6,7 @@
       rep(10L, ncol(mtcars)), 1L, sys.call())
     Condition
       Error:
-      ! Unknown Praquet encoding code: 10
+      ! Unknown Parquet encoding code: 10
 
 # force PLAIN / RLE
 
@@ -70,7 +70,7 @@
       write_parquet(d, tmp, schema = schema2)
     Condition
       Error in `write_parquet()`:
-      ! Internal nanoparquet error, precision to high for INT32 DECIMAL
+      ! Internal nanoparquet error, precision too high for INT32 DECIMAL
 
 ---
 
@@ -78,7 +78,7 @@
       write_parquet(d2, tmp, schema = schema2)
     Condition
       Error in `write_parquet()`:
-      ! Internal nanoparquet error, precision to high for INT32 DECIMAL
+      ! Internal nanoparquet error, precision too high for INT32 DECIMAL
 
 # write broken DECIMAL INT64
 
@@ -86,7 +86,7 @@
       write_parquet(d, tmp, schema = schema2)
     Condition
       Error in `write_parquet()`:
-      ! Internal nanoparquet error, precision to high for INT64 DECIMAL
+      ! Internal nanoparquet error, precision too high for INT64 DECIMAL
 
 ---
 
@@ -94,7 +94,7 @@
       write_parquet(d2, tmp, schema = schema2)
     Condition
       Error in `write_parquet()`:
-      ! Internal nanoparquet error, precision to high for INT64 DECIMAL
+      ! Internal nanoparquet error, precision too high for INT64 DECIMAL
 
 # write broken INT32
 
@@ -198,7 +198,7 @@
       write_parquet(d2, tmp, schema = schema)
     Condition
       Error in `write_parquet()`:
-      ! Invalid string length: 6, expenting 3 for FIXED_LEN_TYPE_ARRAY
+      ! Invalid string length: 6, expecting 3 for FIXED_LEN_BYTE_ARRAY
 
 ---
 
@@ -214,7 +214,7 @@
       write_parquet(d3, tmp, schema = schema)
     Condition
       Error in `write_parquet()`:
-      ! Invalid string length: 4, expenting 3 for FIXED_LEN_TYPE_ARRAY
+      ! Invalid string length: 4, expecting 3 for FIXED_LEN_BYTE_ARRAY
 
 ---
 

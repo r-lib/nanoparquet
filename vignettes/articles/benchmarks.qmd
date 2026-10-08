@@ -127,7 +127,7 @@ I include the complete raw results at the end of this article.
 - Parquet has a rich type system, including native support for missing
   values.
 - Parquet is binary, (possibly) efficiently encoded, (usually) compressed,
-  so Parquet files are typicallly smaller, and faster to read and write.
+  so Parquet files are typically smaller, and faster to read and write.
 - Parquet better supports reading subsets of rows or columns from a file,
   even through HTTP if you like.
 

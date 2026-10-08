@@ -214,7 +214,7 @@ void RParquetReader::create_metadata(RParquetFilter &filter) {
     for (auto i = 0; i < filter.columns.size(); i++) {
       if (filter.columns[i] >= num_leaf_cols) {
         throw std::runtime_error(
-          "Unvalid (too large) column selected from Parquet file"
+          "Invalid (too large) column selected from Parquet file"
         );
       }
       colmap[leaf_to_schema[filter.columns[i]]] = i + 1;
@@ -893,7 +893,7 @@ void convert_column_to_r_int64_dict_nomiss(postprocess *pp, uint32_t cl) {
           *beg++ = static_cast<double>(*ibeg++);
         }
       } else {
-        // first convert tbe dict values
+        // first convert the dict values
         uint32_t dict_len = pp->dicts[cl][rg].dict_len;
         if (!rg_dict_converted && dict_len > 0) {
           rg_dict_converted = true;

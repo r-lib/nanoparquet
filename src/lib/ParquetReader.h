@@ -164,7 +164,7 @@ protected:
   // A set of managed buffers for the column chunk data
   std::unique_ptr<BufferManager> bufman_cc = nullptr;
   // A set of managed buffers for the missing data. We use a separate set of
-  // buffers for theese because they should be of the same size, so we can
+  // buffers for these because they should be of the same size, so we can
   // avoid multiple re-allocations
   std::unique_ptr<BufferManager> bufman_rep = nullptr;
   std::unique_ptr<BufferManager> bufman_na = nullptr;
