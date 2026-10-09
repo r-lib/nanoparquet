@@ -1862,6 +1862,28 @@ void write_boolean_impl(std::ostream &file, SEXP col,
   }
 }
 
+void RParquetOutFile::update_boolean_minmax(uint32_t idx, SEXP col,
+                                            uint64_t from, uint64_t until) {
+  if (!write_minmax_values || !is_minmax_supported[idx]) return;
+  uint8_t min_value = 1, max_value = 0;
+  if (has_minmax_value[idx]) {
+    GRAB_MIN2(min_value, idx);
+    GRAB_MAX2(max_value, idx);
+  }
+  const int *p = LOGICAL(col);
+  for (uint64_t i = from; i < until && (min_value || !max_value); i++) {
+    if (p[i] == NA_LOGICAL) continue;
+    max_value |= p[i];
+    min_value &= p[i];
+  }
+  // min > max if all values are NA
+  if (min_value <= max_value) {
+    SAVE_MIN2(min_value, idx, min_value);
+    SAVE_MAX2(max_value, idx, max_value);
+    has_minmax_value[idx] = true;
+  }
+}
+
 void RParquetOutFile::write_boolean_as_bitpacked(std::ostream &file, uint32_t idx,
                                     uint32_t group, uint32_t page,
                                     uint64_t from, uint64_t until) {
@@ -1876,6 +1898,7 @@ void RParquetOutFile::write_boolean_as_bitpacked(std::ostream &file, uint32_t id
     });
   }
   write_boolean_impl(file, col, from, until);
+  update_boolean_minmax(idx, col, from, until);
 }
 
 void RParquetOutFile::write_boolean_as_int(std::ostream &file,
@@ -1895,6 +1918,7 @@ void RParquetOutFile::write_boolean_as_int(std::ostream &file,
   }
   uint64_t len = until - from;
   file.write((const char *) (LOGICAL(col) + from), sizeof(int) * len);
+  update_boolean_minmax(idx, col, from, until);
 }
 
 uint32_t RParquetOutFile::get_num_levels(uint32_t idx, uint64_t from,
@@ -2094,6 +2118,7 @@ void RParquetOutFile::write_present_boolean_as_int(std::ostream &file,
       file.write((const char*) &el, sizeof(int));
     }
   }
+  update_boolean_minmax(idx, col, from, until);
 }
 
 void RParquetOutFile::write_present_boolean_as_bitpacked(
@@ -2128,6 +2153,7 @@ void RParquetOutFile::write_present_boolean_as_bitpacked(
     }
   }
   write_boolean_impl(file, col2, 0, num_present);
+  update_boolean_minmax(idx, col, from, until);
 
   UNPROTECT(1);
 }
@@ -3039,7 +3065,7 @@ void RParquetOutFile::init_metadata(
       //   lt.__isset.DECIMAL || lt.isset.FLOAT16;
     } else {
       switch(sels.element().type) {
-      // case parquet::Type::BOOLEAN:
+      case parquet::Type::BOOLEAN:
       case parquet::Type::INT32:
       case parquet::Type::INT64:
       case parquet::Type::FLOAT:
@@ -3121,7 +3147,7 @@ void RParquetOutFile::init_append_metadata(
       //   lt.__isset.DECIMAL || lt.isset.FLOAT16;
     } else {
       switch(sel.type) {
-      // case parquet::Type::BOOLEAN:
+      case parquet::Type::BOOLEAN:
       case parquet::Type::INT32:
       case parquet::Type::INT64:
       case parquet::Type::FLOAT:
