@@ -177,7 +177,7 @@ CRAN release: 2026-04-11
     and
     [`read_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_schema.md)
     report list columns with `r_type` `list(...)`, e.g. `list(double)`
-    or `list(list(characer))`, etc.
+    or `list(list(character))`, etc.
 
   - Dictionary encoding (`RLE_DICTIONARY`) is supported for `LIST`
     columns.

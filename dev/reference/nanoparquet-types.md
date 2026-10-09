@@ -130,13 +130,13 @@ Currently supported non-default mappings are:
 
 - `factor` to `ENUM`,
 
-- `integer` to `DECIAML` & `INT32`,
+- `integer` to `DECIMAL` & `INT32`,
 
-- `integer` to `DECIAML` & `INT64`,
+- `integer` to `DECIMAL` & `INT64`,
 
-- `double` to `DECIAML` & `INT32`,
+- `double` to `DECIMAL` & `INT32`,
 
-- `double` to `DECIAML` & `INT64`,
+- `double` to `DECIMAL` & `INT64`,
 
 - `integer` to `INT(8, *)`, `INT(16, *)`, `INT(32, signed)`,
 

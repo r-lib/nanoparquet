@@ -129,7 +129,7 @@ A named list with entries:
     "DELTA_BINARY_PACKED", "DELTA_LENGTH_BYTE_ARRAY",
     "DELTA_BYTE_ARRAY", "RLE_DICTIONARY", "BYTE_STREAM_SPLIT".
 
-  - `path_in_scema`: list column of character vectors. It is simply the
+  - `path_in_schema`: list column of character vectors. It is simply the
     path from the root node. It is simply the column name for flat
     schemas.
 
@@ -157,12 +157,12 @@ A named list with entries:
     may be `NA`.
 
   - `min_value`: list column of raw vectors, the minimum value of the
-    column, in binary. If `NULL`, then then it is not specified. This
-    column is experimental.
+    column, in binary. If `NULL`, then it is not specified. This column
+    is experimental.
 
   - `max_value`: list column of raw vectors, the maximum value of the
-    column, in binary. If `NULL`, then then it is not specified. This
-    column is experimental.
+    column, in binary. If `NULL`, then it is not specified. This column
+    is experimental.
 
   - `is_min_value_exact`: whether the minimum value is an actual value
     of a column, or a bound. It may be `NA`.

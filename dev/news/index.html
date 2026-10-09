@@ -93,7 +93,7 @@ Rscript --quiet -e 'nanoparquet::write_parquet(mtcars, ":stdout:")' &gt; mtcars.
 <ul><li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> can write R list columns whose elements are integer, double, or character vectors. <code>NULL</code> entries encode a missing list, <code>NA</code> values inside an element vector encode a missing element, and zero-length vectors encode an empty list.</p></li>
 <li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> can read <code>LIST</code> columns with any supported scalar element type. All four combinations of optional/required outer list and optional/required element are supported, for both data page version 1 and version 2.</p></li>
 <li><p><code><a href="../reference/parquet_schema.html">parquet_schema()</a></code> accepts <code>list("LIST", element = &lt;type&gt;)</code> to specify a <code>LIST</code> column type explicitly.</p></li>
-<li><p><code><a href="../reference/infer_parquet_schema.html">infer_parquet_schema()</a></code> and <code><a href="../reference/read_parquet_schema.html">read_parquet_schema()</a></code> report list columns with <code>r_type</code> <code>list(...)</code>, e.g. <code>list(double)</code> or <code>list(list(characer))</code>, etc.</p></li>
+<li><p><code><a href="../reference/infer_parquet_schema.html">infer_parquet_schema()</a></code> and <code><a href="../reference/read_parquet_schema.html">read_parquet_schema()</a></code> report list columns with <code>r_type</code> <code>list(...)</code>, e.g. <code>list(double)</code> or <code>list(list(character))</code>, etc.</p></li>
 <li><p>Dictionary encoding (<code>RLE_DICTIONARY</code>) is supported for <code>LIST</code> columns.</p></li>
 </ul></li>
 </ul></div>
