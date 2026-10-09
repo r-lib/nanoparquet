@@ -403,7 +403,7 @@ test_that("zstd with data page v2", {
   expect_equal(read_parquet(pf), read_parquet(pf2))
 })
 
-test_that("DELTA_BIANRY_PACKED encoding", {
+test_that("DELTA_BINARY_PACKED encoding", {
   suppressPackageStartupMessages(library(bit64))
   pf <- test_path("data/dbp-int32.parquet")
   expect_snapshot({

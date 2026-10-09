@@ -209,7 +209,7 @@ encode_arrow_schema_r <- function(df, schema) {
   artypes[dfts] <- "Duration"
   if (anyNA(artypes)) {
     stop(
-      "Unsuppoted types when writing Parquet file: ",
+      "Unsupported types when writing Parquet file: ",
       paste(unique(dftypes[is.na(artypes)]), collapse = ", ")
     )
   }

@@ -33,8 +33,8 @@ public:
     }
     if (mini_blocks_per_block == 0) {
       throw runtime_error(
-        "zero miniblocks per block is not allowsd in "
-        "DELTA_BIANRY_PACKED column"
+        "zero miniblocks per block is not allowed in "
+        "DELTA_BINARY_PACKED column"
       );
     }
     values_per_mini_block = values_per_block / mini_blocks_per_block;

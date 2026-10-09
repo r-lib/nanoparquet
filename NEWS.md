@@ -117,7 +117,7 @@
 
   - `infer_parquet_schema()` and `read_parquet_schema()` report list
     columns with `r_type` `list(...)`, e.g. `list(double)` or
-    `list(list(characer))`, etc.
+    `list(list(character))`, etc.
 
   - Dictionary encoding (`RLE_DICTIONARY`) is supported for `LIST`
     columns.

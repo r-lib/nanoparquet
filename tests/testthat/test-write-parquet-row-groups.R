@@ -46,7 +46,7 @@ test_that("factors & factor levels", {
   withr::local_options(nanoparquet.num_rows_per_row_group = 50L)
   write_parquet(df, tmp)
   expect_equal(as.data.frame(read_parquet(tmp)), df)
-  # the same dict is written into every dicitonary page
+  # the same dict is written into every dictionary page
   pgs <- read_parquet_pages(tmp)
   dict_ofs <- pgs[["page_header_offset"]][
     pgs[["page_type"]] == "DICTIONARY_PAGE"

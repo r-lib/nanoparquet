@@ -159,7 +159,7 @@ format_schema_result <- function(mtd, sch, options) {
 #'     - `encodings`: encodings used to store this chunk. It is a list
 #'       column of character vectors of encoding names. Current possible
 #'       encodings: `r paste0('"', names(encodings), '"', collapse = ", ")`.
-#'     - `path_in_scema`: list column of character vectors. It is simply
+#'     - `path_in_schema`: list column of character vectors. It is simply
 #'       the path from the root node. It is simply the column name for
 #'       flat schemas.
 #'     - `codec`: compression codec used for the column chunk. Possible
@@ -177,10 +177,10 @@ format_schema_result <- function(mtd, sch, options) {
 #'     - `null_count`: the number of missing values in the column chunk.
 #'       It may be `NA`.
 #'     - `min_value`: list column of raw vectors, the minimum value of the
-#'       column, in binary. If `NULL`, then then it is not specified.
+#'       column, in binary. If `NULL`, then it is not specified.
 #'       This column is experimental.
 #'     - `max_value`: list column of raw vectors, the maximum value of the
-#'       column, in binary. If `NULL`, then then it is not specified.
+#'       column, in binary. If `NULL`, then it is not specified.
 #'       This column is experimental.
 #'     - `is_min_value_exact`: whether the minimum value is an actual
 #'       value of a column, or a bound. It may be `NA`.

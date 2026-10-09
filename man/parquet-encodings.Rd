@@ -80,7 +80,7 @@ Supported types: none. Only for definition and repetition levels, but
 
 This is a simple bit packing encoding for integers, that was previously
 used for encoding definition and repetition levels. It is not used in new
-Parquet files because the the \code{RLE} encoding includes it and it is better.
+Parquet files because the \code{RLE} encoding includes it and it is better.
 
 Nanoparquet currently cannot read or write the \code{BIT_PACKED} encoding.
 }

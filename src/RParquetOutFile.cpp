@@ -64,7 +64,7 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
 
   if (renc >= 10) {
     r_call([&] {
-      Rf_error("Unknown Praquet encoding code: %d", renc);
+      Rf_error("Unknown Parquet encoding code: %d", renc);
     });
   }
 
@@ -297,7 +297,7 @@ RParquetOutFile::detect_encoding(uint32_t idx, parquet::SchemaElement &sel,
 bool RParquetOutFile::should_use_dict_encoding(uint32_t idx) {
   SEXP col = VECTOR_ELT(df, idx);
   int rtype = TYPEOF(col);
-  // this has to a dictionaery
+  // this has to be a dictionary
   if (rtype == INTSXP && Rf_inherits(col, "factor")) {
     return true;
   }
@@ -533,7 +533,7 @@ void write_integer_int32_dec(std::ostream & file, SEXP col, uint64_t from,
     r_call([&] {
       Rf_errorcall(
         nanoparquet_call,
-        "Internal nanoparquet error, precision to high for INT32 DECIMAL"
+        "Internal nanoparquet error, precision too high for INT32 DECIMAL"
       );
     });
   }
@@ -664,7 +664,7 @@ void write_double_int32_dec(std::ostream &file, SEXP col, uint64_t from,
     r_call([&] {
       Rf_errorcall(
         nanoparquet_call,
-        "Internal nanoparquet error, precision to high for INT32 DECIMAL"
+        "Internal nanoparquet error, precision too high for INT32 DECIMAL"
       );
     });
   }
@@ -958,7 +958,7 @@ void write_integer_int64_dec(std::ostream &file, SEXP col, uint64_t from,
     r_call([&] {
       Rf_errorcall(
         nanoparquet_call,
-        "Internal nanoparquet error, precision to high for INT64 DECIMAL"
+        "Internal nanoparquet error, precision too high for INT64 DECIMAL"
       );
     });
   }
@@ -1031,7 +1031,7 @@ void RParquetOutFile::write_integer_int64(std::ostream &file, SEXP col,
     r_call([&] {
       Rf_errorcall(
         nanoparquet_call,
-        "Internal nanoparquet error, precision to high for INT64 DECIMAL"
+        "Internal nanoparquet error, precision too high for INT64 DECIMAL"
       );
     });
   }
@@ -1499,7 +1499,7 @@ static inline bool STR_MORE(const char *c, size_t l, std::string &etalon) {
   size_t el = etalon.size();
   // "" is not more than anything
   if (l == 0) return false;
-  // othwrwise anything is more than ""
+  // otherwise anything is more than ""
   if (el == 0) return true;
   int res = memcmp(c, etalon.data(), l < el ? l : el);
   return res > 0 || (res == 0 && l > el);
@@ -1778,8 +1778,8 @@ void RParquetOutFile::write_fixed_len_byte_array(
           r_call([&] {
             Rf_errorcall(
               nanoparquet_call,
-              "Invalid string length: %d, expenting %d for "
-              "FIXED_LEN_TYPE_ARRAY", len1, type_length
+              "Invalid string length: %d, expecting %d for "
+              "FIXED_LEN_BYTE_ARRAY", len1, type_length
             );
           });
         }
@@ -1807,8 +1807,8 @@ void RParquetOutFile::write_fixed_len_byte_array(
           r_call([&] {
             Rf_errorcall(
               nanoparquet_call,
-              "Invalid string length: %d, expenting %d for "
-              "FIXED_LEN_TYPE_ARRAY", len1, type_length
+              "Invalid string length: %d, expecting %d for "
+              "FIXED_LEN_BYTE_ARRAY", len1, type_length
             );
           });
         }
@@ -2215,7 +2215,7 @@ uint32_t RParquetOutFile::get_size_dictionary(
     break;
   }
   case STRSXP: {
-    // need to count the length of the stings that are indexed in dict
+    // need to count the length of the strings that are indexed in dict
     create_dictionary(idx, from, until, sel);
     SEXP dictidx = VECTOR_ELT(VECTOR_ELT(dicts, idx), 0);
     R_xlen_t len = Rf_xlength(dictidx);
@@ -2782,7 +2782,7 @@ void RParquetOutFile::write_dictionary(
     break;
   }
   case LGLSXP: {                                           // # nocov start
-    // can Parquet have dicitonary encoded BOOLEANS? There isn't much point.
+    // can Parquet have dictionary encoded BOOLEANS? There isn't much point.
     if (type != parquet::Type::BOOLEAN) {
       r_call([&] {
         Rf_errorcall(

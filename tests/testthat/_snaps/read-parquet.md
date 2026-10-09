@@ -212,7 +212,7 @@
       67             TRUE
       68             TRUE
 
-# DELTA_BIANRY_PACKED encoding
+# DELTA_BINARY_PACKED encoding
 
     Code
       read_parquet_metadata(pf)$column_chunks$encodings

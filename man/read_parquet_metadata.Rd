@@ -88,7 +88,7 @@ same file.
 \item \code{encodings}: encodings used to store this chunk. It is a list
 column of character vectors of encoding names. Current possible
 encodings: "PLAIN", "GROUP_VAR_INT", "PLAIN_DICTIONARY", "RLE", "BIT_PACKED", "DELTA_BINARY_PACKED", "DELTA_LENGTH_BYTE_ARRAY", "DELTA_BYTE_ARRAY", "RLE_DICTIONARY", "BYTE_STREAM_SPLIT".
-\item \code{path_in_scema}: list column of character vectors. It is simply
+\item \code{path_in_schema}: list column of character vectors. It is simply
 the path from the root node. It is simply the column name for
 flat schemas.
 \item \code{codec}: compression codec used for the column chunk. Possible
@@ -106,10 +106,10 @@ are no dictionary pages.
 \item \code{null_count}: the number of missing values in the column chunk.
 It may be \code{NA}.
 \item \code{min_value}: list column of raw vectors, the minimum value of the
-column, in binary. If \code{NULL}, then then it is not specified.
+column, in binary. If \code{NULL}, then it is not specified.
 This column is experimental.
 \item \code{max_value}: list column of raw vectors, the maximum value of the
-column, in binary. If \code{NULL}, then then it is not specified.
+column, in binary. If \code{NULL}, then it is not specified.
 This column is experimental.
 \item \code{is_min_value_exact}: whether the minimum value is an actual
 value of a column, or a bound. It may be \code{NA}.

@@ -154,7 +154,7 @@ test_that("DELTA_BINARY_PACKED edge cases", {
   })
 })
 
-test_that("DELTA_BIANRY_PACKED INT64", {
+test_that("DELTA_BINARY_PACKED INT64", {
   suppressPackageStartupMessages(library(bit64))
   pf <- test_path("data/dbp-int64.parquet")
   dt <- read_parquet_page(pf, 4L)$data

@@ -42,7 +42,7 @@ static void thrift_unpack(const uint8_t *buf, uint32_t *len,
 
 ParquetReader::ParquetReader(std::string filename, bool readwrite)
   : file_type_(FILE_ON_DISK), filename_(filename) {
-  // set nuber of threads here, assuming each thread needs k buffers
+  // set number of threads here, assuming each thread needs k buffers
   bufman_cc = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_rep = std::unique_ptr<BufferManager>(new BufferManager(1));
   bufman_na = std::unique_ptr<BufferManager>(new BufferManager(1));
