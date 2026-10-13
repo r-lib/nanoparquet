@@ -1866,10 +1866,6 @@ void RParquetOutFile::update_boolean_minmax(uint32_t idx, SEXP col,
                                             uint64_t from, uint64_t until) {
   if (!write_minmax_values || !is_minmax_supported[idx]) return;
   uint8_t min_value = 1, max_value = 0;
-  if (has_minmax_value[idx]) {
-    GRAB_MIN2(min_value, idx);
-    GRAB_MAX2(max_value, idx);
-  }
   const int *p = LOGICAL(col);
   for (uint64_t i = from; i < until && (min_value || !max_value); i++) {
     if (p[i] == NA_LOGICAL) continue;
