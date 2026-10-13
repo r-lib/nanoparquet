@@ -49,6 +49,7 @@
 <ul><li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> now reads ordered factors as ordered factors.</p></li>
 <li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> no longer fails on <code><a href="https://bit64.r-lib.org/reference/bit64-package.html" class="external-link">bit64::integer64</a></code> columns with missing values.</p></li>
 <li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now writes correct min/max statistics for numeric columns that span multiple pages.</p></li>
+<li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now writes column orders to the file metadata, so Arrow and other readers that require them use the min/max statistics.</p></li>
 <li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now uses ZSTD compression level 3 by default, as documented.</p></li>
 </ul></div>
     <div class="section level2">
