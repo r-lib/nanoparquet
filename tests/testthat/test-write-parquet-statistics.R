@@ -111,14 +111,17 @@ test_that("min/max for logicals", {
   )
 
   withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
-  x <- rep(c(TRUE, FALSE), each = 10000)
-  for (encoding in c("PLAIN", "RLE")) {
-    expect_equal(
-      minmax(x, encoding = encoding),
-      list(min = list(raw_false), max = list(raw_true))
-    )
-    pages <- read_parquet_pages(tmp)
-    expect_gt(sum(pages$page_type == "DATA_PAGE"), 1)
+  required <- rep(c(TRUE, FALSE), each = 10000)
+  optional <- rep(c(TRUE, NA, FALSE), each = 10000)
+  for (x in list(required, optional)) {
+    for (encoding in c("PLAIN", "RLE")) {
+      expect_equal(
+        minmax(x, encoding = encoding),
+        list(min = list(raw_false), max = list(raw_true))
+      )
+      pages <- read_parquet_pages(tmp)
+      expect_gt(sum(pages$page_type == "DATA_PAGE"), 1)
+    }
   }
 })
 

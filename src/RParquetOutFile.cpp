@@ -1876,12 +1876,24 @@ void RParquetOutFile::update_boolean_minmax(uint32_t idx, SEXP col,
     max_value |= p[i];
     min_value &= p[i];
   }
+  save_boolean_minmax(idx, min_value, max_value);
+}
+
+void RParquetOutFile::save_boolean_minmax(uint32_t idx, uint8_t min_value,
+                                          uint8_t max_value) {
+  if (!write_minmax_values || !is_minmax_supported[idx]) return;
   // min > max if all values are NA
-  if (min_value <= max_value) {
-    SAVE_MIN2(min_value, idx, min_value);
-    SAVE_MAX2(max_value, idx, max_value);
-    has_minmax_value[idx] = true;
+  if (min_value > max_value) return;
+  if (has_minmax_value[idx]) {
+    uint8_t old_min, old_max;
+    GRAB_MIN2(old_min, idx);
+    GRAB_MAX2(old_max, idx);
+    min_value &= old_min;
+    max_value |= old_max;
   }
+  SAVE_MIN2(min_value, idx, min_value);
+  SAVE_MAX2(max_value, idx, max_value);
+  has_minmax_value[idx] = true;
 }
 
 void RParquetOutFile::write_boolean_as_bitpacked(std::ostream &file, uint32_t idx,
@@ -2112,13 +2124,16 @@ void RParquetOutFile::write_present_boolean_as_int(std::ostream &file,
       );
     });
   }
+  uint8_t min_value = 1, max_value = 0;
   for (uint64_t i = from; i < until; i++) {
     int el = LOGICAL(col)[i];
     if (el != NA_LOGICAL) {
       file.write((const char*) &el, sizeof(int));
+      min_value &= el;
+      max_value |= el;
     }
   }
-  update_boolean_minmax(idx, col, from, until);
+  save_boolean_minmax(idx, min_value, max_value);
 }
 
 void RParquetOutFile::write_present_boolean_as_bitpacked(
@@ -2147,13 +2162,17 @@ void RParquetOutFile::write_present_boolean_as_bitpacked(
       );
     });
   }
+  uint8_t min_value = 1, max_value = 0;
   for (i = from, o = 0; i < until; i++) {
-    if (LOGICAL(col)[i] != NA_LOGICAL) {
-      LOGICAL(col2)[o++] = LOGICAL(col)[i];
+    int el = LOGICAL(col)[i];
+    if (el != NA_LOGICAL) {
+      LOGICAL(col2)[o++] = el;
+      min_value &= el;
+      max_value |= el;
     }
   }
   write_boolean_impl(file, col2, 0, num_present);
-  update_boolean_minmax(idx, col, from, until);
+  save_boolean_minmax(idx, min_value, max_value);
 
   UNPROTECT(1);
 }
