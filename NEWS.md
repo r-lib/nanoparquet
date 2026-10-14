@@ -2,6 +2,8 @@
 
 * `parquet_schema()` now prints the parameters of `TIME` and `TIMESTAMP` types.
 
+* `parquet_type()` now takes `is_adjusted_to_utc` instead of `is_adjusted_utc` for `TIME` and `TIMESTAMP` types, matching the Parquet specification.
+
 * `read_parquet()` now reads ordered factors as ordered factors.
 
 * `write_parquet()` no longer fails on `bit64::integer64` columns with missing values.
