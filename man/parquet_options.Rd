@@ -83,9 +83,8 @@ Possible values are 1 and 2. Default is 1.}
 per row group, for data types that support this in \code{\link[=write_parquet]{write_parquet()}}.
 However, nanoparquet currently does not support minimum and maximum
 values for the \code{DECIMAL}, \code{UUID} and \code{FLOAT16} logical types and the
-\code{BOOLEAN}, \code{BYTE_ARRAY} and \code{FIXED_LEN_BYTE_ARRAY} primitive types
-if they are writing without a logical type. Currently the default
-is \code{TRUE}.}
+\code{BYTE_ARRAY} and \code{FIXED_LEN_BYTE_ARRAY} primitive types if they are
+written without a logical type. Currently the default is \code{TRUE}.}
 }
 \value{
 List of nanoparquet options.
