@@ -2,7 +2,7 @@ test_that("rle_decode", {
   # arrow might be broken on CRAN
   skip_on_cran()
   skip_without("arrow")
-  tmp <- tempfile(fileext = ".parquet")
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   d <- data.frame(
     x = as.factor(sample(letters, 100, replace = TRUE))
   )

@@ -1,6 +1,5 @@
 test_that("append_parquet creates file if it doesn't exist", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df1 <- test_df()
   append_parquet(df1, tmp)
@@ -9,8 +8,7 @@ test_that("append_parquet creates file if it doesn't exist", {
 })
 
 test_that("keep all row groups", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df1 <- test_df(missing = TRUE)
   write_parquet(df1, tmp)
@@ -40,8 +38,7 @@ test_that("keep all row groups", {
 })
 
 test_that("overwrite last row group", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df1 <- test_df(missing = TRUE)
   write_parquet(df1, tmp, row_groups = c(1L, 31L))
@@ -73,8 +70,7 @@ test_that("overwrite last row group", {
 })
 
 test_that("appending all-NA rows to REQUIRED columns gives a clear error", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df_valid <- data.frame(
     id = as.integer(1:5),
@@ -94,8 +90,7 @@ test_that("appending all-NA rows to REQUIRED columns gives a clear error", {
 })
 
 test_that("overwrite a single row groups", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df1 <- test_df(missing = TRUE)
   write_parquet(df1, tmp)

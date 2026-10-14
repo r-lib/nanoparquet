@@ -1,9 +1,8 @@
 test_that("parquet_metadata", {
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   df <- test_df()
-  mkdirp(tmpdir <- tempfile())
+  tmpdir <- withr::local_tempdir()
   tmp <- file.path(tmpdir, "test.parquet")
-  on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
   write_parquet(df, tmp, compression = "uncompressed")
 
   wd <- getwd()

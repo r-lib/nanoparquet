@@ -1,6 +1,5 @@
 test_that("read_parquet_row_group", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   un <- function(x) {
     x <- as.data.frame(x)

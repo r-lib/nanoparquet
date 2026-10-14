@@ -1,6 +1,5 @@
 test_that("TIMESTAMP", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   ts <- structure(1724186255.52948, class = c("POSIXct", "POSIXt"))
   d <- data.frame(ts = ts)
@@ -42,8 +41,7 @@ test_that("TIMESTAMP", {
 })
 
 test_that("TIMESTAMP, dictionary", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   ts <- structure(1724186255.52948, class = c("POSIXct", "POSIXt"))
   d <- data.frame(ts = ts)
@@ -88,8 +86,7 @@ test_that("TIMESTAMP, dictionary", {
 })
 
 test_that("TIMESTAMP_MILLIS, TIMESTAMP_MICROS", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   ts <- structure(1724186255.52948, class = c("POSIXct", "POSIXt"))
   d <- data.frame(ts = ts)
@@ -119,8 +116,7 @@ test_that("TIMESTAMP_MILLIS, TIMESTAMP_MICROS", {
 })
 
 test_that("TIMESTAMP_MILLIS, TIMESTAMP_MICROS, dictionary", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   ts <- structure(1724186255.52948, class = c("POSIXct", "POSIXt"))
   d <- data.frame(ts = ts)
@@ -152,8 +148,7 @@ test_that("TIMESTAMP_MILLIS, TIMESTAMP_MICROS, dictionary", {
 })
 
 test_that("TIME", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   dt <- hms::hms(1, 2, 3)
   d <- data.frame(dt = dt)
@@ -183,8 +178,7 @@ test_that("TIME", {
 })
 
 test_that("TIME_MILLIS, TIME_MICROS", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   dt <- hms::hms(1, 2, 3)
   d <- data.frame(dt = dt)
@@ -208,8 +202,7 @@ test_that("TIME_MILLIS, TIME_MICROS", {
 })
 
 test_that("TIME, dictionary", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   dt <- hms::hms(1, 2, 3)
   d <- data.frame(dt = dt)
@@ -242,8 +235,7 @@ test_that("TIME, dictionary", {
 })
 
 test_that("TIME_MILLIS, TIME_MICROS, dictionary", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   dt <- hms::hms(1, 2, 3)
   d <- data.frame(dt = dt)

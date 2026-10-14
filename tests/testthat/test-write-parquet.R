@@ -1,7 +1,6 @@
 test_that("factors are written as strings", {
   mt <- test_df(factor = TRUE)
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(mt, tmp)
   expect_snapshot(
@@ -14,8 +13,7 @@ test_that("factors are written as strings", {
 test_that("round trip", {
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df()
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(mt, tmp, compression = "uncompressed")
   expect_true(all(read_parquet(tmp) == mt))
@@ -32,8 +30,7 @@ test_that("round trip with arrow", {
   skip_without("arrow")
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df(tibble = TRUE, factor = TRUE)
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(mt, tmp, compression = "uncompressed")
   mt2 <- arrow::read_parquet(tmp)
@@ -49,8 +46,7 @@ test_that("round trip with duckdb", {
   skip_without("duckdb")
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- as.data.frame(test_df())
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(mt, tmp, compression = "uncompressed")
   df <- duckdb::sql_query(sprintf("FROM '%s'", tmp))
@@ -67,9 +63,8 @@ test_that("round trip with pandas/pyarrow", {
   skip_without_pyarrow()
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   mt <- test_df()
-  tmp1 <- tempfile(fileext = ".parquet")
-  tmp2 <- tempfile(fileext = ".parquet")
-  on.exit(unlink(c(tmp1, tmp2)), add = TRUE)
+  tmp1 <- withr::local_tempfile(fileext = ".parquet")
+  tmp2 <- withr::local_tempfile(fileext = ".parquet")
   # need to create to be able to call normalizePath()
   file.create(tmp1)
   file.create(tmp2)
@@ -90,8 +85,7 @@ df.to_parquet("%s", engine = "pyarrow")
       normalizePath(input, winslash = "/"),
       normalizePath(output, winslash = "/")
     )
-    pytmp <- tempfile(fileext = ".py")
-    on.exit(unlink(pytmp), add = TRUE)
+    pytmp <- withr::local_tempfile(fileext = ".py")
     writeLines(pyscript, pytmp)
     py <- if (Sys.which("python3") != "") "python3" else "python"
     processx::run(py, pytmp, stderr = "2>&1", error_on_status = FALSE)
@@ -118,8 +112,7 @@ test_that("errors", {
     skip("ASAN bug")
   }
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   mt <- mt2 <- test_df(factor = TRUE)
   mt$list <- I(replicate(nrow(mt), list(1:4), simplify = FALSE))
@@ -138,8 +131,7 @@ test_that("errors", {
 
 test_that("writing metadata", {
   mt <- mt2 <- test_df()
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(mt, tmp, metadata = c("foo" = "bar"))
   kvm <- read_parquet_metadata(tmp)$file_meta_data$key_value_metadata[[1]]
@@ -162,8 +154,7 @@ test_that("strings are converted to UTF-8", {
     charToRaw(df$latin1)
   })
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   write_parquet(df, tmp)
   df2 <- read_parquet(tmp)
 
@@ -175,8 +166,7 @@ test_that("strings are converted to UTF-8", {
 })
 
 test_that("REQ PLAIN", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     stringsAsFactors = FALSE,
@@ -207,8 +197,7 @@ test_that("REQ PLAIN", {
 
 test_that("OPT PLAIN", {
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     stringsAsFactors = FALSE,
@@ -242,8 +231,7 @@ test_that("OPT PLAIN", {
 })
 
 test_that("REQ RLE_DICT", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     stringsAsFactors = FALSE,
@@ -267,8 +255,7 @@ test_that("REQ RLE_DICT", {
 })
 
 test_that("OPT RLE_DICT", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     stringsAsFactors = FALSE,
@@ -296,8 +283,7 @@ test_that("OPT RLE_DICT", {
 })
 
 test_that("REQ RLE", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     l = c(logical(30), !logical(5), logical(20), !logical(30))
@@ -323,8 +309,7 @@ test_that("REQ RLE", {
 })
 
 test_that("OPT RLE", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     l = c(NA, logical(30), !logical(5), logical(20), NA, !logical(30))
@@ -360,8 +345,7 @@ test_that("OPT RLE", {
 })
 
 test_that("Factor levels not in the data", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     f = factor(sample(letters[1:5], 100, replace = TRUE), levels = letters)
@@ -386,8 +370,7 @@ test_that("write Date", {
   skip_on_cran()
   skip_without("arrow")
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     d = c(Sys.Date() - 1, Sys.Date(), Sys.Date() + 1)
@@ -402,8 +385,7 @@ test_that("write hms", {
   skip_on_cran()
   skip_without("arrow")
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     h = hms::hms(1, 2, 3)
@@ -418,8 +400,7 @@ test_that("write POSIXct", {
   skip_on_cran()
   skip_without("arrow")
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     h = .POSIXct(Sys.time(), tz = "UTC")
@@ -434,8 +415,7 @@ test_that("write difftime", {
   skip_on_cran()
   skip_without("arrow")
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # Fractional seconds are kept
   d <- data.frame(
@@ -447,8 +427,7 @@ test_that("write difftime", {
   expect_equal(d$h, d2$h)
 
   # Other units are converted to secs
-  tmp2 <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp2), add = TRUE)
+  tmp2 <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     h = as.difftime(10, units = "mins")

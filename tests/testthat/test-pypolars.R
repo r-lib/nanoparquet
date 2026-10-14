@@ -1,8 +1,7 @@
 test_that("polars can read temporal types", {
   skip_without_polars()
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   do <- function(df, path = tmp) {
     write_parquet(df, path)
@@ -13,8 +12,7 @@ pl.read_parquet("%s")
     ]",
       normalizePath(path, winslash = "/")
     )
-    pytmp <- tempfile(fileext = ".py")
-    on.exit(unlink(pytmp), add = TRUE)
+    pytmp <- withr::local_tempfile(fileext = ".py")
     writeLines(pyscript, pytmp)
     py <- if (Sys.which("python3") != "") "python3" else "python"
     processx::run(py, pytmp, stderr = "2>&1")

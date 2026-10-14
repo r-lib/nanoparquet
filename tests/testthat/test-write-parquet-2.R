@@ -1,8 +1,7 @@
 test_that("REQ PLAIN", {
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   withr::local_envvar(NANOPARQUET_PAGE_SIZE = "8192") # 8k pages
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   N <- 10000
   d <- data.frame(
@@ -43,8 +42,7 @@ test_that("REQ PLAIN", {
 test_that("OPT PLAIN", {
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "1")
   withr::local_envvar(NANOPARQUET_PAGE_SIZE = "8192") # 8k pages
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   N <- 10000
   d <- data.frame(
@@ -83,8 +81,7 @@ test_that("OPT PLAIN", {
 
 test_that("REQ RLE_DICT", {
   withr::local_envvar(NANOPARQUET_PAGE_SIZE = "8192") # 8k pages
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # the index is bit-packed, so we need a bit more of this
   N <- 100000
@@ -136,8 +133,7 @@ test_that("REQ RLE_DICT", {
 
 test_that("OPT RLE_DICT", {
   withr::local_envvar(NANOPARQUET_PAGE_SIZE = "8192") # 8k pages
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # the index is bit-packed, so we need a bit more of this
   N <- 100000
@@ -189,8 +185,7 @@ test_that("OPT RLE_DICT", {
 
 test_that("write_parquet() to memory", {
   d <- test_df(missing = TRUE)
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   pm <- write_parquet(d, ":raw:")
   write_parquet(d, tmp)
@@ -208,8 +203,7 @@ test_that("write_parquet() to memory 2", {
     TEST_2 = seq(100000:1)
   )
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   r1 <- write_parquet(data, ":raw:")
   write_parquet(data, tmp)
@@ -223,10 +217,11 @@ test_that("write_parquet() to stdout", {
     skip("processx 3.8.7.9000 is required")
   }
 
-  tmp1 <- tempfile(fileext = ".parquet")
-  tmp2 <- tempfile(fileext = ".parquet")
-  script <- tempfile(fileext = ".R")
-  on.exit(unlink(c(tmp1, tmp2, script)), add = TRUE)
+  tmp1 <- withr::local_tempfile(fileext = ".parquet")
+
+  tmp2 <- withr::local_tempfile(fileext = ".parquet")
+
+  script <- withr::local_tempfile(fileext = ".R")
 
   libpaths <- paste(sprintf('"%s"', .libPaths()), collapse = ", ")
   txt <- c(
@@ -250,8 +245,7 @@ test_that("write_parquet() to stdout", {
 
 test_that("gzip compression", {
   d <- test_df(missing = TRUE)
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(d, tmp, compression = "gzip")
   expect_equal(read_parquet_page(tmp, 4L)$codec, "GZIP")
@@ -260,8 +254,7 @@ test_that("gzip compression", {
 
 test_that("zstd compression", {
   d <- test_df(missing = TRUE)
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(d, tmp, compression = "zstd")
   expect_equal(read_parquet_page(tmp, 4L)$codec, "ZSTD")
@@ -273,8 +266,7 @@ test_that("Conversion of sub-dates prior Posix origin is correct", {
     days = as.Date(c(-1.1, -0.1, 0, 0.1, 1.1), origin = "1970-01-01")
   )
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(data, tmp)
   expect_equal(
@@ -289,8 +281,7 @@ test_that("page_from > page_until does not crash (issue #147)", {
   # Use a small optional column with large string values so that
   # total_size / page_size creates more pages than rows.
   withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   big <- strrep("x", 2048)
   d <- data.frame(

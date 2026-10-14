@@ -19,8 +19,7 @@ test_that("errors", {
 })
 
 test_that("force PLAIN / RLE", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   d <- data.frame(d1 = 1:100, d2 = rep(1L, 100))
 
   withr::local_envvar(NANOPARQUET_FORCE_PLAIN = "true")
@@ -40,8 +39,7 @@ test_that("force PLAIN / RLE", {
 })
 
 test_that("cutoff for dict encoding decision", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   d <- data.frame(d1 = c(1:10000, rep(1L, 100000)))
   write_parquet(d, tmp)
   expect_snapshot({
@@ -55,8 +53,7 @@ test_that("cutoff for dict encoding decision", {
 })
 
 test_that("write broken DECIMAL INT32", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(dec = 1:5)
   d2 <- data.frame(dec = as.double(1:5))
@@ -98,8 +95,7 @@ test_that("write broken DECIMAL INT32", {
 })
 
 test_that("write broken DECIMAL INT64", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(dec = 1:5)
   d2 <- data.frame(dec = as.double(1:5))
@@ -119,8 +115,7 @@ test_that("write broken DECIMAL INT64", {
 })
 
 test_that("write broken INT32", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(dec = 1:5)
   d2 <- data.frame(dec = as.double(1:5))
@@ -137,8 +132,7 @@ test_that("write broken INT32", {
 })
 
 test_that("write broken UINT32", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(dec = 1:5)
   d2 <- data.frame(dec = as.double(1:5))
@@ -155,8 +149,7 @@ test_that("write broken UINT32", {
 })
 
 test_that("write broken INT64", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d2 <- data.frame(dec = as.double(1:5))
 
@@ -169,8 +162,7 @@ test_that("write broken INT64", {
 })
 
 test_that("INT96 errors", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(c = c(TRUE, FALSE))
 
@@ -180,8 +172,7 @@ test_that("INT96 errors", {
 })
 
 test_that("FLOAT errors", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(c = c(TRUE, FALSE))
   expect_snapshot(error = TRUE, {
@@ -190,8 +181,7 @@ test_that("FLOAT errors", {
 })
 
 test_that("DOUBLE errors", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(c = c(TRUE, FALSE))
   expect_snapshot(error = TRUE, {
@@ -200,8 +190,7 @@ test_that("DOUBLE errors", {
 })
 
 test_that("BYTE_ARRAY errors", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(c = I(list(c(TRUE, FALSE))))
   expect_snapshot(error = TRUE, {
@@ -215,8 +204,7 @@ test_that("BYTE_ARRAY errors", {
 })
 
 test_that("FIXED_LEN_BYTE_ARRAY errors", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(c = I(list(c(TRUE, FALSE))))
   expect_snapshot(error = TRUE, {
@@ -249,8 +237,7 @@ test_that("FIXED_LEN_BYTE_ARRAY errors", {
 })
 
 test_that("BOOLEAN errors", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(c = 1:5)
   expect_snapshot(error = TRUE, {
@@ -264,8 +251,7 @@ test_that("BOOLEAN errors", {
 })
 
 test_that("Errors when writing a dictionary", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(c = 1:5)
   expect_snapshot(error = TRUE, {
@@ -352,8 +338,7 @@ test_that("Errors when writing a dictionary", {
 })
 
 test_that("POSIXct dictionary", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     d = structure(1724157480.12919, class = c("POSIXct", "POSIXt"))
@@ -391,8 +376,7 @@ test_that("POSIXct dictionary", {
 })
 
 test_that("more dictionaries", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # too small value for DECIMAL INT32
   d4 <- data.frame(c = as.double(-101L))
@@ -493,8 +477,7 @@ test_that("more dictionaries", {
 })
 
 test_that("Even more dictionaries", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # bad UUID value
   d <- data.frame(x = "not-a-uuid")
@@ -540,8 +523,7 @@ test_that("argument errors", {
 })
 
 test_that("edge case: empty dict", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(address_id = c(NA_integer_, NA_integer_, NA_integer_))
   write_parquet(df, tmp)
   expect_equal(as.data.frame(read_parquet(tmp)), df)

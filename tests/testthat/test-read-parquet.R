@@ -127,8 +127,7 @@ test_that("read factors, marked by Arrow", {
 })
 
 test_that("read ordered factors, marked by Arrow", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(
     o = factor(
       c("hi", "lo", NA),
@@ -153,8 +152,7 @@ test_that("round trip with arrow", {
   skip_on_cran()
   skip_without("arrow")
   mt <- test_df(factor = TRUE)
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   arrow::write_parquet(mt, tmp, compression = "uncompressed")
   expect_equal(read_parquet(tmp), mt)
@@ -173,8 +171,7 @@ test_that("round trip with arrow, empty data frame", {
     b = numeric(0),
     c = logical(0)
   )
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   arrow::write_parquet(df, tmp)
   result <- read_parquet(tmp)
   expect_equal(nrow(result), 0L)
@@ -191,8 +188,7 @@ test_that("round trip with duckdb", {
     skip("ASAN bug")
   }
   mt <- test_df()
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   drv <- duckdb::duckdb()
   con <- DBI::dbConnect(drv)
@@ -223,8 +219,7 @@ test_that("round trip with duckdb", {
 })
 
 test_that("read Date", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     d = c(Sys.Date() - 1, Sys.Date(), Sys.Date() + 1)
@@ -237,8 +232,7 @@ test_that("read Date", {
 })
 
 test_that("read hms", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     h = hms::hms(1, 2, 3)
@@ -258,8 +252,7 @@ test_that("read hms in MICROS", {
 })
 
 test_that("read POSIXct", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     h = .POSIXct(Sys.time(), tz = "UTC")
@@ -286,8 +279,7 @@ test_that("read POSIXct in MILLIS", {
 })
 
 test_that("read difftime", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # Fractional seconds are kept
   d <- data.frame(
@@ -311,8 +303,7 @@ test_that("read difftime", {
 })
 
 test_that("RLE BOOLEAN", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     l = c(
