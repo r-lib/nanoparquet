@@ -8,4 +8,11 @@ test_that("obj_sum.nanoparquet_logical_type", {
   expect_snapshot({
     lapply(sch$logical_type, obj_sum.nanoparquet_logical_type)
   })
+
+  tmp <- tempfile(fileext = ".parquet")
+  on.exit(unlink(tmp), add = TRUE)
+  write_parquet(data.frame(x = as.POSIXct("2024-01-01", tz = "UTC")), tmp)
+  expect_snapshot(
+    obj_sum.nanoparquet_logical_type(read_parquet_schema(tmp)$logical_type[[2]])
+  )
 })

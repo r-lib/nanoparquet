@@ -1,5 +1,7 @@
 # nanoparquet (development version)
 
+* `parquet_schema()` now prints the parameters of `TIME` and `TIMESTAMP` types.
+
 * `read_parquet()` now reads ordered factors as ordered factors.
 
 * `write_parquet()` no longer fails on `bit64::integer64` columns with missing values.
