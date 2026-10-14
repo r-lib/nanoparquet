@@ -19,6 +19,9 @@
   readers that require them use the min/max statistics.
 
 - [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
+  now writes min/max statistics for logical columns.
+
+- [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md)
   now uses ZSTD compression level 3 by default, as documented.
 
 ## nanoparquet 0.5.2

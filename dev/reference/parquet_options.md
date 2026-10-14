@@ -113,9 +113,8 @@ parquet_options(
   [`write_parquet()`](https://nanoparquet.r-lib.org/dev/reference/write_parquet.md).
   However, nanoparquet currently does not support minimum and maximum
   values for the `DECIMAL`, `UUID` and `FLOAT16` logical types and the
-  `BOOLEAN`, `BYTE_ARRAY` and `FIXED_LEN_BYTE_ARRAY` primitive types if
-  they are writing without a logical type. Currently the default is
-  `TRUE`.
+  `BYTE_ARRAY` and `FIXED_LEN_BYTE_ARRAY` primitive types if they are
+  written without a logical type. Currently the default is `TRUE`.
 
 ## Value
 
