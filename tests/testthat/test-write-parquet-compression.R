@@ -1,6 +1,5 @@
 test_that("gzip compression levels", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- test_df()
   for (level in c(NA_integer_, 0:11)) {
@@ -15,8 +14,7 @@ test_that("gzip compression levels", {
 })
 
 test_that("zstd compression levels", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- test_df()
   for (level in c(NA_integer_, (-22):(22))) {

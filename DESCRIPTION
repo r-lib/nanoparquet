@@ -35,7 +35,7 @@ Suggests:
     spelling,
     testthat,
     tzdb,
-    withr
+    withr (>= 2.3.0)
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
 Config/testthat/parallel: TRUE

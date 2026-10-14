@@ -4,8 +4,7 @@ test_that("errors", {
   })
 
   df <- test_df()
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   expect_snapshot(error = TRUE, {
     write_parquet(df, tmp, row_groups = "foobar")
     write_parquet(df, tmp, row_groups = c(100L, 1L))
@@ -14,9 +13,8 @@ test_that("errors", {
 })
 
 test_that("row groups", {
-  tmp1 <- tempfile(fileext = ".parquet")
-  tmp2 <- tempfile(fileext = ".parquet")
-  on.exit(unlink(c(tmp1, tmp2)), add = TRUE)
+  tmp1 <- withr::local_tempfile(fileext = ".parquet")
+  tmp2 <- withr::local_tempfile(fileext = ".parquet")
 
   df <- test_df()
   write_parquet(df, tmp1, row_groups = 1L)
@@ -37,8 +35,7 @@ test_that("row groups", {
 })
 
 test_that("factors & factor levels", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(
     f = factor(c(rep("a", 100), rep("b", 100), rep("c", 100)))
@@ -58,8 +55,7 @@ test_that("factors & factor levels", {
 })
 
 test_that("non-factors write local dictionary", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(
     stringsAsFactors = FALSE,
@@ -80,8 +76,7 @@ test_that("non-factors write local dictionary", {
 })
 
 test_that("strings in a dictionary", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- test_df()
   write_parquet(

@@ -1,6 +1,5 @@
 test_that("null_count is written", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- test_df(missing = TRUE)
   write_parquet(
     df,
@@ -16,8 +15,7 @@ test_that("null_count is written", {
 })
 
 test_that("min/max for integers", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(
     x = c(
       sample(1:5),
@@ -59,8 +57,7 @@ test_that("min/max for integers", {
 })
 
 test_that("min/max for logicals", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   raw_false <- as.raw(0)
   raw_true <- as.raw(1)
 
@@ -126,8 +123,7 @@ test_that("min/max for logicals", {
 })
 
 test_that("min/max for DATEs", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   do <- function(...) {
     df <- data.frame(
@@ -162,8 +158,7 @@ test_that("min/max for DATEs", {
 })
 
 test_that("min/max for double -> signed integers", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(
     x = as.double(c(
       sample(1:5),
@@ -206,8 +201,7 @@ test_that("min/max for double -> signed integers", {
 })
 
 test_that("min/max for double -> unsigned integers", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(
     x = as.double(c(
       sample(1:5),
@@ -250,8 +244,7 @@ test_that("min/max for double -> unsigned integers", {
 })
 
 test_that("minmax for double -> INT32 TIME(MULLIS)", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   # IDK what's the point of signed TIME, but it seems to be allowed, the
   # sort order is signed
   df <- data.frame(
@@ -296,8 +289,7 @@ test_that("minmax for double -> INT32 TIME(MULLIS)", {
 })
 
 test_that("min/max for DOUBLE", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(
     x = as.double(c(
       sample(1:5),
@@ -337,8 +329,7 @@ test_that("min/max for DOUBLE", {
 })
 
 test_that("min/max for FLOAT", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(
     x = as.double(c(
       sample(1:5),
@@ -379,8 +370,7 @@ test_that("min/max for FLOAT", {
 })
 
 test_that("min/max for integer -> INT64", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(
     x = c(
       sample(1:5),
@@ -417,8 +407,7 @@ test_that("min/max for integer -> INT64", {
 })
 
 test_that("min/max for REALSXP -> INT64", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(
     x = as.double(c(
       sample(1:5),
@@ -455,8 +444,7 @@ test_that("min/max for REALSXP -> INT64", {
 })
 
 test_that("min/max for STRING", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(
     x = c(
       sample(letters[1:5]),
@@ -543,8 +531,7 @@ test_that("min/max for STRING", {
 })
 
 test_that("min/max for REALSXP -> TIMESTAMP (INT64)", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   now <- 0L
   df <- data.frame(
     x = .POSIXct(
@@ -590,8 +577,7 @@ test_that("min/max for REALSXP -> TIMESTAMP (INT64)", {
 })
 
 test_that("min/max for dictionary encoded TIMESTAMP (#169)", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   ts <- .POSIXct(1209506400, tz = "UTC")
   df <- data.frame(x = rep(ts, 16))
 
@@ -605,8 +591,7 @@ test_that("min/max for dictionary encoded TIMESTAMP (#169)", {
 })
 
 test_that("min/max for dictionary encoded difftime", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(x = as.difftime(rep(c(5, 10), 8), units = "secs"))
 
   write_parquet(df, tmp, encoding = "RLE_DICTIONARY")
@@ -619,8 +604,7 @@ test_that("min/max for dictionary encoded difftime", {
 
 test_that("min/max for dictionary encoded integer64", {
   skip_if_not_installed("bit64")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   vals <- bit64::as.integer64(c(-1234567890123, 9876543210, 1))
   df <- data.frame(x = vals[c(1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3)])
 
@@ -633,8 +617,7 @@ test_that("min/max for dictionary encoded integer64", {
 
 test_that("min/max for dictionary encoded negative integer64 with NA", {
   skip_if_not_installed("bit64")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(x = bit64::as.integer64(rep(c(-1, -2, NA), 4)))
 
   write_parquet(df, tmp, encoding = "RLE_DICTIONARY")
@@ -645,8 +628,7 @@ test_that("min/max for dictionary encoded negative integer64 with NA", {
 })
 
 test_that("min/max for multi-page column chunks", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   n <- 2000
   df <- data.frame(
     int = c(-1000L, 1000L, seq_len(n - 2)),
@@ -671,8 +653,7 @@ test_that("min/max for multi-page column chunks", {
 
 test_that("column orders are written for every leaf column", {
   skip_without("duckdb")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(a = 1:2, s = c("a", "b"))
   df$l <- list(1:3, 4:5)

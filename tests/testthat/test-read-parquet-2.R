@@ -2,8 +2,7 @@
 # Primitive types
 
 test_that("BOOLEAN", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(i = rep(c(TRUE, FALSE), 3))
   write_parquet(d, tmp, compression = "uncompressed")
@@ -34,8 +33,7 @@ test_that("BOOLEAN", {
 })
 
 test_that("INT32", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(i = 1:10)
   write_parquet(d, tmp, compression = "uncompressed")
@@ -66,8 +64,7 @@ test_that("INT32", {
 })
 
 test_that("INT64", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema("INT64")
 
   d <- data.frame(i = 1:10)
@@ -105,8 +102,7 @@ test_that("INT64", {
 # TODO: INT96, once we have a way to not convert it to POSIXct
 
 test_that("FLOAT", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema("FLOAT")
 
   d <- data.frame(i = 1:10 / 2)
@@ -152,8 +148,7 @@ test_that("FLOAT from multiple row groups and pages", {
 })
 
 test_that("DOUBLE", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(i = 1:10 / 2)
   write_parquet(d, tmp, compression = "uncompressed")
@@ -184,8 +179,7 @@ test_that("DOUBLE", {
 })
 
 test_that("BYTE_ARRAY", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     l = I(list(
@@ -239,8 +233,7 @@ test_that("BYTE_ARRAY", {
 })
 
 test_that("FIXED_LEN_BYTE_ARRAY", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     l = I(list(
@@ -301,8 +294,7 @@ test_that("FIXED_LEN_BYTE_ARRAY", {
 # -------------------------------------------------------------------------
 
 test_that("compression", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- test_df(missing = TRUE)
   d2 <- test_df(missing = TRUE)[, 1:11]

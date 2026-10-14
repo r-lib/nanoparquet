@@ -28,8 +28,7 @@ test_that("BOOLEAN", {
   do(data.frame(l = rep(TRUE, 16)))
   do(data.frame(l = c(rep(TRUE, 8), NA, rep(TRUE, 8))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   d <- data.frame(l = c(rep(TRUE, 8), NA, rep(TRUE, 8)))
   expect_snapshot(error = TRUE, {
     # not implemented
@@ -48,8 +47,7 @@ test_that("BOOLEAN multi-page round-trip (issue #142)", {
   n <- 20000L
   x <- sample(c(TRUE, FALSE, NA), n, replace = TRUE, prob = c(0.9, 0.05, 0.05))
   d <- data.frame(l = x)
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   withr::with_envvar(c(NANOPARQUET_PAGE_SIZE = "1024"), {
     write_parquet(d, tmp, encoding = "RLE")
@@ -75,8 +73,7 @@ test_that("INT32", {
   do(data.frame(d = rep(1L, 10)))
   do(data.frame(d = c(rep(1L, 5), NA, rep(1L, 5))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   d <- data.frame(d = c(rep(1L, 5), NA, rep(1L, 5)))
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -100,8 +97,7 @@ test_that("integer -> INT64", {
   do(data.frame(d = rep(1L, 10)))
   do(d <- data.frame(d = c(rep(1L, 5), NA, rep(1L, 5))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -125,8 +121,7 @@ test_that("double -> INT64", {
   do(data.frame(d = as.double(rep(1L, 10))))
   do(d <- data.frame(d = as.double(c(rep(1L, 5), NA, rep(1L, 5)))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -138,8 +133,7 @@ test_that("double -> INT64", {
 })
 
 test_that("integer -> INT96", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema("INT96")
 
   d <- data.frame(d = 1:5)
@@ -209,8 +203,7 @@ test_that("integer -> INT96", {
 })
 
 test_that("double -> INT96", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- "INT96"
 
   # TODO: fix tests
@@ -228,8 +221,7 @@ test_that("double -> INT96", {
   do(data.frame(d = as.double(rep(1L, 10))))
   do(d <- data.frame(d = as.double(c(rep(1L, 5), NA, rep(1L, 5)))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # unsupported for INT96
@@ -250,8 +242,7 @@ test_that("FLOAT", {
   do(data.frame(d = rep(1, 10) / 2))
   do(d <- data.frame(d = c(rep(1, 5) / 2, NA, rep(1, 5) / 2)))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -274,8 +265,7 @@ test_that("DOUBLE", {
   do(data.frame(d = rep(1, 10) / 2))
   do(d <- data.frame(d = c(rep(1, 5) / 2, NA, rep(1, 5) / 2)))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -300,8 +290,7 @@ test_that("BYTE_ARRAY, string", {
   d[["d"]][5] <- NA
   do(d)
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -334,8 +323,7 @@ test_that("BYTE_ARRAY, RAW", {
   d[["d"]][5] <- list(NULL)
   do(d)
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -347,8 +335,7 @@ test_that("BYTE_ARRAY, RAW", {
 })
 
 test_that("FIXED_LEN_BYTE_ARRAY, RAW", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- list("FIXED_LEN_BYTE_ARRAY", type_length = 3)
 
   do <- function(d) {
@@ -392,8 +379,7 @@ test_that("FIXED_LEN_BYTE_ARRAY, FLOAT16", {
   d[["d"]][5] <- NA
   do(d)
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -419,8 +405,7 @@ test_that("FIXED_LEN_BYTE_ARRAY, character", {
   d[["d"]][5] <- NA
   do(d)
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet

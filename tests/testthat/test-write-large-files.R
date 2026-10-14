@@ -8,7 +8,7 @@ test_that("write large file", {
   big <- do.call("rbind", replicate(100, larger, simplify = FALSE))
   large <- do.call("rbind", replicate(10, big, simplify = FALSE))
 
-  tmp <- tempfile(fileext = ".parquet")
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   system.time(write_parquet(large, tmp))
   system.time(large2 <- read_parquet(tmp))
   expect_equal(large, large2)
@@ -27,8 +27,7 @@ test_that("write >4GB file: uint32_t/int32_t overflow (issue #143)", {
   # (uint32_t write_columns end).
 
   n <- 270e6L
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(a = as.double(seq_len(n)), b = as.double(seq_len(n)) * 2.0)
   write_parquet(df, tmp, compression = "uncompressed")
   df2 <- as.data.frame(read_parquet(tmp))

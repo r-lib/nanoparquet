@@ -1,6 +1,5 @@
 test_that("edit_parquet_metadata adds a new key", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(data.frame(x = 1:3), tmp)
   edit_parquet_metadata(tmp, c(author = "Alice"))
@@ -11,8 +10,7 @@ test_that("edit_parquet_metadata adds a new key", {
 })
 
 test_that("edit_parquet_metadata updates an existing key", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(data.frame(x = 1:3), tmp, metadata = c(author = "Alice"))
   edit_parquet_metadata(tmp, c(author = "Bob"))
@@ -23,8 +21,7 @@ test_that("edit_parquet_metadata updates an existing key", {
 })
 
 test_that("edit_parquet_metadata removes a key via NA value", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(
     data.frame(x = 1:3),
@@ -40,8 +37,7 @@ test_that("edit_parquet_metadata removes a key via NA value", {
 })
 
 test_that("edit_parquet_metadata clears all metadata with NULL", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(
     data.frame(x = 1:3),
@@ -56,8 +52,7 @@ test_that("edit_parquet_metadata clears all metadata with NULL", {
 })
 
 test_that("edit_parquet_metadata accepts a data frame", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(
     data.frame(x = 1:3),
@@ -75,8 +70,7 @@ test_that("edit_parquet_metadata accepts a data frame", {
 })
 
 test_that("edit_parquet_metadata preserves untouched keys", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(
     data.frame(x = 1:3),
@@ -92,8 +86,7 @@ test_that("edit_parquet_metadata preserves untouched keys", {
 })
 
 test_that("edit_parquet_metadata data is readable after editing", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(x = 1:10, y = letters[1:10])
   write_parquet(df, tmp)
@@ -107,8 +100,7 @@ test_that("edit_parquet_metadata data is readable after editing", {
 })
 
 test_that("edit_parquet_metadata truncates file when footer shrinks", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(
     data.frame(x = 1:3),
@@ -126,8 +118,7 @@ test_that("edit_parquet_metadata truncates file when footer shrinks", {
 })
 
 test_that("edit_parquet_metadata rejects invalid metadata argument", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   write_parquet(data.frame(x = 1L), tmp)
   expect_error(edit_parquet_metadata(tmp, 1:3))

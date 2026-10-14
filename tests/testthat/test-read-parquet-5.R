@@ -1,6 +1,5 @@
 test_that("read a subset", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- as.data.frame(test_df(missing = TRUE))
   write_parquet(df, tmp)
 
@@ -31,8 +30,7 @@ test_that("read a subset", {
 
 test_that("read a subset, edge cases", {
   loadNamespace("pillar")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- as.data.frame(test_df(missing = TRUE))
   write_parquet(df, tmp)
 
@@ -55,8 +53,7 @@ test_that("read a subset, edge cases", {
 })
 
 test_that("read a subset, factor to test Arrow metadata", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- as.data.frame(test_df(missing = TRUE, factor = TRUE))
   write_parquet(df, tmp)
   expect_equal(
@@ -70,8 +67,7 @@ test_that("read a subset, factor to test Arrow metadata", {
 })
 
 test_that("subset column order", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- as.data.frame(test_df(missing = TRUE, factor = TRUE))
   write_parquet(df, tmp)
 
@@ -87,8 +83,7 @@ test_that("subset column order", {
 
 # https://github.com/r-lib/nanoparquet/issues/170
 test_that("subset of columns with missing values", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   # some columns have missing values, some don't, so the columns are a mix
   # of REQUIRED and OPTIONAL ones
   df <- data.frame(
@@ -125,8 +120,7 @@ test_that("subset of columns with missing values", {
 })
 
 test_that("subset of columns, list columns", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- data.frame(x = 1:3, y = c(1.5, NA, 3.5))
   df$lst <- list(1:2, NULL, integer())
   df$lst2 <- list(c("a", NA), "b", character())
@@ -151,8 +145,7 @@ test_that("subset of columns, list columns", {
 })
 
 test_that("error if a column is requested multiple times", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   df <- as.data.frame(test_df(missing = TRUE, factor = TRUE))
   write_parquet(df, tmp)
 
@@ -170,8 +163,7 @@ test_that("error if a column is requested multiple times", {
 
 test_that("class", {
   withr::local_options(nanoparquet.class = NULL)
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   write_parquet(test_df(), tmp)
   expect_equal(class(read_parquet(tmp)), c("tbl", "data.frame"))
   expect_equal(

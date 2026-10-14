@@ -69,15 +69,13 @@ writer.close()
 ]",
       normalizePath(path, winslash = "/")
     )
-    pytmp <- tempfile(fileext = ".py")
-    on.exit(unlink(pytmp), add = TRUE)
+    pytmp <- withr::local_tempfile(fileext = ".py")
     writeLines(pyscript, pytmp)
     py <- if (Sys.which("python3") != "") "python3" else "python"
     processx::run(py, pytmp, stderr = "2>&1", error_on_status = FALSE)
   }
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(x = c(1:100, 500:600 * 2L))
   stat <- dodbp(d, tmp)

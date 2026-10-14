@@ -21,8 +21,7 @@ skip_without_pyarrow <- function() {
     import pyarrow
     import pyarrow.parquet as pq
   ]"
-  pytmp <- tempfile(fileext = ".py")
-  on.exit(unlink(pytmp), add = TRUE)
+  pytmp <- withr::local_tempfile(fileext = ".py")
   writeLines(pyscript, pytmp)
   py <- if (Sys.which("python3") != "") "python3" else "python"
   res <- tryCatch(
@@ -42,8 +41,7 @@ skip_without_polars <- function() {
   pyscript <- r"[
     import polars
   ]"
-  pytmp <- tempfile(fileext = ".py")
-  on.exit(unlink(pytmp), add = TRUE)
+  pytmp <- withr::local_tempfile(fileext = ".py")
   writeLines(pyscript, pytmp)
   py <- if (Sys.which("python3") != "") "python3" else "python"
   res <- tryCatch(
@@ -104,8 +102,7 @@ test_df <- function(tibble = FALSE, factor = FALSE, missing = FALSE) {
 }
 
 test_write <- function(d, schema = NULL, encoding = NULL) {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema1 <- if (!is.null(schema)) parquet_schema(schema)
   write_parquet(d, tmp, schema = schema1, encoding = encoding)
 

@@ -45,8 +45,7 @@ test_that("factor_bits", {
 })
 
 test_that("temporal types", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   withr::local_options(nanoparquet.write_arrow_metadata = TRUE)
 
   # Date
@@ -122,8 +121,7 @@ test_that("arrow-rs can read ARROW:schema (issue #152)", {
   )
   bin <- file.path(crate, "target", "debug", "arrow-rs-reader")
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   withr::local_options(nanoparquet.write_arrow_metadata = TRUE)
 
   write_parquet(data.frame(a = c(1, 2), b = c(3, 4)), tmp)

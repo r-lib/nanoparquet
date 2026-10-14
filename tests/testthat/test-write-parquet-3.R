@@ -1,6 +1,5 @@
 test_that("write_parquet -> INT32", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # integer -> INT32
   d <- data.frame(d = c(1:10, NA))
@@ -30,8 +29,7 @@ test_that("write_parquet -> INT32", {
 })
 
 test_that("write_parquet -> INT64", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # integer -> INT64
   d <- data.frame(d = c(NA, 1:10))
@@ -81,8 +79,7 @@ test_that("write_parquet -> INT64", {
 })
 
 test_that("write_parquet -> INT96", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # integer -> INT96
   d <- data.frame(d = c(-5:5, NA))
@@ -114,8 +111,7 @@ test_that("write_parquet -> INT96", {
 })
 
 test_that("write_parquet -> FLOAT", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # double -> FLOAT
   d <- data.frame(d = c(as.double(-5:5), NA))
@@ -133,8 +129,7 @@ test_that("write_parquet -> FLOAT", {
 })
 
 test_that("write_parquet -> BYTE_ARRAY", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # character -> BYTE_ARRAY
   d <- data.frame(d = c("foo", "bar", "foobar", NA))
@@ -150,8 +145,7 @@ test_that("write_parquet -> BYTE_ARRAY", {
 })
 
 test_that("write_parquet -> FIXED_LEN_BYTE_ARRAY", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # character -> FIXED_LEN_BYTE_ARRAY
   d <- data.frame(d = c("foo", "bar", "aaa", NA))
@@ -167,8 +161,7 @@ test_that("write_parquet -> FIXED_LEN_BYTE_ARRAY", {
 })
 
 test_that("write_parquet -> STRING", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # character -> STRING
   d <- data.frame(d = c("foo", "bar", "foobar", NA))
@@ -180,8 +173,7 @@ test_that("write_parquet -> STRING", {
 })
 
 test_that("write_parquet -> ENUM", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # character -> ENUM
   d <- data.frame(d = c("foo", "bar", "foobar", NA))
@@ -201,8 +193,7 @@ test_that("write_parquet -> ENUM", {
 })
 
 test_that("write_parquet -> DECIMAL INT32", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # integer -> DECIMAL INT32
   d <- data.frame(d = c(-5:5, NA))
@@ -290,8 +281,7 @@ test_that("write_parquet -> DECIMAL INT32", {
 })
 
 test_that("write_parquet -> DECIMAL INT64", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   # integer -> DECIMAL INT64
   d <- data.frame(d = c(-5:5, NA))
@@ -379,8 +369,7 @@ test_that("write_parquet -> DECIMAL INT64", {
 })
 
 test_that("smaller integers", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(d = c(-5:5, NA))
   write_parquet(d, tmp, schema = parquet_schema("INT_8"))
@@ -448,8 +437,7 @@ test_that("smaller integers", {
 })
 
 test_that("double to smaller integers", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(d = as.double(c(-5:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("INT_8"))
@@ -549,8 +537,7 @@ test_that("double to smaller integers", {
 })
 
 test_that("double to INT(64, *)", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(d = as.double(c(-5:5, NA)))
   write_parquet(d, tmp, schema = parquet_schema("INT_64"))
@@ -594,8 +581,7 @@ test_that("double to INT(64, *)", {
 })
 
 test_that("integer64 round-trip and read_int64_type option", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     x = bit64::as.integer64(c(1e15, -1e15, NA, 2^31))
@@ -632,8 +618,7 @@ test_that("integer64 round-trip and read_int64_type option", {
 
 test_that("integer64 with missing values uses dictionary encoding", {
   skip_if_not_installed("bit64")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(x = bit64::as.integer64(c(rep(c(-1, 0, 1), 10), NA)))
   write_parquet(d, tmp)
@@ -645,8 +630,7 @@ test_that("integer64 with missing values uses dictionary encoding", {
 })
 
 test_that("JSON", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(d = c("foo", "bar", "foobar", NA))
   write_parquet(d, tmp, schema = parquet_schema("JSON"))
@@ -657,8 +641,7 @@ test_that("JSON", {
 })
 
 test_that("UUID", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(d = c(rep("00112233-4455-6677-8899-aabbccddeeff", 3), NA))
   write_parquet(d, tmp, schema = parquet_schema("UUID"))
@@ -674,8 +657,7 @@ test_that("UUID", {
 })
 
 test_that("FLOAT16", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(c = c(0, 1, 2, NA, -1, NaN, -2, -Inf, Inf, 1 / 2))
   write_parquet(d, tmp, schema = parquet_schema("FLOAT16"))
@@ -686,8 +668,7 @@ test_that("FLOAT16", {
 })
 
 test_that("NaN", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(d = c(1, 2, NaN, 4, 5))
   write_parquet(d, tmp)
@@ -698,8 +679,7 @@ test_that("NaN", {
 })
 
 test_that("list of RAW to BYTE_ARRAY", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     d = I(list(
@@ -731,8 +711,7 @@ test_that("list of RAW to BYTE_ARRAY", {
 })
 
 test_that("list of RAW to FIXED_LEN_BYTE_ARRAY", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
 
   d <- data.frame(
@@ -766,8 +745,7 @@ test_that("list of RAW to FIXED_LEN_BYTE_ARRAY", {
 
 test_that("blob::blob to BYTE_ARRAY", {
   skip_without("blob")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(
     d = blob::blob(
@@ -807,8 +785,7 @@ test_that("blob::blob to BYTE_ARRAY", {
 
 test_that("blob::blob to FIXED_LEN_BYTE_ARRAY", {
   skip_without("blob")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(list("FIXED_LEN_BYTE_ARRAY", type_length = 3))
 
   d <- data.frame(

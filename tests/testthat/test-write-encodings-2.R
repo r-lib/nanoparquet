@@ -13,8 +13,7 @@ test_that("character -> ENUM", {
   d[["s"]][5] <- NA
   do(d)
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -35,8 +34,7 @@ test_that("factor -> ENUM", {
   d <- data.frame(s = as.factor(c("foo", "bar", NA, "foobar")))
   test_write(d, schema)
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -61,8 +59,7 @@ test_that("integer -> DECOMAL INT32", {
   do(data.frame(d = rep(1L, 10)))
   do(d <- data.frame(d = c(rep(1L, 5), NA, rep(1L, 5))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -87,8 +84,7 @@ test_that("integer -> DECIMAL INT64", {
   do(data.frame(d = rep(1L, 10)))
   do(d <- data.frame(d = c(rep(1L, 5), NA, rep(1L, 5))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -113,8 +109,7 @@ test_that("double -> DECOMAL INT32", {
   do(data.frame(d = rep(1, 10)))
   do(d <- data.frame(d = c(rep(1, 5), NA, rep(1, 5))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -139,8 +134,7 @@ test_that("double -> DECIMAL INT64", {
   do(data.frame(d = rep(1, 10)))
   do(d <- data.frame(d = c(rep(1, 5), NA, rep(1, 5))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -165,8 +159,7 @@ test_that("integer -> INT(8, *)", {
   do(data.frame(d = rep(1L, 10)))
   do(d <- data.frame(d = c(rep(1L, 5), NA, rep(1L, 5))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -191,8 +184,7 @@ test_that("integer -> INT(16, *)", {
   do(data.frame(d = rep(1L, 10)))
   do(d <- data.frame(d = c(rep(1L, 5), NA, rep(1L, 5))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -217,8 +209,7 @@ test_that("integer -> INT(64, *)", {
   do(data.frame(d = rep(1L, 10)))
   do(d <- data.frame(d = c(rep(1L, 5), NA, rep(1L, 5))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -243,8 +234,7 @@ test_that("double -> INT(8, TRUE)", {
   do(data.frame(d = as.double(rep(1L, 10))))
   do(d <- data.frame(d = as.double(c(rep(1L, 5), NA, rep(1L, 5)))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -269,8 +259,7 @@ test_that("double -> INT(8, FALSE)", {
   do(data.frame(d = as.double(rep(1L, 10))))
   do(d <- data.frame(d = as.double(c(rep(1L, 5), NA, rep(1L, 5)))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -295,8 +284,7 @@ test_that("double -> INT(16, TRUE)", {
   do(data.frame(d = as.double(rep(1L, 10))))
   do(d <- data.frame(d = as.double(c(rep(1L, 5), NA, rep(1L, 5)))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -321,8 +309,7 @@ test_that("double -> INT(16, FALSE)", {
   do(data.frame(d = as.double(rep(1L, 10))))
   do(d <- data.frame(d = as.double(c(rep(1L, 5), NA, rep(1L, 5)))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -347,8 +334,7 @@ test_that("double -> INT(32, TRUE)", {
   do(data.frame(d = as.double(rep(1L, 10))))
   do(d <- data.frame(d = as.double(c(rep(1L, 5), NA, rep(1L, 5)))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -373,8 +359,7 @@ test_that("double -> INT(32, FALSE)", {
   do(data.frame(d = as.double(rep(1L, 10))))
   do(d <- data.frame(d = as.double(c(rep(1L, 5), NA, rep(1L, 5)))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -399,8 +384,7 @@ test_that("double -> INT(64, TRUE)", {
   do(data.frame(d = as.double(rep(1L, 10))))
   do(d <- data.frame(d = as.double(c(rep(1L, 5), NA, rep(1L, 5)))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet
@@ -425,8 +409,7 @@ test_that("double -> INT(64, FALSE)", {
   do(data.frame(d = as.double(rep(1L, 10))))
   do(d <- data.frame(d = as.double(c(rep(1L, 5), NA, rep(1L, 5)))))
 
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
   schema <- parquet_schema(schema)
   expect_snapshot(error = TRUE, {
     # not implemented yet

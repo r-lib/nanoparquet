@@ -1,6 +1,5 @@
 test_that("DECIMAL converted type", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(d = 100)
   sch <- parquet_schema(list(
@@ -37,8 +36,7 @@ test_that("DECIMAL in BA dict", {
 return()
 
 test_that("DECIMAL in BA", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(d = as.double(100:110))
   sch <- parquet_schema(list(
@@ -70,8 +68,7 @@ test_that("DECIMAL in BA", {
 })
 
 test_that("DECIMAL in BA, dictionary", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   d <- data.frame(d = as.double(100:110))
   sch <- parquet_schema(list(

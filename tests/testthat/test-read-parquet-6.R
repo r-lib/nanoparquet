@@ -66,8 +66,7 @@ test_that("LIST", {
 })
 
 test_that("write and read list(integer())", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(id = 1:4)
   df$x <- list(1L, c(2L, 3L), NULL, c(4L, NA_integer_, 6L))
@@ -78,8 +77,7 @@ test_that("write and read list(integer())", {
 })
 
 test_that("write and read list(double())", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(id = 1:4)
   df$x <- list(1.5, c(2.5, 3.5), NULL, c(4.5, NA_real_, 6.5))
@@ -90,8 +88,7 @@ test_that("write and read list(double())", {
 })
 
 test_that("write and read list(character())", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(id = 1:4)
   df$x <- list("a", c("b", "c"), NULL, c("d", NA_character_, "f"))
@@ -103,8 +100,7 @@ test_that("write and read list(character())", {
 
 test_that("list(integer()) multiple data pages", {
   withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   N <- 1000
   pattern <- list(1L, c(2L, 3L), NULL, c(4L, NA_integer_, 6L))
@@ -127,8 +123,7 @@ test_that("list(integer()) multiple data pages", {
 
 test_that("list(double()) multiple data pages", {
   withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   N <- 1000
   pattern <- list(1.5, c(2.5, 3.5), NULL, c(4.5, NA_real_, 6.5))
@@ -151,8 +146,7 @@ test_that("list(double()) multiple data pages", {
 
 test_that("list(character()) multiple data pages", {
   withr::local_envvar(NANOPARQUET_PAGE_SIZE = "1024")
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   N <- 1000
   pattern <- list("a", c("b", "c"), NULL, c("d", NA_character_, "f"))
@@ -174,8 +168,7 @@ test_that("list(character()) multiple data pages", {
 })
 
 test_that("list(integer()) multiple row groups", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(id = 1:8)
   df$x <- list(
@@ -196,8 +189,7 @@ test_that("list(integer()) multiple row groups", {
 })
 
 test_that("list(double()) multiple row groups", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(id = 1:8)
   df$x <- list(
@@ -218,8 +210,7 @@ test_that("list(double()) multiple row groups", {
 })
 
 test_that("list(character()) multiple row groups", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(id = 1:8)
   df$x <- list(
@@ -240,8 +231,7 @@ test_that("list(character()) multiple row groups", {
 })
 
 test_that("list(integer()) many row groups", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   pattern <- list(
     1L,
@@ -263,8 +253,7 @@ test_that("list(integer()) many row groups", {
 })
 
 test_that("list(double()) many row groups", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   pattern <- list(
     1.5,
@@ -286,8 +275,7 @@ test_that("list(double()) many row groups", {
 })
 
 test_that("list(character()) many row groups", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   pattern <- list(
     "a",
@@ -309,8 +297,7 @@ test_that("list(character()) many row groups", {
 })
 
 test_that("list(integer()) dictionary encoding", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(id = 1:4)
   df$x <- list(1L, c(2L, 3L), NULL, c(4L, NA_integer_, 6L))
@@ -326,8 +313,7 @@ test_that("list(integer()) dictionary encoding", {
 })
 
 test_that("list(double()) dictionary encoding", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(id = 1:4)
   df$x <- list(1.5, c(2.5, 3.5), NULL, c(4.5, NA_real_, 6.5))
@@ -343,8 +329,7 @@ test_that("list(double()) dictionary encoding", {
 })
 
 test_that("list(character()) dictionary encoding", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(id = 1:4)
   df$x <- list("a", c("b", "c"), NULL, c("d", NA_character_, "f"))
@@ -360,8 +345,7 @@ test_that("list(character()) dictionary encoding", {
 })
 
 test_that("write and read zero columns, zero rows", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame()
   write_parquet(df, tmp)
@@ -375,8 +359,7 @@ test_that("write and read zero columns, zero rows", {
 })
 
 test_that("write and read zero rows", {
-  tmp <- tempfile(fileext = ".parquet")
-  on.exit(unlink(tmp), add = TRUE)
+  tmp <- withr::local_tempfile(fileext = ".parquet")
 
   df <- data.frame(
     i = integer(),
