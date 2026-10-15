@@ -5,9 +5,7 @@ test_that("parquet_metadata", {
   tmp <- file.path(tmpdir, "test.parquet")
   write_parquet(df, tmp, compression = "uncompressed")
 
-  wd <- getwd()
-  on.exit(setwd(wd), add = TRUE)
-  setwd(tmpdir)
+  withr::local_dir(tmpdir)
 
   mtd <- read_parquet_metadata("test.parquet")
   mtd$file_meta_data$key_value_metadata <-
