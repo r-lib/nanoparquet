@@ -103,7 +103,7 @@ test_that("various error cases", {
   }
   expect_error(res <- read_parquet(""))
   expect_error(res <- read_parquet("DONTEXIST"))
-  tf <- tempfile()
+  tf <- withr::local_tempfile()
   expect_error(res <- read_parquet(tf))
   expect_error(res <- read_parquet(c(tf, tf)))
 })
@@ -395,7 +395,7 @@ test_that("zstd with data page v2", {
 })
 
 test_that("DELTA_BINARY_PACKED encoding", {
-  suppressPackageStartupMessages(library(bit64))
+  loadNamespace("pillar")
   pf <- test_path("data/dbp-int32.parquet")
   expect_snapshot({
     read_parquet_metadata(pf)$column_chunks$encodings
