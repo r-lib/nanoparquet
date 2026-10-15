@@ -145,6 +145,30 @@ test_that("parquet_type converted type shortcuts", {
   )
 })
 
+test_that("parquet_type accepts old is_adjusted_utc name", {
+  expect_equal(
+    parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MILLIS"),
+    parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS")
+  )
+  expect_equal(
+    parquet_type("TIMESTAMP", is_adjusted_utc = FALSE, unit = "MICROS"),
+    parquet_type("TIMESTAMP", is_adjusted_to_utc = FALSE, unit = "MICROS")
+  )
+  expect_equal(
+    parquet_schema(list("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")),
+    parquet_schema(list("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS"))
+  )
+  expect_error(
+    parquet_type(
+      "TIME",
+      is_adjusted_utc = TRUE,
+      is_adjusted_to_utc = TRUE,
+      unit = "MILLIS"
+    ),
+    "only one of"
+  )
+})
+
 test_that("parquet_schema", {
   sch <- parquet_schema(
     "INT32",

@@ -219,8 +219,18 @@ parquet_type <- function(
   primitive_type = NULL,
   repetition_type = NULL,
   encoding = NULL,
-  element = NULL
+  element = NULL,
+  is_adjusted_utc = NULL
 ) {
+  # old name of `is_adjusted_to_utc`, for compatibility
+  if (!is.null(is_adjusted_utc)) {
+    if (!is.null(is_adjusted_to_utc)) {
+      stop("Use only one of `is_adjusted_to_utc` and `is_adjusted_utc`.")
+    }
+    is_adjusted_to_utc <- is_adjusted_utc
+    is_adjusted_utc <- NULL
+  }
+
   fixed_len_byte_array <- function() {
     stopifnot(
       !is.null(type_length),
