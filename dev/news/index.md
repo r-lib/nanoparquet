@@ -2,6 +2,13 @@
 
 ## nanoparquet (development version)
 
+- [`parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/parquet_schema.md)
+  now uses the `is_adjusted_to_utc` parameter for `TIME` and `TIMESTAMP`
+  types, instead of `is_adjusted_utc`. (There is a fallback to old name,
+  so existing code does not fail.) Also,
+  [`read_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_schema.md)
+  now prints the parameters of `TIME` and `TIMESTAMP` types correctly.
+
 - [`read_parquet()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet.md)
   now reads ordered factors as ordered factors.
 

@@ -86,10 +86,10 @@ Parquet logical types:
 
 - `"DATE"`
 
-- `"TIME"`: needs an `is_adjusted_utc` (`TRUE` or `FALSE`) and a `unit`
-  parameter. `unit` must be `"MILLIS"`, `"MICROS"` or `"NANOS"`.
+- `"TIME"`: needs an `is_adjusted_to_utc` (`TRUE` or `FALSE`) and a
+  `unit` parameter. `unit` must be `"MILLIS"`, `"MICROS"` or `"NANOS"`.
 
-- `"TIMESTAMP"`: needs an `is_adjusted_utc` (`TRUE` or `FALSE`) and a
+- `"TIMESTAMP"`: needs an `is_adjusted_to_utc` (`TRUE` or `FALSE`) and a
   `unit` parameter. `unit` must be `"MILLIS"`, `"MICROS"` or `"NANOS"`.
 
 - `"JSON"`
@@ -117,16 +117,16 @@ syntactic shortcut for the corresponding logical types:
 - `INT_64` mean `list("INT", bit_width = 64, is_signed = TRUE)`.
 
 - `TIME_MICROS` means
-  `list("TIME", is_adjusted_utc = TRUE, unit = "MICROS")`.
+  `list("TIME", is_adjusted_to_utc = TRUE, unit = "MICROS")`.
 
 - `TIME_MILLIS` means
-  `list("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")`.
+  `list("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS")`.
 
 - `TIMESTAMP_MICROS` means
-  `list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")`.
+  `list("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MICROS")`.
 
 - `TIMESTAMP_MILLIS` means
-  `list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")`.
+  `list("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MILLIS")`.
 
 - `UINT_8` means `list("INT", bit_width = 8, is_signed = FALSE)`.
 

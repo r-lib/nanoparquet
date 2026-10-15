@@ -108,9 +108,9 @@ It needs the <code>precision</code> and <code>primitive_type</code> parameters. 
 supports the <code>scale</code> parameter, it defaults to zero if not specified.</p></li>
 <li><p><code>"FLOAT16"</code></p></li>
 <li><p><code>"DATE"</code></p></li>
-<li><p><code>"TIME"</code>: needs an <code>is_adjusted_utc</code> (<code>TRUE</code> or <code>FALSE</code>) and a
+<li><p><code>"TIME"</code>: needs an <code>is_adjusted_to_utc</code> (<code>TRUE</code> or <code>FALSE</code>) and a
 <code>unit</code> parameter. <code>unit</code> must be <code>"MILLIS"</code>, <code>"MICROS"</code> or <code>"NANOS"</code>.</p></li>
-<li><p><code>"TIMESTAMP"</code>: needs an <code>is_adjusted_utc</code> (<code>TRUE</code> or <code>FALSE</code>) and a
+<li><p><code>"TIMESTAMP"</code>: needs an <code>is_adjusted_to_utc</code> (<code>TRUE</code> or <code>FALSE</code>) and a
 <code>unit</code> parameter. <code>unit</code> must be <code>"MILLIS"</code>, <code>"MICROS"</code> or <code>"NANOS"</code>.</p></li>
 <li><p><code>"JSON"</code></p></li>
 <li><p><code>"BSON"</code></p></li>
@@ -126,10 +126,10 @@ syntactic shortcut for the corresponding logical types:</p><ul><li><p><code>INT_
 <li><p><code>INT_16</code> mean <code>list("INT", bit_width = 16, is_signed = TRUE)</code>.</p></li>
 <li><p><code>INT_32</code> mean <code>list("INT", bit_width = 32, is_signed = TRUE)</code>.</p></li>
 <li><p><code>INT_64</code> mean <code>list("INT", bit_width = 64, is_signed = TRUE)</code>.</p></li>
-<li><p><code>TIME_MICROS</code> means <code>list("TIME", is_adjusted_utc = TRUE, unit = "MICROS")</code>.</p></li>
-<li><p><code>TIME_MILLIS</code> means <code>list("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")</code>.</p></li>
-<li><p><code>TIMESTAMP_MICROS</code> means <code>list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")</code>.</p></li>
-<li><p><code>TIMESTAMP_MILLIS</code> means <code>list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")</code>.</p></li>
+<li><p><code>TIME_MICROS</code> means <code>list("TIME", is_adjusted_to_utc = TRUE, unit = "MICROS")</code>.</p></li>
+<li><p><code>TIME_MILLIS</code> means <code>list("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS")</code>.</p></li>
+<li><p><code>TIMESTAMP_MICROS</code> means <code>list("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MICROS")</code>.</p></li>
+<li><p><code>TIMESTAMP_MILLIS</code> means <code>list("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MILLIS")</code>.</p></li>
 <li><p><code>UINT_8</code> means <code>list("INT", bit_width = 8, is_signed = FALSE)</code>.</p></li>
 <li><p><code>UINT_16</code> means <code>list("INT", bit_width = 16, is_signed = FALSE)</code>.</p></li>
 <li><p><code>UINT_32</code> means <code>list("INT", bit_width = 32, is_signed = FALSE)</code>.</p></li>

@@ -46,7 +46,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="nanoparquet-development-version">nanoparquet (development version)<a class="anchor" aria-label="anchor" href="#nanoparquet-development-version"></a></h2>
-<ul><li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> now reads ordered factors as ordered factors.</p></li>
+<ul><li><p><code><a href="../reference/parquet_schema.html">parquet_schema()</a></code> now uses the <code>is_adjusted_to_utc</code> parameter for <code>TIME</code> and <code>TIMESTAMP</code> types, instead of <code>is_adjusted_utc</code>. (There is a fallback to old name, so existing code does not fail.) Also, <code><a href="../reference/read_parquet_schema.html">read_parquet_schema()</a></code> now prints the parameters of <code>TIME</code> and <code>TIMESTAMP</code> types correctly.</p></li>
+<li><p><code><a href="../reference/read_parquet.html">read_parquet()</a></code> now reads ordered factors as ordered factors.</p></li>
 <li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> no longer fails on <code><a href="https://bit64.r-lib.org/reference/bit64-package.html" class="external-link">bit64::integer64</a></code> columns with missing values.</p></li>
 <li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now writes correct min/max statistics for numeric columns that span multiple pages.</p></li>
 <li><p><code><a href="../reference/write_parquet.html">write_parquet()</a></code> now writes column orders to the file metadata, so Arrow and other readers that require them use the min/max statistics.</p></li>
