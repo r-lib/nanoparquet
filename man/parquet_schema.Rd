@@ -63,9 +63,9 @@ It needs the \code{precision} and \code{primitive_type} parameters. Also
 supports the \code{scale} parameter, it defaults to zero if not specified.
 \item \code{"FLOAT16"}
 \item \code{"DATE"}
-\item \code{"TIME"}: needs an \code{is_adjusted_utc} (\code{TRUE} or \code{FALSE}) and a
+\item \code{"TIME"}: needs an \code{is_adjusted_to_utc} (\code{TRUE} or \code{FALSE}) and a
 \code{unit} parameter. \code{unit} must be \code{"MILLIS"}, \code{"MICROS"} or \code{"NANOS"}.
-\item \code{"TIMESTAMP"}: needs an \code{is_adjusted_utc} (\code{TRUE} or \code{FALSE}) and a
+\item \code{"TIMESTAMP"}: needs an \code{is_adjusted_to_utc} (\code{TRUE} or \code{FALSE}) and a
 \code{unit} parameter. \code{unit} must be \code{"MILLIS"}, \code{"MICROS"} or \code{"NANOS"}.
 \item \code{"JSON"}
 \item \code{"BSON"}
@@ -86,10 +86,10 @@ syntactic shortcut for the corresponding logical types:
 \item \code{INT_16} mean \code{list("INT", bit_width = 16, is_signed = TRUE)}.
 \item \code{INT_32} mean \code{list("INT", bit_width = 32, is_signed = TRUE)}.
 \item \code{INT_64} mean \code{list("INT", bit_width = 64, is_signed = TRUE)}.
-\item \code{TIME_MICROS} means \code{list("TIME", is_adjusted_utc = TRUE, unit = "MICROS")}.
-\item \code{TIME_MILLIS} means \code{list("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")}.
-\item \code{TIMESTAMP_MICROS} means \code{list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")}.
-\item \code{TIMESTAMP_MILLIS} means \code{list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")}.
+\item \code{TIME_MICROS} means \code{list("TIME", is_adjusted_to_utc = TRUE, unit = "MICROS")}.
+\item \code{TIME_MILLIS} means \code{list("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS")}.
+\item \code{TIMESTAMP_MICROS} means \code{list("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MICROS")}.
+\item \code{TIMESTAMP_MILLIS} means \code{list("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MILLIS")}.
 \item \code{UINT_8} means \code{list("INT", bit_width = 8, is_signed = FALSE)}.
 \item \code{UINT_16} means \code{list("INT", bit_width = 16, is_signed = FALSE)}.
 \item \code{UINT_32} means \code{list("INT", bit_width = 32, is_signed = FALSE)}.

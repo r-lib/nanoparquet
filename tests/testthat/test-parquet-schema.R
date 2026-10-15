@@ -29,12 +29,12 @@ test_that("parquet_type", {
     )
     parquet_type("FLOAT16")
     parquet_type("DATE")
-    parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")
-    parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MICROS")
-    parquet_type("TIME", is_adjusted_utc = TRUE, unit = "NANOS")
-    parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")
-    parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")
-    parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "NANOS")
+    parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS")
+    parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "MICROS")
+    parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "NANOS")
+    parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MILLIS")
+    parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MICROS")
+    parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "NANOS")
     parquet_type("JSON")
     parquet_type("BSON")
   })
@@ -45,7 +45,7 @@ test_that("parquet_type", {
     parquet_type(
       "TIME",
       repetition_type = "REPEATED",
-      is_adjusted_utc = TRUE,
+      is_adjusted_to_utc = TRUE,
       unit = "MILLIS"
     )
   })
@@ -70,14 +70,14 @@ test_that("parquet_type", {
       primitive_type = "FIXED_LEN_BYTE_ARRAY",
       type_length = 5
     )
-    parquet_type("TIME", is_adjusted_utc = TRUE)
+    parquet_type("TIME", is_adjusted_to_utc = TRUE)
     parquet_type("TIME", unit = "MILLIS")
-    parquet_type("TIME", is_adjusted_utc = 1, unit = "MILLIS")
-    parquet_type("TIME", is_adjusted_utc = TRUE, unit = "FOO")
-    parquet_type("TIMESTAMP", is_adjusted_utc = TRUE)
+    parquet_type("TIME", is_adjusted_to_utc = 1, unit = "MILLIS")
+    parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "FOO")
+    parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE)
     parquet_type("TIMESTAMP", unit = "MILLIS")
-    parquet_type("TIMESTAMP", is_adjusted_utc = 1, unit = "MILLIS")
-    parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "FOO")
+    parquet_type("TIMESTAMP", is_adjusted_to_utc = 1, unit = "MILLIS")
+    parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "FOO")
     parquet_type("MAP")
     parquet_type("UNKNOWN")
     parquet_type("INT32", repetition_type = TRUE)
@@ -128,20 +128,44 @@ test_that("parquet_type converted type shortcuts", {
 
   expect_equal(
     parquet_type("TIME_MICROS"),
-    parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MICROS")
+    parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "MICROS")
   )
   expect_equal(
     parquet_type("TIME_MILLIS"),
-    parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")
+    parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS")
   )
 
   expect_equal(
     parquet_type("TIMESTAMP_MICROS"),
-    parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")
+    parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MICROS")
   )
   expect_equal(
     parquet_type("TIMESTAMP_MILLIS"),
-    parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")
+    parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MILLIS")
+  )
+})
+
+test_that("parquet_type accepts old is_adjusted_utc name", {
+  expect_equal(
+    parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MILLIS"),
+    parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS")
+  )
+  expect_equal(
+    parquet_type("TIMESTAMP", is_adjusted_utc = FALSE, unit = "MICROS"),
+    parquet_type("TIMESTAMP", is_adjusted_to_utc = FALSE, unit = "MICROS")
+  )
+  expect_equal(
+    parquet_schema(list("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")),
+    parquet_schema(list("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS"))
+  )
+  expect_error(
+    parquet_type(
+      "TIME",
+      is_adjusted_utc = TRUE,
+      is_adjusted_to_utc = TRUE,
+      unit = "MILLIS"
+    ),
+    "only one of"
   )
 })
 

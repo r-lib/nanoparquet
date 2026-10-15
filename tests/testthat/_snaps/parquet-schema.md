@@ -430,7 +430,7 @@
       [1] NA
       
     Code
-      parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")
+      parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS")
     Output
       $type
       [1] "INT32"
@@ -439,7 +439,7 @@
       $type
       [1] "TIME"
       
-      $is_adjusted_utc
+      $is_adjusted_to_utc
       [1] TRUE
       
       $unit
@@ -458,7 +458,7 @@
       [1] NA
       
     Code
-      parquet_type("TIME", is_adjusted_utc = TRUE, unit = "MICROS")
+      parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "MICROS")
     Output
       $type
       [1] "INT64"
@@ -467,7 +467,7 @@
       $type
       [1] "TIME"
       
-      $is_adjusted_utc
+      $is_adjusted_to_utc
       [1] TRUE
       
       $unit
@@ -486,7 +486,7 @@
       [1] NA
       
     Code
-      parquet_type("TIME", is_adjusted_utc = TRUE, unit = "NANOS")
+      parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "NANOS")
     Output
       $type
       [1] "INT64"
@@ -495,7 +495,7 @@
       $type
       [1] "TIME"
       
-      $is_adjusted_utc
+      $is_adjusted_to_utc
       [1] TRUE
       
       $unit
@@ -514,7 +514,7 @@
       [1] NA
       
     Code
-      parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")
+      parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MILLIS")
     Output
       $type
       [1] "INT64"
@@ -523,7 +523,7 @@
       $type
       [1] "TIMESTAMP"
       
-      $is_adjusted_utc
+      $is_adjusted_to_utc
       [1] TRUE
       
       $unit
@@ -542,7 +542,7 @@
       [1] NA
       
     Code
-      parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")
+      parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MICROS")
     Output
       $type
       [1] "INT64"
@@ -551,7 +551,7 @@
       $type
       [1] "TIMESTAMP"
       
-      $is_adjusted_utc
+      $is_adjusted_to_utc
       [1] TRUE
       
       $unit
@@ -570,7 +570,7 @@
       [1] NA
       
     Code
-      parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "NANOS")
+      parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "NANOS")
     Output
       $type
       [1] "INT64"
@@ -579,7 +579,7 @@
       $type
       [1] "TIMESTAMP"
       
-      $is_adjusted_utc
+      $is_adjusted_to_utc
       [1] TRUE
       
       $unit
@@ -679,7 +679,7 @@
       [1] NA
       
     Code
-      parquet_type("TIME", repetition_type = "REPEATED", is_adjusted_utc = TRUE,
+      parquet_type("TIME", repetition_type = "REPEATED", is_adjusted_to_utc = TRUE,
         unit = "MILLIS")
     Output
       $type
@@ -689,7 +689,7 @@
       $type
       [1] "TIME"
       
-      $is_adjusted_utc
+      $is_adjusted_to_utc
       [1] TRUE
       
       $unit
@@ -785,7 +785,7 @@
       Error in `decimal()`:
       ! precision <= floor(log10(2^(8 * type_length - 1) - 1)) is not TRUE
     Code
-      parquet_type("TIME", is_adjusted_utc = TRUE)
+      parquet_type("TIME", is_adjusted_to_utc = TRUE)
     Condition
       Error in `time()`:
       ! !is.null(unit) is not TRUE
@@ -793,19 +793,19 @@
       parquet_type("TIME", unit = "MILLIS")
     Condition
       Error in `time()`:
-      ! !is.null(is_adjusted_utc) is not TRUE
+      ! !is.null(is_adjusted_to_utc) is not TRUE
     Code
-      parquet_type("TIME", is_adjusted_utc = 1, unit = "MILLIS")
+      parquet_type("TIME", is_adjusted_to_utc = 1, unit = "MILLIS")
     Condition
       Error in `time()`:
-      ! is_flag(is_adjusted_utc) is not TRUE
+      ! is_flag(is_adjusted_to_utc) is not TRUE
     Code
-      parquet_type("TIME", is_adjusted_utc = TRUE, unit = "FOO")
+      parquet_type("TIME", is_adjusted_to_utc = TRUE, unit = "FOO")
     Condition
       Error in `time()`:
       ! unit %in% c("MILLIS", "MICROS", "NANOS") is not TRUE
     Code
-      parquet_type("TIMESTAMP", is_adjusted_utc = TRUE)
+      parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE)
     Condition
       Error in `timestamp()`:
       ! !is.null(unit) is not TRUE
@@ -813,14 +813,14 @@
       parquet_type("TIMESTAMP", unit = "MILLIS")
     Condition
       Error in `timestamp()`:
-      ! !is.null(is_adjusted_utc) is not TRUE
+      ! !is.null(is_adjusted_to_utc) is not TRUE
     Code
-      parquet_type("TIMESTAMP", is_adjusted_utc = 1, unit = "MILLIS")
+      parquet_type("TIMESTAMP", is_adjusted_to_utc = 1, unit = "MILLIS")
     Condition
       Error in `timestamp()`:
-      ! is_flag(is_adjusted_utc) is not TRUE
+      ! is_flag(is_adjusted_to_utc) is not TRUE
     Code
-      parquet_type("TIMESTAMP", is_adjusted_utc = TRUE, unit = "FOO")
+      parquet_type("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "FOO")
     Condition
       Error in `timestamp()`:
       ! unit %in% c("MILLIS", "MICROS", "NANOS") is not TRUE

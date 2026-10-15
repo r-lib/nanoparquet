@@ -1,5 +1,7 @@
 # nanoparquet (development version)
 
+*  `parquet_schema()` now uses the `is_adjusted_to_utc` parameter for `TIME` and `TIMESTAMP` types, instead of `is_adjusted_utc`. (There is a fallback to old name, so existing code does not fail.) Also, `read_parquet_schema()` now prints the parameters of `TIME` and `TIMESTAMP` types correctly.
+
 * `read_parquet()` now reads ordered factors as ordered factors.
 
 * `write_parquet()` no longer fails on `bit64::integer64` columns with missing values.

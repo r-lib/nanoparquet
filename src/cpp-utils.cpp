@@ -49,7 +49,7 @@ void r_to_logical_type(SEXP logical_type, parquet::SchemaElement &sel) {
       if (lt_len != 3) {
         Rf_errorcall(
           nanoparquet_call,
-          "%s logical type needs is_adjusted_utc and unit.", ctype
+          "%s logical type needs is_adjusted_to_utc and unit.", ctype
         );
       }
       is_utc = LOGICAL(VECTOR_ELT(logical_type, 1))[0];

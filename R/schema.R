@@ -51,9 +51,9 @@
 #'   supports the `scale` parameter, it defaults to zero if not specified.
 #' * `"FLOAT16"`
 #' * `"DATE"`
-#' * `"TIME"`: needs an `is_adjusted_utc` (`TRUE` or `FALSE`) and a
+#' * `"TIME"`: needs an `is_adjusted_to_utc` (`TRUE` or `FALSE`) and a
 #'   `unit` parameter. `unit` must be `"MILLIS"`, `"MICROS"` or `"NANOS"`.
-#' * `"TIMESTAMP"`: needs an `is_adjusted_utc` (`TRUE` or `FALSE`) and a
+#' * `"TIMESTAMP"`: needs an `is_adjusted_to_utc` (`TRUE` or `FALSE`) and a
 #'   `unit` parameter. `unit` must be `"MILLIS"`, `"MICROS"` or `"NANOS"`.
 #' * `"JSON"`
 #' * `"BSON"`
@@ -73,10 +73,10 @@
 #' * `INT_16` mean `list("INT", bit_width = 16, is_signed = TRUE)`.
 #' * `INT_32` mean `list("INT", bit_width = 32, is_signed = TRUE)`.
 #' * `INT_64` mean `list("INT", bit_width = 64, is_signed = TRUE)`.
-#' * `TIME_MICROS` means `list("TIME", is_adjusted_utc = TRUE, unit = "MICROS")`.
-#' * `TIME_MILLIS` means `list("TIME", is_adjusted_utc = TRUE, unit = "MILLIS")`.
-#' * `TIMESTAMP_MICROS` means `list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MICROS")`.
-#' * `TIMESTAMP_MILLIS` means `list("TIMESTAMP", is_adjusted_utc = TRUE, unit = "MILLIS")`.
+#' * `TIME_MICROS` means `list("TIME", is_adjusted_to_utc = TRUE, unit = "MICROS")`.
+#' * `TIME_MILLIS` means `list("TIME", is_adjusted_to_utc = TRUE, unit = "MILLIS")`.
+#' * `TIMESTAMP_MICROS` means `list("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MICROS")`.
+#' * `TIMESTAMP_MILLIS` means `list("TIMESTAMP", is_adjusted_to_utc = TRUE, unit = "MILLIS")`.
 #' * `UINT_8` means `list("INT", bit_width = 8, is_signed = FALSE)`.
 #' * `UINT_16` means `list("INT", bit_width = 16, is_signed = FALSE)`.
 #' * `UINT_32` means `list("INT", bit_width = 32, is_signed = FALSE)`.
@@ -214,13 +214,23 @@ parquet_type <- function(
   is_signed = NULL,
   precision = NULL,
   scale = NULL,
-  is_adjusted_utc = NULL,
+  is_adjusted_to_utc = NULL,
   unit = NULL,
   primitive_type = NULL,
   repetition_type = NULL,
   encoding = NULL,
-  element = NULL
+  element = NULL,
+  is_adjusted_utc = NULL
 ) {
+  # old name of `is_adjusted_to_utc`, for compatibility
+  if (!is.null(is_adjusted_utc)) {
+    if (!is.null(is_adjusted_to_utc)) {
+      stop("Use only one of `is_adjusted_to_utc` and `is_adjusted_utc`.")
+    }
+    is_adjusted_to_utc <- is_adjusted_utc
+    is_adjusted_utc <- NULL
+  }
+
   fixed_len_byte_array <- function() {
     stopifnot(
       !is.null(type_length),
@@ -298,8 +308,8 @@ parquet_type <- function(
 
   time <- function() {
     stopifnot(
-      !is.null(is_adjusted_utc),
-      is_flag(is_adjusted_utc),
+      !is.null(is_adjusted_to_utc),
+      is_flag(is_adjusted_to_utc),
       !is.null(unit),
       is_string(unit),
       unit %in% c("MILLIS", "MICROS", "NANOS")
@@ -308,19 +318,19 @@ parquet_type <- function(
       type = if (unit == "MILLIS") "INT32" else "INT64",
       logical_type = nanoparquet_logical_type(list(
         type = "TIME",
-        is_adjusted_utc = is_adjusted_utc,
+        is_adjusted_to_utc = is_adjusted_to_utc,
         unit = unit
       ))
     )
-    is_adjusted_utc <<- NULL
+    is_adjusted_to_utc <<- NULL
     unit <<- NULL
     r
   }
 
   timestamp <- function() {
     stopifnot(
-      !is.null(is_adjusted_utc),
-      is_flag(is_adjusted_utc),
+      !is.null(is_adjusted_to_utc),
+      is_flag(is_adjusted_to_utc),
       !is.null(unit),
       is_string(unit),
       unit %in% c("MILLIS", "MICROS", "NANOS")
@@ -329,11 +339,11 @@ parquet_type <- function(
       type = "INT64",
       logical_type = nanoparquet_logical_type(list(
         type = "TIMESTAMP",
-        is_adjusted_utc = is_adjusted_utc,
+        is_adjusted_to_utc = is_adjusted_to_utc,
         unit = unit
       ))
     )
-    is_adjusted_utc <<- NULL
+    is_adjusted_to_utc <<- NULL
     unit <<- NULL
     r
   }
@@ -456,22 +466,22 @@ parquet_type <- function(
     },
 
     "TIME_MICROS" = {
-      is_adjusted_utc <- TRUE
+      is_adjusted_to_utc <- TRUE
       unit <- "MICROS"
       time()
     },
     "TIME_MILLIS" = {
-      is_adjusted_utc <- TRUE
+      is_adjusted_to_utc <- TRUE
       unit <- "MILLIS"
       time()
     },
     "TIMESTAMP_MICROS" = {
-      is_adjusted_utc <- TRUE
+      is_adjusted_to_utc <- TRUE
       unit <- "MICROS"
       timestamp()
     },
     "TIMESTAMP_MILLIS" = {
-      is_adjusted_utc <- TRUE
+      is_adjusted_to_utc <- TRUE
       unit <- "MILLIS"
       timestamp()
     },
@@ -516,8 +526,8 @@ parquet_type <- function(
     "Unused Parquet type parameter 'is_signed'." = is.null(is_signed),
     "Unused Parquet type parameter 'precision'." = is.null(precision),
     "Unused Parquet type parameter 'scale'." = is.null(scale),
-    "Unused Parquet type parameter 'is_adjusted_utc'." = is.null(
-      is_adjusted_utc
+    "Unused Parquet type parameter 'is_adjusted_to_utc'." = is.null(
+      is_adjusted_to_utc
     ),
     "Unused Parquet type parameter 'unit'." = is.null(unit),
     "Unused Parquet type parameter 'primitive_type'." = is.null(primitive_type)
