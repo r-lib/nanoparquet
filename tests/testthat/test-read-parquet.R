@@ -395,7 +395,7 @@ test_that("zstd with data page v2", {
 })
 
 test_that("DELTA_BINARY_PACKED encoding", {
-  withr::local_package("bit64")
+  loadNamespace("pillar")
   pf <- test_path("data/dbp-int32.parquet")
   expect_snapshot({
     read_parquet_metadata(pf)$column_chunks$encodings

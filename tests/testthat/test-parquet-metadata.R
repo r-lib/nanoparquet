@@ -82,7 +82,7 @@ test_that("key-value metadata", {
 })
 
 test_that("parquet_info", {
-  withr::local_package("pillar")
+  loadNamespace("pillar")
   expect_snapshot({
     read_parquet_info(test_path("data/enum.parquet"))
     read_parquet_info(test_path("data/factor.parquet"))
