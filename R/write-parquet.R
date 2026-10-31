@@ -396,7 +396,7 @@ append_parquet <- function(
   x <- prepare_write_df(x)
 
   mtd <- read_parquet_metadata(file)
-  schema <- read_parquet_schema(file)
+  schema <- mtd$schema
   schema <- map_schema_to_df(schema, x, list())
   schema_top <- schema[!duplicated(schema[["r_col"]]), ]
   schema_top <- check_schema_required_cols(x, schema_top)
