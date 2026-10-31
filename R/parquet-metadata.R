@@ -311,13 +311,13 @@ read_parquet_schema <- function(file, options = parquet_options()) {
 
 read_parquet_info <- function(file) {
   file <- path.expand(file)
-  mtd <- read_parquet_metadata(file)
+  mtd <- .Call(nanoparquet_read_metadata, file)
   info <- data.frame(
     stringsAsFactors = FALSE,
     file_name = file,
     num_cols = mtd$schema$num_children[1],
     num_rows = mtd$file_meta_data$num_rows,
-    num_row_groups = nrow(mtd$row_groups),
+    num_row_groups = length(mtd$row_groups$id),
     file_size = file.size(file),
     parquet_version = mtd$file_meta_data$version,
     created_by = mtd$file_meta_data$created_by
