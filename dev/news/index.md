@@ -2,6 +2,15 @@
 
 ## nanoparquet (development version)
 
+- [`read_parquet_metadata()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_metadata.md),
+  [`read_parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_schema.md),
+  [`read_parquet_info()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_info.md),
+  [`read_parquet_pages()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_pages.md)
+  and
+  [`read_parquet_page()`](https://nanoparquet.r-lib.org/dev/reference/read_parquet_page.md)
+  no longer allocate memory in proportion to the number of rows in the
+  file ([\#188](https://github.com/r-lib/nanoparquet/issues/188)).
+
 - [`parquet_schema()`](https://nanoparquet.r-lib.org/dev/reference/parquet_schema.md)
   now uses the `is_adjusted_to_utc` parameter for `TIME` and `TIMESTAMP`
   types, instead of `is_adjusted_utc`. (There is a fallback to old name,
