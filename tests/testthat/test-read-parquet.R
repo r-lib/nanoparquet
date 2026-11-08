@@ -434,7 +434,7 @@ test_that("DELTA_LENGTH_BYTE_ARRAY encoding", {
   dlba <- read_parquet(pf)
   expect_snapshot({
     as.data.frame(dlba)[1:10, ]
-    rle(nchar(dlba$FRUIT))
+    unclass(rle(nchar(dlba$FRUIT)))
   })
 })
 

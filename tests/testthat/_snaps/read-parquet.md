@@ -367,11 +367,14 @@
        [7] "apple_banana_mango36" "apple_banana_mango49" "apple_banana_mango64"
       [10] "apple_banana_mango81"
     Code
-      rle(nchar(dlba$FRUIT))
+      unclass(rle(nchar(dlba$FRUIT)))
     Output
-      Run Length Encoding
-        lengths: int [1:6] 4 6 22 68 217 683
-        values : int [1:6] 19 20 21 22 23 24
+      $lengths
+      [1]   4   6  22  68 217 683
+      
+      $values
+      [1] 19 20 21 22 23 24
+      
 
 # DELTA_BYTE_ARRAY encoding
 

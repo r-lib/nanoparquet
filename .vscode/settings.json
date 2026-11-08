@@ -15,5 +15,6 @@
     },
     "search.exclude": {
         ".dev": true
-    }
+    },
+    "cmake.sourceDirectory": "/Users/gaborcsardi/works/nanoparquet/src/thrift/qt"
 }
