@@ -11,7 +11,7 @@
 #include <Rinternals.h>
 #undef TYPE_BITS
 
-#include "RParquetReader.h"
+#include "MetadataReader.h"
 #include "unwind.h"
 
 #ifdef _WIN32
@@ -61,7 +61,7 @@ SEXP rf_nanoparquet_edit_metadata(
   int32_t footer_len;
   int64_t file_size;
   {
-    RParquetReader reader(fname);
+    MetadataReader reader(fname);
     fmd = reader.file_meta_data_;
     footer_len = reader.footer_len;
     reader.pfile.seekg(0, std::ios_base::end);

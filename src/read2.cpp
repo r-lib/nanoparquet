@@ -7,6 +7,7 @@
 #include "protect.h"
 
 #include "RParquetReader.h"
+#include "MetadataReader.h"
 #include "r-nanoparquet.h"
 
 extern SEXP nanoparquet_call;
@@ -290,8 +291,7 @@ SEXP nanoparquet_read_col_names(SEXP filesxp) {
 
   try {
     std::string fname = sfname;
-    RParquetReader reader(fname);
-    reader.read_arrow_metadata();
+    MetadataReader reader(fname);
     parquet::FileMetaData &fmt = reader.file_meta_data_;
     uint32_t ncols = fmt.schema.size();
     uint32_t nleafs = 0;

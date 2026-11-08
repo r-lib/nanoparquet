@@ -89,3 +89,23 @@ test_that("parquet_info", {
     read_parquet_info(test_path("data/decimals.parquet"))
   })
 })
+
+test_that("reading metadata does not allocate memory for the data", {
+  # https://github.com/r-lib/nanoparquet/issues/188
+  skip_on_cran()
+  n <- 5e6
+  tmp <- withr::local_tempfile(fileext = ".parquet")
+  write_parquet(data.frame(d = rep(1, n), s = rep("a", n)), tmp)
+
+  vcells <- function(expr) {
+    gc(reset = TRUE)
+    before <- gc()["Vcells", "max used"]
+    expr
+    gc()["Vcells", "max used"] - before
+  }
+
+  expect_lt(vcells(read_parquet_metadata(tmp)), n / 10)
+  expect_lt(vcells(read_parquet_schema(tmp)), n / 10)
+  expect_lt(vcells(read_parquet_info(tmp)), n / 10)
+  expect_lt(vcells(read_parquet_pages(tmp)), n / 10)
+})

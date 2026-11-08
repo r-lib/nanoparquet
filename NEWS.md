@@ -1,5 +1,7 @@
 # nanoparquet (development version)
 
+* `read_parquet_metadata()`, `read_parquet_schema()`, `read_parquet_info()`, `read_parquet_pages()` and `read_parquet_page()` no longer allocate memory in proportion to the number of rows in the file (#188).
+
 *  `parquet_schema()` now uses the `is_adjusted_to_utc` parameter for `TIME` and `TIMESTAMP` types, instead of `is_adjusted_utc`. (There is a fallback to old name, so existing code does not fail.) Also, `read_parquet_schema()` now prints the parameters of `TIME` and `TIMESTAMP` types correctly.
 
 * `read_parquet()` now reads ordered factors as ordered factors.

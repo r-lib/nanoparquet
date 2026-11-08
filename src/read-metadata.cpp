@@ -3,7 +3,7 @@
 #include <Rinternals.h>
 
 #include "protect.h"
-#include "RParquetReader.h"
+#include "MetadataReader.h"
 
 using namespace nanoparquet;
 using namespace std;
@@ -407,7 +407,7 @@ SEXP nanoparquet_read_metadata(SEXP filesxp) {
   R_API_START(R_NilValue);
 
   const char *fname = CHAR(STRING_ELT(filesxp, 0));
-  RParquetReader f(fname);
+  MetadataReader f(fname);
 
   const char *res_nms[] = {
     "file_meta_data",
@@ -459,7 +459,7 @@ SEXP nanoparquet_read_schema(SEXP filesxp) {
   R_API_START(R_NilValue);
   SEXP cfname = PROTECT(STRING_ELT(filesxp, 0));
   const char *fname = CHAR(cfname);
-  RParquetReader f(fname);
+  MetadataReader f(fname);
   parquet::FileMetaData fmd = f.file_meta_data_;
   UNPROTECT(1);
   return convert_schema(fname, fmd.schema);

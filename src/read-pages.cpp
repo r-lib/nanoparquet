@@ -1,7 +1,7 @@
 #include "lib/nanoparquet.h"
 
 #include "protect.h"
-#include "RParquetReader.h"
+#include "MetadataReader.h"
 
 using namespace nanoparquet;
 using namespace std;
@@ -18,7 +18,7 @@ SEXP nanoparquet_read_pages(SEXP filesxp) {
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
   R_API_START(R_NilValue);
   const char *fname = CHAR(STRING_ELT(filesxp, 0));
-  RParquetReader f(fname);
+  MetadataReader f(fname);
 
   // first go over the pages to see how many we have
   size_t num_pages = 0;
@@ -334,7 +334,7 @@ SEXP nanoparquet_read_page(SEXP filesxp, SEXP page) {
   SEXP uwtoken = PROTECT(R_MakeUnwindCont());
   R_API_START(R_NilValue);
   const char *fname = CHAR(STRING_ELT(filesxp, 0));
-  RParquetReader f(fname);
+  MetadataReader f(fname);
   // Find where it is in the file
   PageData pd = find_page(f, page_header_offset);
   // Need to find some metadata about this column
